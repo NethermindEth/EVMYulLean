@@ -1,0 +1,61 @@
+name: CI
+
+on:
+  pull_request:
+    branches:
+      - main
+
+jobs:
+  build-model:
+    runs-on: ubuntu-latest
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: cache elan and mathlib
+        id: cache-elan-mathlib
+
+        uses: actions/cache@v3
+
+        env:
+          cache-name: cache-elan-mathlib
+        
+        with:
+          path: |
+            .lake/packages/**
+            ~/.elan
+            ~/.profile
+          key: ${{ runner.os }}-${{ env.cache-name }}-${{ hashFiles('**/lakefile.lean') }}
+
+      - if: ${{ steps.cache-elan-mathlib.outputs.cache-hit != 'true' }}
+
+        name: install elan
+        run: |
+          set -o pipefail
+          curl -sSfL https://github.com/leanprover/elan/releases/download/v3.1.1/elan-x86_64-unknown-linux-gnu.tar.gz | tar xz
+          ./elan-init -y --default-toolchain none
+          echo "$HOME/.elan/bin" >> "${GITHUB_PATH}"
+
+      - if: ${{ steps.cache-elan-mathlib.outputs.cache-hit != 'true' }}
+
+        name: get cache
+        id: get
+        run: |
+          lake exe cache clean
+          lake exe cache get
+
+      - name: cache build
+        id: cache-build
+        uses: actions/cache@v3
+        env:
+          cache-name: cache-build
+        with:
+          path: |
+            .lake/build
+          key: ${{ runner.os }}-${{ env.cache-name }}-${{ hashFiles('**/lakefile.lean') }}
+
+      - name: build
+        run: |
+          source ~/.profile
+          lake build
+      

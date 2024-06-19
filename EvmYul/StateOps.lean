@@ -1,0 +1,154 @@
+import EvmYul.State.SubstateOps
+import EvmYul.State.AccountOps
+
+import EvmYul.State
+
+namespace EvmYul
+
+namespace State
+
+def addAccessedAccount (self : State) (addr : Address) : State :=
+  { self with substate := self.substate.addAccessedAccount addr }
+
+def addAccessedStorageKey (self : State) (sk : Address × UInt256) : State :=
+  { self with substate := self.substate.addAccessedStorageKey sk }
+
+/--
+DEAD(σ, a). Section 4.1., equation 15.
+-/
+def dead (s : State) (addr : Address) : Bool :=
+  s.accountMap.lookup addr |>.option True Account.emptyAccount
+
+def addHashCollision (self : State) : State := { self with hashCollision := true }
+
+def accountExists (self : State) (addr : Address) : Bool := self.accountMap.lookup addr |>.isSome
+
+def lookupAccount (self : State) (addr : Address) : Option Account :=
+  self.accountMap.lookup addr
+
+def updateAccount (addr : Address) (act : Account) (self : State) : State :=
+  { self with accountMap := self.accountMap.insert addr act }
+def setAccount (self : State) (addr : Address) (acc : Account) : State :=
+  { self with accountMap := self.accountMap.insert addr acc }
+
+def setSelfAccount (self : State) (acc : Account := default) : State :=
+  self.setAccount self.executionEnv.codeOwner acc
+
+def updateAccount! (self : State) (addr : Address) (f : Account → Account) : State :=
+  let acc! := self.lookupAccount addr |>.getD default
+  self.setAccount addr (f acc!)
+
+def updateSelfAccount! (self : State) : (Account → Account) → State :=
+  self.updateAccount! self.executionEnv.codeOwner
+
+def balance (self : State) (k : UInt256) : State × UInt256 :=
+  let addr := Address.ofUInt256 k
+  (self.addAccessedAccount addr, self.accountMap.lookup addr |>.option 0 Account.balance)
+
+def transferBalance (sender : Address) (recipient : Address) (balance : UInt256) (self : State) : Option State :=
+  if sender == recipient then .some self -- NB this check renders `balance` validity irrelevant
+  else do
+    let senderAcc ← self.accountMap.lookup sender 
+    let recipientAcc ← self.accountMap.lookup recipient
+    let (senderAcc, recipientAcc) ← senderAcc.transferBalanceTo balance recipientAcc
+    self.updateAccount sender senderAcc
+      |>.updateAccount recipient recipientAcc
+
+def initialiseAccount (addr : Address) (self : State) : State :=
+  if self.accountExists addr then self else self.updateAccount addr default
+def setBalance! (self : State) (addr : Address) (balance : UInt256) : State :=
+  self.updateAccount! addr (λ acc ↦ { acc with balance := balance })
+
+def setSelfBalance! (self : State) : UInt256 → State :=
+  self.setBalance! self.executionEnv.codeOwner
+
+def calldataload (self : State) (v : UInt256) : UInt256 :=
+  uInt256OfByteArray <| self.executionEnv.inputData.extract v (v + 32)
+
+def setNonce! (self : State) (addr : Address) (nonce : UInt256) : State :=
+  self.updateAccount! addr (λ acc ↦ { acc with nonce := nonce })
+
+def setSelfNonce! (self : State) (nonce : UInt256) : State :=
+  self.setNonce! self.executionEnv.codeOwner nonce
+
+def selfStorage! (self : State) : Finmap (λ _ : UInt256 ↦ UInt256) :=
+  self.lookupAccount self.executionEnv.codeOwner |>.getD default |>.storage
+
+section CodeCopy
+
+def extCodeSize (self : State) (a : UInt256) : State × UInt256 :=
+  let addr := Address.ofUInt256 a
+  let s := self.lookupAccount addr |>.option 0 (Fin.ofNat ∘ ByteArray.size ∘ Account.code)
+  (self.addAccessedAccount addr, s)
+
+def extCodeHash (self : State) (v : UInt256) : UInt256 :=
+  self.lookupAccount (Address.ofUInt256 v) |>.option 0 Account.codeHash
+
+end CodeCopy
+
+section Blocks
+
+def blockHash (self : State) (blockNumber : UInt256) : UInt256 :=
+  let v := self.executionEnv.header.number
+  if v ≤ blockNumber || blockNumber + 256 < v then 0
+  else
+    let bs := self.blocks.map λ b ↦ b.blockHeader.parentHash
+    bs.getD (v - blockNumber) 0
+
+def coinBase (self : State) : Address :=
+  self.executionEnv.header.beneficiary
+
+def timeStamp (self : State) : UInt256 :=
+  self.executionEnv.header.timestamp
+
+def number (self : State) : UInt256 :=
+  self.executionEnv.header.number
+
+def difficulty (self : State) : UInt256 :=
+  self.executionEnv.header.difficulty
+
+def gasLimit (self : State) : UInt256 :=
+  self.executionEnv.header.gasLimit
+
+def chainId (self : State) : UInt256 :=
+  self.executionEnv.header.chainId
+
+def selfbalance (self : State) : UInt256 :=
+  Finmap.lookup self.executionEnv.codeOwner self.accountMap |>.option 0 Account.balance
+
+/--
+TODO: `Account` also has `code`. Recheck.
+-/
+def setCode (self : State) (code : ByteArray) : State :=
+  { self with executionEnv.code := code }
+
+end Blocks
+
+section Storage
+
+def setStorage! (self : State) (addr : Address) (strg : Finmap (λ _ : UInt256 ↦ UInt256)) : State :=
+  self.updateAccount! addr (λ acc ↦ { acc with storage := strg })
+
+def setSelfStorage! (self : State) : Finmap (λ _ : UInt256 ↦ UInt256) → State :=
+  self.setStorage! self.executionEnv.codeOwner
+
+def sload (self : State) (spos : UInt256) : State × UInt256 :=
+  let Iₐ := self.executionEnv.codeOwner
+  let v := self.lookupAccount Iₐ |>.option 0 (Account.lookupStorage (k := spos))
+  let state' := self.addAccessedStorageKey (Iₐ, spos)
+  (state', v)
+
+def sstore (self : State) (spos sval : UInt256) : State :=
+  let Iₐ := self.executionEnv.codeOwner
+  self.lookupAccount Iₐ |>.option self λ acc ↦
+    let self' := self.setAccount Iₐ (acc.updateStorage spos sval)
+    { self' with
+        usedRange := {spos} ∪ self'.usedRange -- not sure what this is
+        substate := self.substate.addAccessedStorageKey (Iₐ, spos)
+    }
+
+end Storage
+
+end State
+
+end EvmYul

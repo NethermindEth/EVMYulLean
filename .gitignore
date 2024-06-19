@@ -1,0 +1,3 @@
+*.olean
+.lake/
+vc/.stack-work/*
