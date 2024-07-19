@@ -45,6 +45,10 @@ def mstore (self : MachineState) (spos sval : UInt256) : MachineState :=
 def mstore8 (self : MachineState) (spos sval : UInt256) : MachineState :=
   self.updateMemory spos (Fin.ofNat (sval.val % (2^8)))
 
+def mcopy (self : MachineState) (mstart datastart s : UInt256) : MachineState :=
+  let arr := self.lookupMemoryRange datastart.val s.val
+  (·.1) <| arr.foldl (init := (self, mstart)) λ (sa , j) i ↦ (sa.updateMemory j i.val, j + 1)
+
 -- Apendix H, (320)
 def M (s f l : UInt256) : UInt256 :=
   match l with

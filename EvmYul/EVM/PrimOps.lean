@@ -73,6 +73,16 @@ def binaryMachineStateOp'
       .ok <| evmState'.replaceStackAndIncrPC (s.push val)
     | _ => .error EVM.Exception.InvalidStackSizeException
 
+def ternaryMachineStateOp
+  (op : MachineState → UInt256 → UInt256 → UInt256 → MachineState) : Transformer
+:= λ evmState ↦
+  match evmState.stack.pop3 with
+    | some ⟨ s , μ₀, μ₁, μ₂ ⟩ =>
+      let mState' := op evmState.toMachineState μ₀ μ₁ μ₂
+      let evmState' := {evmState with toMachineState := mState'}
+      .ok <| evmState'.replaceStackAndIncrPC s
+    | _ => .error EVM.Exception.InvalidStackSizeException
+
 def binaryStateOp
   (op : EvmYul.State → UInt256 → UInt256 → EvmYul.State) : Transformer
 := λ evmState ↦

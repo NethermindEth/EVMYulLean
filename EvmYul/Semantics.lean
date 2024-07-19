@@ -100,6 +100,13 @@ private def dispatchBinaryMachineStateOp
     | .EVM => EVM.binaryMachineStateOp op
     | .Yul => Yul.binaryMachineStateOp op
 
+private def dispatchTernaryMachineStateOp
+  (τ : OperationType) (op : MachineState → UInt256 → UInt256 → UInt256 → MachineState) :
+  Transformer τ
+:=
+  match τ with
+    | .EVM => EVM.ternaryMachineStateOp op
+    | .Yul => Yul.ternaryMachineStateOp op
 
 private def dispatchBinaryMachineStateOp'
   (τ : OperationType) (op : MachineState → UInt256 → UInt256 → UInt256 × MachineState) :
@@ -315,6 +322,7 @@ def step {τ : OperationType} (op : Operation τ) : Transformer τ :=
     | τ, .TLOAD => dispatchUnaryStateOp τ EvmYul.State.tload
     | τ, .TSTORE => dispatchBinaryStateOp τ EvmYul.State.tstore
     | τ, .MSIZE => dispatchMachineStateOp τ MachineState.msize
+    | τ, .MCOPY => dispatchTernaryMachineStateOp τ MachineState.mcopy
 
     | τ, .LOG0 => dispatchLog0 τ
     | τ, .LOG1 => dispatchLog1 τ
