@@ -312,6 +312,8 @@ def step {τ : OperationType} (op : Operation τ) : Transformer τ :=
     | τ, .MSTORE8 => dispatchBinaryMachineStateOp τ MachineState.mstore8
     | τ, .SLOAD => dispatchUnaryStateOp τ EvmYul.State.sload
     | τ, .SSTORE => dispatchBinaryStateOp τ EvmYul.State.sstore
+    | τ, .TLOAD => dispatchUnaryStateOp τ EvmYul.State.tload
+    | τ, .TSTORE => dispatchBinaryStateOp τ EvmYul.State.tstore
     | τ, .MSIZE => dispatchMachineStateOp τ MachineState.msize
 
     | τ, .LOG0 => dispatchLog0 τ
@@ -347,7 +349,13 @@ def step {τ : OperationType} (op : Operation τ) : Transformer τ :=
                     | none => 0
                     | some ac => ac.balance
                 let newAccount : Account :=
-                  ⟨1, v + v', code, fromBytesBigEndian (KEC code).data.data, default⟩
+                  { nonce := 1
+                  , balance := v + v'
+                  , code := code
+                  , codeHash := fromBytesBigEndian (KEC code).data.data
+                  , storage := default
+                  , tstorage := default
+                  }
                 let yulState' := yulState.setState (yulState.toState.updateAccount addr newAccount)
 
                 .ok <| (yulState', some addr)
@@ -411,7 +419,13 @@ def step {τ : OperationType} (op : Operation τ) : Transformer τ :=
                 | none => 0
                 | some ac => ac.balance
             let newAccount : Account :=
-              ⟨1, v + v', code, fromBytesBigEndian (KEC code).data.data, default⟩
+              { nonce := 1
+              , balance := v + v'
+              , code := code
+              , codeHash := fromBytesBigEndian (KEC code).data.data
+              , storage := default
+              , tstorage := default
+              }
             let yulState' := yulState.setState (yulState.toState.updateAccount addr newAccount)
             .ok <| (yulState', some addr)
           | _ => .error .InvalidArguments

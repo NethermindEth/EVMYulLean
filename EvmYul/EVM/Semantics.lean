@@ -107,7 +107,7 @@ def dup (n : ℕ) : Transformer :=
     .ok <| s.replaceStackAndIncrPC (top.getLast! :: s.stack)
   else
     .error EVM.Exception.InvalidStackSizeException
-    
+
 def swap (n : ℕ) : Transformer :=
   λ s ↦
   let top := s.stack.take (n + 1)
@@ -419,7 +419,13 @@ def Lambda
       | some ac => ac.balance
 
   let newAccount : Account :=
-    ⟨1, v + v', .empty, fromBytes' (KEC default).data.data, default⟩
+    { nonce := 1
+    , balance := v + v'
+    , code := .empty
+    , codeHash := fromBytes' (KEC default).data.data
+    , storage := default
+    , tstorage := default
+    }
 
   let σStar :=
     match σ.lookup s with

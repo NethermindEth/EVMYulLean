@@ -36,7 +36,7 @@ def serializeCompBitInstr : CBLOp .EVM → UInt8
   | .SHR => 28
   | .SAR => 29
 
-def serializeKeccakInstr : KOp .EVM → UInt8 
+def serializeKeccakInstr : KOp .EVM → UInt8
   | .KECCAK256 => 32
 
 def serializeEnvInstr : EOp .EVM → UInt8
@@ -82,6 +82,8 @@ def serializeStackMemFlowInstr : SMSFOp .EVM → UInt8
   | .JUMP => 86
   | .JUMPI => 87
   | .JUMPDEST => 91
+  | .TLOAD => 0x5c
+  | .TSTORE => 0x5d
 
 def serializePushInstr : POp → UInt8
   | .PUSH0 => 95
@@ -244,7 +246,7 @@ def serializeInstr : Operation .EVM → UInt8
     | .MLOAD => some 2
     | .MSTORE => some 2
     | .MSTORE8  => some 1
-    | .SLOAD  => some 2
+    | .SLOAD  => some 1
     | .SSTORE  => some 2
     | .PC => some 0
     | .MSIZE  => some 0
@@ -290,6 +292,8 @@ def serializeInstr : Operation .EVM → UInt8
     | .JUMP => some 1
     | .JUMPI => some 2
     | .JUMPDEST => some 0
+    | .TLOAD => some 1
+    | .TSTORE => some 2
     | .CREATE => some 3
     | .CALL => some 7
     | .CALLCODE => some 7
@@ -367,6 +371,8 @@ def serializeInstr : Operation .EVM → UInt8
     | .JUMP => some 0
     | .JUMPI => some 0
     | .JUMPDEST => some 0
+    | .TLOAD => some 1
+    | .TSTORE => some 0
     | .Push _ => some 1
     | .DUP1 => some 2
     | .DUP2 => some 3
@@ -438,7 +444,7 @@ def parseInstr : UInt8 → Option (Operation .EVM)
   | 26 => some .BYTE
   | 27 => some .SHL
   | 28 => some .SHR
-  | 29 => some .SAR 
+  | 29 => some .SAR
   | 32 => some .KECCAK256
   | 48 => some .ADDRESS
   | 49 => some .BALANCE

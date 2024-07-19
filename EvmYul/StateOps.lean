@@ -144,6 +144,17 @@ def sstore (self : State) (spos sval : UInt256) : State :=
         substate := self.substate.addAccessedStorageKey (Iₐ, spos)
     }
 
+def tload (self : State) (spos : UInt256) : State × UInt256 :=
+  let Iₐ := self.executionEnv.codeOwner
+  let v := self.lookupAccount Iₐ |>.option 0 (Account.lookupTransientStorage (k := spos))
+  (self, v)
+
+def tstore (self : State) (spos sval : UInt256) : State :=
+  let Iₐ := self.executionEnv.codeOwner
+  self.lookupAccount Iₐ |>.option self λ acc ↦
+    self.updateAccount Iₐ (acc.updateTransientStorage spos sval)
+
+
 end Storage
 
 end State
