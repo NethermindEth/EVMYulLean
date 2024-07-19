@@ -529,7 +529,7 @@ def Θ (fuel : Nat)
     if !s ∈ σ && v == 0
     then throw .SenderMustExist -- TODO - YP explains the semantics of undefined receiver; what about sender? Cf. between (115) and (116).
     else σ.lookup s |>.get!.subBalance v |>.elim (.error .Underflow) .ok -- Equation (118) TODO - What do we do on underflow?
-  
+
   -- Equation (120)
   let σ₁receiver ←
     if !s ∈ σ && v != 0
@@ -540,7 +540,7 @@ def Θ (fuel : Nat)
 
   -- (117) and (120) is `let σ₁ ← σ.transferBalance s r v` with some account updates.
   let σ₁ := σ.insert s σ₁sender |>.insert r σ₁receiver
-  
+
   let I : ExecutionEnv :=
     {
       codeOwner := r  -- Equation (127)
@@ -558,7 +558,7 @@ def Θ (fuel : Nat)
   -- Equation (126)
   -- Note that the `c` used here is the actual code, not the address. TODO - Handle precompiled contracts.
   let (σ'', g'', A'', out) ← Ξ fuel σ₁ g A I
-  
+
   -- Equation (122)
   let σ' := if σ'' == ∅ then σ else σ''
 

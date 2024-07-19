@@ -19,9 +19,7 @@ DEAD(σ, a). Section 4.1., equation 15.
 def dead (σ : Finmap (λ _ : Address ↦ Account)) (addr : Address) : Bool :=
   σ.lookup addr |>.option True Account.emptyAccount
 
-def addHashCollision (self : State) : State := { self with hashCollision := true }
-
-def accountExists (self : State) (addr : Address) : Bool := self.accountMap.lookup addr |>.isSome
+  def accountExists (self : State) (addr : Address) : Bool := self.accountMap.lookup addr |>.isSome
 
 def lookupAccount (self : State) (addr : Address) : Option Account :=
   self.accountMap.lookup addr
@@ -48,7 +46,7 @@ def balance (self : State) (k : UInt256) : State × UInt256 :=
 def transferBalance (sender : Address) (recipient : Address) (balance : UInt256) (self : State) : Option State :=
   if sender == recipient then .some self -- NB this check renders `balance` validity irrelevant
   else do
-    let senderAcc ← self.accountMap.lookup sender 
+    let senderAcc ← self.accountMap.lookup sender
     let recipientAcc ← self.accountMap.lookup recipient
     let (senderAcc, recipientAcc) ← senderAcc.transferBalanceTo balance recipientAcc
     self.updateAccount sender senderAcc
@@ -143,7 +141,6 @@ def sstore (self : State) (spos sval : UInt256) : State :=
   self.lookupAccount Iₐ |>.option self λ acc ↦
     let self' := self.setAccount Iₐ (acc.updateStorage spos sval)
     { self' with
-        usedRange := {spos} ∪ self'.usedRange -- not sure what this is
         substate := self.substate.addAccessedStorageKey (Iₐ, spos)
     }
 
