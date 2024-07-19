@@ -354,7 +354,7 @@ inductive SMSFOp : OperationType → Type where
     PC: get program counter before increment
     δ: 0 ; α: 1
   -/
-  | protected PC : SMSFOp τ
+  | protected PC : SMSFOp .EVM
   /--
     MSIZE: get the size of active memory in bytes
     δ: 0 ; α: 1
@@ -625,7 +625,7 @@ abbrev SSTORE  {τ : OperationType} : Operation τ    := .StackMemFlow .SSTORE
 abbrev MSTORE8 {τ : OperationType} : Operation τ    := .StackMemFlow .MSTORE8
 abbrev JUMP                        : Operation .EVM := .StackMemFlow .JUMP
 abbrev JUMPI                       : Operation .EVM := .StackMemFlow .JUMPI
-abbrev PC      {τ : OperationType} : Operation τ    := .StackMemFlow .PC
+abbrev PC                          : Operation .EVM    := .StackMemFlow .PC
 abbrev MSIZE   {τ : OperationType} : Operation τ    := .StackMemFlow .MSIZE
 abbrev GAS     {τ : OperationType} : Operation τ    := .StackMemFlow .GAS
 abbrev JUMPDEST                    : Operation .EVM := .StackMemFlow .JUMPDEST

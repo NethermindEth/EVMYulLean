@@ -201,6 +201,3 @@ instance : Coe UInt8 (Fin (2^8)) := ⟨(·.val)⟩
 instance : Coe (Fin (2^8)) UInt8 := ⟨(⟨·⟩)⟩
 instance : Coe UInt64 (Fin (2^64)) := ⟨(·.val)⟩
 instance : Coe (Fin (2^64)) UInt64 := ⟨(⟨·⟩)⟩
-
-instance : Fintype UInt64 := ⟨⟨List.finRange (2^64) |>.map UInt64.mk, sorry⟩, sorry⟩
-instance : Fintype UInt8 := ⟨⟨List.finRange (2^8) |>.map UInt8.mk, sorry⟩, sorry⟩

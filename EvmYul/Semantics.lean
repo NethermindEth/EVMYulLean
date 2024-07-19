@@ -155,9 +155,15 @@ def toHex (bytes : ByteArray) : String :=
 
 def shortInput := "01aHHABLA"
 def longInput := "Lean 4 is a reimplementation of the Lean theorem prover in Lean itself. The new compiler produces C code, and users can now implement efficient proof automation in Lean, compile it into efficient C code, and load it as a plugin. In Lean 4, users can access all internal data structures used to implement Lean by merely importing the Lean package."
--- Look ok 596cfd6c2f8f76b8f480f5c2fc582db9089486792435f397f8286aff64d42646
-#eval toHex $ KEC shortInput.toUTF8
-#eval toHex $ KEC longInput.toUTF8
+
+example :
+  toHex (KEC shortInput.toUTF8) = "6107589dda3ff2ac99745795d1eb3ac2538f2a7a93f9ef180c33dee244592874"
+:= by native_decide
+
+example :
+  toHex (KEC longInput.toUTF8) = "596cfd6c2f8f76b8f480f5c2fc582db9089486792435f397f8286aff64d42646"
+:= by native_decide
+
 -- Appendix B. Recursive Length Prefix
 
 inductive 𝕋 :=
@@ -414,8 +420,9 @@ def step {τ : OperationType} (op : Operation τ) : Transformer τ :=
 
 end
 
-#eval toBytesBigEndian 0
-#eval RLP (.𝔹 (toBytesBigEndian 123456789).toByteArray) |>.option "" toHex
+example :
+  (RLP (.𝔹 (toBytesBigEndian 123456789).toByteArray) |>.map toHex) == some "84075bcd15"
+:= by native_decide
 
 end Semantics
 
