@@ -81,11 +81,7 @@ def keccakF (state : SHA3SR) : SHA3SR :=
 def bytesOfList (l : List (Fin 2)) : List UInt8 :=
   l.toChunks 8 |>.map λ bits ↦ bits.zip (List.iota 8 |>.map Nat.pred) |>.foldl (init := 0)
     λ acc (bit, exp) ↦ acc + (UInt8.ofNat <| bit.val * 2^exp)
-
-def hexOfByte (byte : UInt8) : String :=
-  hexDigitRepr (byte.toNat >>> 4 &&& 0b00001111) ++
-  hexDigitRepr (byte.toNat &&& 0b00001111)
-
+    
 namespace Absorb
 
 partial def unfoldr {α β} (f : β → Option (α × β)) (b0 : β) : Array α :=

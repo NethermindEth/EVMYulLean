@@ -16,6 +16,7 @@ inductive Exception where
   | Overflow                          : Exception 
   | StopInvoked (s : EVM.State)       : Exception
   | OutOfFuel                         : Exception
+  | BogusExceptionToBeReplaced (s : String) : Exception
 
 instance : Repr Exception where
   reprPrec s _ := match s with
@@ -30,6 +31,7 @@ instance : Repr Exception where
                     | .Overflow                          => "Overflow"
                     | .StopInvoked _                     => "Execution halted by STOP."
                     | .OutOfFuel                         => "OutOfFuel"
+                    | .BogusExceptionToBeReplaced s      => s!"BogusExceptionToBeReplaced: {s}"
 
 end EVM
 

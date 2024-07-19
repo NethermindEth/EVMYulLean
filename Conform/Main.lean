@@ -11,7 +11,9 @@ def isTestFile (file : System.FilePath) : Bool := file.extension.option false (�
 def main (args : List String) : IO Unit := do
   if args.length != 1 then IO.println "Usage: conform <path to 'EthereumTests'>"; return ()
 
-  let testFiles ← Array.filter isTestFile <$> System.FilePath.walkDir (args.head! / TestsSubdir)
+  -- let testFiles ← Array.filter isTestFile <$> System.FilePath.walkDir (args.head! / TestsSubdir)
+  
+  let testFiles := #[SimpleFile]
 
   let mut dbgCount := 1
 
@@ -26,4 +28,4 @@ def main (args : List String) : IO Unit := do
 
     dbgCount := dbgCount - 1
 
--- #eval main ["EthereumTests"]
+#eval main ["EthereumTests"]

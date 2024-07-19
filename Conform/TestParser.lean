@@ -121,7 +121,7 @@ instance : FromJson Transaction where
     pure <| .access {
       nonce      := ← json.getObjValAs? UInt256          "nonce"
       gasLimit   := ← json.getObjValAs? UInt256          "gasLimit"
-      recipient  := ← json.getObjValAs? (Option Address) "to" -- TODO - How do test represent no 'to' - just missing field? Refine this.
+      recipient  := ← json.getObjValAs? (Option Address) "to" -- TODO - How do tests represent no 'to' - just missing field? Refine this.
       value      := ← json.getObjValAs? UInt256          "value"
       r          := ← json.getObjValAs? ByteArray        "r"
       s          := ← json.getObjValAs? ByteArray        "s"

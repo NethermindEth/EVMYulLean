@@ -19,13 +19,14 @@ DEAD(σ, a). Section 4.1., equation 15.
 def dead (σ : Finmap (λ _ : Address ↦ Account)) (addr : Address) : Bool :=
   σ.lookup addr |>.option True Account.emptyAccount
 
-  def accountExists (self : State) (addr : Address) : Bool := self.accountMap.lookup addr |>.isSome
+def accountExists (self : State) (addr : Address) : Bool := self.accountMap.lookup addr |>.isSome
 
 def lookupAccount (self : State) (addr : Address) : Option Account :=
   self.accountMap.lookup addr
 
 def updateAccount (addr : Address) (act : Account) (self : State) : State :=
   { self with accountMap := self.accountMap.insert addr act }
+
 def setAccount (self : State) (addr : Address) (acc : Account) : State :=
   { self with accountMap := self.accountMap.insert addr acc }
 
@@ -54,6 +55,7 @@ def transferBalance (sender : Address) (recipient : Address) (balance : UInt256)
 
 def initialiseAccount (addr : Address) (self : State) : State :=
   if self.accountExists addr then self else self.updateAccount addr default
+
 def setBalance! (self : State) (addr : Address) (balance : UInt256) : State :=
   self.updateAccount! addr (λ acc ↦ { acc with balance := balance })
 
@@ -61,6 +63,7 @@ def setSelfBalance! (self : State) : UInt256 → State :=
   self.setBalance! self.executionEnv.codeOwner
 
 def calldataload (self : State) (v : UInt256) : UInt256 :=
+  dbg_trace s!"calldataload yielding: {uInt256OfByteArray <| self.executionEnv.inputData.extract v (v + 32)}"
   uInt256OfByteArray <| self.executionEnv.inputData.extract v (v + 32)
 
 def setNonce! (self : State) (addr : Address) (nonce : UInt256) : State :=
@@ -137,6 +140,7 @@ def sload (self : State) (spos : UInt256) : State × UInt256 :=
   (state', v)
 
 def sstore (self : State) (spos sval : UInt256) : State :=
+  dbg_trace "sstore called with spos: {spos} sval: {sval}"
   let Iₐ := self.executionEnv.codeOwner
   self.lookupAccount Iₐ |>.option self λ acc ↦
     let self' := self.setAccount Iₐ (acc.updateStorage spos sval)
