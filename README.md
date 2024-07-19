@@ -42,3 +42,14 @@ The semantic function `exec` mutually defined with `eval` (and some misc. functi
 ```
 EvmYul/Yul/Interpreter.lean
 ```
+
+## Conformance testing
+A git submodule with EVM conformance tests is in:
+```
+EthereumTests/
+```
+
+The test running infrastructure can be found in:
+```
+Conform/
+```
