@@ -107,9 +107,7 @@ def dup (n : ℕ) : Transformer :=
     .ok <| s.replaceStackAndIncrPC (top.getLast! :: s.stack)
   else
     .error EVM.Exception.InvalidStackSizeException
-
-#check List.getLast
-
+    
 def swap (n : ℕ) : Transformer :=
   λ s ↦
   let top := s.stack.take (n + 1)
