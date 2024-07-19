@@ -15,6 +15,7 @@ inductive Exception where
   | Underflow                         : Exception 
   | Overflow                          : Exception 
   | StopInvoked (s : EVM.State)       : Exception
+  | OutOfFuel                         : Exception
 
 instance : Repr Exception where
   reprPrec s _ := match s with
@@ -28,6 +29,7 @@ instance : Repr Exception where
                     | .Underflow                         => "Underflow"
                     | .Overflow                          => "Overflow"
                     | .StopInvoked _                     => "Execution halted by STOP."
+                    | .OutOfFuel                         => "OutOfFuel"
 
 end EVM
 

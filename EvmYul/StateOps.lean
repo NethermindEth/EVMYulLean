@@ -16,8 +16,8 @@ def addAccessedStorageKey (self : State) (sk : Address × UInt256) : State :=
 /--
 DEAD(σ, a). Section 4.1., equation 15.
 -/
-def dead (s : State) (addr : Address) : Bool :=
-  s.accountMap.lookup addr |>.option True Account.emptyAccount
+def dead (σ : Finmap (λ _ : Address ↦ Account)) (addr : Address) : Bool :=
+  σ.lookup addr |>.option True Account.emptyAccount
 
 def addHashCollision (self : State) : State := { self with hashCollision := true }
 

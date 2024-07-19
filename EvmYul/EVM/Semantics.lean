@@ -57,6 +57,8 @@ def argOnNBytesOfInstr : Operation .EVM → ℕ
 
 def N (pc : Nat) (instr : Operation .EVM) := pc.succ + argOnNBytesOfInstr instr
 
+abbrev YPState := Finmap (λ _ : Address ↦ Account)
+
 /--
 Returns the instruction from `arr` at `pc` assuming it is valid.
 
@@ -76,6 +78,15 @@ def decode (arr : ByteArray) (pc : Nat) :
 def fetchInstr (I : EvmYul.ExecutionEnv) (pc :  UInt256) :
                Except EVM.Exception (Operation .EVM × Option (UInt256 × Nat)) :=
   decode I.code pc |>.option (.error .InvalidStackSizeException) Except.ok
+
+partial def D_J (c : ByteArray) (i : ℕ) : List ℕ :=
+  match c.get? i >>= EvmYul.EVM.parseInstr with
+    | none => []
+    | some cᵢ =>
+      if  cᵢ = .JUMPDEST then
+        i :: D_J c (N i cᵢ)
+      else
+        D_J c (N i cᵢ)
 
 private def BitVec.ofFn {k} (x : Fin k → Bool) : BitVec k :=
   BitVec.ofNat k (natOfBools (Vector.ofFn x))
@@ -107,13 +118,6 @@ def swap (n : ℕ) : Transformer :=
     .ok <| s.replaceStackAndIncrPC (top.getLast! :: top.tail!.dropLast ++ [top.head!] ++ bottom)
   else
     .error EVM.Exception.InvalidStackSizeException
-
--- def callDataLoad (μ₀ : UInt256)(Id : ByteArray) : UInt256 :=
---   open Array in
---   let vs : Array UInt256 := (Array.range 32).map (λ v => EvmYul.UInt256.ofNat v + μ₀)
---   sorry
-
--- def keccak256 : EVM.State → Except EVM.Exception EVM.State := sorry
 
 local instance : MonadLift Option (Except EVM.Exception) :=
   ⟨Option.option (.error .InvalidStackSizeException) .ok⟩
@@ -198,7 +202,7 @@ def step (fuel : ℕ) : EVM.Transformer :=
             let Iₐ := evmState.executionEnv.codeOwner
             let Iₒ := evmState.executionEnv.sender
             let Iₑ := evmState.executionEnv.depth
-            let Λ := Lambda f evmState.accountMap evmState.toState.substate Iₐ Iₒ I.gasPrice μ₀ i (Iₑ + 1) ζ I.header
+            let Λ := Lambda f evmState.accountMap evmState.toState.substate Iₐ Iₒ I.gasPrice μ₀ i (Iₑ + 1) ζ I.header I.perm
             let (a, evmState', z, o) : (Address × EVM.State × Bool × ByteArray) :=
               if μ₀ ≤ (evmState.accountMap.lookup Iₐ |>.option 0 Account.balance) ∧ Iₑ < 1024 then
                 match Λ with
@@ -233,7 +237,7 @@ def step (fuel : ℕ) : EVM.Transformer :=
             let Iₐ := evmState.executionEnv.codeOwner
             let Iₒ := evmState.executionEnv.sender
             let Iₑ := evmState.executionEnv.depth
-            let Λ := Lambda f evmState.accountMap evmState.toState.substate Iₐ Iₒ I.gasPrice μ₀ i (Iₑ + 1) ζ I.header
+            let Λ := Lambda f evmState.accountMap evmState.toState.substate Iₐ Iₒ I.gasPrice μ₀ i (Iₑ + 1) ζ I.header I.perm
             let (a, evmState', z, o) : (Address × EVM.State × Bool × ByteArray) :=
               if μ₀ ≤ (evmState.accountMap.lookup Iₐ |>.option 0 Account.balance) ∧ Iₑ < 1024 then
                 match Λ with
@@ -275,7 +279,8 @@ def step (fuel : ℕ) : EVM.Transformer :=
             let A' := evmState.addAccessedAccount t |>.substate -- A' ≡ A except A'ₐ ≡ Aₐ ∪ {t}
             let tDirect := evmState.accountMap.lookup t |>.get!.code -- We use the code directly without an indirection a'la `codeMap[t]`.
             let i := evmState.toMachineState.lookupMemoryRange μ₃ μ₄ -- m[μs[3] . . . (μs[3] + μs[4] − 1)]
-            Θ (σ  := evmState)                        -- σ in  Θ(σ, ..)
+            Θ (fuel := f)                             -- TODO meh
+              (σ  := evmState.toState.accountMap)     -- σ in  Θ(σ, ..)
               (A  := A')                              -- A* in Θ(.., A*, ..)
               (s  := evmState.executionEnv.codeOwner) -- Iₐ in Θ(.., Iₐ, ..)
               (o  := evmState.executionEnv.sender)    -- Iₒ in Θ(.., Iₒ, ..)
@@ -289,13 +294,13 @@ def step (fuel : ℕ) : EVM.Transformer :=
               (e  := evmState.executionEnv.depth + 1) -- Iₑ + 1 in Θ(.., Iₑ + 1, ..)
               (w  := evmState.executionEnv.perm)      -- I_W in Θ(.., I_W)
           -- TODO gas - CCALLGAS(σ, μ, A)
-          else .ok (evmState, μ₀, evmState.toState.substate, false, ByteArray.empty)
-        let n : UInt256 := min μ₆ o.size -- n ≡ min({μs[6], ‖o‖}) -- TODO - Why is this using... set??? { } brackets ???
+          else .ok (evmState.toState.accountMap, μ₀, evmState.toState.substate, false, .some .empty) -- otherwise (σ, CCALLGAS(σ, μ, A), A, 0, ())
+        let n : UInt256 := min μ₆ (o.elim 0 (UInt256.ofNat ∘ ByteArray.size)) -- n ≡ min({μs[6], ‖o‖}) -- TODO - Why is this using... set??? { } brackets ???
         -- TODO I am assuming here that μ' is μ with the updates mentioned in the CALL section. Check.
 
         -- TODO - Note to self. Check how updateMemory/copyMemory is implemented. By a cursory look, we play loose with UInt8 -> UInt256 (c.f. e.g. `calldatacopy`) and then the interplay with the WordSize parameter.
-        let μ'ₘ := List.range (n - 1) |>.foldl (init := evmState.toMachineState)
-                     λ μ addr ↦ μ.copyMemory o μ₅ μ₆ -- μ′_m[μs[5]  ... (μs[5] + n − 1)] = o[0 ... (n − 1)]
+        -- TODO - Check what happens when `o = .none`.
+        let μ'ₘ := evmState.toMachineState.copyMemory (o.getD .empty) μ₅ n -- μ′_m[μs[5]  ... (μs[5] + n − 1)] = o[0 ... (n − 1)]
 
         let μ'ₒ := o -- μ′o = o
         let μ'_g := g' -- TODO gas - μ′g ≡ μg − CCALLGAS(σ, μ, A) + g
@@ -311,31 +316,82 @@ def step (fuel : ℕ) : EVM.Transformer :=
         -- NB. `MachineState` here does not contain the `Stack` nor the `PC`, thus incomplete.
         let μ'incomplete : MachineState :=
           { μ'ₘ with
-              returnData := μ'ₒ
+              returnData   := μ'ₒ.getD .empty -- TODO - Check stuff wrt. .none
               gasAvailable := μ'_g
-              maxAddress := μ'ᵢ }
+              maxAddress   := μ'ᵢ }
 
-        let σ' : EVM.State := {
+        let σ' : EVM.State := { evmState with accountMap := σ', substate := A' }
+        let σ' := {
           σ' with toMachineState := μ'incomplete
         }.replaceStackAndIncrPC μ'ₛ
 
         .ok σ'
       | instr => EvmYul.step instr evmState
 
-def multistep (fuel : ℕ) (evmState : State) : Except EVM.Exception (State × ByteArray) := do
+def X (fuel : ℕ) (evmState : State) : Except EVM.Exception (State × Option ByteArray) := do
   match fuel with
-    | 0 => .ok (evmState, .empty)
+    | 0 => .ok (evmState, some .empty)
     | .succ f =>
-      let (instr, _) ← fetchInstr evmState.toState.executionEnv evmState.pc
-      let evmState' ← step f evmState
-      match instr with
-        | .RETURN | .REVERT => .ok <| (evmState', evmState'.returnData)
-        | .STOP | .SELFDESTRUCT => .ok (evmState', .empty)
-        | _ => multistep f evmState'
+      let I_b := evmState.toState.executionEnv.code
+      let w :=
+        match decode I_b evmState.pc with
+          | some (w, _) => w
+          | none => .STOP
+      let W (w : Operation .EVM) (s : Stack UInt256) : Bool :=
+        w ∈ [.CREATE, .CREATE2, .SSTORE, .SELFDESTRUCT, .LOG0, .LOG1, .LOG2, .LOG3, .LOG4] ∨
+        (w = .CALL ∧ s.get? 2 ≠ some 0)
+      let Z : Bool :=
+        δ w = none ∨
+        evmState.stack.length < (δ w).getD 0 ∨
+        (w = .JUMP ∧ notIn (evmState.stack.get? 0) (D_J I_b 0)) ∨
+        (w = .JUMPI ∧ (evmState.stack.get? 0 ≠ some 0) ∧ notIn (evmState.stack.get? 1) (D_J I_b 0)) ∨
+        (w = .RETURNDATACOPY ∧ evmState.stack.getD 1 0 + evmState.stack.getD 2 0 > evmState.returnData.size) ∨
+        evmState.stack.length - (δ w).getD 0 - (α w).getD 0 > 1024 ∨
+        ( ¬ evmState.executionEnv.perm ∧ W w evmState.stack)
+      let H (μ : MachineState) (w : Operation .EVM) : Option ByteArray :=
+        if w ∈ [.RETURN, .REVERT] then
+          some μ.returnData
+        else
+          if w ∈ [.STOP, .SELFDESTRUCT] then
+            some .empty
+          else none
+
+      if Z then
+        .ok ({evmState with accountMap := ∅}, none)
+      else
+        if w = .REVERT then
+          .ok ({evmState with accountMap := ∅}, some evmState.returnData)
+        else
+          let evmState' ← step f evmState
+          match H evmState.toMachineState w with
+            | none => X f evmState'
+            | some o => .ok <| (evmState', some o)
+ where
+  belongs (o : Option ℕ) (l : List ℕ) : Bool :=
+    match o with
+      | none => false
+      | some n => n ∈ l
+  notIn (o : Option ℕ) (l : List ℕ) : Bool := not (belongs o l)
+
+def Ξ (fuel : ℕ) (σ : YPState) (g : UInt256) (A : Substate) (I : ExecutionEnv) :
+  Except EVM.Exception (YPState × UInt256 × Substate × Option ByteArray)
+:= do
+  match fuel with
+    | 0 => .ok (σ, g, A, some .empty) -- TODO - Gas model
+    | .succ f =>
+      let defState : EVM.State := default
+      let freshEvmState : EVM.State :=
+        { defState with
+            accountMap := σ
+            executionEnv := I
+            substate := A
+        }
+      let (evmState', o) ← X f freshEvmState
+      return (evmState'.accountMap, g, evmState'.substate, o) -- TODO - Gas model
 
 def Lambda
   (fuel : ℕ)
-  (σ : Finmap (λ _ : Address ↦ Account))
+  (σ : YPState)
   (A : Substate)
   (s : Address) -- sender
   (o : Address) -- original transactor
@@ -345,8 +401,9 @@ def Lambda
   (e : UInt256) -- depth of the message-call/contract-creation stack
   (ζ : Option ByteArray) -- the salt
   (H : BlockHeader)
+  (w : Bool)
   :
-  Option (Address × Finmap (λ _ : Address ↦ Account) × Substate × Bool × ByteArray)
+  Option (Address × YPState × Substate × Bool × ByteArray)
 :=
   match fuel with
     | 0 => .none
@@ -383,32 +440,26 @@ def Lambda
     , gasPrice  := p
     , header    := H
     , depth     := e + 1
-    , perm      := sorry -- TODO(Andrei)
+    , perm      := w
     }
-  let defState : EVM.State := default
-  let freshEvmState : EVM.State :=
-    { defState with
-        accountMap := σStar
-        executionEnv := exEnv
-        substate := AStar
-    }
-  match multistep f freshEvmState with
+  match Ξ f σStar 42 AStar exEnv with -- TODO - Gas model.
     | .error _ => .none
-    | .ok (evmState', returnedData) =>
+    | .ok (_, _, _, none) => .none
+    | .ok (σStarStar, _, AStarStar, some returnedData) =>
       let F₀ : Bool :=
         match σ.lookup a with
           | .some ac => ac.code ≠ .empty ∨ ac.nonce ≠ 0
           | .none => false
-      let σStarStar := evmState'.accountMap
+      -- let σStarStar := evmState'.accountMap
       let F : Bool :=
         F₀ ∨ σStarStar ≠ ∅ ∨ returnedData.size > 24576
-          ∨ returnedData = ByteArray.mk ⟨0xef :: returnedData.data.toList.tail⟩
+          ∨ returnedData = ⟨⟨(0xef :: returnedData.data.toList.tail)⟩⟩
       let fail := F ∨ σStarStar = ∅
       let σ' :=
         if fail then σ
-          else if evmState'.dead a then (σStarStar.extract a).2
+          else if State.dead σStarStar a then (σStarStar.extract a).2
             else σStarStar.insert a {newAccount with code := returnedData}
-      let A' := if fail then AStar else evmState'.substate
+      let A' := if fail then AStar else AStarStar
       let z := not fail
       .some (a, σ', A', z, returnedData)
  where
@@ -425,15 +476,15 @@ def Lambda
       | some ζ =>
         .some <| (toBytesBigEndian 255).toByteArray ++ s ++ ζ ++ KEC i
 
-/--
-This invokes precompiled contracts based on the hash of the code.
-Of course, we store the code directly.
+-- /--
+-- This invokes precompiled contracts based on the hash of the code.
+-- Of course, we store the code directly.
 
-TODO - Link to precompiles, investigate the return value.
-Should this return the sender somehow ::thinking::?
--/
-def Ξ (σ₁ : EVM.State) (g : UInt256) (A : Substate) (I : ExecutionEnv) :
-      EVM.State × UInt256 × Substate × ByteArray := sorry -- TODO - Wiat for this to exist.
+-- TODO - Link to precompiles, investigate the return value.
+-- Should this return the sender somehow ::thinking::?
+-- -/
+-- def Ξ (σ₁ : EVM.State) (g : UInt256) (A : Substate) (I : ExecutionEnv) :
+--       EVM.State × UInt256 × Substate × ByteArray := sorry -- TODO - Wiat for this to exist.
 
 /--
 `σ`  - evm state
@@ -451,8 +502,13 @@ def Ξ (σ₁ : EVM.State) (g : UInt256) (A : Substate) (I : ExecutionEnv) :
 `w`  - permissions to make modifications to the stack
 
 TODO check - UInt256 vs Nat for some of the arguments.
+TODO check - There's some stuff with .none and .some .empty ByteArray on return.
+
+NB - This is implemented using the 'boolean' fragment with ==, <=, ||, etc.
+     The 'prop' version will come next once we have the comutable one.
 -/
-def Θ (σ  : EVM.State)
+def Θ (fuel : Nat)
+      (σ  : YPState)
       (A  : Substate)
       (s  : Address)
       (o  : Address)
@@ -464,40 +520,27 @@ def Θ (σ  : EVM.State)
       (v' : UInt256)
       (d  : ByteArray)
       (e  : Nat)
-      (w  : Bool) : Except EVM.Exception (EVM.State × UInt256 × Substate × Bool × ByteArray) := do
+      (w  : Bool) : Except EVM.Exception (YPState × UInt256 × Substate × Bool × Option ByteArray) :=
+  match fuel with
+    | 0 => .error .OutOfFuel
+    | fuel + 1 => do
   -- Equation (117)
   let σ₁sender ←
-    if !σ.accountExists s && v == 0
+    if !s ∈ σ && v == 0
     then throw .SenderMustExist -- TODO - YP explains the semantics of undefined receiver; what about sender? Cf. between (115) and (116).
-    else σ.accountMap.lookup s |>.get!.subBalance v |>.elim (.error .Underflow) .ok -- Equation (118) TODO - What do we do on underflow?
+    else σ.lookup s |>.get!.subBalance v |>.elim (.error .Underflow) .ok -- Equation (118) TODO - What do we do on underflow?
   
   -- Equation (120)
   let σ₁receiver ←
-    if !σ.accountExists s && v != 0
+    if !s ∈ σ && v != 0
     then default else
-    if !σ.accountExists s && v == 0
+    if !s ∈ σ && v == 0
     then throw .ReceiverMustExistWithNonZeroValue else -- TODO - It seems that we must only initialise the account if v != 0. Otherwise the same question as with the non-existant sender.
-    σ.accountMap.lookup r |>.get!.addBalance v |>.elim (.error .Overflow) .ok -- Equation (121) TODO - What do we do on overflow?
+    σ.lookup r |>.get!.addBalance v |>.elim (.error .Overflow) .ok -- Equation (121) TODO - What do we do on overflow?
 
   -- (117) and (120) is `let σ₁ ← σ.transferBalance s r v` with some account updates.
-  let σ₁ := σ.updateAccount s σ₁sender |>.updateAccount r σ₁receiver
+  let σ₁ := σ.insert s σ₁sender |>.insert r σ₁receiver
   
-  -- Equation (126)
-  -- Note that the `c` used here is the actual code, not the address. TODO - Handle precompiled contracts.
-  let (σ'', g'', A'', out) := Ξ σ₁ g A σ.toState.executionEnv
-  
-  -- Equation (122)
-  let σ' := if σ''.isEmpty then σ else σ''
-
-  -- Equation (123)
-  let g' := if σ''.isEmpty && out.isEmpty then 0 else g''
-
-  -- Equation (124)
-  let A' := if σ''.isEmpty then A else A''
-
-  -- Equation (125)
-  let z := if σ''.isEmpty then false else true
-
   let I : ExecutionEnv :=
     {
       codeOwner := r  -- Equation (127)
@@ -512,176 +555,26 @@ def Θ (σ  : EVM.State)
       perm      := w  -- Equation (134)
     }
 
-  -- TODO - Not sure if I should be set here, or somehow pre-set for Xi.
-  .ok ({ σ' with toState.executionEnv := I }, g', A', z, out)
+  -- Equation (126)
+  -- Note that the `c` used here is the actual code, not the address. TODO - Handle precompiled contracts.
+  let (σ'', g'', A'', out) ← Ξ fuel σ₁ g A I
+  
+  -- Equation (122)
+  let σ' := if σ'' == ∅ then σ else σ''
+
+  -- Equation (123)
+  let g' := if σ'' == ∅ && out.isNone then 0 else g''
+
+  -- Equation (124)
+  let A' := if σ'' == ∅ then A else A''
+
+  -- Equation (125)
+  let z := σ'' != ∅
+
+  -- Equation (114)
+  .ok (σ', g', A', z, out)
 
 end
--- open EvmYul.UInt256
--- def step : EvmYul.EVM.State → Except EVM.Exception EvmYul.EVM.State
--- | evmState@⟨sState@⟨state, mState⟩, pc, stack⟩ => do
---   match fetchInstr sState.toState.executionEnv pc with
---   | .error ex => .error ex
---   | .ok (i, pushArg?) =>
---     match i with
---     | .StopArith .STOP => .ok evmState
---     | .StopArith .ADD  => execBinOp UInt256.add evmState
---     | .StopArith .MUL => execBinOp UInt256.mul evmState
---     | .StopArith .SUB => execBinOp UInt256.sub evmState
---     | .StopArith .DIV => execBinOp UInt256.div evmState
---     | .StopArith .SDIV => execBinOp UInt256.sdiv evmState
---     | .StopArith .MOD => execBinOp UInt256.mod evmState
---     | .StopArith .SMOD => execBinOp UInt256.smod evmState
---     | .StopArith .ADDMOD => execTriOp addMod evmState
---     | .StopArith .MULMOD => execTriOp mulMod evmState
---     | .StopArith .EXP => execBinOp exp evmState
---     | .CompBit .LT => execBinOp lt evmState
---     | .CompBit .GT => execBinOp gt evmState
---     | .CompBit .SLT => execBinOp slt evmState
---     | .CompBit .SGT => execBinOp sgt evmState
---     | .CompBit .EQ => execBinOp eq evmState
---     | .CompBit .ISZERO => execUnOp isZero evmState
---     | .CompBit .AND => execBinOp UInt256.land evmState
---     | .CompBit .OR => execBinOp UInt256.lor evmState
---     | .CompBit .XOR => execBinOp UInt256.xor evmState
---     | .CompBit .NOT => execUnOp UInt256.lnot evmState
---     | .CompBit .BYTE => execBinOp UInt256.byteAt evmState
---     | .CompBit .SHL => execBinOp UInt256.shiftLeft evmState
---     | .CompBit .SHR => execBinOp UInt256.shiftRight evmState
---     | .CompBit .SAR => execBinOp UInt256.sar evmState
---     | .Keccak .KECCAK256 => sorry
---     | .StopArith .SIGNEXTEND =>
---         execBinOp
---           UInt256.signextend
---           -- (λ μ₀ μ₁ =>
---           --                  let v₁ : BitVec 256 := BitVec.ofNat 256 μ₁.1
---           --                  let t  : Fin 256 := (256 - 8 * (μ₀ - 1)).1
---           --                  let v₂ : BitVec 256 := BitVec.ofFn λ i =>
---           --                    if i <= t then BitVec.getLsb v₁ t else BitVec.getLsb v₁ i
---           --                  UInt256.ofNat (BitVec.toNat v₂))
---           evmState
---     | .Env .ADDRESS => .ok <| evmState.replaceStackAndIncrPC (stack.push sState.toState.executionEnv.codeOwner)
---     | .Env .BALANCE =>
---       match Stack.pop stack with
---       | some ⟨ s , μ₀ ⟩ =>
---         let (state', a') := EvmYul.State.balance evmState.toSharedState.toState μ₀
---         let evmState' := {evmState with toSharedState.toState := state'}
---         -- let addr : _root_.Address := Fin.ofNat (Nat.mod μ₀.1 (2 ^ 160))
---         -- let σ₁ : EvmYul.EVMState := EvmYul.EVMState.addAccessedAccount addr σ
---         -- match Finmap.lookup addr σ.account_map with
---         -- | some v => inr (σ₁ , pushAndIncrPC v.balance s μ)
---         -- | _      => inr (σ₁ , pushAndIncrPC 0 s μ)
---         .ok <| evmState'.replaceStackAndIncrPC (s.push a')
---       | _ => .error EVM.Exception.InvalidStackSizeException
---     | .Env .ORIGIN => .ok <| evmState.replaceStackAndIncrPC (stack.push sState.toState.executionEnv.sender)
---     | .Env .CALLER => .ok <| evmState.replaceStackAndIncrPC (stack.push sState.toState.executionEnv.source)
---     | .Env .CALLVALUE => .ok <| evmState.replaceStackAndIncrPC (stack.push sState.toState.executionEnv.weiValue)
---     | .Env .CALLDATALOAD =>
---       match Stack.pop stack with
---       | some ⟨ _ , μ₀ ⟩ =>
---         let v : UInt256 := EvmYul.State.calldataload evmState.toSharedState.toState μ₀
---         .ok <| evmState.replaceStackAndIncrPC (stack.push v)
---       | _ => .error EVM.Exception.InvalidStackSizeException
---     | .Env .CALLDATASIZE =>
---       let v : UInt256 := UInt256.ofNat sState.toState.executionEnv.inputData.size
---       .ok <| evmState.replaceStackAndIncrPC (stack.push v)
---     | .Env .CALLDATACOPY =>
---       match Stack.pop3 stack with
---       | some ⟨ s , μ₀ , μ₁ , μ₂ ⟩ =>
---         -- TODO: doublecheck calldatacopy
---         let sState' := evmState.calldatacopy μ₀ μ₁ μ₂
---         let evmState' := { evmState with toSharedState := sState'}
---         -- maxAddress handled by updateMemory
---         -- let maxAddress' := M evmState'.maxAddress μ₀ μ₂
---         -- let evmState'' := { evmState' with maxAddress := maxAddress' }
---         .ok evmState'
---       | _ => .error EVM.Exception.InvalidStackSizeException
---     | .Env .CODESIZE => .ok <| evmState.replaceStackAndIncrPC (stack.push sState.toState.executionEnv.code.size)
---     | .Env .CODECOPY =>
---       match Stack.pop3 stack with
---       | some ⟨ s , μ₀ , μ₁ , μ₂ ⟩ =>
---         -- TODO: doublecheck codecopy
---         let sState' := sState.codeCopy μ₀ μ₁ μ₂
---         let evmState' := { evmState with toSharedState := sState'}
---         -- maxAddress handled by updateMemory?
---         -- let maxAddress' := M evmState'.maxAddress μ₀ μ₂
---         -- let evmState'' := { evmState' with maxAddress := maxAddress' }
---         .ok <| evmState'
---       | _ => .error EVM.Exception.InvalidStackSizeException
---     | .Env .GASPRICE =>
---       let v : UInt256 := UInt256.ofNat sState.toState.executionEnv.gasPrice
---       .ok <| evmState.replaceStackAndIncrPC (stack.push v)
---     | .Env .EXTCODESIZE =>
---       match Stack.pop stack with
---       | some ⟨ s , μ₀ ⟩ =>
---         let addr : Address := Fin.ofNat (Nat.mod μ₀.1 (2 ^ 160))
---         let state' : EvmYul.State := EvmYul.State.addAccessedAccount sState.toState addr
---         let evmState' := {evmState with toSharedState.toState := state'}
---         match Finmap.lookup addr evmState'.accountMap with
---         | some act => .ok <| evmState'.replaceStackAndIncrPC (stack.push act.code.size)
---         | _ => .ok <| evmState'.replaceStackAndIncrPC (stack.push 0)
---       | _ => .error EVM.Exception.InvalidStackSizeException
---     | .Env .EXTCODECOPY =>
---       match Stack.pop4 stack with
---       | some ⟨s, μ₀, μ₁, μ₂, μ₃⟩ =>
---         let addr : Address := Fin.ofNat (Nat.mod μ₀.1 (2 ^ 160))
---         let sState' := sState.extCodeCopy addr μ₁ μ₂ μ₃
---         let evmState' := {evmState with toSharedState := sState'}
---         -- maxAddress handled by updateMemory?
---         -- let maxAddress' := M mState.maxAddress μ₁ μ₃
---         -- let evmState'' := {evmState' with maxAddress := maxAddress'}
---         let state' : EvmYul.State := EvmYul.State.addAccessedAccount sState.toState addr
---         let evmState'' := {evmState' with toState := state'}
---         .ok evmState''
---       | _ => .error EVM.Exception.InvalidStackSizeException
---     | .Env .RETURNDATASIZE =>
---       let v := mState.returndatasize
---       .ok <| evmState.replaceStackAndIncrPC (stack.push v)
---     | .Env .RETURNDATACOPY =>
---       match Stack.pop3 stack with
---       | some ⟨ s , μ₀ , μ₁ , μ₂ ⟩ =>
---         let some mState' := evmState.toMachineState.returndatacopy μ₀ μ₁ μ₂ | .error EVM.Exception.OutOfBounds
---         .ok <| {evmState with toMachineState := mState'}
---       | _ => .error EVM.Exception.InvalidStackSizeException
---     | .Env .EXTCODEHASH => sorry
---     | .Block .BLOCKHASH =>
---       match Stack.pop stack with
---       | some ⟨ s , μ₀ ⟩ =>
---         -- State.blockHash seems correct
---         let v : UInt256 := state.blockHash μ₀
---         .ok <| evmState.replaceStackAndIncrPC (stack.push v)
---       | _ => .error EVM.Exception.InvalidStackSizeException
---     | .Block .COINBASE =>
---       let v : UInt256 := sState.toState.executionEnv.header.beneficiary
---       .ok <| evmState.replaceStackAndIncrPC (stack.push v)
---     | .Block .TIMESTAMP =>
---       let v : UInt256 := UInt256.ofNat (sState.toState.executionEnv.header.timestamp)
---       .ok <| evmState.replaceStackAndIncrPC (stack.push v)
---     | .Block .NUMBER =>
---       let v : UInt256 := UInt256.ofNat (sState.toState.executionEnv.header.number)
---       .ok <| evmState.replaceStackAndIncrPC (stack.push v)
---     | .Block .DIFFICULTY =>
---       let v : UInt256 := UInt256.ofNat (sState.toState.executionEnv.header.difficulty)
---       .ok <| evmState.replaceStackAndIncrPC (stack.push v)
---     | .Block .GASLIMIT =>
---       let v : UInt256 := UInt256_returnedData.ofNat (sState.toState.executionEnv.header.gasLimit)
---       .ok <| evmState.replaceStackAndIncrPC (stack.push v)
---     | .Block .CHAINID =>
---       -- XXX The chainid β seem to be associated in transactions.
---       -- question: How transactions are denoted in the evm state?
---       let v : UInt256 := sState.toState.chainId
---       .ok <| evmState.replaceStackAndIncrPC (stack.push v)
---     | .Block .SELFBALANCE =>
---       let v : UInt256 := sState.toState.executionEnv.codeOwner
---       .ok <| evmState.replaceStackAndIncrPC (stack.push v)
---     | .Block .BASEFEE => sorry
---     | .Log _ => sorry -- How to model substate’s log series?
---     | .StackMemFlow .POP =>
---       match Stack.pop stack with
---       | some ⟨ s , _ ⟩ => .ok <| evmState.replaceStackAndIncrPC s
---       | _ => .error EVM.Exception.InvalidStackSizeException
---     | .Push _ => do let some (arg, argWidth) := pushArg? | .error EVM.Exception.InvalidStackSizeException
---                     .ok <| evmState.replaceStackAndIncrPC (stack.push arg) (pcΔ := argWidth)
---     | _ => .ok evmState
 
 end EVM
 
