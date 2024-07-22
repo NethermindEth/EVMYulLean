@@ -370,6 +370,18 @@ inductive SMSFOp : OperationType → Type where
     δ: 0 ; α: 0
   -/
   | protected JUMPDEST : SMSFOp .EVM
+  /--
+    EIP-1153
+    TLOAD: load word from transient memory
+    δ: 1 ; α: 1
+  -/
+  | protected TLOAD : SMSFOp τ
+  /--
+    EIP-1153
+    TSTORE: Save word to transient memory
+    δ: 2 ; α: 0
+  -/
+  | protected TSTORE : SMSFOp τ
   deriving DecidableEq, Repr
 
 /--
@@ -617,18 +629,20 @@ abbrev CHAINID     {τ : OperationType} : Operation τ := .Block .CHAINID
 abbrev SELFBALANCE {τ : OperationType} : Operation τ := .Block .SELFBALANCE
 abbrev BASEFEE     {τ : OperationType} : Operation τ := .Block .BASEFEE
 
-abbrev POP     {τ : OperationType} : Operation τ    := .StackMemFlow .POP
-abbrev MLOAD   {τ : OperationType} : Operation τ    := .StackMemFlow .MLOAD
-abbrev MSTORE  {τ : OperationType} : Operation τ    := .StackMemFlow .MSTORE
-abbrev SLOAD   {τ : OperationType} : Operation τ    := .StackMemFlow .SLOAD
-abbrev SSTORE  {τ : OperationType} : Operation τ    := .StackMemFlow .SSTORE
-abbrev MSTORE8 {τ : OperationType} : Operation τ    := .StackMemFlow .MSTORE8
-abbrev JUMP                        : Operation .EVM := .StackMemFlow .JUMP
-abbrev JUMPI                       : Operation .EVM := .StackMemFlow .JUMPI
-abbrev PC                          : Operation .EVM    := .StackMemFlow .PC
-abbrev MSIZE   {τ : OperationType} : Operation τ    := .StackMemFlow .MSIZE
-abbrev GAS     {τ : OperationType} : Operation τ    := .StackMemFlow .GAS
-abbrev JUMPDEST                    : Operation .EVM := .StackMemFlow .JUMPDEST
+abbrev POP     {τ : OperationType}   : Operation τ    := .StackMemFlow .POP
+abbrev MLOAD   {τ : OperationType}   : Operation τ    := .StackMemFlow .MLOAD
+abbrev MSTORE  {τ : OperationType}   : Operation τ    := .StackMemFlow .MSTORE
+abbrev SLOAD   {τ : OperationType}   : Operation τ    := .StackMemFlow .SLOAD
+abbrev SSTORE  {τ : OperationType}   : Operation τ    := .StackMemFlow .SSTORE
+abbrev MSTORE8 {τ : OperationType}   : Operation τ    := .StackMemFlow .MSTORE8
+abbrev JUMP                          : Operation .EVM := .StackMemFlow .JUMP
+abbrev JUMPI                         : Operation .EVM := .StackMemFlow .JUMPI
+abbrev PC                            : Operation .EVM    := .StackMemFlow .PC
+abbrev MSIZE   {τ : OperationType}   : Operation τ    := .StackMemFlow .MSIZE
+abbrev GAS     {τ : OperationType}   : Operation τ    := .StackMemFlow .GAS
+abbrev JUMPDEST                      : Operation .EVM := .StackMemFlow .JUMPDEST
+abbrev TLOAD     {τ : OperationType} : Operation τ    := .StackMemFlow .TLOAD
+abbrev TSTORE    {τ : OperationType} : Operation τ    := .StackMemFlow .TSTORE
 
 abbrev PUSH0  : Operation .EVM := .Push .PUSH0
 abbrev PUSH1  : Operation .EVM := .Push .PUSH1

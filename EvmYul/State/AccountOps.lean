@@ -10,6 +10,12 @@ def lookupStorage (self : Account) (k : UInt256) : UInt256 :=
 def updateStorage (self : Account) (k v : UInt256) : Account :=
   { self with storage := self.storage.insert k v }
 
+def lookupTransientStorage (self : Account) (k : UInt256) : UInt256 :=
+  self.tstorage.lookup k |>.getD 0
+
+def updateTransientStorage (self : Account) (k v : UInt256) : Account :=
+  { self with tstorage := self.tstorage.insert k v }
+
 /--
 EMPTY(σ, a). Section 4.1., equation 14.
 -/
