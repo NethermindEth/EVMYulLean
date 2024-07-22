@@ -470,6 +470,15 @@ def Lambda
   match fuel with
     | 0 => dbg_trace "nofuel"; .none
     | .succ f => do
+
+  -- EIP-3860 (includes EIP-170)
+  let MAX_CODE_SIZE := 24576
+  let MAX_INITCODE_SIZE := 2 * MAX_CODE_SIZE
+  let FORK_BLKNUM := 2675000
+  if H.number ≥ FORK_BLKNUM ∧ i.size > MAX_INITCODE_SIZE
+    -- TODO: "similar to transactions considered invalid for not meeting the intrinsic gas cost requirement"
+    then none
+
   let n : UInt256 := (σ.find? s |>.option 0 Account.nonce) - 1
   let lₐ ← L_A s n ζ i
   let a : Address :=
@@ -517,11 +526,15 @@ def Lambda
     | .error _ => .none
     | .ok (_, _, _, _, none) => dbg_trace "continue"; .none
     | .ok (createdAccounts', σStarStar, _, AStarStar, some returnedData) =>
+      -- EIP-170 (required for EIP-386):
+      if H.number ≥ FORK_BLKNUM ∧ returnedData.size > MAX_CODE_SIZE
+        -- TODO: out of gas error
+        then none
+
       let F₀ : Bool :=
         match σ.find? a with
           | .some ac => ac.code ≠ .empty ∨ ac.nonce ≠ 0
           | .none => false
-      -- let σStarStar := evmState'.accountMap
       let F : Bool :=
         F₀ ∨ σStarStar != ∅ ∨ returnedData.size > 24576
           ∨ returnedData = ⟨⟨(0xef :: returnedData.data.toList.tail)⟩⟩
