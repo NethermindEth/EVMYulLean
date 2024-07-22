@@ -382,7 +382,12 @@ inductive SMSFOp : OperationType → Type where
     δ: 2 ; α: 0
   -/
   | protected TSTORE : SMSFOp τ
-  deriving DecidableEq, Repr
+  /--
+    EIPS-5656
+    MCOPY: copy memory areas
+    δ: 3 ; α: 0
+  -/
+  | protected MCOPY : SMSFOp τ  deriving DecidableEq, Repr
 
 /--
   Push operations.
@@ -641,8 +646,9 @@ abbrev PC                            : Operation .EVM    := .StackMemFlow .PC
 abbrev MSIZE   {τ : OperationType}   : Operation τ    := .StackMemFlow .MSIZE
 abbrev GAS     {τ : OperationType}   : Operation τ    := .StackMemFlow .GAS
 abbrev JUMPDEST                      : Operation .EVM := .StackMemFlow .JUMPDEST
-abbrev TLOAD     {τ : OperationType} : Operation τ    := .StackMemFlow .TLOAD
-abbrev TSTORE    {τ : OperationType} : Operation τ    := .StackMemFlow .TSTORE
+abbrev TLOAD   {τ : OperationType} : Operation τ    := .StackMemFlow .TLOAD
+abbrev TSTORE  {τ : OperationType} : Operation τ    := .StackMemFlow .TSTORE
+abbrev MCOPY   {τ : OperationType} : Operation τ := .StackMemFlow .MCOPY
 
 abbrev PUSH0  : Operation .EVM := .Push .PUSH0
 abbrev PUSH1  : Operation .EVM := .Push .PUSH1

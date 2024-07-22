@@ -59,6 +59,16 @@ def binaryMachineStateOp'
       .ok <| (yulState', some val)
     | _ => .error .InvalidArguments
 
+def ternaryMachineStateOp
+  (op : MachineState → UInt256 → UInt256 → UInt256 → MachineState) : Transformer
+:= λ yulState lits ↦
+  match lits with
+    | [a, b, c] =>
+      let mState' := op yulState.toMachineState a b c
+      let yulState' := yulState.setMachineState mState'
+      .ok <| (yulState', none)
+    | _ => .error .InvalidArguments
+
 def binaryStateOp
   (op : EvmYul.State → UInt256 → UInt256 → EvmYul.State) : Transformer
 := λ yulState lits ↦

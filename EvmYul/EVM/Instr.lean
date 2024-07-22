@@ -84,6 +84,7 @@ def serializeStackMemFlowInstr : SMSFOp .EVM → UInt8
   | .JUMPDEST => 91
   | .TLOAD => 0x5c
   | .TSTORE => 0x5d
+  | .MCOPY => 0x5E
 
 def serializePushInstr : POp → UInt8
   | .PUSH0 => 95
@@ -294,6 +295,7 @@ def serializeInstr : Operation .EVM → UInt8
     | .JUMPDEST => some 0
     | .TLOAD => some 1
     | .TSTORE => some 2
+    | .MCOPY => some 3
     | .CREATE => some 3
     | .CALL => some 7
     | .CALLCODE => some 7
@@ -373,6 +375,7 @@ def serializeInstr : Operation .EVM → UInt8
     | .JUMPDEST => some 0
     | .TLOAD => some 1
     | .TSTORE => some 0
+    | .MCOPY => some 0
     | .Push _ => some 1
     | .DUP1 => some 2
     | .DUP2 => some 3
@@ -485,6 +488,7 @@ def parseInstr : UInt8 → Option (Operation .EVM)
   | 91 => some .JUMPDEST
   | 92 => some .TLOAD
   | 93 => some .TSTORE
+  | 94 => some .MCOPY
   | 95 => some .PUSH0
   | 96 => some .PUSH1
   | 97 => some .PUSH2
