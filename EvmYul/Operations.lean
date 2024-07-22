@@ -303,7 +303,17 @@ inductive BOp : OperationType → Type where
     δ: 0 ; α: 1
   -/
   | protected SELFBALANCE : BOp τ
+  /--
+    BASEFEE: get the current block’s base fee
+    δ: 0 ; α: 1
+  -/
   | protected BASEFEE : BOp τ
+  /--
+    BLOBBASEFEE: get the value of the blob base-fee of the current block
+    δ: 0 ; α: 1
+  -/
+  | protected BLOBBASEFEE : BOp τ
+
   deriving DecidableEq, Repr
 
 /--
@@ -616,6 +626,7 @@ abbrev GASLIMIT    {τ : OperationType} : Operation τ := .Block .GASLIMIT
 abbrev CHAINID     {τ : OperationType} : Operation τ := .Block .CHAINID
 abbrev SELFBALANCE {τ : OperationType} : Operation τ := .Block .SELFBALANCE
 abbrev BASEFEE     {τ : OperationType} : Operation τ := .Block .BASEFEE
+abbrev BLOBBASEFEE {τ : OperationType} : Operation τ := .Block .BLOBBASEFEE
 
 abbrev POP     {τ : OperationType} : Operation τ    := .StackMemFlow .POP
 abbrev MLOAD   {τ : OperationType} : Operation τ    := .StackMemFlow .MLOAD

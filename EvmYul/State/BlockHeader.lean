@@ -22,7 +22,8 @@ namespace EvmYul
 `minHash`       `m`
 `chainId`       `n` TODO ????
 `nonce`         `n` [deprecated]
-`baseFeePerGas` `f` 
+`baseFeePerGas` `f`
+`blobBaseFeePerGas` (EIP-7516)
 -/
 structure BlockHeader where
   parentHash    : UInt256
@@ -41,8 +42,9 @@ structure BlockHeader where
   minHash       : UInt256
   chainId       : UInt256 -- TODO(Why is this here?)
   nonce         : UInt64
-  -- prevRandao -- TODO 
+  -- prevRandao -- TODO
   baseFeePerGas : ℕ
+  blobBaseFeePerGas : ℕ
 deriving DecidableEq, Inhabited
 
 attribute [deprecated] BlockHeader.difficulty

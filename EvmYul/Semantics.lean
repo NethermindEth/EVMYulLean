@@ -287,6 +287,8 @@ def step {τ : OperationType} (op : Operation τ) : Transformer τ :=
     | τ, .GASLIMIT => dispatchStateOp τ EvmYul.State.gasLimit
     | τ, .CHAINID => dispatchStateOp τ EvmYul.State.chainId
     | τ, .SELFBALANCE => dispatchStateOp τ EvmYul.State.selfbalance
+    | τ, .BASEFEE => dispatchExecutionEnvOp τ (.ofNat ∘ BlockHeader.baseFeePerGas ∘ ExecutionEnv.header)
+    | τ, .BLOBBASEFEE => dispatchExecutionEnvOp τ (.ofNat ∘ BlockHeader.blobBaseFeePerGas ∘ ExecutionEnv.header)
 
     | .EVM, .POP =>
       λ evmState ↦

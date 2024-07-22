@@ -36,7 +36,7 @@ def serializeCompBitInstr : CBLOp .EVM → UInt8
   | .SHR => 28
   | .SAR => 29
 
-def serializeKeccakInstr : KOp .EVM → UInt8 
+def serializeKeccakInstr : KOp .EVM → UInt8
   | .KECCAK256 => 32
 
 def serializeEnvInstr : EOp .EVM → UInt8
@@ -68,6 +68,7 @@ def serializeBlockInstr : BOp .EVM → UInt8
   | .CHAINID => 70
   | .SELFBALANCE => 71
   | .BASEFEE => 72
+  | .BLOBBASEFEE => 0x4a
 
 def serializeStackMemFlowInstr : SMSFOp .EVM → UInt8
   | .POP => 80
@@ -240,6 +241,7 @@ def serializeInstr : Operation .EVM → UInt8
     | .CHAINID => some 0
     | .SELFBALANCE  => some 0
     | .BASEFEE => some 0
+    | .BLOBBASEFEE => some 0
     | .POP => some 1
     | .MLOAD => some 2
     | .MSTORE => some 2
@@ -355,6 +357,7 @@ def serializeInstr : Operation .EVM → UInt8
     | .CHAINID => some 1
     | .SELFBALANCE => some 1
     | .BASEFEE => some 1
+    | .BLOBBASEFEE => some 1
     | .POP => some 0
     | .MLOAD => some 1
     | .MSTORE => some 0
@@ -438,7 +441,7 @@ def parseInstr : UInt8 → Option (Operation .EVM)
   | 26 => some .BYTE
   | 27 => some .SHL
   | 28 => some .SHR
-  | 29 => some .SAR 
+  | 29 => some .SAR
   | 32 => some .KECCAK256
   | 48 => some .ADDRESS
   | 49 => some .BALANCE
@@ -465,6 +468,7 @@ def parseInstr : UInt8 → Option (Operation .EVM)
   | 70 => some .CHAINID
   | 71 => some .SELFBALANCE
   | 72 => some .BASEFEE
+  | 74 => some .BASEFEE
   | 80 => some .POP
   | 81 => some .MLOAD
   | 82 => some .MSTORE
