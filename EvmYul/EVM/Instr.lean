@@ -488,6 +488,7 @@ def parseInstr : UInt8 → Option (Operation .EVM)
   | 91 => some .JUMPDEST
   | 92 => some .TLOAD
   | 93 => some .TSTORE
+  | 94 => some .MCOPY
   | 95 => some .PUSH0
   | 96 => some .PUSH1
   | 97 => some .PUSH2
