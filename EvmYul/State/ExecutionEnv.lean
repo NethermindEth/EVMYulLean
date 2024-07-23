@@ -30,4 +30,10 @@ structure ExecutionEnv :=
   perm      : Bool
   deriving DecidableEq, Inhabited, Repr
 
+/- Instead of returning the `RANDAO` value from the previous block, we return a
+  value that looks random based on the previous block's hash.
+-/
+protected def prevRandao (e : ExecutionEnv) : UInt256 :=
+  UInt256.xor e.header.parentHash e.header.number
+
 end EvmYul

@@ -111,6 +111,7 @@ instance : FromJson BlockHeader where
         nonce         := 0 -- [deprecated] 0.
         baseFeePerGas := ← json.getObjValAsD! _         "baseFeePerGas" <&> UInt256.toNat
         parentBeaconBlockRoot := ← json.getObjValAsD! ByteArray "parentBeaconBlockRoot"
+        prevRandao := TODO
       }
     catch exct => dbg_trace s!"OOOOPSIE: {exct}\n json: {json}"
                   default
