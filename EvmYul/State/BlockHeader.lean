@@ -22,7 +22,7 @@ namespace EvmYul
 `minHash`       `m`
 `chainId`       `n` TODO ????
 `nonce`         `n` [deprecated]
-`baseFeePerGas` `f` 
+`baseFeePerGas` `f`
 -/
 structure BlockHeader where
   parentHash    : UInt256
@@ -41,11 +41,15 @@ structure BlockHeader where
   minHash       : UInt256
   chainId       : UInt256 -- TODO(Why is this here?)
   nonce         : UInt64
-  -- prevRandao -- TODO 
+  prevRandao    : UInt256
   baseFeePerGas : ℕ
 deriving DecidableEq, Inhabited
 
 attribute [deprecated] BlockHeader.difficulty
 attribute [deprecated] BlockHeader.nonce
+/-
+  We return a presudorandom value instead of fetching this field.
+-/
+attribute [deprecated] BlockHeader.prevRandao
 
 end EvmYul
