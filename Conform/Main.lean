@@ -28,4 +28,4 @@ def main (args : List String) : IO Unit := do
 
     dbgCount := dbgCount - 1
 
-#eval main ["EthereumTests"]
+-- #eval main ["EthereumTests"]
