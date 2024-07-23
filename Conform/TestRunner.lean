@@ -21,6 +21,7 @@ def Pre.toEVMState (self : Pre) : EVM.State :=
   where addAccount s addr acc :=
     let account : Account := 
       {
+        tstorage := ∅ -- TODO - Look into transaciton storage.
         nonce    := acc.nonce
         balance  := acc.balance
         code     := acc.code
