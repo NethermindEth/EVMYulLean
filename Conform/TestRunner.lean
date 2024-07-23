@@ -53,56 +53,6 @@ precisely on why this failed.
 private def somewhatShoddyStateEq (s₁ s₂ : EVM.State) : Bool :=
   s₁.accountMap == s₂.accountMap
 
-/-
-TODO - Remove these debugging instances.
--/
-
--- private local instance : ToString Account := ⟨λ acc ↦ s!"ACCOUNT: {Finmap.pretty acc.storage}"⟩
-
--- private local instance : LE EvmYul.Storage where
---   le lhs rhs := let x := lhs.entries.sort (·≤·)
---                 let y := rhs.entries.sort (·≤·)
---                 Id.run do
---                   let mut i := 0
---                   let mut res := true
---                   while true do
---                     let xElem := x.get? i
---                     let yElem := y.get? i
---                     match xElem, yElem with
---                       | .none, .none => break
---                       | .some xElem, .some yElem => if xElem ≤ yElem then i := i + 1; continue else res := false; break
---                       | .none, .some _ => res := true; break
---                       | .some _, .none => res := false; break
---                   return res
-
--- private local instance : LE Account where
---   le lhs rhs := lhs.storage ≤ rhs.storage
-
--- private local instance : LE ((_ : Address) × Account) where
---   le lhs rhs := if lhs.1 = rhs.1 then lhs.2 ≤ rhs.2 else lhs.1 ≤ rhs.1
-
--- /--
--- TODO - Doesn't matter for eyeballing. Remove later.
--- -/
--- private local instance : IsTrans ((_ : Address) × Account) fun x x_1 => x ≤ x_1 := sorry
-
--- private local instance : IsAntisymm ((_ : Address) × Account) fun x x_1 => x ≤ x_1 := sorry
-
--- private local instance : IsTotal ((_ : Address) × Account) fun x x_1 => x ≤ x_1 := sorry
-
--- private local instance : DecidableRel fun (x : Account) x_1 => x ≤ x_1 := by
---   unfold LE.le EvmYul.Conform.instLEAccount_conform
---   dsimp
---   unfold LE.le EvmYul.Conform.instLEStorage_conform
---   simp
---   intros a b
---   exact inferInstance
-
--- private local instance : DecidableRel fun x x_1 => (x : (_ : Address) × Account) ≤ x_1 :=
---   λ ⟨x₁, y₁⟩ ⟨x₂, y₂⟩ ↦ by 
---     dsimp; unfold LE.le EvmYul.Conform.instLESigmaAddressAccount_conform
---     exact inferInstance
-
 def executeTransaction (transaction : Transaction) (s : EVM.State) : Except EVM.Exception EVM.State := do
   -- dbg_trace s!"Executing transaction."
   let target ← transaction.to?.elim (.error (.BogusExceptionToBeReplaced "no target is currently not addressed")) .ok
