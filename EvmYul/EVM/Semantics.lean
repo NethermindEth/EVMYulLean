@@ -343,7 +343,7 @@ def X (fuel : ℕ) (evmState : State) : Except EVM.Exception (State × Option By
         match decode I_b evmState.pc with
           | some (w, _) => w
           | none => .STOP
-      dbg_trace s!"Decoded instruction: {w.pretty}"
+      -- dbg_trace s!"Executing: {w.pretty}"
       let W (w : Operation .EVM) (s : Stack UInt256) : Bool :=
         w ∈ [.CREATE, .CREATE2, .SSTORE, .SELFDESTRUCT, .LOG0, .LOG1, .LOG2, .LOG3, .LOG4] ∨
         (w = .CALL ∧ s.get? 2 ≠ some 0)
@@ -571,13 +571,13 @@ def Θ (fuel : Nat)
       perm      := w  -- Equation (134)
     }
 
-  dbg_trace s!"Pre Ξ we have: {Finmap.pretty σ₁}"
+  -- dbg_trace s!"Pre Ξ we have: {Finmap.pretty σ₁}"
 
   -- Equation (126)
   -- Note that the `c` used here is the actual code, not the address. TODO - Handle precompiled contracts.
   let (σ'', g'', A'', out) ← Ξ fuel σ₁ g A I
 
-  dbg_trace s!"Post Ξ we have: {Finmap.pretty σ''}"
+  -- dbg_trace s!"Post Ξ we have: {Finmap.pretty σ''}"
 
   -- Equation (122)
   let σ' := if σ'' == ∅ then σ else σ''

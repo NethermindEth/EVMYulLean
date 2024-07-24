@@ -63,7 +63,7 @@ def setSelfBalance! (self : State) : UInt256 → State :=
   self.setBalance! self.executionEnv.codeOwner
 
 def calldataload (self : State) (v : UInt256) : UInt256 :=
-  dbg_trace s!"calldataload yielding: {uInt256OfByteArray <| self.executionEnv.inputData.extract v (v + 32)}"
+  -- dbg_trace s!"calldataload yielding: {uInt256OfByteArray <| self.executionEnv.inputData.extract v (v + 32)}"
   uInt256OfByteArray <| self.executionEnv.inputData.extract v (v + 32)
 
 def setNonce! (self : State) (addr : Address) (nonce : UInt256) : State :=
@@ -140,7 +140,7 @@ def sload (self : State) (spos : UInt256) : State × UInt256 :=
   (state', v)
 
 def sstore (self : State) (spos sval : UInt256) : State :=
-  dbg_trace "sstore called with spos: {spos} sval: {sval}"
+  -- dbg_trace "sstore called with spos: {spos} sval: {sval}"
   let Iₐ := self.executionEnv.codeOwner
   self.lookupAccount Iₐ |>.option self λ acc ↦
     let self' := self.setAccount Iₐ (acc.updateStorage spos sval)

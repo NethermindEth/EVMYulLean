@@ -127,8 +127,8 @@ def mkFailed (reason : String := "") : TestResult := .some reason
 
 def mkSuccess : TestResult := .none
 
-def ofBool (success : Bool) : TestResult :=
-  if success then mkSuccess else mkFailed
+def ofBool (success : Bool) (reason : String := "Semantics error.") : TestResult :=
+  if success then mkSuccess else mkFailed reason
 
 end TestResult
 
