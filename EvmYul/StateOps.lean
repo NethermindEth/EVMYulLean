@@ -19,7 +19,7 @@ DEAD(σ, a). Section 4.1., equation 15.
 def dead (σ : Finmap (λ _ : Address ↦ Account)) (addr : Address) : Bool :=
   σ.lookup addr |>.option True Account.emptyAccount
 
-  def accountExists (self : State) (addr : Address) : Bool := self.accountMap.lookup addr |>.isSome
+def accountExists (self : State) (addr : Address) : Bool := self.accountMap.lookup addr |>.isSome
 
 def lookupAccount (self : State) (addr : Address) : Option Account :=
   self.accountMap.lookup addr

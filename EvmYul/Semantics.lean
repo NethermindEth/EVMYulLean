@@ -214,6 +214,7 @@ def RLP (t : 𝕋) : Option ByteArray :=
   match t with
     | .𝔹 ba => R_b ba
     | .𝕃 l => R_l l
+end
 
 def step {τ : OperationType} (op : Operation τ) : Transformer τ :=
   match τ, op with
@@ -271,7 +272,8 @@ def step {τ : OperationType} (op : Operation τ) : Transformer τ :=
           | some ⟨stack', μ₀, μ₁, μ₂⟩ => do
             let .some mState' := evmState.toMachineState.returndatacopy μ₀ μ₁ μ₂
               | .error EVM.Exception.OutOfBounds
-            .ok <| {evmState with toMachineState := mState'}
+            let evmState' := {evmState with toMachineState := mState'}
+            .ok <| evmState'.replaceStackAndIncrPC stack'
           | _ => .error EVM.Exception.InvalidStackSizeException
     | .Yul, .RETURNDATACOPY =>
       λ yulState lits ↦
@@ -344,29 +346,29 @@ def step {τ : OperationType} (op : Operation τ) : Transformer τ :=
                 let addr : Address :=
                   (KEC L_A).extract 96 265 |>.data.data |> fromBytesBigEndian |> Fin.ofNat
                 let code : ByteArray := yulState.toMachineState.lookupMemoryRange poz len
-                -- σ*
-                let accountMapStar :=
-                  match yulState.toState.accountMap.lookup Iₐ with
-                    | none => yulState.toState.accountMap
-                    | some ac =>
-                      yulState.toState.accountMap.insert
-                        Iₐ
-                        {ac with balance := ac.balance - v, nonce := ac.nonce + 1}
-                let v' :=
-                  match yulState.toState.accountMap.lookup addr with
-                    | none => 0
-                    | some ac => ac.balance
-                let newAccount : Account :=
-                  { nonce := 1
-                  , balance := v + v'
-                  , code := code
-                  , codeHash := fromBytesBigEndian (KEC code).data.data
-                  , storage := default
-                  , tstorage := default
-                  }
-                let yulState' := yulState.setState (yulState.toState.updateAccount addr newAccount)
+                match yulState.toState.accountMap.lookup Iₐ with
+                  | none => .ok <| (yulState, some 0)
+                  | some ac_Iₐ =>
+                    if v < ac_Iₐ.balance then .ok <| (yulState, some 0) else
+                    let ac_Iₐ := {ac_Iₐ with balance := ac_Iₐ.balance - v, nonce := ac_Iₐ.nonce + 1}
+                    let v' :=
+                      match yulState.toState.accountMap.lookup addr with
+                        | none => 0
+                        | some ac_addr => ac_addr.balance
+                    let newAccount : Account :=
+                      { nonce := 1
+                      , balance := v + v'
+                      , code := code
+                      , codeHash := fromBytesBigEndian (KEC code).data.data
+                      , storage := default
+                      , tstorage := default
+                      }
+                    let yulState' :=
+                      yulState.setState <|
+                        yulState.toState.updateAccount addr newAccount
+                        |>.updateAccount Iₐ ac_Iₐ
 
-                .ok <| (yulState', some addr)
+                    .ok <| (yulState', some addr)
           | _ => .error .InvalidArguments
     | τ, .RETURN => dispatchBinaryMachineStateOp τ MachineState.evmReturn
     | τ, .REVERT => dispatchBinaryMachineStateOp τ MachineState.evmRevert
@@ -378,10 +380,8 @@ def step {τ : OperationType} (op : Operation τ) : Transformer τ :=
             let r : Address := Address.ofUInt256 μ₁
             let A' : Substate :=
               { evmState.substate with
-                  selfDestructSet :=
-                    evmState.substate.selfDestructSet ∪ {Iₐ}
-                  accessedAccounts :=
-                    evmState.substate.accessedAccounts ∪ {r}
+                  selfDestructSet := evmState.substate.selfDestructSet ∪ {Iₐ}
+                  accessedAccounts := evmState.substate.accessedAccounts ∪ {r}
               }
             let accountMap' :=
               match evmState.lookupAccount r, evmState.lookupAccount Iₐ with
@@ -394,8 +394,12 @@ def step {τ : OperationType} (op : Operation τ) : Transformer τ :=
                     evmState.accountMap.insert r {σ_r with balance := 0}
                       |>.insert Iₐ {σ_Iₐ with balance := 0}
                 | _, _ => evmState.accountMap
-            let evmState' := {evmState with accountMap := accountMap'}
-            .ok <| evmState.replaceStackAndIncrPC s
+            let evmState' :=
+              {evmState with
+                accountMap := accountMap'
+                substate := A'
+              }
+            .ok <| evmState'.replaceStackAndIncrPC s
           | _ => .error EVM.Exception.InvalidStackSizeException
     | .EVM, .CALL => λ evmState ↦
       match evmState.stack.pop7 with
@@ -415,32 +419,32 @@ def step {τ : OperationType} (op : Operation τ) : Transformer τ :=
             let a₀ : List UInt8 := [0xff]
             let addr₀ := KEC <| ⟨⟨a₀ ++ this ++ s⟩⟩ ++ KEC code
             let addr : Address := Fin.ofNat <| fromBytesBigEndian addr₀.data.data
-            let accountMapStar :=
-              match yulState.toState.accountMap.lookup Iₐ with
-                | none => yulState.toState.accountMap
-                | some ac =>
-                  yulState.toState.accountMap.insert
-                    Iₐ
-                    {ac with balance := ac.balance - v, nonce := ac.nonce + 1}
-            let v' :=
-              match yulState.toState.accountMap.lookup addr with
-                | none => 0
-                | some ac => ac.balance
-            let newAccount : Account :=
-              { nonce := 1
-              , balance := v + v'
-              , code := code
-              , codeHash := fromBytesBigEndian (KEC code).data.data
-              , storage := default
-              , tstorage := default
-              }
-            let yulState' := yulState.setState (yulState.toState.updateAccount addr newAccount)
-            .ok <| (yulState', some addr)
+            match yulState.toState.accountMap.lookup Iₐ with
+              | none => .ok <| (yulState, some 0)
+              | some ac_Iₐ =>
+                if v < ac_Iₐ.balance then .ok <| (yulState, some 0) else
+                let ac_Iₐ' := {ac_Iₐ with balance := ac_Iₐ.balance - v, nonce := ac_Iₐ.nonce + 1}
+                let v' :=
+                  match yulState.toState.accountMap.lookup addr with
+                    | none => 0
+                    | some ac_addr => ac_addr.balance
+                let newAccount : Account :=
+                  { nonce := 1
+                  , balance := v + v'
+                  , code := code
+                  , codeHash := fromBytesBigEndian (KEC code).data.data
+                  , storage := default
+                  , tstorage := default
+                  }
+                let yulState' :=
+                  yulState.setState <|
+                    yulState.toState.updateAccount addr newAccount
+                      |>.updateAccount Iₐ ac_Iₐ'
+
+                .ok <| (yulState', some addr)
           | _ => .error .InvalidArguments
 
     | _, _ => sorry
-
-end
 
 example :
   (RLP (.𝔹 (toBytesBigEndian 123456789).toByteArray) |>.map toHex) == some "84075bcd15"
