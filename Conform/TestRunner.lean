@@ -178,11 +178,15 @@ def processTest (entry : TestEntry) : Except Exception TestResult := do
 
 local instance : MonadLift (Except String) (Except Conform.Exception) := ⟨Except.mapError .CannotParse⟩
 
-def processTestsOfFile (file : System.FilePath) : ExceptT Exception IO (Lean.RBMap String TestResult compare) := do
+def processTestsOfFile (file : System.FilePath) (whitelist : Array String := #[]) :
+                       ExceptT Exception IO (Lean.RBMap String TestResult compare) := do
   let file ← Lean.Json.fromFile file
   let test ← Lean.FromJson.fromJson? (α := Test) file
-  test.toTests.foldlM (init := ∅) λ acc (testname, test) ↦
+  let tests := filterIfNonempty test.toTests
+  tests.foldlM (init := ∅) λ acc (testname, test) ↦
     processTest test >>= pure ∘ acc.insert testname
+  where filterIfNonempty (tests : List (String × TestEntry)) :=
+    if whitelist.isEmpty then tests else tests.filter (λ (name, _) ↦ name ∈ whitelist)
 
 end Conform
 
