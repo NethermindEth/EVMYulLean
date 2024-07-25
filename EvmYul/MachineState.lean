@@ -1,5 +1,4 @@
-import Mathlib.Data.Finmap
-
+import EvmYul.Maps.ByteMap
 import EvmYul.UInt256
 
 namespace EvmYul
@@ -19,7 +18,7 @@ The partial shared `MachineState` `μ`. Section 9.4.1.
 structure MachineState where
   gasAvailable : UInt256
   maxAddress   : UInt256
-  memory       : Finmap (λ _ : UInt256 => UInt8)
+  memory       : ByteMap
   returnData   : ByteArray
   deriving DecidableEq, Inhabited
 

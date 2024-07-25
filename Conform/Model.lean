@@ -1,8 +1,10 @@
 import Lean.Data.RBMap
 import Lean.Data.Json
 
-import EvmYul.Wheels
+-- import EvmYul.Maps
 import EvmYul.Operations
+import EvmYul.Wheels
+
 import EvmYul.EVM.State
 
 import Conform.Wheels
@@ -58,7 +60,7 @@ instance : DecidableRel (α := (_ : UInt256) × UInt256) (· ≤ ·) :=
     unfold LE.le instLESigmaUInt256_conform; simp
     aesop (config := {warnOnNonterminal := false}) <;> exact inferInstance
 
-def Storage.ofFinmap (m : Finmap (λ _ : UInt256 ↦ UInt256)) : Storage :=
+def Storage.ofFinmap (m : EvmYul.Storage) : Storage :=
   let asList := computeToList! m.entries
   Lean.RBMap.ofList (asList.map λ ⟨k, v⟩ ↦ (Address.ofUInt256 k, v))
 
@@ -125,8 +127,8 @@ def mkFailed (reason : String := "") : TestResult := .some reason
 
 def mkSuccess : TestResult := .none
 
-def ofBool (success : Bool) : TestResult :=
-  if success then mkSuccess else mkFailed
+def ofBool (success : Bool) (reason : String := "Semantics error.") : TestResult :=
+  if success then mkSuccess else mkFailed reason
 
 end TestResult
 

@@ -1,5 +1,9 @@
 import EvmYul.State.Account
 
+import EvmYul.Maps.StorageMap
+
+import EvmYul.Pretty
+
 namespace EvmYul
 
 namespace Account
@@ -42,5 +46,38 @@ def subBalance (self : Account) (balance : UInt256) : Option Account :=
   else .some { self with balance := self.balance - balance }
 
 end Account
+
+/-
+TODO - For debugging / reporting, likely just remove at some point.
+-/
+
+section RemoveLater
+
+instance : LE Account where
+  le lhs rhs := lhs.storage ≤ rhs.storage
+
+instance : DecidableRel (λ (lhs : Account) rhs ↦ lhs ≤ rhs) :=
+  λ lhs rhs ↦ by
+    unfold LE.le instLEAccount
+    exact inferInstance
+
+-- instance : ToString Account := ⟨λ acc ↦ s!"ACCOUNT: {Finmap.pretty acc.storage}"⟩
+
+/--
+TODO - Remove later, debugging.
+-/
+private def stringOfStorage (m : Storage) : String := Id.run do
+  let mut result : String := ""
+  for ⟨k, v⟩ in computeToList! m.entries do
+    result := result.append s!"{k} → {v};"
+  return result
+
+-- instance : ToString Account := ⟨λ acc ↦
+--   s!"ACCOUNT: [nonce: {acc.nonce}; balance: {acc.balance}; code: {acc.code.toList.take 5}...; codehash: {acc.codeHash}; storage: {stringOfStorage acc.storage}]; tstorage: {stringOfStorage acc.tstorage}"⟩
+
+instance : ToString Account := ⟨λ acc ↦
+  s!"ACCOUNT: storage: {stringOfStorage acc.storage}]"⟩
+
+end RemoveLater
 
 end EvmYul

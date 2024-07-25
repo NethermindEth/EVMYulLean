@@ -735,6 +735,7 @@ abbrev REVERT       {τ : OperationType} : Operation τ := .System .REVERT
 abbrev INVALID      {τ : OperationType} : Operation τ := .System .INVALID
 abbrev SELFDESTRUCT {τ : OperationType} : Operation τ := .System .SELFDESTRUCT
 
+
 end Operation
 
 open EvmYul.UInt256

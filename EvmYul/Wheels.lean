@@ -11,7 +11,7 @@ def Address.size : Nat := 1461501637330902918203684832716283019655932542976
 
 abbrev Address : Type := Fin Address.size
 
-abbrev Storage : Type := Finmap (λ _ : UInt256 ↦ UInt256)
+-- abbrev Storage : Type := Finmap (λ _ : UInt256 ↦ UInt256)
 
 instance : Inhabited Address := ⟨Fin.ofNat 0⟩
 
@@ -22,6 +22,13 @@ def ofUInt256 (v : UInt256) : Address := Fin.ofNat (v.val % Address.size)
 instance {n : Nat} : OfNat Address n := ⟨Fin.ofNat n⟩
 
 end Address
+
+def hexOfByte (byte : UInt8) : String :=
+  hexDigitRepr (byte.toNat >>> 4 &&& 0b00001111) ++
+  hexDigitRepr (byte.toNat &&& 0b00001111)
+
+def toHex (bytes : ByteArray) : String :=
+  bytes.foldl (init := "") λ acc byte ↦ acc ++ hexOfByte byte
 
 /--
   Is an enumerate type, but nat is okay for now TODO(model properly)
