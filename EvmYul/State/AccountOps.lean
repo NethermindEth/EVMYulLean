@@ -69,7 +69,7 @@ TODO - Remove later, debugging.
 private def stringOfStorage (m : Storage) : String := Id.run do
   let mut result : String := ""
   for ⟨k, v⟩ in computeToList! m.entries do
-    result := result.append s!"{k} → {v};"
+    result := result.append s!"{k} → {v}; "
   return result
 
 -- instance : ToString Account := ⟨λ acc ↦
