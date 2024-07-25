@@ -4,8 +4,8 @@ import Conform.TestRunner
 -- def isTestFile (file : System.FilePath) : Bool := file.extension.option false (· == "json")
 
 -- def SimpleFile := "EthereumTests/BlockchainTests/GeneralStateTests/VMTests/vmArithmeticTest/add.json"
--- def BuggyFile := "EthereumTests/BlockchainTests/GeneralStateTests/VMTests/vmArithmeticTest/exp.json"
-def BuggyFile := "Conform/exp.json"
+def BuggyFile := "EthereumTests/BlockchainTests/GeneralStateTests/VMTests/vmArithmeticTest/exp.json"
+-- def BuggyFile := "Conform/exp.json"
 
 def TestsSubdir := "BlockchainTests"
 def isTestFile (file : System.FilePath) : Bool := file.extension.option false (· == "json")
@@ -15,11 +15,12 @@ def main (args : List String) : IO Unit := do
 
   -- let testFiles ← Array.filter isTestFile <$> System.FilePath.walkDir (args.head! / TestsSubdir)
   -- let testFiles ← Array.filter isTestFile <$> System.FilePath.walkDir ("EthereumTests" / "BlockchainTests" / "GeneralStateTests" / "VMTests" / "vmArithmeticTest")
+  let testFiles ← Array.filter isTestFile <$> System.FilePath.walkDir ("EthereumTests" / "BlockchainTests" / "GeneralStateTests" / "VMTests" / "vmArithmeticTest")
   
   -- let testFiles := #[SimpleFile]
-  let testFiles := #[BuggyFile]
+  -- let testFiles := #[BuggyFile]
 
-  let mut dbgCount := 1
+  let mut dbgCount := 42
 
   for testFile in testFiles do
     if dbgCount == 0 then break
