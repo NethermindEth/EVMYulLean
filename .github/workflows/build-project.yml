@@ -58,4 +58,8 @@ jobs:
         run: |
           source ~/.profile
           lake build
-      
+
+      - name: build conform
+        run: |
+          source ~/.profile
+          lake build conform
