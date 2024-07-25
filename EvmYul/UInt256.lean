@@ -11,8 +11,6 @@ import Mathlib.Tactic.Ring
 
 namespace EvmYul
 
-open Std
-
 def UInt256.size : ℕ := 115792089237316195423570985008687907853269984665640564039457584007913129639936
 
 instance : NeZero UInt256.size := ⟨by decide⟩
@@ -79,8 +77,16 @@ instance : HMod UInt256 ℕ UInt256 := ⟨UInt256.modn⟩
 def complement (a : UInt256) : UInt256 := 0-(a + 1)
 
 instance : Complement UInt256 := ⟨EvmYul.UInt256.complement⟩
-instance : HPow UInt256 UInt256 UInt256 where
-  hPow a n := a ^ n.val
+
+private def powAux (a : UInt256) (c : UInt256) : ℕ → UInt256
+  | 0 => a
+  | n@(k + 1) => if n % 2 == 1
+                 then powAux (a * c) (c * c) (n / 2) 
+                 else powAux a       (c * c) (n / 2)
+
+def pow (b : UInt256) (n : UInt256) := powAux 1 b n.1
+
+instance : HPow UInt256 UInt256 UInt256 := ⟨pow⟩
 instance : AndOp UInt256 := ⟨UInt256.land⟩
 instance : OrOp UInt256 := ⟨UInt256.lor⟩
 instance : Xor UInt256 := ⟨UInt256.xor⟩
@@ -116,10 +122,12 @@ def sgn (a : UInt256) : UInt256 :=
     then 0
     else 1
 
-def abs (a : UInt256) : UInt256 :=
+def abs (a : UInt256) : UInt256 := 
   if 2 ^ 255 <= a
   then a * -1
   else a
+
+def bigUInt : UInt256 := 0xffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffff
 
 def sdiv (a b : UInt256) : UInt256 :=
   if 2 ^ 255 <= a then
@@ -193,8 +201,8 @@ def mulMod (a b c : UInt256) : UInt256 :=
   if c = 0 then 0 else
   Fin.mod (a * b) c
 
-def exp (a b : UInt256) : UInt256 :=
-  a ^ b.val
+def exp (a b : UInt256) : UInt256 := pow a b
+  -- a ^ b.val
 
 def lt (a b : UInt256) :=
   fromBool (a < b)

@@ -169,6 +169,8 @@ def processTest (entry : TestEntry) : Except Exception TestResult := do
 
   pure <| result.elim .mkSuccess λ errSt ↦
     let (postSubActual, actualSubPost) := storageΔ (entry.postState.toEVMState.accountMap) errSt.accountMap
+    dbg_trace "ST: {Finmap.pretty errSt.accountMap}"
+    dbg_trace "POST: {Finmap.pretty entry.postState.toEVMState.accountMap}"
     .mkFailed s!"post / actual: {Finmap.pretty postSubActual}\nactual / post: {Finmap.pretty actualSubPost}"
   -- dbg_trace "pre: {entry.pre}"
   -- dbg_trace "post: {entry.postState}"

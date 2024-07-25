@@ -3,7 +3,9 @@ import Conform.TestRunner
 -- def TestsSubdir := "BlockchainTests"
 -- def isTestFile (file : System.FilePath) : Bool := file.extension.option false (· == "json")
 
-def SimpleFile := "EthereumTests/BlockchainTests/GeneralStateTests/VMTests/vmArithmeticTest/add.json"
+-- def SimpleFile := "EthereumTests/BlockchainTests/GeneralStateTests/VMTests/vmArithmeticTest/add.json"
+-- def BuggyFile := "EthereumTests/BlockchainTests/GeneralStateTests/VMTests/vmArithmeticTest/exp.json"
+def BuggyFile := "Conform/exp.json"
 
 def TestsSubdir := "BlockchainTests"
 def isTestFile (file : System.FilePath) : Bool := file.extension.option false (· == "json")
@@ -12,8 +14,10 @@ def main (args : List String) : IO Unit := do
   if args.length != 1 then IO.println "Usage: conform <path to 'EthereumTests'>"; return ()
 
   -- let testFiles ← Array.filter isTestFile <$> System.FilePath.walkDir (args.head! / TestsSubdir)
+  -- let testFiles ← Array.filter isTestFile <$> System.FilePath.walkDir ("EthereumTests" / "BlockchainTests" / "GeneralStateTests" / "VMTests" / "vmArithmeticTest")
   
-  let testFiles := #[SimpleFile]
+  -- let testFiles := #[SimpleFile]
+  let testFiles := #[BuggyFile]
 
   let mut dbgCount := 1
 
@@ -28,4 +32,4 @@ def main (args : List String) : IO Unit := do
 
     dbgCount := dbgCount - 1
 
--- #eval main ["EthereumTests"]
+#eval main ["EthereumTests"]
