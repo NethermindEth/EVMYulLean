@@ -4,6 +4,7 @@ namespace EvmYul
 
 namespace EVM
 
+-- TODO - fix / cleanup.
 inductive Exception where
   | InvalidStackSizeException         : Exception
   | InvalidPC                         : Exception

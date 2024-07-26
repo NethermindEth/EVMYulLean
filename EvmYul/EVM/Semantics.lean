@@ -72,7 +72,11 @@ The `Push` instruction also returns the argument as an EVM word along with the w
 -/
 def decode (arr : ByteArray) (pc : Nat) :
   Option (Operation .EVM × Option (UInt256 × Nat)) := do
+  -- dbg_trace s!"DECODING; arr: {arr} pc: {pc}"
+  -- let wagh := arr.get? pc
+  -- dbg_trace s!"wagh is: {wagh}"
   let instr ← arr.get? pc >>= EvmYul.EVM.parseInstr
+  -- dbg_trace s!"AAAAA: {instr.pretty}"
   let argWidth := argOnNBytesOfInstr instr
   .some (
     instr,
@@ -133,7 +137,9 @@ def step (fuel : ℕ) : EVM.Transformer :=
     | 0 => .ok
     | .succ f =>
     λ (evmState : EVM.State) ↦ do
+    -- dbg_trace "FETCHING!"
     let (instr, arg) ← fetchInstr evmState.toState.executionEnv evmState.pc
+    -- dbg_trace s!"step called with: {instr.pretty}"
     -- @Andrei: Of course not all can be shared, so based on `instr` this might not be `EvmYul.step`.
     match instr with
       | .Push _ => do
@@ -275,14 +281,18 @@ def step (fuel : ℕ) : EVM.Transformer :=
         -- μ₄ - inSize
         -- μ₅ - outOffsize
         -- μ₆ - outSize
+        -- dbg_trace "POPPING"
         let (stack, μ₀, μ₁, μ₂, μ₃, μ₄, μ₅, μ₆) ← evmState.stack.pop7
+        -- dbg_trace "POPPED OK; μ₁ : {μ₁}"
         -- dbg_trace s!"Pre call, we have: {Finmap.pretty evmState.accountMap}"
         let (σ', g', A', z, o) ← do
           -- TODO - Refactor condition and possibly share with CREATE
           if μ₂ ≤ (evmState.accountMap.lookup evmState.executionEnv.codeOwner |>.option 0 Account.balance) ∧ evmState.executionEnv.depth < 1024 then
             let t : Address := Address.ofUInt256 μ₁ -- t ≡ μs[1] mod 2^160
             let A' := evmState.addAccessedAccount t |>.substate -- A' ≡ A except A'ₐ ≡ Aₐ ∪ {t}
-            let tDirect := evmState.accountMap.lookup t |>.get!.code -- We use the code directly without an indirection a'la `codeMap[t]`.
+            -- TODO A minor... hack? Are we supposed to run into missing account here?
+            let .some tDirect := evmState.accountMap.lookup t | throw (.ReceiverNotInAccounts t)
+            let tDirect := tDirect.code -- We use the code directly without an indirection a'la `codeMap[t]`.
             let i := evmState.toMachineState.lookupMemoryRange μ₃ μ₄ -- m[μs[3] . . . (μs[3] + μs[4] − 1)]
             Θ (fuel := f)                             -- TODO meh
               (σ  := evmState.accountMap)             -- σ in  Θ(σ, ..)
@@ -300,7 +310,7 @@ def step (fuel : ℕ) : EVM.Transformer :=
               (w  := evmState.executionEnv.perm)      -- I_W in Θ(.., I_W)
           -- TODO gas - CCALLGAS(σ, μ, A)
           else .ok (evmState.toState.accountMap, μ₀, evmState.toState.substate, false, .some .empty) -- otherwise (σ, CCALLGAS(σ, μ, A), A, 0, ())
-        -- dbg_trace s!"After call, we have σ': {Finmap.pretty σ'}"
+        dbg_trace s!"THETA OK"
         let n : UInt256 := min μ₆ (o.elim 0 (UInt256.ofNat ∘ ByteArray.size)) -- n ≡ min({μs[6], ‖o‖}) -- TODO - Why is this using... set??? { } brackets ???
         -- TODO I am assuming here that μ' is μ with the updates mentioned in the CALL section. Check.
 
@@ -335,6 +345,7 @@ def step (fuel : ℕ) : EVM.Transformer :=
       | instr => EvmYul.step instr evmState
 
 def X (fuel : ℕ) (evmState : State) : Except EVM.Exception (State × Option ByteArray) := do
+  -- dbg_trace s!"X?!"
   match fuel with
     | 0 => .ok (evmState, some .empty)
     | .succ f =>
@@ -342,22 +353,11 @@ def X (fuel : ℕ) (evmState : State) : Except EVM.Exception (State × Option By
       let w :=
         match decode I_b evmState.pc with
           | some (w, _) => w
-          | none => .STOP
+          | none => dbg_trace "GON STOP!"; .STOP
       -- dbg_trace s!"Executing: {w.pretty}"
       let W (w : Operation .EVM) (s : Stack UInt256) : Bool :=
         w ∈ [.CREATE, .CREATE2, .SSTORE, .SELFDESTRUCT, .LOG0, .LOG1, .LOG2, .LOG3, .LOG4] ∨
         (w = .CALL ∧ s.get? 2 ≠ some 0)
-      -- dbg_trace "w: {repr w} δ w: {δ w}"
-      -- dbg_trace "w: {repr w} δ w: {δ w} evmState.stack.length: {evmState.stack.length}"
-      -- dbg_trace "evmState.stack.length - (δ w).getD 0 - (α w).getD 0 > 1024: {evmState.stack.length - (δ w).getD 0 - (α w).getD 0}"
-      -- dbg_trace "W w evmState.stack: {W w evmState.stack}"
-      -- dbg_trace "evmState.executionEnv.perm: {evmState.executionEnv.perm}"
-      -- dbg_trace "wat; {decide <| δ w = none} {decide <| evmState.stack.length < (δ w).getD 0}"
-      -- dbg_trace "wat; {decide <| (w = .JUMP ∧ notIn (evmState.stack.get? 0) (D_J I_b 0))} {decide <| (w = .JUMPI ∧ (evmState.stack.get? 0 ≠ some 0) ∧ notIn (evmState.stack.get? 1) (D_J I_b 0))}"
-      -- dbg_trace "wat; {decide <| (w = .RETURNDATACOPY ∧ evmState.stack.getD 1 0 + evmState.stack.getD 2 0 > evmState.returnData.size)}"
-      -- dbg_trace "wat; {decide <| evmState.stack.length - (δ w).getD 0 - (α w).getD 0 > 1024}"
-      -- dbg_trace "wat; W: {decide <| W w evmState.stack}"
-      -- dbg_trace "wat; {decide <| ( (¬ evmState.executionEnv.perm) ∧ W w evmState.stack)}"
       let Z : Bool :=
         δ w = none ∨
         evmState.stack.length < (δ w).getD 0 ∨
@@ -366,6 +366,7 @@ def X (fuel : ℕ) (evmState : State) : Except EVM.Exception (State × Option By
         (w = .RETURNDATACOPY ∧ evmState.stack.getD 1 0 + evmState.stack.getD 2 0 > evmState.returnData.size) ∨
         evmState.stack.length - (δ w).getD 0 - (α w).getD 0 > 1024 ∨
         ( (¬ evmState.executionEnv.perm) ∧ W w evmState.stack)
+
       let H (μ : MachineState) (w : Operation .EVM) : Option ByteArray :=
         if w ∈ [.RETURN, .REVERT] then
           some μ.returnData
@@ -375,13 +376,11 @@ def X (fuel : ℕ) (evmState : State) : Except EVM.Exception (State × Option By
           else none
 
       if Z then
-        -- dbg_trace "Z"
         .ok ({evmState with accountMap := ∅}, none)
       else
         if w = .REVERT then
           .ok ({evmState with accountMap := ∅}, some evmState.returnData)
         else
-          -- dbg_trace "Stepping."
           let evmState' ← step f evmState
           match H evmState.toMachineState w with
             | none => X f evmState'
@@ -571,7 +570,6 @@ def Θ (fuel : Nat)
       perm      := w  -- Equation (134)
     }
 
-  -- dbg_trace s!"Pre Ξ we have: {Finmap.pretty σ₁}"
 
   -- Equation (126)
   -- Note that the `c` used here is the actual code, not the address. TODO - Handle precompiled contracts.

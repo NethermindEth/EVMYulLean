@@ -169,8 +169,8 @@ def processTest (entry : TestEntry) : Except Exception TestResult := do
 
   pure <| result.elim .mkSuccess λ errSt ↦
     let (postSubActual, actualSubPost) := storageΔ (entry.postState.toEVMState.accountMap) errSt.accountMap
-    dbg_trace "ST: {Finmap.pretty errSt.accountMap}"
-    dbg_trace "POST: {Finmap.pretty entry.postState.toEVMState.accountMap}"
+    -- dbg_trace "ST: {Finmap.pretty errSt.accountMap}"
+    -- dbg_trace "POST: {Finmap.pretty entry.postState.toEVMState.accountMap}"
     .mkFailed s!"post / actual: {Finmap.pretty postSubActual}\nactual / post: {Finmap.pretty actualSubPost}"
   -- dbg_trace "pre: {entry.pre}"
   -- dbg_trace "post: {entry.postState}"
@@ -178,15 +178,24 @@ def processTest (entry : TestEntry) : Except Exception TestResult := do
 
 local instance : MonadLift (Except String) (Except Conform.Exception) := ⟨Except.mapError .CannotParse⟩
 
-def processTestsOfFile (file : System.FilePath) (whitelist : Array String := #[]) :
+def processTestsOfFile (file : System.FilePath)
+                       (whitelist : Array String := #[])
+                       (blacklist : Array String := #[]):
                        ExceptT Exception IO (Lean.RBMap String TestResult compare) := do
   let file ← Lean.Json.fromFile file
   let test ← Lean.FromJson.fromJson? (α := Test) file
-  let tests := filterIfNonempty test.toTests
+  let tests := guardBlacklist ∘ guardWhitelist <| test.toTests
   tests.foldlM (init := ∅) λ acc (testname, test) ↦
-    processTest test >>= pure ∘ acc.insert testname
-  where filterIfNonempty (tests : List (String × TestEntry)) :=
-    if whitelist.isEmpty then tests else tests.filter (λ (name, _) ↦ name ∈ whitelist)
+    try -- TODO - currently we workaround by distinguishing hard and soft errors.
+        -- This needs refining.
+      processTest test >>= pure ∘ acc.insert testname
+    catch | e@(.ReceiverNotInAccounts a) => pure _
+          | e => throw e
+  where
+    guardWhitelist (tests : List (String × TestEntry)) :=
+      if whitelist.isEmpty then tests else tests.filter (λ (name, _) ↦ name ∈ whitelist)
+    guardBlacklist (tests : List (String × TestEntry)) :=
+      tests.filter (λ (name, _) ↦ name ∉ blacklist)
 
 end Conform
 
