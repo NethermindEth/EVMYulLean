@@ -76,7 +76,7 @@ def decode (arr : ByteArray) (pc : Nat) :
   -- let wagh := arr.get? pc
   -- dbg_trace s!"wagh is: {wagh}"
   let instr ← arr.get? pc >>= EvmYul.EVM.parseInstr
-  -- dbg_trace s!"AAAAA: {instr.pretty}"
+  dbg_trace s!"Decoded: {instr.pretty}"
   let argWidth := argOnNBytesOfInstr instr
   .some (
     instr,
@@ -132,13 +132,17 @@ local instance : MonadLift Option (Except EVM.Exception) :=
 
 mutual
 
-def step (fuel : ℕ) : EVM.Transformer :=
+def step (fuel : ℕ) (instr : Option (Operation .EVM × Option (UInt256 × Nat)) := .none) : EVM.Transformer :=
   match fuel with
     | 0 => .ok
     | .succ f =>
     λ (evmState : EVM.State) ↦ do
-    -- dbg_trace "FETCHING!"
-    let (instr, arg) ← fetchInstr evmState.toState.executionEnv evmState.pc
+    -- This will normally be called from `Ξ` (or `X`) with `fetchInstr` already having been called.
+    -- That said, we sometimes want a `step : EVM.Transformer` and as such, we can decode on demand.
+    let (instr, arg) ←
+      match instr with
+        | .none => fetchInstr evmState.toState.executionEnv evmState.pc
+        | .some (instr, arg) => pure (instr, arg)
     -- dbg_trace s!"step called with: {instr.pretty}"
     -- @Andrei: Of course not all can be shared, so based on `instr` this might not be `EvmYul.step`.
     match instr with
@@ -289,6 +293,7 @@ def step (fuel : ℕ) : EVM.Transformer :=
           -- TODO - Refactor condition and possibly share with CREATE
           if μ₂ ≤ (evmState.accountMap.lookup evmState.executionEnv.codeOwner |>.option 0 Account.balance) ∧ evmState.executionEnv.depth < 1024 then
             let t : Address := Address.ofUInt256 μ₁ -- t ≡ μs[1] mod 2^160
+            dbg_trace s!"DBG REMOVE; Calling address: {t}"
             let A' := evmState.addAccessedAccount t |>.substate -- A' ≡ A except A'ₐ ≡ Aₐ ∪ {t}
             -- TODO A minor... hack? Are we supposed to run into missing account here?
             let .some tDirect := evmState.accountMap.lookup t | throw (.ReceiverNotInAccounts t)
@@ -350,11 +355,12 @@ def X (fuel : ℕ) (evmState : State) : Except EVM.Exception (State × Option By
     | 0 => .ok (evmState, some .empty)
     | .succ f =>
       let I_b := evmState.toState.executionEnv.code
-      let w :=
+      dbg_trace "X calling decode"
+      let instr@(w, arg) :=
         match decode I_b evmState.pc with
-          | some (w, _) => w
-          | none => dbg_trace "GON STOP!"; .STOP
-      -- dbg_trace s!"Executing: {w.pretty}"
+          | some (w, arg) => (w, arg) 
+          | none => (.STOP, .none)
+      dbg_trace s!"I got: {w.pretty}"
       let W (w : Operation .EVM) (s : Stack UInt256) : Bool :=
         w ∈ [.CREATE, .CREATE2, .SSTORE, .SELFDESTRUCT, .LOG0, .LOG1, .LOG2, .LOG3, .LOG4] ∨
         (w = .CALL ∧ s.get? 2 ≠ some 0)
@@ -381,7 +387,7 @@ def X (fuel : ℕ) (evmState : State) : Except EVM.Exception (State × Option By
         if w = .REVERT then
           .ok ({evmState with accountMap := ∅}, some evmState.returnData)
         else
-          let evmState' ← step f evmState
+          let evmState' ← step f instr evmState
           match H evmState.toMachineState w with
             | none => X f evmState'
             | some o => .ok <| (evmState', some o)
