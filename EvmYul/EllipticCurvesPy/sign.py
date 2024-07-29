@@ -16,10 +16,9 @@ def secp256k1_sign(msg_hash: Hash32, secret_key: int) -> Tuple[U256, ...]:
         U256.from_be_bytes(signature[32:64]),
         U256(signature[64]),
     )
-# msg_hash : Hash32 = bytes.fromhex("0000000000000000000000000000000000000000000000000000000000000000")
+
 msg_hash : Hash32 = bytes.fromhex(sys.argv[1])
 
-# pr : int = int.from_bytes(bytes.fromhex("208065a247edbe5df4d86fbdc0171303f23a76961be9f6013850dd2bdc759bbb"), "big")
 pr : U256 = Uint.from_bytes(bytes.fromhex(sys.argv[2]), "big")
 
 res = secp256k1_sign(msg_hash, pr)
