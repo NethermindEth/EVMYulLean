@@ -156,10 +156,6 @@ private def dispatchLog4 (τ : OperationType) : Transformer τ :=
 
 private def L (n : ℕ) := n - n / 64
 
-
-def toHex (bytes : ByteArray) : String :=
-  bytes.foldl (init := "") λ acc byte ↦ acc ++ hexOfByte byte
-
 def shortInput := "01aHHABLA"
 def longInput := "Lean 4 is a reimplementation of the Lean theorem prover in Lean itself. The new compiler produces C code, and users can now implement efficient proof automation in Lean, compile it into efficient C code, and load it as a plugin. In Lean 4, users can access all internal data structures used to implement Lean by merely importing the Lean package."
 
