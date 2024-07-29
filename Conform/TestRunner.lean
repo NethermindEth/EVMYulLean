@@ -192,7 +192,7 @@ def processTestsOfFile (file : System.FilePath)
       processTest test >>= pure ∘ acc.insert testname
           -- currently the soft errors are the ones I am personally unsure about :)
     catch | .EVMError e@(.ReceiverNotInAccounts _) => pure (acc.insert testname (.mkFailed s!"{repr e}"))
-          | e => throw e -- TODO - hard error, stop executing the tests; malformed input, logic error, etc.
+          | e => IO.println s!"Test: {testname} FAILED!"; throw e -- TODO - hard error, stop executing the tests; malformed input, logic error, etc.
   where
     guardWhitelist (tests : List (String × TestEntry)) :=
       if whitelist.isEmpty then tests else tests.filter (λ (name, _) ↦ name ∈ whitelist)
