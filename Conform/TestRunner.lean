@@ -188,9 +188,11 @@ def processTestsOfFile (file : System.FilePath)
   tests.foldlM (init := ∅) λ acc (testname, test) ↦
     try -- TODO - currently we workaround by distinguishing hard and soft errors.
         -- This needs refining.
+      IO.println s!"Test: {testname}"
       processTest test >>= pure ∘ acc.insert testname
-    catch | e@(.ReceiverNotInAccounts a) => pure _
-          | e => throw e
+          -- currently the soft errors are the ones I am personally unsure about :)
+    catch | .EVMError e@(.ReceiverNotInAccounts _) => pure (acc.insert testname (.mkFailed s!"{repr e}"))
+          | e => throw e -- TODO - hard error, stop executing the tests; malformed input, logic error, etc.
   where
     guardWhitelist (tests : List (String × TestEntry)) :=
       if whitelist.isEmpty then tests else tests.filter (λ (name, _) ↦ name ∈ whitelist)

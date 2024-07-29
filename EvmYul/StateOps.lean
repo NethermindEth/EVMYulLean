@@ -63,8 +63,8 @@ def setSelfBalance! (self : State) : UInt256 → State :=
   self.setBalance! self.executionEnv.codeOwner
 
 def calldataload (self : State) (v : UInt256) : UInt256 :=
-  dbg_trace s!"calldataload arr: {self.executionEnv.inputData.extract' v (v + 32)}"
-  dbg_trace s!"calldataload yielding: {uInt256OfByteArray <| self.executionEnv.inputData.extract' v (v + 32)}"
+  -- dbg_trace s!"calldataload arr: {self.executionEnv.inputData.extract' v (v + 32)}"
+  -- dbg_trace s!"calldataload yielding: {uInt256OfByteArray <| self.executionEnv.inputData.extract' v (v + 32)}"
   uInt256OfByteArray <| self.executionEnv.inputData.extract' v (v + 32)
 
 def setNonce! (self : State) (addr : Address) (nonce : UInt256) : State :=

@@ -33,7 +33,7 @@ def updateMemory (self : SharedState) (addr v : UInt256) (numOctets : WordSize :
 
 def calldatacopy (self : SharedState) (mstart datastart s : UInt256) : SharedState :=
   let arr := self.toState.executionEnv.inputData.extract' datastart.val s.val
-  dbg_trace s!"{arr}"
+  -- dbg_trace s!"{arr}"
   (·.1) <| arr.foldl (init := (self, mstart)) λ (sa , j) i ↦ (sa.updateMemory j i.val, j + 1)
 
 def big : UInt256 := 0xfffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffa
