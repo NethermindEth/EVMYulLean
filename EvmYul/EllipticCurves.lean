@@ -7,7 +7,7 @@ unsafe def unsafePerformIO {τ} [Inhabited τ] (io : IO τ) : τ :=
     | Except.error _ => panic! "unsafePerformIO was a not great idea after all"
 
 @[implemented_by unsafePerformIO]
-def totallySafePerformIO [Inhabited τ] (io : IO τ) : τ := Inhabited.default
+def totallySafePerformIO {τ} [Inhabited τ] (io : IO τ) : τ := Inhabited.default
 
 def blobECDSARECOVER (e v r s : String) : String :=
   totallySafePerformIO ∘ IO.Process.run <|

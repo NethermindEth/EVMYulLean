@@ -8,6 +8,7 @@ import EvmYul.State
 import EvmYul.StateOps
 import EvmYul.UInt256
 import EvmYul.Wheels
+import EvmYul.EllipticCurves
 
 import EvmYul.Data.Stack
 
