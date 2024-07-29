@@ -139,6 +139,8 @@ def sdiv (a b : UInt256) : UInt256 :=
        (a / abs b) * -1
     else a / b
 
+#eval sdiv 1 4
+
 def smod (a b : UInt256) : UInt256 :=
   if 2 ^ 255 <= a
   then if 2 ^ 255 <= b

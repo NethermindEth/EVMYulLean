@@ -17,6 +17,7 @@ inductive Exception where
   | Overflow                          : Exception 
   | StopInvoked (s : EVM.State)       : Exception
   | OutOfFuel                         : Exception
+  | ReceiverNotInAccounts (a : Address) : Exception
   | BogusExceptionToBeReplaced (s : String) : Exception
 
 instance : Repr Exception where
@@ -32,6 +33,7 @@ instance : Repr Exception where
                     | .Overflow                          => "Overflow"
                     | .StopInvoked _                     => "Execution halted by STOP."
                     | .OutOfFuel                         => "OutOfFuel"
+                    | .ReceiverNotInAccounts (a : Address) => s!"ReceiverNotInAccounts: {a}"
                     | .BogusExceptionToBeReplaced s      => s!"BogusExceptionToBeReplaced: {s}"
 
 end EVM

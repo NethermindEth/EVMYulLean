@@ -14,7 +14,6 @@ inductive Exception :=
   | CannotParse (why : String)
   | EVMError (exc : EVM.Exception)
   | InvalidTestStructure (why : String)
-  | ReceiverNotInAccounts (a : Address) -- TODO - remove.
   deriving Repr
 end Conform
 
