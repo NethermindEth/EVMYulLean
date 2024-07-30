@@ -112,6 +112,7 @@ def eq0 (a : UInt256) : Bool := a = 0
 def lnot (a : UInt256) : UInt256 := (UInt256.size - 1) - a
 
 def byteAt (a b : UInt256) : UInt256 :=
+  -- dbg_trace "BYTE AT"
   b >>> (UInt256.ofNat ((31 - a.toNat) * 8)) &&& 0xFF
 
 def sgn (a : UInt256) : UInt256 :=

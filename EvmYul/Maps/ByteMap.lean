@@ -41,7 +41,10 @@ instance : IsAntisymm ((_ : UInt256) × UInt8) (· ≤ ·) := sorry
 
 instance : IsTotal ((_ : UInt256) × UInt8) (· ≤ ·) := sorry
 
-instance : DecidableRel (α := (_ : UInt256) × UInt8) (· ≤ ·) := sorry
+instance : DecidableRel (α := (_ : UInt256) × UInt8) (· ≤ ·) :=
+  λ lhs rhs ↦ by
+  unfold LE.le instLESigmaUInt256UInt8
+  exact inferInstance
 
 end RemoveLater
 

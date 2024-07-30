@@ -18,16 +18,32 @@ def updateMemory (self : MachineState) (addr v : UInt256) (numOctets : WordSize 
               maxAddress := self.new_max addr numOctets }
 
 def copyMemory (self : MachineState) (source : ByteArray) (s n : Nat) : MachineState :=
-  { self with memory := (List.range n).map (UInt256.ofNat) |>.foldl (init := self.memory)
+  { self with memory := (List.range n).map UInt256.ofNat |>.foldl (init := self.memory)
                           λ mem addr ↦ mem.insert (addr+s) (source.get! addr)
               maxAddress := self.new_max (s + n) WordSize.Standard
   }
 
+/--
+TODO - Currently a debug version.
+-/
 def lookupMemory (self : MachineState) (addr : UInt256) : UInt256 :=
-  fromBytes! (List.map (λ i ↦ (self.memory.lookup (addr + i)).get!) (List.range 32))
+  -- fromBytes! (List.map (λ i ↦ (self.memory.lookup (addr + i)).get!) (List.range 32))
+  fromBytes! <| List.range 32 |>.map λ i ↦
+    match self.memory.lookup (addr + i) with
+      | .none => dbg_trace s!"lookupMemory failed; address: {addr}"; 0
+      | .some val => val
 
-def lookupMemoryRange (self : MachineState) (addr size : UInt256) : ByteArray :=
-  ⟨⟨List.map (λ i ↦ (self.memory.lookup (addr + i)).get!) (List.range size)⟩⟩
+/--
+TODO - Currently a debug version.
+-/
+def lookupMemoryRange (self : MachineState) (addr size : UInt256) : ByteArray := -- dbg_trace "lookupMemoryRange"
+  -- ⟨⟨List.map (λ i ↦ (self.memory.lookup (addr + i)).get!) (List.range size)⟩⟩
+  ⟨⟨
+    List.range size |>.map λ i ↦
+      match self.memory.lookup (addr + i) with
+        | .none => dbg_trace s!"lookupMemoryRange failed; address: {addr} size: {size}"; 0
+        | .some val => val
+  ⟩⟩
 
 def msize (self : MachineState) : UInt256 :=
   self.maxAddress
