@@ -15,10 +15,16 @@ def isTestFile (file : System.FilePath) : Bool := file.extension.option false (�
 def main (args : List String) : IO Unit := do
   if args.length != 1 then IO.println "Usage: conform <path to 'EthereumTests'>"; return ()
 
-  -- let testFiles ← Array.filter isTestFile <$> System.FilePath.walkDir (args.head! / TestsSubdir)
-  -- let testFiles ← Array.filter isTestFile <$> System.FilePath.walkDir ("EthereumTests" / "BlockchainTests" / "GeneralStateTests" / "VMTests" / "vmArithmeticTest")
-  -- let testFiles ← Array.filter isTestFile <$> System.FilePath.walkDir ("EthereumTests" / "BlockchainTests" / "GeneralStateTests" / "VMTests" / "vmArithmeticTest")
   let testFiles ← Array.filter isTestFile <$> System.FilePath.walkDir ("EthereumTests" / "BlockchainTests" / "GeneralStateTests" / "VMTests")
+  -- let testFiles ← Array.filter isTestFile <$> System.FilePath.walkDir ("EthereumTests" / "BlockchainTests" / "GeneralStateTests" / "stZeroKnowledge2")
+  -- let testFiles ← Array.filter isTestFile <$> System.FilePath.walkDir ("EthereumTests" / "BlockchainTests" / "GeneralStateTests" / "stZeroKnowledge")
+  -- let testFiles ← Array.filter isTestFile <$> System.FilePath.walkDir ("EthereumTests" / "BlockchainTests" / "GeneralStateTests" / "stZeroCallsTest")
+  -- let testFiles ← Array.filter isTestFile <$> System.FilePath.walkDir ("EthereumTests" / "BlockchainTests" / "GeneralStateTests" / "stZeroCallsRevert")
+  -- let testFiles ← Array.filter isTestFile <$> System.FilePath.walkDir ("EthereumTests" / "BlockchainTests" / "GeneralStateTests" / "stWalletTest")
+  -- let testFiles ← Array.filter isTestFile <$> System.FilePath.walkDir ("EthereumTests" / "BlockchainTests" / "GeneralStateTests" / "stTransitionTest") -- TODO: Parser error.
+  -- let testFiles ← Array.filter isTestFile <$> System.FilePath.walkDir ("EthereumTests" / "BlockchainTests" / "GeneralStateTests" / "stTimeConsuming") -- TODO: Parser error.
+  -- let testFiles ← Array.filter isTestFile <$> System.FilePath.walkDir ("EthereumTests" / "BlockchainTests" / "GeneralStateTests" / "stSystemOperationsTest") -- TODO: Takes too long
+
   
   -- let testFiles := #[SimpleFile]
   -- let testFiles := #[BuggyFile]
