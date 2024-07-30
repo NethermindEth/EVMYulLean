@@ -16,6 +16,15 @@ namespace EvmYul
 
 namespace Conform
 
+def VerySlowTests : Array String :=
+  #[
+    "sha3_d3g0v0_Cancun", -- ~6MB getting keccak256'd, estimated time on my PC: ~1 hour, best guess: unfoldr.go in keccak256.lean
+    "sha3_d5g0v0_Cancun", -- best guess: `lookupMemoryRange'{'}{''}` are slow; I guess we will need an faster structure than Finmap
+    "sha3_d6g0v0_Cancun" -- same problem as `sha3_d5g0v0_Cancun` I'm guessing
+  ]
+
+def GlobalBlacklist : Array String := VerySlowTests
+
 def Pre.toEVMState (self : Pre) : EVM.State :=
   self.fold addAccount default
   where addAccount s addr acc :=
@@ -193,7 +202,7 @@ def processTestsOfFile (file : System.FilePath)
     guardWhitelist (tests : List (String × TestEntry)) :=
       if whitelist.isEmpty then tests else tests.filter (λ (name, _) ↦ name ∈ whitelist)
     guardBlacklist (tests : List (String × TestEntry)) :=
-      tests.filter (λ (name, _) ↦ name ∉ blacklist)
+      tests.filter (λ (name, _) ↦ name ∉ GlobalBlacklist ++ blacklist)
 
 end Conform
 

@@ -25,25 +25,46 @@ def copyMemory (self : MachineState) (source : ByteArray) (s n : Nat) : MachineS
 
 /--
 TODO - Currently a debug version.
+
+-- Failing at least `sha3_d0g0v0_Cancun` in 
+-- `EthereumTests/BlockchainTests/GeneralStateTests/VMTests/vmTests/sha3.json`.
 -/
 def lookupMemory (self : MachineState) (addr : UInt256) : UInt256 :=
   -- fromBytes! (List.map (λ i ↦ (self.memory.lookup (addr + i)).get!) (List.range 32))
+
+  -- fromBytes! <| List.range 32 |>.map λ i ↦ self.memory.lookup (addr + i) |>.getD 0
+
   fromBytes! <| List.range 32 |>.map λ i ↦
     match self.memory.lookup (addr + i) with
-      | .none => dbg_trace s!"lookupMemory failed; address: {addr}"; 0
+      | .none => dbg_trace "lookup failed; addr: {addr} - returning 0"; 0
       | .some val => val
 
 /--
 TODO - Currently a debug version.
 -/
-def lookupMemoryRange (self : MachineState) (addr size : UInt256) : ByteArray := -- dbg_trace "lookupMemoryRange"
+def lookupMemoryRange (self : MachineState) (addr size : UInt256) : ByteArray := dbg_trace s!"lookupMemoryRange addr: {addr} size: {size}"
   -- ⟨⟨List.map (λ i ↦ (self.memory.lookup (addr + i)).get!) (List.range size)⟩⟩
-  ⟨⟨
-    List.range size |>.map λ i ↦
-      match self.memory.lookup (addr + i) with
-        | .none => dbg_trace s!"lookupMemoryRange failed; address: {addr} size: {size}"; 0
-        | .some val => val
-  ⟩⟩
+  ⟨⟨List.range size |>.map λ i ↦ self.memory.lookup (addr + i) |>.getD 0⟩⟩
+
+def lookupMemoryRange' (self : MachineState) (addr size : UInt256) : ByteArray := Id.run do
+  let mut result : ByteArray := ∅
+  let mut i := 0
+  while i < size do
+    result := result.push <| self.memory.lookup (addr + i) |>.getD 0
+    i := i + 1
+  return result
+
+private def lookupMemoryRange''_aux (self : MachineState) (addr : UInt256) (res : ByteArray) : UInt256 → ByteArray
+  | 0 => res
+  | ⟨k + 1, _⟩ => lookupMemoryRange''_aux self addr (res.push <| self.memory.lookup (addr + k) |>.getD 0) k
+termination_by k => k
+decreasing_by {
+  simp_wf; simp [Fin.lt_def]
+  rw [Nat.mod_eq_of_lt] <;> omega 
+}
+
+def lookupMemoryRange'' (self : MachineState) (addr size : UInt256) : ByteArray :=
+  lookupMemoryRange''_aux self addr .empty size
 
 def msize (self : MachineState) : UInt256 :=
   self.maxAddress
@@ -62,7 +83,7 @@ def mstore8 (self : MachineState) (spos sval : UInt256) : MachineState :=
   self.updateMemory spos (Fin.ofNat (sval.val % (2^8)))
 
 def mcopy (self : MachineState) (mstart datastart s : UInt256) : MachineState :=
-  let arr := self.lookupMemoryRange datastart.val s.val
+  let arr := self.lookupMemoryRange' datastart.val s.val
   (·.1) <| arr.foldl (init := (self, mstart)) λ (sa , j) i ↦ (sa.updateMemory j i.val, j + 1)
 
 -- Apendix H, (320)
@@ -111,8 +132,11 @@ def evmRevert (self : MachineState) (mstart s : UInt256) : MachineState :=
 end ReturnData
 
 def keccak256 (self : MachineState) (mstart s : UInt256) : UInt256 × MachineState :=
-  let vals := self.lookupMemoryRange mstart.val s.val
+  -- dbg_trace s!"called keccak256; going to be looking up a lot of vals; s: {s}"
+  let vals := self.lookupMemoryRange' mstart.val s.val
+  -- dbg_trace s!"got vals {vals}"
   let kec := KEC vals
+  -- dbg_trace s!"got kec {kec}"
   let maxAddress' := M self.maxAddress mstart s
   (fromBytesBigEndian kec.data.data, {self with maxAddress := maxAddress'})
 

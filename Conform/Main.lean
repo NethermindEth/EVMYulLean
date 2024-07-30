@@ -18,21 +18,22 @@ def main (args : List String) : IO Unit := do
   -- let testFiles ← Array.filter isTestFile <$> System.FilePath.walkDir (args.head! / TestsSubdir)
   -- let testFiles ← Array.filter isTestFile <$> System.FilePath.walkDir ("EthereumTests" / "BlockchainTests" / "GeneralStateTests" / "VMTests" / "vmArithmeticTest")
   -- let testFiles ← Array.filter isTestFile <$> System.FilePath.walkDir ("EthereumTests" / "BlockchainTests" / "GeneralStateTests" / "VMTests" / "vmArithmeticTest")
-  -- let testFiles ← Array.filter isTestFile <$> System.FilePath.walkDir ("EthereumTests" / "BlockchainTests" / "GeneralStateTests" / "VMTests" / "vmTests")
+  let testFiles ← Array.filter isTestFile <$> System.FilePath.walkDir ("EthereumTests" / "BlockchainTests" / "GeneralStateTests" / "VMTests")
   
   -- let testFiles := #[SimpleFile]
   -- let testFiles := #[BuggyFile]
-  let testFiles := #[SpecificFile]
+  -- let testFiles := #[SpecificFile]
   -- let testFiles := #[BuggyFile]
 
-  let mut dbgCount := 10
+
+  let mut dbgCount := 2048
 
   for testFile in testFiles do
     -- dbg_trace s!"testFile: {testFile}"
     if dbgCount == 0 then break
 
     IO.println s!"File under test: {testFile}"
-    let res ← ExceptT.run <| EvmYul.Conform.processTestsOfFile testFile (whitelist := #["sha3_d0g0v0_Cancun"])
+    let res ← ExceptT.run <| EvmYul.Conform.processTestsOfFile testFile
     match res with
       | .error err         => IO.println s!"Error: {repr err}"
       | .ok    testresults => IO.println s!"{repr testresults}"

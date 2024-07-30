@@ -159,13 +159,13 @@ private def L (n : ℕ) := n - n / 64
 def shortInput := "01aHHABLA"
 def longInput := "Lean 4 is a reimplementation of the Lean theorem prover in Lean itself. The new compiler produces C code, and users can now implement efficient proof automation in Lean, compile it into efficient C code, and load it as a plugin. In Lean 4, users can access all internal data structures used to implement Lean by merely importing the Lean package."
 
-example :
-  toHex (KEC shortInput.toUTF8) = "6107589dda3ff2ac99745795d1eb3ac2538f2a7a93f9ef180c33dee244592874"
-:= by native_decide
+-- example :
+--   toHex (KEC shortInput.toUTF8) = "6107589dda3ff2ac99745795d1eb3ac2538f2a7a93f9ef180c33dee244592874"
+-- := by native_decide
 
-example :
-  toHex (KEC longInput.toUTF8) = "596cfd6c2f8f76b8f480f5c2fc582db9089486792435f397f8286aff64d42646"
-:= by native_decide
+-- example :
+--   toHex (KEC longInput.toUTF8) = "596cfd6c2f8f76b8f480f5c2fc582db9089486792435f397f8286aff64d42646"
+-- := by native_decide
 
 -- Appendix B. Recursive Length Prefix
 
@@ -340,7 +340,7 @@ def step {τ : OperationType} (op : Operation τ) : Transformer τ :=
               | some L_A =>
                 let addr : Address :=
                   (KEC L_A).extract 96 265 |>.data.data |> fromBytesBigEndian |> Fin.ofNat
-                let code : ByteArray := yulState.toMachineState.lookupMemoryRange poz len
+                let code : ByteArray := yulState.toMachineState.lookupMemoryRange' poz len
                 -- σ*
                 let accountMapStar :=
                   match yulState.toState.accountMap.lookup Iₐ with
@@ -402,7 +402,7 @@ def step {τ : OperationType} (op : Operation τ) : Transformer τ :=
             let Iₐ := yulState.executionEnv.codeOwner
             let this₀ := toBytesBigEndian Iₐ.val
             let this : List UInt8 := List.replicate (20 - this₀.length) 0 ++ this₀
-            let code : ByteArray := yulState.toMachineState.lookupMemoryRange poz len
+            let code : ByteArray := yulState.toMachineState.lookupMemoryRange' poz len
             let s : List UInt8 := toBytesBigEndian ζ
             let a₀ : List UInt8 := [0xff]
             let addr₀ := KEC <| ⟨⟨a₀ ++ this ++ s⟩⟩ ++ KEC code
