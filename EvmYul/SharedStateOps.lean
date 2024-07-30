@@ -39,7 +39,7 @@ def calldatacopy (self : SharedState) (mstart datastart s : UInt256) : SharedSta
 def big : UInt256 := 0xfffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffa
 
 def codeCopy (self : SharedState) (mstart cstart s : UInt256) : SharedState :=
-  let Ib := self.toState.executionEnv.code.extract cstart.val s.val -- TODO(double check, changed in a fast-and-loose manner)
+  let Ib := self.toState.executionEnv.code.extract' cstart.val s.val -- TODO(double check, changed in a fast-and-loose manner)
   (·.1) <| Ib.foldl (init := (self, mstart)) λ (sa, j) i ↦ (sa.updateMemory j i.toUInt256, j + 1)
 
 def extCodeCopy (self : SharedState) (acc mstart cstart s : UInt256) : SharedState :=
@@ -47,7 +47,7 @@ def extCodeCopy (self : SharedState) (acc mstart cstart s : UInt256) : SharedSta
   let sState' : SharedState :=
     match self.toState.lookupAccount addr with
     | .some act1 =>
-      let Ib := act1.code.extract cstart.val s.val
+      let Ib := act1.code.extract' cstart.val s.val
       (·.1) <| Ib.foldl (init := (self, mstart)) λ (sa, j) i ↦ (sa.updateMemory j i.toUInt256, j + 1)
     | _ =>
       (·.1) <| s.val.fold (init := (self, mstart)) λ _ (sa , j) ↦ (sa.updateMemory j 0, j + 1)

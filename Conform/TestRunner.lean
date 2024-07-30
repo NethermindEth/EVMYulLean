@@ -105,7 +105,7 @@ def executeTransaction (transaction : Transaction) (s : EVM.State) : Except EVM.
 
   -- dbg_trace s!"Initialisied code: {EvmYul.toHex I'.code}"
 
-  let _TODOfuel := 2^32
+  let _TODOfuel := 2^13
 
   -- dbg_trace s!"Map before execution: {Finmap.pretty s.accountMap}"
 
@@ -169,12 +169,8 @@ def processTest (entry : TestEntry) : Except Exception TestResult := do
 
   pure <| result.elim .mkSuccess λ errSt ↦
     let (postSubActual, actualSubPost) := storageΔ (entry.postState.toEVMState.accountMap) errSt.accountMap
-    -- dbg_trace "ST: {Finmap.pretty errSt.accountMap}"
-    -- dbg_trace "POST: {Finmap.pretty entry.postState.toEVMState.accountMap}"
-    .mkFailed s!"post / actual: {Finmap.pretty postSubActual}\nactual / post: {Finmap.pretty actualSubPost}"
-  -- dbg_trace "pre: {entry.pre}"
-  -- dbg_trace "post: {entry.postState}"
-  -- pure <| TestResult.ofBool result 
+    -- .mkFailed s!"post / actual: {Finmap.pretty postSubActual}\nactual / post: {Finmap.pretty actualSubPost}"
+    .mkFailed s!"ERROR"
 
 local instance : MonadLift (Except String) (Except Conform.Exception) := ⟨Except.mapError .CannotParse⟩
 
@@ -188,7 +184,7 @@ def processTestsOfFile (file : System.FilePath)
   tests.foldlM (init := ∅) λ acc (testname, test) ↦
     try -- TODO - currently we workaround by distinguishing hard and soft errors.
         -- This needs refining.
-      IO.println s!"Test: {testname}"
+      -- IO.println s!"Test: {testname}"
       processTest test >>= pure ∘ acc.insert testname
           -- currently the soft errors are the ones I am personally unsure about :)
     catch | .EVMError e@(.ReceiverNotInAccounts _) => pure (acc.insert testname (.mkFailed s!"{repr e}"))

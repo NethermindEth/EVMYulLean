@@ -171,7 +171,7 @@ def step (fuel : ℕ) (instr : Option (Operation .EVM × Option (UInt256 × Nat)
           | _ => .error EVM.Exception.InvalidStackSizeException
       | .PC =>
         .ok <| evmState.replaceStackAndIncrPC (evmState.stack.push evmState.pc)
-      | .JUMPDEST => .ok evmState
+      | .JUMPDEST => .ok evmState.incrPC
 
       | .DUP1 => dup 1 evmState
       | .DUP2 => dup 2 evmState
@@ -293,7 +293,7 @@ def step (fuel : ℕ) (instr : Option (Operation .EVM × Option (UInt256 × Nat)
           -- TODO - Refactor condition and possibly share with CREATE
           if μ₂ ≤ (evmState.accountMap.lookup evmState.executionEnv.codeOwner |>.option 0 Account.balance) ∧ evmState.executionEnv.depth < 1024 then
             let t : Address := Address.ofUInt256 μ₁ -- t ≡ μs[1] mod 2^160
-            dbg_trace s!"DBG REMOVE; Calling address: {t}"
+            -- dbg_trace s!"DBG REMOVE; Calling address: {t}"
             let A' := evmState.addAccessedAccount t |>.substate -- A' ≡ A except A'ₐ ≡ Aₐ ∪ {t}
             -- TODO A minor... hack? Are we supposed to run into missing account here?
             let .some tDirect := evmState.accountMap.lookup t | throw (.ReceiverNotInAccounts t)
@@ -321,8 +321,9 @@ def step (fuel : ℕ) (instr : Option (Operation .EVM × Option (UInt256 × Nat)
 
         -- TODO - Note to self. Check how updateMemory/copyMemory is implemented. By a cursory look, we play loose with UInt8 -> UInt256 (c.f. e.g. `calldatacopy`) and then the interplay with the WordSize parameter.
         -- TODO - Check what happens when `o = .none`.
+        dbg_trace s!"REPORT - μ₅: {μ₅} n: {n} o: {o}"
         let μ'ₘ := evmState.toMachineState.copyMemory (o.getD .empty) μ₅ n -- μ′_m[μs[5]  ... (μs[5] + n − 1)] = o[0 ... (n − 1)]
-
+        dbg_trace s!"REPORT - μ'ₘ: {Finmap.pretty μ'ₘ.memory}"
         let μ'ₒ := o -- μ′o = o
         let μ'_g := g' -- TODO gas - μ′g ≡ μg − CCALLGAS(σ, μ, A) + g
 
@@ -350,17 +351,13 @@ def step (fuel : ℕ) (instr : Option (Operation .EVM × Option (UInt256 × Nat)
       | instr => EvmYul.step instr evmState
 
 def X (fuel : ℕ) (evmState : State) : Except EVM.Exception (State × Option ByteArray) := do
-  -- dbg_trace s!"X?!"
   match fuel with
     | 0 => .ok (evmState, some .empty)
     | .succ f =>
       let I_b := evmState.toState.executionEnv.code
-      dbg_trace "X calling decode"
-      let instr@(w, arg) :=
-        match decode I_b evmState.pc with
-          | some (w, arg) => (w, arg) 
-          | none => (.STOP, .none)
-      dbg_trace s!"I got: {w.pretty}"
+      -- dbg_trace "X calling decode"
+      let instr@(w, _) := decode I_b evmState.pc |>.getD (.STOP, .none)
+      -- dbg_trace s!"I got: {w.pretty}"
       let W (w : Operation .EVM) (s : Stack UInt256) : Bool :=
         w ∈ [.CREATE, .CREATE2, .SSTORE, .SELFDESTRUCT, .LOG0, .LOG1, .LOG2, .LOG3, .LOG4] ∨
         (w = .CALL ∧ s.get? 2 ≠ some 0)
