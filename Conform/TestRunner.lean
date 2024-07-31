@@ -19,7 +19,7 @@ namespace Conform
 def VerySlowTests : Array String :=
   #[
     "sha3_d3g0v0_Cancun", -- ~6MB getting keccak256'd, estimated time on my PC: ~1 hour, best guess: unfoldr.go in keccak256.lean
-    "sha3_d5g0v0_Cancun", -- best guess: `lookupMemoryRange'{'}{''}` are slow; I guess we will need an faster structure than Finmap
+    -- "sha3_d5g0v0_Cancun", -- best guess: `lookupMemoryRange'{'}{''}` are slow; I guess we will need an faster structure than Finmap
     "sha3_d6g0v0_Cancun" -- same problem as `sha3_d5g0v0_Cancun` I'm guessing
   ]
 
@@ -192,7 +192,9 @@ def processTestsOfFile (file : System.FilePath)
                        ExceptT Exception IO (Lean.RBMap String TestResult compare) := do
   let file ← Lean.Json.fromFile file
   let test ← Lean.FromJson.fromJson? (α := Test) file
+  dbg_trace s!"tests before guard: {test.toTests.map Prod.fst}"
   let tests := guardBlacklist ∘ guardWhitelist <| test.toTests
+  dbg_trace s!"tests after guard: {tests.map Prod.fst}"
   tests.foldlM (init := ∅) λ acc (testname, test) ↦
     try -- TODO - currently we workaround by distinguishing hard and soft errors.
         -- This needs refining.

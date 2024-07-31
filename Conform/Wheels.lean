@@ -109,6 +109,22 @@ end Address
 
 end WithConform
 
+namespace DebuggingAndProfiling
+
+section
+
+set_option autoImplicit true
+
+unsafe def report [Inhabited β] (s : String) (f : α → β) (a : α) : β :=
+  dbg_trace s!"BEGIN: {s}"
+  let res := timeit s!"The function '{s}' took:" <| pure (f a)
+  dbg_trace s!"END: {s}"
+  unsafeIO res |>.toOption.get!
+
+end
+
+end DebuggingAndProfiling
+
 end EvmYul
 
 open EvmYul.Conform (toHex) in

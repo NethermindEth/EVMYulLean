@@ -28,7 +28,7 @@ def main (args : List String) : IO Unit := do
   
   -- let testFiles := #[SimpleFile]
   -- let testFiles := #[BuggyFile]
-  -- let testFiles := #[SpecificFile]
+  let testFiles := #[SpecificFile]
   -- let testFiles := #[BuggyFile]
 
 
@@ -39,7 +39,7 @@ def main (args : List String) : IO Unit := do
     if dbgCount == 0 then break
 
     IO.println s!"File under test: {testFile}"
-    let res ← ExceptT.run <| EvmYul.Conform.processTestsOfFile testFile
+    let res ← ExceptT.run <| EvmYul.Conform.processTestsOfFile testFile (whitelist := #["sha3_d5g0v0_Cancun"])
     match res with
       | .error err         => IO.println s!"Error: {repr err}"
       | .ok    testresults => IO.println s!"{repr testresults}"
