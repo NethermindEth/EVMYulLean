@@ -25,6 +25,9 @@ abbrev Storage := AddrMap UInt256
 def Storage.toFinmap (self : Storage) : Finmap (λ _ : UInt256 ↦ UInt256) :=
   self.fold (init := ∅) λ acc k v ↦ acc.insert (UInt256.ofNat k.1) v
 
+def Storage.toEvmYulStorage (self : Storage) : EvmYul.Storage :=
+  self.fold (init := ∅) λ acc k v ↦ acc.insert (UInt256.ofNat k.1) v
+
 def AddrMap.keys {α : Type} [Inhabited α] (self : AddrMap α) : Multiset Address :=
   .ofList <| self.toList.map Prod.fst
 
@@ -61,8 +64,7 @@ instance : DecidableRel (α := (_ : UInt256) × UInt256) (· ≤ ·) :=
     aesop (config := {warnOnNonterminal := false}) <;> exact inferInstance
 
 def Storage.ofFinmap (m : EvmYul.Storage) : Storage :=
-  let asList := computeToList! m.entries
-  Lean.RBMap.ofList (asList.map λ ⟨k, v⟩ ↦ (Address.ofUInt256 k, v))
+  Lean.RBMap.ofList <| m.toList.map λ (k, v) ↦ (Address.ofUInt256 k, v)
 
 abbrev Code := ByteArray
 
