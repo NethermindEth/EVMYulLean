@@ -35,7 +35,7 @@ def Pre.toEVMState (self : Pre) : EVM.State :=
         balance  := acc.balance
         code     := acc.code
         codeHash := 0 -- TODO - We can of course compute this but we probably do not need this.
-        storage  := acc.storage.toFinmap
+        storage  := acc.storage.toEvmYulStorage
       }  
     { s with toState := s.setAccount addr account }
 
@@ -49,7 +49,7 @@ local instance : Inhabited EVM.Transformer where
 private def compareWithEVMdefaults (s₁ s₂ : EvmYul.Storage) : Bool :=
   withDefault s₁ == withDefault s₂
   where
-    withDefault (s : EvmYul.Storage) : EvmYul.Storage := if 0 ∈ s then s else s.insert 0 0
+    withDefault (s : EvmYul.Storage) : EvmYul.Storage := if s.contains 0 then s else s.insert 0 0
 
 /--
 TODO - Fix me.
@@ -57,7 +57,7 @@ TODO - Fix me.
 private def veryShoddyAccEq (acc₁ acc₂ : Account) : Bool :=
   withDefault acc₁.storage == withDefault acc₂.storage
   where
-    withDefault (s : EvmYul.Storage) : EvmYul.Storage := if 0 ∈ s then s else s.insert 0 0
+    withDefault (s : EvmYul.Storage) : EvmYul.Storage := if s.contains 0 then s else s.insert 0 0
 
 /--
 TODO - Of course remove this later.
@@ -67,12 +67,13 @@ private local instance (priority := high) shoddyInstance : DecidableEq Account :
 
 /--
 TODO - This should be a generic map complement, but we are not trying to write a library here.
-Also ouch `Finmap`.
+
+Now that this is not a `Finmap`, this is probably defined somewhere in the API, fix later.
 -/
 def storageComplement (m₁ m₂ : AccountMap) : AccountMap := Id.run do
   let mut result : AccountMap := m₁
-  for ⟨k₂, v₂⟩ in computeToList! m₂.entries do
-    match m₁.lookup k₂ with
+  for ⟨k₂, v₂⟩ in m₂.toList do
+    match m₁.find? k₂ with
     | .none => continue
     | .some v₁ => if v₁ == v₂ then result := result.erase k₂ else continue
   return result
@@ -83,6 +84,8 @@ Effectively `m₁ / m₂ × m₂ / m₁`.
 
 - if the `Δ = (∅, ∅)`, then `m₁ = m₂`
 - used for reporting delta between expected post state and the actual state post execution
+
+Now that this is not a `Finmap`, this is probably defined somewhere in the API, fix later.
 -/
 def storageΔ (m₁ m₂ : AccountMap) : AccountMap × AccountMap :=
   (storageComplement m₁ m₂, storageComplement m₂ m₁)
@@ -106,7 +109,7 @@ def executeTransaction (transaction : Transaction) (s : EVM.State) : Except EVM.
 
   -- TODO - This is not complete, of course.
   let I' := {
-    s.executionEnv with code      := s.accountMap.lookup target |>.elim .empty Account.code
+    s.executionEnv with code      := s.accountMap.find? target |>.elim .empty Account.code
                         codeOwner := target  
                         perm      := true
                         inputData := transaction.data
@@ -139,7 +142,7 @@ def executeTransaction (transaction : Transaction) (s : EVM.State) : Except EVM.
   -- TODO - This is currently not done properly. ^^^^^^^^^^^^^^
 
   let _BEACON_ROOTS_ADDRESS_HACK := 0x000f3df6d732807ef1319fb7b8bb8522d0beac02
-  let .some _BEACON_ROOTS_ACCOUNT_HACK := s.accountMap.lookup _BEACON_ROOTS_ADDRESS_HACK | throw (.BogusExceptionToBeReplaced "_BEACON_ROOTS_ADDRESS_HACK not in pre")
+  let .some _BEACON_ROOTS_ACCOUNT_HACK := s.accountMap.find? _BEACON_ROOTS_ADDRESS_HACK | throw (.BogusExceptionToBeReplaced "_BEACON_ROOTS_ADDRESS_HACK not in pre")
   let σ := σ.insert _BEACON_ROOTS_ADDRESS_HACK (_BEACON_ROOTS_ACCOUNT_HACK.updateStorage 0x03e8 0x03e8)
   
   -- TODO - I think we do this tuple → EVM.State conversion reasonably often, factor out?
