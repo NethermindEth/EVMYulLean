@@ -1,6 +1,8 @@
 import EvmYul.State.SubstateOps
 import EvmYul.State.AccountOps
 
+import EvmYul.Maps.YPState
+
 import EvmYul.State
 
 namespace EvmYul
@@ -15,14 +17,16 @@ def addAccessedStorageKey (self : State) (sk : Address × UInt256) : State :=
 
 /--
 DEAD(σ, a). Section 4.1., equation 15.
--/
-def dead (σ : Finmap (λ _ : Address ↦ Account)) (addr : Address) : Bool :=
-  σ.lookup addr |>.option True Account.emptyAccount
 
-def accountExists (self : State) (addr : Address) : Bool := self.accountMap.lookup addr |>.isSome
+TODO - some conundrum about the mismatch of particulars of states from YP, maybe this should not be here
+-/
+def dead (σ : YPState) (addr : Address) : Bool :=
+  σ.find? addr |>.option True Account.emptyAccount
+
+def accountExists (self : State) (addr : Address) : Bool := self.accountMap.find? addr |>.isSome
 
 def lookupAccount (self : State) (addr : Address) : Option Account :=
-  self.accountMap.lookup addr
+  self.accountMap.find? addr
 
 def updateAccount (addr : Address) (act : Account) (self : State) : State :=
   { self with accountMap := self.accountMap.insert addr act }
@@ -42,13 +46,13 @@ def updateSelfAccount! (self : State) : (Account → Account) → State :=
 
 def balance (self : State) (k : UInt256) : State × UInt256 :=
   let addr := Address.ofUInt256 k
-  (self.addAccessedAccount addr, self.accountMap.lookup addr |>.option 0 Account.balance)
+  (self.addAccessedAccount addr, self.accountMap.find? addr |>.elim 0 Account.balance)
 
 def transferBalance (sender : Address) (recipient : Address) (balance : UInt256) (self : State) : Option State :=
   if sender == recipient then .some self -- NB this check renders `balance` validity irrelevant
   else do
-    let senderAcc ← self.accountMap.lookup sender
-    let recipientAcc ← self.accountMap.lookup recipient
+    let senderAcc ← self.accountMap.find? sender
+    let recipientAcc ← self.accountMap.find? recipient
     let (senderAcc, recipientAcc) ← senderAcc.transferBalanceTo balance recipientAcc
     self.updateAccount sender senderAcc
       |>.updateAccount recipient recipientAcc
@@ -73,7 +77,7 @@ def setNonce! (self : State) (addr : Address) (nonce : UInt256) : State :=
 def setSelfNonce! (self : State) (nonce : UInt256) : State :=
   self.setNonce! self.executionEnv.codeOwner nonce
 
-def selfStorage! (self : State) : Finmap (λ _ : UInt256 ↦ UInt256) :=
+def selfStorage! (self : State) : Storage :=
   self.lookupAccount self.executionEnv.codeOwner |>.getD default |>.storage
 
 section CodeCopy
@@ -116,7 +120,7 @@ def chainId (self : State) : UInt256 :=
   self.executionEnv.header.chainId
 
 def selfbalance (self : State) : UInt256 :=
-  Finmap.lookup self.executionEnv.codeOwner self.accountMap |>.option 0 Account.balance
+  Batteries.RBMap.find? self.accountMap self.executionEnv.codeOwner |>.elim 0 Account.balance
 
 /--
 TODO: `Account` also has `code`. Recheck.
@@ -128,10 +132,10 @@ end Blocks
 
 section Storage
 
-def setStorage! (self : State) (addr : Address) (strg : Finmap (λ _ : UInt256 ↦ UInt256)) : State :=
+def setStorage! (self : State) (addr : Address) (strg : Storage) : State :=
   self.updateAccount! addr (λ acc ↦ { acc with storage := strg })
 
-def setSelfStorage! (self : State) : Finmap (λ _ : UInt256 ↦ UInt256) → State :=
+def setSelfStorage! (self : State) : Storage → State :=
   self.setStorage! self.executionEnv.codeOwner
 
 def sload (self : State) (spos : UInt256) : State × UInt256 :=

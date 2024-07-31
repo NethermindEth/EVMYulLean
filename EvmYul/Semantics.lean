@@ -331,7 +331,7 @@ def step {τ : OperationType} (op : Operation τ) : Transformer τ :=
         match lits with
           | [v, poz, len] =>
             let Iₐ := yulState.executionEnv.codeOwner
-            let nonce' : UInt256 := yulState.toState.accountMap.lookup Iₐ |>.option 0 Account.nonce
+            let nonce' : UInt256 := yulState.toState.accountMap.find? Iₐ |>.option 0 Account.nonce
             let s : 𝕋 := .𝔹 (toBytesBigEndian Iₐ.val).toByteArray
             let n : 𝕋 := .𝔹 (toBytesBigEndian nonce').toByteArray
             let L_A := RLP <| .𝕃 [s, n]
@@ -343,14 +343,14 @@ def step {τ : OperationType} (op : Operation τ) : Transformer τ :=
                 let code : ByteArray := yulState.toMachineState.lookupMemoryRange' poz len
                 -- σ*
                 let accountMapStar :=
-                  match yulState.toState.accountMap.lookup Iₐ with
+                  match yulState.toState.accountMap.find? Iₐ with
                     | none => yulState.toState.accountMap
                     | some ac =>
                       yulState.toState.accountMap.insert
                         Iₐ
                         {ac with balance := ac.balance - v, nonce := ac.nonce + 1}
                 let v' :=
-                  match yulState.toState.accountMap.lookup addr with
+                  match yulState.toState.accountMap.find? addr with
                     | none => 0
                     | some ac => ac.balance
                 let newAccount : Account :=
@@ -376,9 +376,9 @@ def step {τ : OperationType} (op : Operation τ) : Transformer τ :=
             let A' : Substate :=
               { evmState.substate with
                   selfDestructSet :=
-                    evmState.substate.selfDestructSet ∪ {Iₐ}
+                    evmState.substate.selfDestructSet.insert Iₐ
                   accessedAccounts :=
-                    evmState.substate.accessedAccounts ∪ {r}
+                    evmState.substate.accessedAccounts.insert r
               }
             let accountMap' :=
               match evmState.lookupAccount r, evmState.lookupAccount Iₐ with
@@ -408,14 +408,14 @@ def step {τ : OperationType} (op : Operation τ) : Transformer τ :=
             let addr₀ := KEC <| ⟨⟨a₀ ++ this ++ s⟩⟩ ++ KEC code
             let addr : Address := Fin.ofNat <| fromBytesBigEndian addr₀.data.data
             let accountMapStar :=
-              match yulState.toState.accountMap.lookup Iₐ with
+              match yulState.toState.accountMap.find? Iₐ with
                 | none => yulState.toState.accountMap
                 | some ac =>
                   yulState.toState.accountMap.insert
                     Iₐ
                     {ac with balance := ac.balance - v, nonce := ac.nonce + 1}
             let v' :=
-              match yulState.toState.accountMap.lookup addr with
+              match yulState.toState.accountMap.find? addr with
                 | none => 0
                 | some ac => ac.balance
             let newAccount : Account :=
