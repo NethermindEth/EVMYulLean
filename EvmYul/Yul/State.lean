@@ -18,7 +18,7 @@ inductive Jump where
   | Continue : EvmYul.SharedState → VarStore → Jump
   | Break    : EvmYul.SharedState → VarStore → Jump
   | Leave    : EvmYul.SharedState → VarStore → Jump
-deriving DecidableEq
+deriving BEq
 
 /--
 The Yul `State`.
@@ -32,7 +32,7 @@ inductive State where
   | Ok         : EvmYul.SharedState → VarStore → State
   | OutOfFuel  : State
   | Checkpoint : Jump → State
-deriving DecidableEq
+deriving BEq
 
 instance : Inhabited State where
   default := .Ok default default
