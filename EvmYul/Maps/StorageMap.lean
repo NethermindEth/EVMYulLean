@@ -17,7 +17,7 @@ a'la `Finmap`.
 TODO - All of this is very ugly.
 -/
 
-import Mathlib.Data.Finmap
+import Batteries.Data.RBMap
 import Mathlib.Data.Multiset.Sort
 
 import EvmYul.Wheels
@@ -26,65 +26,41 @@ namespace EvmYul
 
 section RemoveLater
 
-abbrev Storage : Type := Finmap (λ _ : UInt256 ↦ UInt256)
+open Batteries (RBMap)
 
-instance : LE ((_ : UInt256) × UInt256) where
-  le lhs rhs := if lhs.1 = rhs.1 then lhs.2 ≤ rhs.2 else lhs.1 ≤ rhs.1
-
-instance : IsTrans ((_ : UInt256) × UInt256) (· ≤ ·) where
-  trans a b c h₁ h₂ := by
-    rcases a with ⟨⟨a, ha⟩, ⟨a', ha'⟩⟩
-    rcases b with ⟨⟨b, hb⟩, ⟨b', hb'⟩⟩
-    rcases c with ⟨⟨c, hc⟩, ⟨c', hc'⟩⟩
-    unfold LE.le instLESigmaUInt256 at h₁ h₂ ⊢; simp at *
-    aesop (config := {warnOnNonterminal := false}) <;> omega
-
-instance : IsAntisymm ((_ : UInt256) × UInt256) (· ≤ ·) where
-  antisymm a b h₁ h₂ := by
-    rcases a with ⟨⟨a, ha⟩, ⟨a', ha'⟩⟩
-    rcases b with ⟨⟨b, hb⟩, ⟨b', hb'⟩⟩
-    unfold LE.le instLESigmaUInt256 at h₁ h₂; simp at *
-    aesop (config := {warnOnNonterminal := false}) <;> omega
-
-instance : IsTotal ((_ : UInt256) × UInt256) (· ≤ ·) where
-  total a b := by
-    rcases a with ⟨⟨a, ha⟩, ⟨a', ha'⟩⟩
-    rcases b with ⟨⟨b, hb⟩, ⟨b', hb'⟩⟩
-    unfold LE.le instLESigmaUInt256; simp
-    aesop (config := {warnOnNonterminal := false}) <;> omega
-
-instance : DecidableRel (α := (_ : UInt256) × UInt256) (· ≤ ·) :=
-  λ a b ↦ by
-    rcases a with ⟨⟨a, ha⟩, ⟨a', ha'⟩⟩
-    rcases b with ⟨⟨b, hb⟩, ⟨b', hb'⟩⟩
-    unfold LE.le instLESigmaUInt256; simp
-    aesop (config := {warnOnNonterminal := false}) <;> exact inferInstance
+abbrev Storage : Type := RBMap UInt256 UInt256 compare
 
 /--
 It does _not_ matter how this is implemented at all, this is used _exclusively_ for convenience.
-`Finmap`s are really clumsy.
 -/
-instance : LE EvmYul.Storage where
-  le lhs rhs := let x := lhs.entries.sort (·≤·)
-                let y := rhs.entries.sort (·≤·)
+instance : LT EvmYul.Storage where
+  lt lhs rhs := let x := lhs.keysArray.zip lhs.valuesArray |>.qsort pairOrd
+                let y := rhs.keysArray.zip rhs.valuesArray |>.qsort pairOrd
                 Id.run do
                   let mut i := 0
-                  let mut res := true
+                  let mut res := false
                   while true do
                     let xElem := x.get? i
                     let yElem := y.get? i
                     match xElem, yElem with
                       | .none, .none => break
-                      | .some xElem, .some yElem => if xElem ≤ yElem then i := i + 1; continue else res := false; break
+                      | .some xElem, .some yElem =>
+                          if pairOrd xElem yElem
+                          then res := true; break
+                          else if xElem != yElem
+                               then break
+                               else i := i + 1; continue
                       | .none, .some _ => res := true; break
                       | .some _, .none => res := false; break
                   return res
+  where pairOrd (a b : UInt256 × UInt256) : Bool := -- TODO - surely there is some lex utility somewhere :)
+    if a.1 = b.1 then a.2 < b.2 else a.1 < b.1
 
-instance : DecidableRel (λ (lhs : EvmYul.Storage) rhs ↦ lhs ≤ rhs) :=
+instance : DecidableRel (λ (a : EvmYul.Storage) b ↦ a < b) :=
   λ lhs rhs ↦ by
-    unfold LE.le instLEStorage
+    unfold LT.lt instLTStorage
     simp
-    exact inferInstance            
+    exact inferInstance    
 
 end RemoveLater
 

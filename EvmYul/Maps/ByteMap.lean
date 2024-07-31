@@ -17,7 +17,7 @@ a'la `Finmap`.
 TODO - All of this is very ugly.
 -/
 
-import Mathlib.Data.Finmap
+import Batteries.Data.RBMap
 
 import EvmYul.Wheels
 
@@ -25,26 +25,28 @@ namespace EvmYul
 
 section RemoveLater
 
-abbrev ByteMap := Finmap (λ _ : UInt256 ↦ UInt8)
+open Batteries (RBMap)
 
-instance : LE ((_ : UInt256) × UInt8) where
-  le lhs rhs := if lhs.1 = rhs.1 then lhs.2 ≤ rhs.2 else lhs.1 ≤ rhs.1
+abbrev ByteMap := RBMap UInt256 UInt8 compare
 
-/-
-Please note that these are used exclusively for conveninece of printing and computing,
-i.e. the sorries are safe.
--/
+-- instance : LE ((_ : UInt256) × UInt8) where
+--   le lhs rhs := if lhs.1 = rhs.1 then lhs.2 ≤ rhs.2 else lhs.1 ≤ rhs.1
 
-instance : IsTrans ((_ : UInt256) × UInt8) (· ≤ ·) := sorry
+-- /-
+-- Please note that these are used exclusively for conveninece of printing and computing,
+-- i.e. the sorries are safe.
+-- -/
+
+-- instance : IsTrans ((_ : UInt256) × UInt8) (· ≤ ·) := sorry
     
-instance : IsAntisymm ((_ : UInt256) × UInt8) (· ≤ ·) := sorry
+-- instance : IsAntisymm ((_ : UInt256) × UInt8) (· ≤ ·) := sorry
 
-instance : IsTotal ((_ : UInt256) × UInt8) (· ≤ ·) := sorry
+-- instance : IsTotal ((_ : UInt256) × UInt8) (· ≤ ·) := sorry
 
-instance : DecidableRel (α := (_ : UInt256) × UInt8) (· ≤ ·) :=
-  λ lhs rhs ↦ by
-  unfold LE.le instLESigmaUInt256UInt8
-  exact inferInstance
+-- instance : DecidableRel (α := (_ : UInt256) × UInt8) (· ≤ ·) :=
+--   λ lhs rhs ↦ by
+--   unfold LE.le instLESigmaUInt256UInt8
+--   exact inferInstance
 
 end RemoveLater
 

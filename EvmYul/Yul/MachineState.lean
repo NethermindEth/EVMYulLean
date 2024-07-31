@@ -10,7 +10,7 @@ The partial Yul `MachineState` `μ`.
 -/
 structure MachineState extends EvmYul.MachineState :=
   varStore : VarStore
-deriving DecidableEq, Inhabited
+deriving BEq, Inhabited
 
 end Yul
 

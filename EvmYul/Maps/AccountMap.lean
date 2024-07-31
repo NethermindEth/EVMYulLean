@@ -17,7 +17,7 @@ a'la `Finmap`.
 TODO - All of this is very ugly.
 -/
 
-import Mathlib.Data.Finmap
+import Batteries.Data.RBMap
 
 import EvmYul.Wheels
 
@@ -30,26 +30,28 @@ namespace EvmYul
 
 section RemoveLater
 
-abbrev AccountMap := Finmap (λ _ : Address ↦ Account)
+open Batteries (RBMap)
 
-instance : LE ((_ : Address) × Account) where
-  le lhs rhs := if lhs.1 = rhs.1 then lhs.2 ≤ rhs.2 else lhs.1 ≤ rhs.1
+abbrev AccountMap := RBMap Address Account compare
 
-/-
-Please note that these are used exclusively for conveninece of printing and computing,
-i.e. the sorries are safe.
--/
+-- instance : LE ((_ : Address) × Account) where
+--   le lhs rhs := if lhs.1 = rhs.1 then lhs.2 ≤ rhs.2 else lhs.1 ≤ rhs.1
 
-instance : IsTrans ((_ : Address) × Account) (· ≤ ·) := sorry
+-- /-
+-- Please note that these are used exclusively for conveninece of printing and computing,
+-- i.e. the sorries are safe.
+-- -/
+
+-- instance : IsTrans ((_ : Address) × Account) (· ≤ ·) := sorry
     
-instance : IsAntisymm ((_ : Address) × Account) (· ≤ ·) := sorry
+-- instance : IsAntisymm ((_ : Address) × Account) (· ≤ ·) := sorry
 
-instance : IsTotal ((_ : Address) × Account) (· ≤ ·) := sorry
+-- instance : IsTotal ((_ : Address) × Account) (· ≤ ·) := sorry
 
-instance : DecidableRel (α := (_ : Address) × Account) (· ≤ ·) :=
-  λ lhs rhs ↦ by
-    unfold LE.le instLESigmaAddressAccount
-    exact inferInstance
+-- instance : DecidableRel (α := (_ : Address) × Account) (· ≤ ·) :=
+--   λ lhs rhs ↦ by
+--     unfold LE.le instLESigmaAddressAccount
+--     exact inferInstance
 
 end RemoveLater
 

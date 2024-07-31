@@ -29,6 +29,6 @@ structure Account :=
   codeHash : UInt256 -- TODO - Probably not needed.
   storage  : Storage
   tstorage : Storage
-deriving DecidableEq, Inhabited
+deriving BEq, Inhabited
 
 end EvmYul
