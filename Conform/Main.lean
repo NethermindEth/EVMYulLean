@@ -7,7 +7,7 @@ def SimpleFile := "EthereumTests/BlockchainTests/GeneralStateTests/VMTests/vmAri
 -- def BuggyFile := "EthereumTests/BlockchainTests/GeneralStateTests/VMTests/vmArithmeticTest/exp.json"
 def BuggyFile := "Conform/testfile.json"
 -- def BuggyFile := "EthereumTests/BlockchainTests/GeneralStateTests/VMTests/vmTests/calldatacopy.json"
-def SpecificFile := "EthereumTests/BlockchainTests/GeneralStateTests/VMTests/vmTests/sha3.json"
+def SpecificFile := "EthereumTests/BlockchainTests/ValidBlocks/bcRandomBlockhashTest/randomStatetest573BC.json"
 
 def TestsSubdir := "BlockchainTests"
 def isTestFile (file : System.FilePath) : Bool := file.extension.option false (· == "json")
@@ -15,7 +15,7 @@ def isTestFile (file : System.FilePath) : Bool := file.extension.option false (�
 def main (args : List String) : IO Unit := do
   if args.length != 1 then IO.println "Usage: conform <path to 'EthereumTests'>"; return ()
 
-  let testFiles ← Array.filter isTestFile <$> System.FilePath.walkDir ("EthereumTests" / "BlockchainTests" / "GeneralStateTests" / "VMTests")
+  -- let testFiles ← Array.filter isTestFile <$> System.FilePath.walkDir ("EthereumTests" / "BlockchainTests" / "GeneralStateTests" / "VMTests")
   -- let testFiles ← Array.filter isTestFile <$> System.FilePath.walkDir ("EthereumTests" / "BlockchainTests" / "GeneralStateTests" / "stZeroKnowledge2")
   -- let testFiles ← Array.filter isTestFile <$> System.FilePath.walkDir ("EthereumTests" / "BlockchainTests" / "GeneralStateTests" / "stZeroKnowledge")
   -- let testFiles ← Array.filter isTestFile <$> System.FilePath.walkDir ("EthereumTests" / "BlockchainTests" / "GeneralStateTests" / "stZeroCallsTest")
@@ -25,24 +25,27 @@ def main (args : List String) : IO Unit := do
   -- let testFiles ← Array.filter isTestFile <$> System.FilePath.walkDir ("EthereumTests" / "BlockchainTests" / "GeneralStateTests" / "stTimeConsuming") -- TODO: Parser error.
   -- let testFiles ← Array.filter isTestFile <$> System.FilePath.walkDir ("EthereumTests" / "BlockchainTests" / "GeneralStateTests" / "stSystemOperationsTest") -- TODO: Takes too long
 
+  -- let appendDir := "stZeroKnowledge2" 
+  let testFiles ← Array.filter isTestFile <$> System.FilePath.walkDir ("EthereumTests" / "BlockchainTests" / "ValidBlocks") -- TODO: Takes too long
+
   
   -- let testFiles := #[SimpleFile]
   -- let testFiles := #[BuggyFile]
   let testFiles := #[SpecificFile]
   -- let testFiles := #[BuggyFile]
 
-
-  let mut dbgCount := 2048
+  let mut dbgCount := 2^20
 
   for testFile in testFiles do
     -- dbg_trace s!"testFile: {testFile}"
     if dbgCount == 0 then break
 
     IO.println s!"File under test: {testFile}"
-    let res ← ExceptT.run <| EvmYul.Conform.processTestsOfFile testFile (whitelist := #["sha3_d5g0v0_Cancun"])
+    let res ← ExceptT.run <| EvmYul.Conform.processTestsOfFile testFile -- (whitelist := #["sha3_d5g0v0_Cancun"])
     match res with
       | .error err         => IO.println s!"Error: {repr err}"
-      | .ok    testresults => IO.println s!"{repr testresults}"
+      | .ok    testresults => -- IO.println s!"{repr testresults}"
+                              IO.println "Tests managed to not crash Lean."
 
     dbgCount := dbgCount - 1
 

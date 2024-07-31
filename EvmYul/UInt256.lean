@@ -140,8 +140,6 @@ def sdiv (a b : UInt256) : UInt256 :=
        (a / abs b) * -1
     else a / b
 
-#eval sdiv 1 4
-
 def smod (a b : UInt256) : UInt256 :=
   if 2 ^ 255 <= a
   then if 2 ^ 255 <= b
@@ -355,3 +353,68 @@ def uInt256OfByteArray (arr : ByteArray) : UInt256 :=
   fromBytes' arr.data.toList.reverse
 
 end EvmYul
+
+section HicSuntDracones
+-- /-
+-- NB - Everything in this section is not particularly reasoning-friendly.
+
+-- These are currently optimised versions of certain functions to make the model 'actually executable'
+-- on modern computers, rather than 'executable in theory'.
+-- -/
+
+-- private def EvmYul.UInt256.toFourUInt64 (a : UInt256) : UInt64 × UInt64 × UInt64 × UInt64 := Id.run do
+--   let mut a := a
+--   let mut result : Array UInt64 := default
+--   for _ in [0:4] do
+--     result := result.push (UInt64.ofNat <| a &&& (2^64-1 : UInt256))
+--     a := a >>> 64
+--   return (result[3]!, result[2]!, result[1]!, result[0]!)
+
+-- /--
+-- NB - We cannot extract up to 2^64 exclusive because 2^64 doesn't fit into a UInt64; this crashes Lean.
+-- As such, we special-case the last element. 
+-- -/
+-- private def ByteArray.toUInt64Chunks (a : ByteArray) : Option (ByteArray × ByteArray × ByteArray × ByteArray) := do
+--   -- Look, if you have 2^256 bytes, you don't want to be running the 'Lean EVM execution client'.
+--   guard <| a.size <= 2^256
+--   let mut a := a
+--   let mut result : Array ByteArray := #[]
+--   for _ in [0:4] do
+--     -- Extract the first 2^64 bytes, handle the last byte in isolation to not crash Lean 4.9.0
+--     result := result.push <| a.extract 0 (2^64 - 1) |>.push (a.data.getD (2^64 - 1) 0)
+--     -- Drop the first 2^64 bytes
+--     a := ⟨a.data.extract (2^64) a.size⟩
+--   return (result[0]!, result[1]!, result[2]!, result[3]!)
+
+-- open EvmYul.UInt256 (ofNat) in
+-- /--
+-- Viz. `ByteArray.extract'`.
+
+-- TODO
+-- NB - some thoughts.
+-- We could divide and conquer and restitch results back to make sure that none of the nats are greater than 2^64.
+
+-- Currently this is somewhat lazy.
+-- Furthermore, the `ByteARray.extract'` should just call this, of course.
+-- -/
+-- def ByteArray.copySlice' (src : ByteArray) (srcOff : Nat) (dest : ByteArray) (destOff len : Nat) (exact : Bool := true) : ByteArray :=
+--   if srcOff < 2^64 && destOff < 2^64 && len < 2^64
+--   then src.copySlice srcOff dest destOff len exact -- NB only when `srcOff`, `destOff` and `len` are sufficiently small
+--   else let srcOffSliced  := ofNat srcOff  |>.toFourUInt64
+--        let destOffSliced := ofNat destOff |>.toFourUInt64
+--        let lenSliced     := ofNat len     |>.toFourUInt64
+--        _
+
+-- Benchmark before we check if any of this is needed!
+
+def ByteArray.copySlice' (src : ByteArray) (srcOff : Nat) (dest : ByteArray) (destOff len : Nat) (exact : Bool := true) : ByteArray :=
+  if false -- srcOff < 2^64 && destOff < 2^64 && len < 2^64
+  then src.copySlice srcOff dest destOff len exact -- NB only when `srcOff`, `destOff` and `len` are sufficiently small
+  else let srcData := src.data
+       let destData := dest.data
+       let sourceChunk := srcData.extract srcOff (srcOff + len)
+       let destBegin := destData.extract 0 destOff
+       let destEnd := destData.extract (destOff + len) destData.size
+       ⟨destBegin ++ sourceChunk ++ destEnd⟩
+
+end HicSuntDracones

@@ -43,6 +43,7 @@ def codeCopy (self : SharedState) (mstart cstart s : UInt256) : SharedState :=
   (·.1) <| Ib.foldl (init := (self, mstart)) λ (sa, j) i ↦ (sa.updateMemory j i.toUInt256, j + 1)
 
 def extCodeCopy (self : SharedState) (acc mstart cstart s : UInt256) : SharedState :=
+  dbg_trace s!"mstart: {mstart} cstart: {cstart} s: {s}"
   let addr := Address.ofUInt256 acc
   let sState' : SharedState :=
     match self.toState.lookupAccount addr with
@@ -57,7 +58,7 @@ end Memory
 
 def logOp (μ₀ μ₁ : UInt256) (t : List UInt256) (sState : SharedState) : Substate × UInt256 :=
     let Iₐ := sState.executionEnv.codeOwner
-    let mem := sState.toMachineState.lookupMemoryRange' μ₀ μ₁
+    let mem := sState.toMachineState.lookupMemoryRange μ₀ μ₁
     let logSeries' := sState.toState.substate.logSeries.push (Iₐ, t, mem)
     let μᵢ' := MachineState.M sState.maxAddress μ₀ μ₁
     ({sState.substate with logSeries := logSeries'}, μᵢ')

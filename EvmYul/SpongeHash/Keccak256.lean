@@ -91,7 +91,7 @@ TODO - slow.
 -/
 partial def unfoldr {α β} (f : β → Option (α × β)) (b0 : β) : Array α :=
   build λ c n ↦
-    let rec go i b := -- TODO - dbg_trace s!"i: {i}", `i` is unnecessary in go here 
+    let rec go i b := -- dbg_trace s!"i: {i}" -- TODO - dbg_trace s!"i: {i}", `i` is unnecessary in go here 
     match f b with
       | .some (a, new_b) => c a <| go i.succ new_b
       | .none            => n

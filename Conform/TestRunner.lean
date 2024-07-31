@@ -18,9 +18,9 @@ namespace Conform
 
 def VerySlowTests : Array String :=
   #[
-    "sha3_d3g0v0_Cancun", -- ~6MB getting keccak256'd, estimated time on my PC: ~1 hour, best guess: unfoldr.go in keccak256.lean
+    "sha3_d3g0v0_Cancun" -- ~6MB getting keccak256'd, estimated time on my PC: ~1 hour, best guess: unfoldr.go in keccak256.lean
     -- "sha3_d5g0v0_Cancun", -- best guess: `lookupMemoryRange'{'}{''}` are slow; I guess we will need an faster structure than Finmap
-    "sha3_d6g0v0_Cancun" -- same problem as `sha3_d5g0v0_Cancun` I'm guessing
+    -- "sha3_d6g0v0_Cancun" -- same problem as `sha3_d5g0v0_Cancun` I'm guessing
   ]
 
 def GlobalBlacklist : Array String := VerySlowTests
@@ -90,6 +90,10 @@ Now that this is not a `Finmap`, this is probably defined somewhere in the API, 
 def storageΔ (m₁ m₂ : AccountMap) : AccountMap × AccountMap :=
   (storageComplement m₁ m₂, storageComplement m₂ m₁)
 
+section
+
+local instance (priority := high) : BEq Account := ⟨veryShoddyAccEq⟩
+
 /--
 TODO - Of course fix this later on. Potentially in some `Except Err` monad to report
 precisely on why this failed.
@@ -98,8 +102,11 @@ private def somewhatShoddyStateEq (s₁ s₂ : EVM.State) : Bool :=
   -- TODO - Please note here that we're only comparing storage until we have the means to execute
   -- transactions appropriately. For example, the sender must lose balance, nonce must increase, etc.
   -- Currently, we only compare with `shoddyInstance` for each account in the storage.
+  -- dbg_trace s!"Post s₁: {repr s₁.accountMap} s₂: {repr s₂.accountMap}"
   -- dbg_trace s!"Post conforms? - {s₁.accountMap == s₂.accountMap}"
   s₁.accountMap == s₂.accountMap
+
+end
 
 def executeTransaction (transaction : Transaction) (s : EVM.State) : Except EVM.Exception EVM.State := do
   -- dbg_trace s!"Executing transaction."
@@ -123,6 +130,8 @@ def executeTransaction (transaction : Transaction) (s : EVM.State) : Except EVM.
 
   -- TODO - Ignore g' gas for the time being.
   let (σ, g', A', o?) ← EVM.Ξ _TODOfuel s.accountMap s.selfbalance s.substate I'
+
+  -- dbg_trace s!"post state: {repr <| σ.toList.map λ (addr, acc) ↦ (addr, acc.storage)}"
 
   -- TODO - Use proper Υ at some point, this is a hack, just like a majority of this function
   -- We manually inject 1000 -> 1000 as tests seem to expect this,
@@ -192,9 +201,9 @@ def processTestsOfFile (file : System.FilePath)
                        ExceptT Exception IO (Lean.RBMap String TestResult compare) := do
   let file ← Lean.Json.fromFile file
   let test ← Lean.FromJson.fromJson? (α := Test) file
-  dbg_trace s!"tests before guard: {test.toTests.map Prod.fst}"
+  -- dbg_trace s!"tests before guard: {test.toTests.map Prod.fst}"
   let tests := guardBlacklist ∘ guardWhitelist <| test.toTests
-  dbg_trace s!"tests after guard: {tests.map Prod.fst}"
+  -- dbg_trace s!"tests after guard: {tests.map Prod.fst}"
   tests.foldlM (init := ∅) λ acc (testname, test) ↦
     try -- TODO - currently we workaround by distinguishing hard and soft errors.
         -- This needs refining.
@@ -202,7 +211,7 @@ def processTestsOfFile (file : System.FilePath)
       processTest test >>= pure ∘ acc.insert testname
           -- currently the soft errors are the ones I am personally unsure about :)
     catch | .EVMError e@(.ReceiverNotInAccounts _) => pure (acc.insert testname (.mkFailed s!"{repr e}"))
-          | e => IO.println s!"Test: {testname} FAILED!"; throw e -- TODO - hard error, stop executing the tests; malformed input, logic error, etc.
+          | e => /- IO.println s!"Test: {testname} FAILED!"; -/ throw e -- TODO - hard error, stop executing the tests; malformed input, logic error, etc.
   where
     guardWhitelist (tests : List (String × TestEntry)) :=
       if whitelist.isEmpty then tests else tests.filter (λ (name, _) ↦ name ∈ whitelist)

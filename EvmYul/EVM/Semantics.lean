@@ -22,6 +22,9 @@ import EvmYul.Semantics
 import EvmYul.Wheels
 import EvmYul.UInt256
 
+import Conform.Wheels
+open EvmYul.DebuggingAndProfiling
+
 namespace EvmYul
 
 namespace EVM
@@ -83,7 +86,7 @@ def decode (arr : ByteArray) (pc : Nat) :
     instr,
     if argWidth == 0
     then .none
-    else .some (EvmYul.uInt256OfByteArray (arr.extract pc.succ (pc.succ + argWidth)), argWidth)
+    else .some (EvmYul.uInt256OfByteArray (arr.extract' pc.succ (pc.succ + argWidth)), argWidth)
   )
 
 def fetchInstr (I : EvmYul.ExecutionEnv) (pc :  UInt256) :
@@ -211,7 +214,7 @@ def step (fuel : ℕ) (instr : Option (Operation .EVM × Option (UInt256 × Nat)
       | .CREATE =>
         match evmState.stack.pop3 with
           | some ⟨stack, μ₀, μ₁, μ₂⟩ => do
-            let i : ByteArray := evmState.toMachineState.lookupMemoryRange' μ₁ μ₂
+            let i : ByteArray := evmState.toMachineState.lookupMemoryRange μ₁ μ₂
             let ζ := none
             let I := evmState.executionEnv
             let Iₐ := evmState.executionEnv.codeOwner
@@ -246,7 +249,7 @@ def step (fuel : ℕ) (instr : Option (Operation .EVM × Option (UInt256 × Nat)
         -- Exactly equivalent to CREATE except ζ ≡ μₛ[3]
         match evmState.stack.pop4 with
           | some ⟨stack, μ₀, μ₁, μ₂, μ₃⟩ => do
-            let i : ByteArray := evmState.toMachineState.lookupMemoryRange' μ₁ μ₂
+            let i : ByteArray := evmState.toMachineState.lookupMemoryRange μ₁ μ₂
             let ζ := some ⟨⟨toBytesBigEndian μ₃.val⟩⟩
             let I := evmState.executionEnv
             let Iₐ := evmState.executionEnv.codeOwner
@@ -299,7 +302,8 @@ def step (fuel : ℕ) (instr : Option (Operation .EVM × Option (UInt256 × Nat)
             -- TODO A minor... hack? Are we supposed to run into missing account here?
             let .some tDirect := evmState.accountMap.find? t | throw (.ReceiverNotInAccounts t)
             let tDirect := tDirect.code -- We use the code directly without an indirection a'la `codeMap[t]`.
-            let i := evmState.toMachineState.lookupMemoryRange' μ₃ μ₄ -- m[μs[3] . . . (μs[3] + μs[4] − 1)]
+            -- dbg_trace s!"looking up memory range: {evmState.toMachineState.lookupMemoryRange μ₃ μ₄}"
+            let i := evmState.toMachineState.lookupMemoryRange μ₃ μ₄ -- m[μs[3] . . . (μs[3] + μs[4] − 1)]
             Θ (fuel := f)                             -- TODO meh
               (σ  := evmState.accountMap)             -- σ in  Θ(σ, ..)
               (A  := A')                              -- A* in Θ(.., A*, ..)
@@ -323,7 +327,9 @@ def step (fuel : ℕ) (instr : Option (Operation .EVM × Option (UInt256 × Nat)
         -- TODO - Note to self. Check how updateMemory/copyMemory is implemented. By a cursory look, we play loose with UInt8 -> UInt256 (c.f. e.g. `calldatacopy`) and then the interplay with the WordSize parameter.
         -- TODO - Check what happens when `o = .none`.
         -- dbg_trace s!"REPORT - μ₅: {μ₅} n: {n} o: {o}"
+        -- dbg_trace "Θ will copy memory now"
         let μ'ₘ := evmState.toMachineState.copyMemory (o.getD .empty) μ₅ n -- μ′_m[μs[5]  ... (μs[5] + n − 1)] = o[0 ... (n − 1)]
+        -- dbg_trace s!"μ'ₘ: {μ'ₘ.memory}"
         -- dbg_trace s!"REPORT - μ'ₘ: {Finmap.pretty μ'ₘ.memory}"
         let μ'ₒ := o -- μ′o = o
         let μ'_g := g' -- TODO gas - μ′g ≡ μg − CCALLGAS(σ, μ, A) + g
@@ -358,7 +364,7 @@ def X (fuel : ℕ) (evmState : State) : Except EVM.Exception (State × Option By
       let I_b := evmState.toState.executionEnv.code
       -- dbg_trace "X calling decode"
       let instr@(w, _) := decode I_b evmState.pc |>.getD (.STOP, .none)
-      -- dbg_trace s!"I got: {w.pretty}"
+      dbg_trace s!"Decoded: {w.pretty}"
       let W (w : Operation .EVM) (s : Stack UInt256) : Bool :=
         w ∈ [.CREATE, .CREATE2, .SSTORE, .SELFDESTRUCT, .LOG0, .LOG1, .LOG2, .LOG3, .LOG4] ∨
         (w = .CALL ∧ s.get? 2 ≠ some 0)
@@ -434,7 +440,7 @@ def Lambda
   let n : UInt256 := (σ.find? s |>.option 0 Account.nonce) - 1
   let lₐ ← L_A s n ζ i
   let a : Address :=
-    (KEC lₐ).extract 96 265 |>.data.toList.reverse |> fromBytes' |> Fin.ofNat
+    (KEC lₐ).extract' 96 265 |>.data.toList.reverse |> fromBytes' |> Fin.ofNat
   -- A*
   let AStar := A.addAccessedAccount a
   -- σ*
@@ -578,8 +584,6 @@ def Θ (fuel : Nat)
   -- Equation (126)
   -- Note that the `c` used here is the actual code, not the address. TODO - Handle precompiled contracts.
   let (σ'', g'', A'', out) ← Ξ fuel σ₁ g A I
-
-  -- dbg_trace s!"Post Ξ we have: {Finmap.pretty σ''}"
 
   -- Equation (122)
   let σ' := if σ'' == ∅ then σ else σ''

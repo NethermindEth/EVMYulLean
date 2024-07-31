@@ -340,7 +340,7 @@ def step {τ : OperationType} (op : Operation τ) : Transformer τ :=
               | some L_A =>
                 let addr : Address :=
                   (KEC L_A).extract 96 265 |>.data.data |> fromBytesBigEndian |> Fin.ofNat
-                let code : ByteArray := yulState.toMachineState.lookupMemoryRange' poz len
+                let code : ByteArray := yulState.toMachineState.lookupMemoryRange poz len
                 -- σ*
                 let accountMapStar :=
                   match yulState.toState.accountMap.find? Iₐ with
@@ -402,7 +402,7 @@ def step {τ : OperationType} (op : Operation τ) : Transformer τ :=
             let Iₐ := yulState.executionEnv.codeOwner
             let this₀ := toBytesBigEndian Iₐ.val
             let this : List UInt8 := List.replicate (20 - this₀.length) 0 ++ this₀
-            let code : ByteArray := yulState.toMachineState.lookupMemoryRange' poz len
+            let code : ByteArray := yulState.toMachineState.lookupMemoryRange poz len
             let s : List UInt8 := toBytesBigEndian ζ
             let a₀ : List UInt8 := [0xff]
             let addr₀ := KEC <| ⟨⟨a₀ ++ this ++ s⟩⟩ ++ KEC code

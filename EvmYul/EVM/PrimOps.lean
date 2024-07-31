@@ -23,6 +23,7 @@ def execBinOp (f : Primop.Binary) : Transformer :=
   λ s ↦
     match s.stack.pop2 with
       | some ⟨stack, μ₀, μ₁⟩ =>
+        -- dbg_trace s!"dispatched into μ₀: {μ₀} μ₁: {μ₁}"
         .ok <| s.replaceStackAndIncrPC (stack.push <| f μ₀ μ₁)
       | _ =>
         .error .InvalidStackSizeException
@@ -92,6 +93,7 @@ def binaryStateOp
 := λ evmState ↦
   match evmState.stack.pop2 with
     | some ⟨ s , μ₀, μ₁ ⟩ =>
+      -- dbg_trace "state stuff; μ₀: {μ₀} μ₁: {μ₁}"
       let state' := op evmState.toState μ₀ μ₁
       let evmState' := {evmState with toState := state'}
       .ok <| evmState'.replaceStackAndIncrPC s
