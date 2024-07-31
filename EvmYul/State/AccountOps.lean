@@ -75,8 +75,10 @@ section RemoveLater
 -- instance : ToString Account := ⟨λ acc ↦
 --   s!"ACCOUNT: [nonce: {acc.nonce}; balance: {acc.balance}; code: {acc.code.toList.take 5}...; codehash: {acc.codeHash}; storage: {stringOfStorage acc.storage}]; tstorage: {stringOfStorage acc.tstorage}"⟩
 
--- instance : ToString Account := ⟨λ acc ↦
---   s!"ACCOUNT: storage: {stringOfStorage acc.storage}]"⟩
+instance : ToString Account := ⟨λ acc ↦
+  s!"ACCOUNT: storage: {repr acc.storage}]"⟩
+
+instance : Repr Account := ⟨λ acc _ ↦ ToString.toString acc⟩
 
 end RemoveLater
 

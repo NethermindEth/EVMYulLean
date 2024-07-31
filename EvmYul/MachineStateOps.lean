@@ -30,6 +30,7 @@ def updateMemory (self : MachineState) (addr v : UInt256) (numOctets : WordSize 
               maxAddress := self.newMax addr numOctets }
 
 def copyMemory (self : MachineState) (source : ByteArray) (s n : Nat) : MachineState :=
+  -- dbg_trace s!"current mem: {self.memory} source: {source} s: {s} n: {n}"
   { self with memory := ByteArray.copySlice (src     := source)
                                             (srcOff  := 0)
                                             (dest    := self.memory)
@@ -73,7 +74,7 @@ def lookupMemory (self : MachineState) (addr : UInt256) : UInt256 :=
 /--
 TODO - Currently a debug version.
 -/
-def lookupMemoryRange (self : MachineState) (addr size : UInt256) : ByteArray := dbg_trace s!"lookupMemoryRange addr: {addr} size: {size}"
+def lookupMemoryRange (self : MachineState) (addr size : UInt256) : ByteArray := -- dbg_trace s!"lookupMemoryRange addr: {addr} size: {size}"
   self.memory.extract' addr (addr + size)
 
 -- def lookupMemoryRange' (self : MachineState) (addr size : UInt256) : ByteArray := Id.run do

@@ -80,7 +80,7 @@ def decode (arr : ByteArray) (pc : Nat) :
   -- let wagh := arr.get? pc
   -- dbg_trace s!"wagh is: {wagh}"
   let instr ← arr.get? pc >>= EvmYul.EVM.parseInstr
-  dbg_trace s!"Decoded: {instr.pretty}"
+  -- dbg_trace s!"Decoded: {instr.pretty}"
   let argWidth := argOnNBytesOfInstr instr
   .some (
     instr,
@@ -302,6 +302,7 @@ def step (fuel : ℕ) (instr : Option (Operation .EVM × Option (UInt256 × Nat)
             -- TODO A minor... hack? Are we supposed to run into missing account here?
             let .some tDirect := evmState.accountMap.find? t | throw (.ReceiverNotInAccounts t)
             let tDirect := tDirect.code -- We use the code directly without an indirection a'la `codeMap[t]`.
+            dbg_trace s!"looking up memory range: {evmState.toMachineState.lookupMemoryRange μ₃ μ₄}"
             let i := evmState.toMachineState.lookupMemoryRange μ₃ μ₄ -- m[μs[3] . . . (μs[3] + μs[4] − 1)]
             Θ (fuel := f)                             -- TODO meh
               (σ  := evmState.accountMap)             -- σ in  Θ(σ, ..)
@@ -326,7 +327,9 @@ def step (fuel : ℕ) (instr : Option (Operation .EVM × Option (UInt256 × Nat)
         -- TODO - Note to self. Check how updateMemory/copyMemory is implemented. By a cursory look, we play loose with UInt8 -> UInt256 (c.f. e.g. `calldatacopy`) and then the interplay with the WordSize parameter.
         -- TODO - Check what happens when `o = .none`.
         -- dbg_trace s!"REPORT - μ₅: {μ₅} n: {n} o: {o}"
+        dbg_trace "Θ will copy memory now"
         let μ'ₘ := evmState.toMachineState.copyMemory (o.getD .empty) μ₅ n -- μ′_m[μs[5]  ... (μs[5] + n − 1)] = o[0 ... (n − 1)]
+        dbg_trace s!"μ'ₘ: {μ'ₘ.memory}"
         -- dbg_trace s!"REPORT - μ'ₘ: {Finmap.pretty μ'ₘ.memory}"
         let μ'ₒ := o -- μ′o = o
         let μ'_g := g' -- TODO gas - μ′g ≡ μg − CCALLGAS(σ, μ, A) + g
@@ -580,6 +583,7 @@ def Θ (fuel : Nat)
 
   -- Equation (126)
   -- Note that the `c` used here is the actual code, not the address. TODO - Handle precompiled contracts.
+  dbg_trace "Θ will call Ξ"
   let (σ'', g'', A'', out) ← Ξ fuel σ₁ g A I
 
   -- dbg_trace s!"Post Ξ we have: {Finmap.pretty σ''}"
