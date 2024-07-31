@@ -57,7 +57,7 @@ end Memory
 
 def logOp (μ₀ μ₁ : UInt256) (t : List UInt256) (sState : SharedState) : Substate × UInt256 :=
     let Iₐ := sState.executionEnv.codeOwner
-    let mem := sState.toMachineState.lookupMemoryRange' μ₀ μ₁
+    let mem := sState.toMachineState.lookupMemoryRange μ₀ μ₁
     let logSeries' := sState.toState.substate.logSeries.push (Iₐ, t, mem)
     let μᵢ' := MachineState.M sState.maxAddress μ₀ μ₁
     ({sState.substate with logSeries := logSeries'}, μᵢ')

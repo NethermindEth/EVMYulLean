@@ -18,7 +18,7 @@ The partial shared `MachineState` `μ`. Section 9.4.1.
 structure MachineState where
   gasAvailable : UInt256
   maxAddress   : UInt256
-  memory       : ByteMap
+  memory       : ByteArray
   returnData   : ByteArray
   deriving BEq, Inhabited
 

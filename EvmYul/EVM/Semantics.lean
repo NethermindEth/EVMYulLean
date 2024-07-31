@@ -22,6 +22,9 @@ import EvmYul.Semantics
 import EvmYul.Wheels
 import EvmYul.UInt256
 
+import Conform.Wheels
+open EvmYul.DebuggingAndProfiling
+
 namespace EvmYul
 
 namespace EVM
@@ -77,7 +80,7 @@ def decode (arr : ByteArray) (pc : Nat) :
   -- let wagh := arr.get? pc
   -- dbg_trace s!"wagh is: {wagh}"
   let instr ← arr.get? pc >>= EvmYul.EVM.parseInstr
-  -- dbg_trace s!"Decoded: {instr.pretty}"
+  dbg_trace s!"Decoded: {instr.pretty}"
   let argWidth := argOnNBytesOfInstr instr
   .some (
     instr,
@@ -211,7 +214,7 @@ def step (fuel : ℕ) (instr : Option (Operation .EVM × Option (UInt256 × Nat)
       | .CREATE =>
         match evmState.stack.pop3 with
           | some ⟨stack, μ₀, μ₁, μ₂⟩ => do
-            let i : ByteArray := evmState.toMachineState.lookupMemoryRange' μ₁ μ₂
+            let i : ByteArray := evmState.toMachineState.lookupMemoryRange μ₁ μ₂
             let ζ := none
             let I := evmState.executionEnv
             let Iₐ := evmState.executionEnv.codeOwner
@@ -246,7 +249,7 @@ def step (fuel : ℕ) (instr : Option (Operation .EVM × Option (UInt256 × Nat)
         -- Exactly equivalent to CREATE except ζ ≡ μₛ[3]
         match evmState.stack.pop4 with
           | some ⟨stack, μ₀, μ₁, μ₂, μ₃⟩ => do
-            let i : ByteArray := evmState.toMachineState.lookupMemoryRange' μ₁ μ₂
+            let i : ByteArray := evmState.toMachineState.lookupMemoryRange μ₁ μ₂
             let ζ := some ⟨⟨toBytesBigEndian μ₃.val⟩⟩
             let I := evmState.executionEnv
             let Iₐ := evmState.executionEnv.codeOwner
@@ -299,7 +302,7 @@ def step (fuel : ℕ) (instr : Option (Operation .EVM × Option (UInt256 × Nat)
             -- TODO A minor... hack? Are we supposed to run into missing account here?
             let .some tDirect := evmState.accountMap.find? t | throw (.ReceiverNotInAccounts t)
             let tDirect := tDirect.code -- We use the code directly without an indirection a'la `codeMap[t]`.
-            let i := evmState.toMachineState.lookupMemoryRange' μ₃ μ₄ -- m[μs[3] . . . (μs[3] + μs[4] − 1)]
+            let i := evmState.toMachineState.lookupMemoryRange μ₃ μ₄ -- m[μs[3] . . . (μs[3] + μs[4] − 1)]
             Θ (fuel := f)                             -- TODO meh
               (σ  := evmState.accountMap)             -- σ in  Θ(σ, ..)
               (A  := A')                              -- A* in Θ(.., A*, ..)

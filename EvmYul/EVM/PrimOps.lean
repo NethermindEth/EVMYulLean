@@ -68,7 +68,7 @@ def binaryMachineStateOp'
 := λ evmState ↦
   match evmState.stack.pop2 with
     | some ⟨ s , μ₀, μ₁ ⟩ =>
-      -- dbg_trace s!"keccak with μ₀: {μ₀} μ₁: {μ₁}"
+      dbg_trace s!"keccak with μ₀: {μ₀} μ₁: {μ₁}"
       let (val, mState') := op evmState.toMachineState μ₀ μ₁
       -- dbg_trace s!"op; val: {val} "
       let evmState' := {evmState with toMachineState := mState'}
