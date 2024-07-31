@@ -1,3 +1,5 @@
+import Batteries.Data.RBMap
+
 import EvmYul.MachineState
 
 import EvmYul.SpongeHash.Keccak256
@@ -8,19 +10,21 @@ namespace MachineState
 
 section Memory
 
-def new_max (self : MachineState) (addr : UInt256) (numOctets : WordSize) : ℕ :=
+open Batteries (RBMap)
+
+def newMax (self : MachineState) (addr : UInt256) (numOctets : WordSize) : ℕ :=
   max self.maxAddress (Rat.ceil ((addr.1 + numOctets) / 32)).toNat
 
 def updateMemory (self : MachineState) (addr v : UInt256) (numOctets : WordSize := WordSize.Standard) : MachineState :=
   { self with memory := let addrs   := List.range 32 |>.map (·+addr)
-                        let inserts := addrs.zipWith Finmap.insert (toBytes! v)
-                        inserts.foldl (init := self.memory) (flip id)
-              maxAddress := self.new_max addr numOctets }
+                        let inserts := addrs.zipWith (λ k v m ↦ RBMap.insert m k v) (toBytes! v)
+                        inserts.foldl (flip id) self.memory
+              maxAddress := self.newMax addr numOctets }
 
 def copyMemory (self : MachineState) (source : ByteArray) (s n : Nat) : MachineState :=
   { self with memory := (List.range n).map UInt256.ofNat |>.foldl (init := self.memory)
                           λ mem addr ↦ mem.insert (addr+s) (source.get! addr)
-              maxAddress := self.new_max (s + n) WordSize.Standard
+              maxAddress := self.newMax (s + n) WordSize.Standard
   }
 
 /--
@@ -35,7 +39,7 @@ def lookupMemory (self : MachineState) (addr : UInt256) : UInt256 :=
   -- fromBytes! <| List.range 32 |>.map λ i ↦ self.memory.lookup (addr + i) |>.getD 0
 
   fromBytes! <| List.range 32 |>.map λ i ↦
-    match self.memory.lookup (addr + i) with
+    match self.memory.find? (addr + i) with
       | .none => dbg_trace "lookup failed; addr: {addr} - returning 0"; 0
       | .some val => val
 
@@ -44,19 +48,19 @@ TODO - Currently a debug version.
 -/
 def lookupMemoryRange (self : MachineState) (addr size : UInt256) : ByteArray := dbg_trace s!"lookupMemoryRange addr: {addr} size: {size}"
   -- ⟨⟨List.map (λ i ↦ (self.memory.lookup (addr + i)).get!) (List.range size)⟩⟩
-  ⟨⟨List.range size |>.map λ i ↦ self.memory.lookup (addr + i) |>.getD 0⟩⟩
+  ⟨⟨List.range size |>.map λ i ↦ self.memory.findD (addr + i) 0⟩⟩
 
 def lookupMemoryRange' (self : MachineState) (addr size : UInt256) : ByteArray := Id.run do
   let mut result : ByteArray := ∅
   let mut i := 0
   while i < size do
-    result := result.push <| self.memory.lookup (addr + i) |>.getD 0
+    result := result.push <| self.memory.findD (addr + i) 0
     i := i + 1
   return result
 
 private def lookupMemoryRange''_aux (self : MachineState) (addr : UInt256) (res : ByteArray) : UInt256 → ByteArray
   | 0 => res
-  | ⟨k + 1, _⟩ => lookupMemoryRange''_aux self addr (res.push <| self.memory.lookup (addr + k) |>.getD 0) k
+  | ⟨k + 1, _⟩ => lookupMemoryRange''_aux self addr (res.push <| self.memory.findD (addr + k) 0) k
 termination_by k => k
 decreasing_by {
   simp_wf; simp [Fin.lt_def]
