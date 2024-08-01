@@ -31,7 +31,7 @@ def main (args : List String) : IO Unit := do
   
   -- let testFiles := #[SimpleFile]
   -- let testFiles := #[BuggyFile]
-  -- let testFiles := #[SpecificFile]
+  let testFiles := #[SpecificFile]
   -- let testFiles := #[BuggyFile]
 
   let mut dbgCount := 2^20

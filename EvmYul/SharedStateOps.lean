@@ -43,6 +43,7 @@ def codeCopy (self : SharedState) (mstart cstart s : UInt256) : SharedState :=
   (·.1) <| Ib.foldl (init := (self, mstart)) λ (sa, j) i ↦ (sa.updateMemory j i.toUInt256, j + 1)
 
 def extCodeCopy (self : SharedState) (acc mstart cstart s : UInt256) : SharedState :=
+  dbg_trace s!"mstart: {mstart} cstart: {cstart} s: {s}"
   let addr := Address.ofUInt256 acc
   let sState' : SharedState :=
     match self.toState.lookupAccount addr with
