@@ -69,7 +69,7 @@ def binaryMachineStateOp'
 := λ evmState ↦
   match evmState.stack.pop2 with
     | some ⟨ s , μ₀, μ₁ ⟩ =>
-      dbg_trace s!"keccak with μ₀: {μ₀} μ₁: {μ₁}"
+      -- dbg_trace s!"keccak with μ₀: {μ₀} μ₁: {μ₁}"
       let (val, mState') := op evmState.toMachineState μ₀ μ₁
       -- dbg_trace s!"op; val: {val} "
       let evmState' := {evmState with toMachineState := mState'}
@@ -93,7 +93,7 @@ def binaryStateOp
 := λ evmState ↦
   match evmState.stack.pop2 with
     | some ⟨ s , μ₀, μ₁ ⟩ =>
-      dbg_trace "state stuff; μ₀: {μ₀} μ₁: {μ₁}"
+      -- dbg_trace "state stuff; μ₀: {μ₀} μ₁: {μ₁}"
       let state' := op evmState.toState μ₀ μ₁
       let evmState' := {evmState with toState := state'}
       .ok <| evmState'.replaceStackAndIncrPC s

@@ -115,5 +115,5 @@ in case either of the arguments is too big.
 -/
 def ByteArray.extract' (a : ByteArray) (b e : Nat) : ByteArray :=
   if b < 2^64 && e < 2^64
-  then a.extract b e -- NB only when `b` and `e` are sufficiently small.
+  then a.extract b e -- NB only when `b` and `e` are sufficiently small
   else ⟨⟨a.toList.drop b |>.take (e - b)⟩⟩

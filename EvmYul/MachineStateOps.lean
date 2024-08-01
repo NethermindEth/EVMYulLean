@@ -21,8 +21,12 @@ def newMax (self : MachineState) (addr : UInt256) (numOctets : WordSize) : ℕ :
 --                         inserts.foldl (flip id) self.memory
 --               maxAddress := self.newMax addr numOctets }
 
+def x : ByteArray := "hello".toUTF8
+def y : ByteArray := "kokusho".toUTF8
+
 def updateMemory (self : MachineState) (addr v : UInt256) (numOctets : WordSize := WordSize.Standard) : MachineState :=
-  { self with memory := ByteArray.copySlice (src     := ⟨⟨toBytes! v⟩⟩)
+  -- dbg_trace "updateMemory"
+  { self with memory := ByteArray.copySlice' (src     := ⟨⟨toBytes! v⟩⟩)
                                             (srcOff  := 0)
                                             (dest    := self.memory)
                                             (destOff := addr)
@@ -30,8 +34,9 @@ def updateMemory (self : MachineState) (addr v : UInt256) (numOctets : WordSize 
               maxAddress := self.newMax addr numOctets }
 
 def copyMemory (self : MachineState) (source : ByteArray) (s n : Nat) : MachineState :=
+  -- dbg_trace "copyMemory"
   -- dbg_trace s!"current mem: {self.memory} source: {source} s: {s} n: {n}"
-  { self with memory := ByteArray.copySlice (src     := source)
+  { self with memory := ByteArray.copySlice' (src     := source)
                                             (srcOff  := 0)
                                             (dest    := self.memory)
                                             (destOff := s)
@@ -148,13 +153,13 @@ def returndatacopy (self : MachineState) (mstart rstart s : UInt256) : Option Ma
   if UInt256.size ≤ pos || self.returndatasize.val ≤ pos then .none
   else
     let arr := self.returnData
-    let rdata := arr.extract rstart.val (rstart.val + s.val - 1)
+    let rdata := arr.extract' rstart.val (rstart.val + s.val - 1)
     let s := rdata.data.foldr (init := (self , mstart))
                               λ v (ac, p) ↦ (ac.updateMemory p v.val, p +1)
     .some s.1
 
 def evmReturn (self : MachineState) (mstart s : UInt256) : MachineState :=
-  let vals := self.returnData.extract mstart.val s.val
+  let vals := self.returnData.extract' mstart.val s.val
   let maxAddress' := M self.maxAddress mstart s
   {self with maxAddress := maxAddress'}.setReturnData vals
 
@@ -164,11 +169,11 @@ def evmRevert (self : MachineState) (mstart s : UInt256) : MachineState :=
 end ReturnData
 
 def keccak256 (self : MachineState) (mstart s : UInt256) : UInt256 × MachineState :=
-  dbg_trace s!"called keccak256; going to be looking up a lot of vals; s: {s}"
+  -- dbg_trace s!"called keccak256; going to be looking up a lot of vals; s: {s}"
   let vals := self.lookupMemoryRange mstart.val s.val
-  dbg_trace s!"got vals {vals}"
+  -- dbg_trace s!"got vals {vals}"
   let kec := KEC vals
-  dbg_trace s!"got kec {kec}"
+  -- dbg_trace s!"got kec {kec}"
   let maxAddress' := M self.maxAddress mstart s
   (fromBytesBigEndian kec.data.data, {self with maxAddress := maxAddress'})
 
