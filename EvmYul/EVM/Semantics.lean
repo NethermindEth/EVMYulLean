@@ -364,7 +364,7 @@ def X (fuel : ℕ) (evmState : State) : Except EVM.Exception (State × Option By
       let I_b := evmState.toState.executionEnv.code
       -- dbg_trace "X calling decode"
       let instr@(w, _) := decode I_b evmState.pc |>.getD (.STOP, .none)
-      dbg_trace s!"Decoded: {w.pretty}"
+      -- dbg_trace s!"Decoded: {w.pretty}"
       let W (w : Operation .EVM) (s : Stack UInt256) : Bool :=
         w ∈ [.CREATE, .CREATE2, .SSTORE, .SELFDESTRUCT, .LOG0, .LOG1, .LOG2, .LOG3, .LOG4] ∨
         (w = .CALL ∧ s.get? 2 ≠ some 0)

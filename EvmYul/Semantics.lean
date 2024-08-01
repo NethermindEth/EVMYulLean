@@ -259,7 +259,7 @@ def step {τ : OperationType} (op : Operation τ) : Transformer τ :=
     | τ, .CODECOPY => dispatchTernaryCopyOp τ .codeCopy
     | τ, .GASPRICE => dispatchExecutionEnvOp τ (.ofNat ∘ ExecutionEnv.gasPrice)
     | τ, .EXTCODESIZE => dispatchUnaryStateOp τ EvmYul.State.extCodeSize
-    | τ, .EXTCODECOPY => dispatchQuaternaryCopyOp τ EvmYul.SharedState.extCodeCopy
+    | τ, .EXTCODECOPY => dispatchQuaternaryCopyOp τ EvmYul.SharedState.extCodeCopy'
     | τ, .RETURNDATASIZE => dispatchMachineStateOp τ EvmYul.MachineState.returndatasize
     | .EVM, .RETURNDATACOPY =>
       λ evmState ↦

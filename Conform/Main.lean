@@ -26,12 +26,12 @@ def main (args : List String) : IO Unit := do
   -- let testFiles ← Array.filter isTestFile <$> System.FilePath.walkDir ("EthereumTests" / "BlockchainTests" / "GeneralStateTests" / "stSystemOperationsTest") -- TODO: Takes too long
 
   -- let appendDir := "stZeroKnowledge2" 
-  let testFiles ← Array.filter isTestFile <$> System.FilePath.walkDir ("EthereumTests" / "BlockchainTests" / "ValidBlocks") -- TODO: Takes too long
+  let testFiles ← Array.filter isTestFile <$> System.FilePath.walkDir ("EthereumTests" / "BlockchainTests" / "GeneralStateTests") -- TODO: Takes too long
 
   
   -- let testFiles := #[SimpleFile]
   -- let testFiles := #[BuggyFile]
-  let testFiles := #[SpecificFile]
+  -- let testFiles := #[SpecificFile]
   -- let testFiles := #[BuggyFile]
 
   let mut dbgCount := 2^20
@@ -40,12 +40,14 @@ def main (args : List String) : IO Unit := do
     -- dbg_trace s!"testFile: {testFile}"
     if dbgCount == 0 then break
 
-    IO.println s!"File under test: {testFile}"
+    -- IO.println s!"File under test: {testFile}"
     let res ← ExceptT.run <| EvmYul.Conform.processTestsOfFile testFile -- (whitelist := #["sha3_d5g0v0_Cancun"])
     match res with
       | .error err         => IO.println s!"Error: {repr err}"
       | .ok    testresults => -- IO.println s!"{repr testresults}"
-                              IO.println "Tests managed to not crash Lean."
+                              -- IO.println "Tests managed to not crash Lean."
+                              -- IO.println s!""
+                              pure ()
 
     dbgCount := dbgCount - 1
 
