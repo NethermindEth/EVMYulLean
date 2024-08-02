@@ -3,6 +3,8 @@ import EvmYul.Wheels
 
 namespace EvmYul
 
+deriving instance Repr for ByteArray
+
 /--
 `BlockHeader`. `H_<x>`. Section 4.3.
 
@@ -43,7 +45,7 @@ structure BlockHeader where
   nonce         : UInt64
   -- prevRandao -- TODO 
   baseFeePerGas : ℕ
-deriving DecidableEq, Inhabited
+deriving DecidableEq, Inhabited, Repr
 
 attribute [deprecated] BlockHeader.difficulty
 attribute [deprecated] BlockHeader.nonce

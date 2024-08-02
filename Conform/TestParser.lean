@@ -3,6 +3,7 @@ import Lean.Data.Json
 import EvmYul.Wheels
 import EvmYul.Operations
 import EvmYul.EVM.Semantics
+import EvmYul.Wheels
 
 import Conform.Model
 import Conform.Wheels
@@ -96,26 +97,33 @@ instance : FromJson BlockHeader where
   fromJson? json := do
     try
       pure {
-        parentHash    := ← json.getObjValAsOrInit? UInt256   "parentHash"
+        parentHash    := ← json.getObjValAsD! UInt256   "parentHash"
         ommersHash    := TODO -- TODO - Set to whatever the KEC(RLP()) evaluates to.
         beneficiary   := TODO
-        stateRoot     := ← json.getObjValAsOrInit? UInt256   "stateRoot"
+        stateRoot     := ← json.getObjValAsD! UInt256   "stateRoot"
         transRoot     := TODO
         receiptRoot   := TODO
-        logsBloom     := ← json.getObjValAsOrInit? ByteArray "bloom"
+        logsBloom     := ← json.getObjValAsD! ByteArray "bloom"
         difficulty    := 0  -- [deprecated] 0.
-        number        := ← json.getObjValAsOrInit? _         "number"        <&> UInt256.toNat
-        gasLimit      := ← json.getObjValAsOrInit? _         "gasLimit"      <&> UInt256.toNat
-        gasUsed       := ← json.getObjValAsOrInit? _         "gasUsed"       <&> UInt256.toNat
-        timestamp     := ← json.getObjValAsOrInit? _         "timestamp"     <&> UInt256.toNat
-        extraData     := ← json.getObjValAsOrInit? ByteArray "extraData"
+        number        := ← json.getObjValAsD! _         "number"        <&> UInt256.toNat
+        gasLimit      := ← json.getObjValAsD! _         "gasLimit"      <&> UInt256.toNat
+        gasUsed       := ← json.getObjValAsD! _         "gasUsed"       <&> UInt256.toNat
+        timestamp     := ← json.getObjValAsD! _         "timestamp"     <&> UInt256.toNat
+        extraData     := ← json.getObjValAsD! ByteArray "extraData"
         minHash       := TODO
         chainId       := TODO
         nonce         := 0  -- [deprecated] 0.
-        baseFeePerGas := ← json.getObjValAsOrInit? _         "baseFeePerGas" <&> UInt256.toNat
+        baseFeePerGas := ← json.getObjValAsD! _         "baseFeePerGas" <&> UInt256.toNat
       }
     catch exct => dbg_trace s!"OOOOPSIE: {exct}\n json: {json}"
                   default
+
+instance : FromJson AccessListEntry where
+  fromJson? json := do
+    pure {
+      address     := ← json.getObjValAs? Address         "address"
+      storageKeys := ← json.getObjValAs? (Array UInt256) "storageKeys"
+    }
 
 /--
 TODO - Currently we return `AccessListTransaction`. No idea if this is what we want.
@@ -123,27 +131,47 @@ TODO - Currently we return `AccessListTransaction`. No idea if this is what we w
 instance : FromJson Transaction where
   fromJson? json := do
     pure <| .access {
-      nonce      := ← json.getObjValAs? UInt256          "nonce"
-      gasLimit   := ← json.getObjValAs? UInt256          "gasLimit"
-      recipient  := ← json.getObjValAs? (Option Address) "to" -- TODO - How do tests represent no 'to' - just missing field? Refine this.
-      value      := ← json.getObjValAs? UInt256          "value"
-      r          := ← json.getObjValAs? ByteArray        "r"
-      s          := ← json.getObjValAs? ByteArray        "s"
-      data       := ← json.getObjValAs? ByteArray        "data"
-      gasPrice   := ← json.getObjValAs? UInt256          "gasPrice"
+      nonce      := ← json.getObjValAsD! UInt256          "nonce"
+      gasLimit   := ← json.getObjValAsD! UInt256          "gasLimit"
+      recipient  := ← json.getObjValAsD! (Option Address) "to" -- TODO - How do tests represent no 'to' - just missing field? Refine this.
+      value      := ← json.getObjValAsD! UInt256          "value"
+      r          := ← json.getObjValAsD! ByteArray        "r"
+      s          := ← json.getObjValAsD! ByteArray        "s"
+      data       := ← json.getObjValAsD! ByteArray        "data"
+      gasPrice   := ← json.getObjValAsD! UInt256          "gasPrice"
       chainId    := TODO
-      accessList := TODO -- TODO - Not sure this needs initialising in tests.
+      -- accessList := ← json.getObjValAsD! AccessList      "accessList" <&> accessListToRBMap
+      accessList := TODO
     }
+  where accessListToRBMap (this : AccessList) : Batteries.RBMap Address (Array UInt256) compare :=
+    this.foldl (init := ∅) λ m ⟨addr, list⟩ ↦ m.insert addr list
 
-instance : FromJson BlockEntry where
-  fromJson? json := do
-    pure {
-      blockHeader  := ← json.getObjValAs? BlockHeader  "blockHeader"
-      rlp          := ← json.getObjValAs? Json         "rlp"
-      transactions := ← json.getObjValAs? Transactions "transactions"
-      uncleHeaders := ← json.getObjValAs? Json         "uncleHeaders"
-      withdrawals  := ← json.getObjValAs? Json         "withdrawals"
-    }
+/--
+- Format₀: `EthereumTests/BlockchainTests/GeneralStateTests/VMTests/vmArithmeticTest/add.json`
+- Format₁: `EthereumTests/BlockchainTests/GeneralStateTests/Pyspecs/cancun/eip4844_blobs/invalid_static_excess_blob_gas.json`
+
+TODO - 
+- `EthereumTests/BlockchainTests/GeneralStateTests/Pyspecs/cancun/eip4844_blobs/invalid_blob_tx_contract_creation.json` - ?????
+-/
+private def blockEntryOfJson (json : Json) : Except String BlockEntry := do
+  -- The exception, if exists, is always in the outermost object regardless of the `<Format>` (see this function's docs).
+  let exception ← json.getObjValAsD! String "expectException"
+  -- Descend to `rlp_decoded` - Format₁ if exists, Format₀ otherwise.
+  let json ← json.getObjValAsD Json "rlp_decoded" json
+  pure {
+    blockHeader  := ← json.getObjValAsD! BlockHeader  "blockHeader"
+    rlp          := ← json.getObjValAsD! Json         "rlp"
+    transactions := ← json.getObjValAsD! Transactions "transactions"
+    uncleHeaders := ← json.getObjValAsD! Json         "uncleHeaders"
+    withdrawals  := ← json.getObjValAsD! Json         "withdrawals"
+    blocknumber  := ← json.getObjValAsD  _            "blocknumber" "1" >>= tryParseBlocknumber
+    exception    := exception
+  }
+  where
+    tryParseBlocknumber (s : String) : Except String Nat := 
+      s.toNat?.elim (.error "Cannot parse `blocknumber`.") .ok
+
+instance : FromJson BlockEntry := ⟨blockEntryOfJson⟩
 
 deriving instance FromJson for TestEntry
 
@@ -168,6 +196,8 @@ instance : ToString Pre := ⟨ToString.toString ∘ repr⟩
 instance : ToString PostEntry := ⟨ToString.toString ∘ repr⟩ 
 
 instance : ToString Post := ⟨ToString.toString ∘ repr⟩
+
+instance : ToString AccessListEntry := ⟨ToString.toString ∘ repr⟩
 
 instance : ToString Transaction := ⟨λ _ ↦ "Some transaction."⟩
 

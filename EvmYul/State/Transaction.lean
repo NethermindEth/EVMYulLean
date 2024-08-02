@@ -1,4 +1,4 @@
-import Mathlib.Data.List.AList
+import Batteries.Data.RBMap
 
 import EvmYul.UInt256
 import EvmYul.Wheels
@@ -25,7 +25,7 @@ structure BaseTransaction where
   r         : ByteArray
   s         : ByteArray
   data      : ByteArray
-  deriving DecidableEq
+  deriving DecidableEq, Repr
 
 /--
 `WithGasPriceTransaction`. `T<x>`. Section 4.3.
@@ -33,7 +33,7 @@ structure BaseTransaction where
 -/
 structure WithGasPriceTransaction extends BaseTransaction where
   gasPrice : UInt256
-  deriving DecidableEq
+  deriving DecidableEq, Repr
 
 /--
 `LegacyTransaction`. `T<x>`. Section 4.3.
@@ -41,13 +41,14 @@ structure WithGasPriceTransaction extends BaseTransaction where
 -/
 structure LegacyTransaction extends WithGasPriceTransaction where
   w: UInt256
-  deriving DecidableEq
+  deriving DecidableEq, Repr
 /--
 `LegacyProtectedTransaction`. `T<x>`. Section 4.3.
 `chainId` `c`
 -/
 structure LegacyProtectedTransaction extends LegacyTransaction where
   chainId : ℕ
+  deriving Repr
 
 /--
 `AccessListTransaction`. `T<x>`. EIP-2930.
@@ -56,8 +57,8 @@ structure LegacyProtectedTransaction extends LegacyTransaction where
 -/
 structure AccessListTransaction extends WithGasPriceTransaction where
   chainId : ChainID
-  accessList : AList (λ _ : Address ↦ List UInt256)
-  deriving DecidableEq
+  accessList : Batteries.RBMap Address (Array UInt256) compare
+  deriving BEq, Repr
 
 /--
 `DynamicFeeTransaction`. `T<x>`. EIP-1559.
@@ -71,14 +72,14 @@ structure DynamicFeeTransaction extends BaseTransaction where
   priorityGasFee : UInt256
   maxGasFee      : UInt256
   chainId        : ChainID
-  accessList     : AList (λ _ : Address ↦ List UInt256)
-  deriving DecidableEq
+  accessList     : Batteries.RBMap Address (Array UInt256) compare
+  deriving BEq, Repr
 
 inductive Transaction where
   | legacy  : LegacyTransaction → Transaction
   | access  : AccessListTransaction → Transaction
   | dynamic : DynamicFeeTransaction → Transaction
-  deriving DecidableEq
+  deriving BEq, Repr
 
 def Transaction.type : Transaction → Nat
   | .legacy  _ => 0

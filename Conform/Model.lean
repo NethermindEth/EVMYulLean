@@ -68,8 +68,6 @@ def Storage.ofFinmap (m : EvmYul.Storage) : Storage :=
 
 abbrev Code := ByteArray
 
-deriving instance Repr for ByteArray
-
 structure AccountEntry :=
   balance : UInt256
   code    : ByteArray
@@ -85,13 +83,20 @@ abbrev Post := AddrMap PostEntry
 
 abbrev Transactions := Array Transaction
 
+/--
+TODO - Temporary.
+-/
+private local instance : Repr Json := ⟨λ s _ ↦ Json.pretty s⟩ 
+
 structure BlockEntry :=
   blockHeader  : BlockHeader
   rlp          : Json
   transactions : Transactions
   uncleHeaders : Json
   withdrawals  : Json
-  deriving Inhabited
+  exception    : String -- TODO - I am guessing there is a closed set of these to turn into a sum.
+  blocknumber  : Nat
+  deriving Inhabited, Repr
 
 abbrev Blocks := Array BlockEntry
 
@@ -115,6 +120,13 @@ structure TestEntry :=
   deriving Inhabited
 
 abbrev Test := Lean.RBMap String TestEntry compare 
+
+structure AccessListEntry :=
+  address     : Address
+  storageKeys : Array UInt256
+  deriving Inhabited, Repr
+
+abbrev AccessList := Array AccessListEntry
 
 def TestResult := Option String
   deriving Repr

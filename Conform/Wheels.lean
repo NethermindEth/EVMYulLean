@@ -18,16 +18,16 @@ Turn non-existance of the key into default initialisation.
 This silences ONLY the `property not found:` error.
 If the parsing of an existing value fails, we propagate the error.
 -/
-def getObjValAsOrInitWith? (j : Json) (α : Type) [FromJson α] (k : String) (default : α) : Except String α :=
+def getObjValAsD (j : Json) (α : Type) [FromJson α] (k : String) (D : α) : Except String α :=
   match j.getObjVal? k with
-    | .error _   => pure default
+    | .error _   => pure D
     | .ok    val => fromJson? val
 
 /--
-`getObjValAsOrInit = getObjValAsOrInitWith default` for inhabited types.
+`getObjValAsD! = getObjValAsD default` for inhabited types.
 -/
-def getObjValAsOrInit? (j : Json) (α : Type) [FromJson α] [Inhabited α] (k : String) : Except String α :=
-  getObjValAsOrInitWith? j α k default
+def getObjValAsD! (j : Json) (α : Type) [FromJson α] [Inhabited α] (k : String) : Except String α :=
+  getObjValAsD j α k default
 
 open Batteries (RBMap) in
 def getObjVals?
@@ -121,6 +121,11 @@ unsafe def report [Inhabited β] (s : String) (f : α → β) (a : α) : β :=
   let res := timeit s!"The function '{s}' took:" <| pure (f a)
   dbg_trace s!"END: {s}"
   unsafeIO res |>.toOption.get!
+
+def testJsonParser (α : Type) [Repr α] [Lean.FromJson α] (s : String) : String :=
+  match Lean.FromJson.fromJson? (α := α) (Lean.Json.parse s).toOption.get! with
+    | .error e  => s!"err: {e}"
+    | .ok    ok => s!"ok: {repr ok}" 
 
 end
 

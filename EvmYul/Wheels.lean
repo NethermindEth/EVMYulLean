@@ -30,10 +30,14 @@ def hexOfByte (byte : UInt8) : String :=
 def toHex (bytes : ByteArray) : String :=
   bytes.foldl (init := "") λ acc byte ↦ acc ++ hexOfByte byte
 
+instance (priority := high) : Repr ByteArray where
+  reprPrec s _ := toHex s
+
 /--
   Is an enumerate type, but nat is okay for now TODO(model properly)
 -/
 def ChainID : Type := Nat
+  deriving Repr
 
 deriving instance DecidableEq for ChainID
 deriving instance Inhabited for ChainID
