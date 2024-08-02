@@ -49,6 +49,8 @@ namespace EvmYul
 
 namespace Conform
 
+def HexPrefix := "0x"
+
 def TargetSchedule := "Cancun"
 
 def isHexDigitChar (c : Char) : Bool :=
@@ -64,14 +66,13 @@ instance : ToString Blob := ⟨Blob.toString⟩
 
 def getBlob? (s : String) : Except String Blob :=
   if isHex s then
-    let rest := s.drop Hex.length
+    let rest := s.drop HexPrefix.length
     if rest.any (not ∘ isHexDigitChar)
     then .error "Blobs must consist of valid hex digits."
     else .ok rest.toLower
   else .error "Input does not begin with 0x."
   where
-    Hex := "0x"
-    isHex (s : String) := s.startsWith Hex
+    isHex (s : String) := s.startsWith HexPrefix
 
 def getBlob! (s : String) : Blob := getBlob? s |>.toOption.get!
 

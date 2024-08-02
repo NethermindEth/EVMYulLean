@@ -23,14 +23,18 @@ Sorries are often
 @[deprecated]
 scoped notation "TODO" => default
 
-private def fromBlobString {α} (f : Blob → Except String α) : FromJson α :=
+private def fromBlobString {α} (f : Blob → Except String α) (allowEmpty := false) : FromJson α :=
   {
-    fromJson? := λ json ↦ json.getStr? >>= (getBlob? · >>= f)
+    fromJson? := λ json ↦ json.getStr? >>= (getBlob?handleEmpty · >>= f)
   }
+  where
+    emptyBlobOfEmptyString (allowEmpty : Bool) (s : String) : String :=
+      if s.isEmpty && allowEmpty then HexPrefix else s
+    getBlob?handleEmpty := getBlob? ∘ emptyBlobOfEmptyString allowEmpty
 
 instance : FromJson UInt256 := fromBlobString UInt256.fromBlob?
 
-instance : FromJson Address := fromBlobString Address.fromBlob?
+instance : FromJson Address := fromBlobString Address.fromBlob? (allowEmpty := true)
 
 instance : FromJson Storage where
   fromJson? json := json.getObjVals? Address UInt256

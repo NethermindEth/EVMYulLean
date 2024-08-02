@@ -197,7 +197,7 @@ local instance : MonadLift (Except String) (Except Conform.Exception) := ⟨Exce
 
 def processTestsOfFile (file : System.FilePath)
                        (whitelist : Array String := #[])
-                       (blacklist : Array String := #[]):
+                       (blacklist : Array String := #[]) :
                        ExceptT Exception IO (Lean.RBMap String TestResult compare) := do
   let file ← Lean.Json.fromFile file
   let test ← Lean.FromJson.fromJson? (α := Test) file

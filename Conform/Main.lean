@@ -40,7 +40,7 @@ def main (args : List String) : IO Unit := do
     -- dbg_trace s!"testFile: {testFile}"
     if dbgCount == 0 then break
 
-    -- IO.println s!"File under test: {testFile}"
+    IO.println s!"File under test: {testFile}"
     let res ← ExceptT.run <| EvmYul.Conform.processTestsOfFile testFile -- (whitelist := #["sha3_d5g0v0_Cancun"])
     match res with
       | .error err         => IO.println s!"Error: {repr err}"
