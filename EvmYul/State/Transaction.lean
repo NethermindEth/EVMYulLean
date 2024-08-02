@@ -5,80 +5,110 @@ import EvmYul.Wheels
 
 namespace EvmYul
 
+-- "All transaction types specify a number of common fields:"
 /--
-`BaseTransaction`. `T<x>`. Section 4.3.
+`BaseTransaction`. Section 4.3.
 
-`nonce`     `x`
-`gasLimit` `a`
-`recipinet` `g`
-`value`     `t`
-`r`         `s`
-`s`         `r`
-`data`      `d/i`
+- `nonce`     `n`
+- `gasLimit`  `g`
+- `recipinet` `t`
+- `value`     `v`
+- `r`         `r`
+- `s`         `s`
+- `data`      `d/i`
 TODO: In case of recipient = none, it means contract creation and data should be treated as init?
 -/
-structure BaseTransaction where
+structure Transaction.Base where
   nonce     : UInt256
   gasLimit  : UInt256
-  recipient : Option Address 
+  recipient : Option Address
   value     : UInt256
   r         : ByteArray
   s         : ByteArray
   data      : ByteArray
-  deriving DecidableEq
+deriving DecidableEq
 
+-- "EIP-2930 (type 1) and EIP-1559 (type 2) transactions also have:""
 /--
-`WithGasPriceTransaction`. `T<x>`. Section 4.3.
-`gasPrice` `p`
+`AccessList`. EIP-2930.
+- `chainId`    `c`
+- `accessList` `A`
+- `yParity`    `y`
 -/
-structure WithGasPriceTransaction extends BaseTransaction where
-  gasPrice : UInt256
-  deriving DecidableEq
-
-/--
-`LegacyTransaction`. `T<x>`. Section 4.3.
-`w` `w`
--/
-structure LegacyTransaction extends WithGasPriceTransaction where
-  w: UInt256
-  deriving DecidableEq
-/--
-`LegacyProtectedTransaction`. `T<x>`. Section 4.3.
-`chainId` `c`
--/
-structure LegacyProtectedTransaction extends LegacyTransaction where
-  chainId : ℕ
-
-/--
-`AccessListTransaction`. `T<x>`. EIP-2930.
-`chainId` `c`
-`accessList` `A`
--/
-structure AccessListTransaction extends WithGasPriceTransaction where
+structure Transaction.WithAccessList where
   chainId : ChainID
   accessList : AList (λ _ : Address ↦ List UInt256)
-  deriving DecidableEq
+  yParity : UInt256
+deriving DecidableEq
+
+-- "type 0 and type 1 transactions specify gas price as a single value:"
+/--
+`WithGasPrice`. Section 4.3.
+- `gasPrice` `p`
+-/
+structure Transaction.WithGasPrice where
+  gasPrice : UInt256
+deriving DecidableEq
+
+-- "Legacy transactions do not have an `accessList`, while `chainId` and `yParity` for legacy transactions are combined into a single value:""
+/--
+Type 0: `LegacyTransaction`. Section 4.3.
+- `nonce`     `n`
+- `gasLimit`  `g`
+- `recipinet` `t`
+- `value`     `v`
+- `r`         `r`
+- `s`         `s`
+- `data`      `d/i`
+- `gasPrice` `p`
+- `w` `w`
+-/
+structure LegacyTransaction extends Transaction.Base, Transaction.WithGasPrice where
+  w: UInt256
+deriving DecidableEq
+
+/-- Type 1: `AccessListTransaction`
+- `nonce`     `n`
+- `gasLimit`  `g`
+- `recipinet` `t`
+- `value`     `v`
+- `r`         `r`
+- `s`         `s`
+- `data`      `d/i`
+- `chainId`    `c`
+- `accessList` `A`
+- `yParity`    `y`
+- `gasPrice` `p`
+-/
+structure AccessListTransaction
+  extends Transaction.Base, Transaction.WithAccessList, Transaction.WithGasPrice
+deriving DecidableEq
 
 /--
-`DynamicFeeTransaction`. `T<x>`. EIP-1559.
-
-`priorityGasFee` 
-`maxGasFee`      
-`chainId`    `c`
-`accessList` `A`
+Type 2: `DynamicFeeTransaction`
+- `nonce`                `n`
+- `gasLimit`             `g`
+- `recipinet`            `t`
+- `value`                `v`
+- `r`                    `r`
+- `s`                    `s`
+- `data`                 `d/i`
+- `chainId`              `c`
+- `accessList`           `A`
+- `yParity`              `y`
+- `maxFeePerGas`         `m`
+- `maxPriorityFeePerGas` `f`
 -/
-structure DynamicFeeTransaction extends BaseTransaction where
-  priorityGasFee : UInt256
-  maxGasFee      : UInt256
-  chainId        : ChainID
-  accessList     : AList (λ _ : Address ↦ List UInt256)
-  deriving DecidableEq
+structure DynamicFeeTransaction extends Transaction.Base, Transaction.WithAccessList where
+  maxFeePerGas         : UInt256
+  maxPriorityFeePerGas : UInt256
+deriving DecidableEq
 
 inductive Transaction where
   | legacy  : LegacyTransaction → Transaction
   | access  : AccessListTransaction → Transaction
   | dynamic : DynamicFeeTransaction → Transaction
-  deriving DecidableEq
+deriving DecidableEq
 
 def Transaction.type : Transaction → Nat
   | .legacy  _ => 0
