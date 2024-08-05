@@ -1,3 +1,4 @@
 *.olean
 .lake/
 vc/.stack-work/*
+__pycache__/
