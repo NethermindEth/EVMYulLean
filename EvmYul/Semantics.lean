@@ -167,11 +167,11 @@ example :
   toHex (KEC longInput.toUTF8) = "596cfd6c2f8f76b8f480f5c2fc582db9089486792435f397f8286aff64d42646"
 := by native_decide
 
--- Appendix B. Recursive Length Prefix
-
 inductive 𝕋 :=
   | 𝔹 : ByteArray → 𝕋
   | 𝕃 : (List 𝕋) → 𝕋
+
+def BE : ℕ → ByteArray := List.toByteArray ∘ toBytesBigEndian
 
 private def R_b (x : ByteArray) : Option ByteArray :=
   if x.size = 1 ∧ x.get! 0 < 128 then some x
@@ -179,8 +179,8 @@ private def R_b (x : ByteArray) : Option ByteArray :=
     if x.size < 56 then some <| [⟨128 + x.size⟩].toByteArray ++ x
     else
       if x.size < 2^64 then
-        let BE : ByteArray := (toBytesBigEndian x.size).toByteArray
-        some <| [⟨183 + BE.size⟩].toByteArray ++ BE ++ x
+        let be := BE x.size
+        some <| [⟨183 + be.size⟩].toByteArray ++ be ++ x
       else none
 
 mutual
@@ -202,8 +202,8 @@ def R_l (l : List 𝕋) : Option ByteArray :=
         some <| [⟨192 + s_x.size⟩].toByteArray ++ s_x
       else
         if s_x.size < 2^64 then
-          let BE : ByteArray := (toBytesBigEndian s_x.size).toByteArray
-          some <| [⟨183 + BE.size⟩].toByteArray ++ BE ++ s_x
+          let be := BE s_x.size
+          some <| [⟨183 + be.size⟩].toByteArray ++ be ++ s_x
         else none
 
 def RLP (t : 𝕋) : Option ByteArray :=

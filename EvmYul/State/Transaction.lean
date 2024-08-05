@@ -6,7 +6,7 @@ import EvmYul.Wheels
 
 namespace EvmYul
 
-open Batteries (RBMap)
+open Batteries (RBMap RBSet)
 
 -- "All transaction types specify a number of common fields:"
 /--
@@ -53,7 +53,7 @@ structure Transaction.WithGasPrice where
   gasPrice : UInt256
 deriving BEq
 
--- "Legacy transactions do not have an `accessList`, while `chainId` and `yParity` for legacy transactions are combined into a single value:""
+-- Legacy transactions do not have an `accessList`, while `chainId` and `yParity` for legacy transactions are combined into a single value:
 /--
 Type 0: `LegacyTransaction`. Section 4.3.
 - `nonce`     `n`
@@ -112,6 +112,16 @@ inductive Transaction where
   | access  : AccessListTransaction → Transaction
   | dynamic : DynamicFeeTransaction → Transaction
 deriving BEq
+
+def Transaction.base : Transaction → Transaction.Base
+  | legacy t => t.toBase
+  | access t => t.toBase
+  | dynamic t => t.toBase
+
+def Transaction.getAccessList : Transaction → List (Address × List UInt256)
+  | legacy _ => []
+  | access t => RBSet.toList t.accessList
+  | dynamic t => RBSet.toList t.accessList
 
 def Transaction.type : Transaction → Nat
   | .legacy  _ => 0
