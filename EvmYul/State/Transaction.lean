@@ -1,9 +1,12 @@
 import Mathlib.Data.List.AList
+import Batteries.Data.RBMap.Lemmas
 
 import EvmYul.UInt256
 import EvmYul.Wheels
 
 namespace EvmYul
+
+open Batteries (RBMap)
 
 -- "All transaction types specify a number of common fields:"
 /--
@@ -26,7 +29,7 @@ structure Transaction.Base where
   r         : ByteArray
   s         : ByteArray
   data      : ByteArray
-deriving DecidableEq
+deriving BEq
 
 -- "EIP-2930 (type 1) and EIP-1559 (type 2) transactions also have:""
 /--
@@ -37,9 +40,9 @@ deriving DecidableEq
 -/
 structure Transaction.WithAccessList where
   chainId : ChainID
-  accessList : AList (λ _ : Address ↦ List UInt256)
+  accessList : RBMap Address (List UInt256) compare
   yParity : UInt256
-deriving DecidableEq
+deriving BEq
 
 -- "type 0 and type 1 transactions specify gas price as a single value:"
 /--
@@ -48,7 +51,7 @@ deriving DecidableEq
 -/
 structure Transaction.WithGasPrice where
   gasPrice : UInt256
-deriving DecidableEq
+deriving BEq
 
 -- "Legacy transactions do not have an `accessList`, while `chainId` and `yParity` for legacy transactions are combined into a single value:""
 /--
@@ -65,7 +68,7 @@ Type 0: `LegacyTransaction`. Section 4.3.
 -/
 structure LegacyTransaction extends Transaction.Base, Transaction.WithGasPrice where
   w: UInt256
-deriving DecidableEq
+deriving BEq
 
 /-- Type 1: `AccessListTransaction`
 - `nonce`     `n`
@@ -82,7 +85,7 @@ deriving DecidableEq
 -/
 structure AccessListTransaction
   extends Transaction.Base, Transaction.WithAccessList, Transaction.WithGasPrice
-deriving DecidableEq
+deriving BEq
 
 /--
 Type 2: `DynamicFeeTransaction`
@@ -102,13 +105,13 @@ Type 2: `DynamicFeeTransaction`
 structure DynamicFeeTransaction extends Transaction.Base, Transaction.WithAccessList where
   maxFeePerGas         : UInt256
   maxPriorityFeePerGas : UInt256
-deriving DecidableEq
+deriving BEq
 
 inductive Transaction where
   | legacy  : LegacyTransaction → Transaction
   | access  : AccessListTransaction → Transaction
   | dynamic : DynamicFeeTransaction → Transaction
-deriving DecidableEq
+deriving BEq
 
 def Transaction.type : Transaction → Nat
   | .legacy  _ => 0
