@@ -1,12 +1,14 @@
 import Mathlib.Data.BitVec
 import Mathlib.Data.Array.Defs
+import Mathlib.Data.Finmap
 import Mathlib.Data.List.Defs
-
+import EvmYul.EVM.Exception
 import EvmYul.Data.Stack
 import EvmYul.Operations
 import EvmYul.UInt256
 import EvmYul.Wheels
 import EvmYul.State.ExecutionEnv
+import EvmYul.State.Substate
 import EvmYul.EVM.State
 import EvmYul.EVM.StateOps
 import EvmYul.SharedStateOps
@@ -14,6 +16,7 @@ import EvmYul.EVM.Exception
 import EvmYul.EVM.Instr
 import EvmYul.Semantics
 import EvmYul.Wheels
+import EvmYul.EllipticCurves
 
 namespace EvmYul
 
@@ -398,7 +401,7 @@ def Lambda
   (i : ByteArray) -- the initialisation EVM code
   (e : UInt256) -- depth of the message-call/contract-creation stack
   (ζ : Option ByteArray) -- the salt
-  (H : BlockHeader)
+  (H : BlockHeader) -- "I_H has no special treatment and is determined from the blockchain"
   (w : Bool)
   :
   Option (Address × YPState × Substate × Bool × ByteArray)
@@ -580,6 +583,191 @@ def Θ (fuel : Nat)
 
 end
 
+open Batteries (RBMap RBSet)
+
+def checkTransactionGetSender (σ : YPState) (chainId H_f : ℕ) (T : Transaction)
+  : Except EVM.Exception Address
+:= do
+  let some T_RLP := RLP (← (L_X T)) | .error <| .InvalidTransaction .IllFormedRLP
+
+  let secp256k1n : ℕ := 115792089237316195423570985008687907852837564279074904382605163141518161494337
+  let r : ℕ := fromBytesBigEndian T.base.r.data.data
+  let s : ℕ := fromBytesBigEndian T.base.s.data.data
+  if 0 ≥ r ∨ r ≥ secp256k1n then .error <| .InvalidTransaction .InvalidSignature
+  if 0 ≥ s ∨ s > secp256k1n / 2 then .error <| .InvalidTransaction .InvalidSignature
+  let v : ℕ := -- (324)
+    match T with
+      | .legacy t =>
+        if t.w ∈ [27, 28] then
+          t.w - 27
+        else
+          if t.w ≠ 35 + chainId * 2 ∧ t.w ≠ 36 + chainId * 2 then
+            (t.w - 35 - chainId) % 2 -- `chainId` not subtracted in the Yellow paper but in the EEL spec
+          else
+            t.w
+      | .access t | .dynamic t => t.yParity
+  if v ∉ [0, 1] then .error <| .InvalidTransaction .InvalidSignature
+
+  let h_T := -- (318)
+    match T with
+      | .legacy _ => KEC T_RLP
+      | _ => KEC <| ByteArray.mk #[.ofNat T.type] ++ T_RLP
+
+  let (S_T : Address) ← -- (323)
+    match ECDSARECOVER h_T (ByteArray.mk #[.ofNat v]) T.base.r T.base.s with
+      | .ok s =>
+        pure <| Fin.ofNat <| fromBytesBigEndian <|
+          ((KEC s).extract 12 32 /- 160 bits = 20 bytes -/ ).data.data
+      | .error s => .error <| .InvalidTransaction (.SenderRecoverError s)
+
+  -- "Also, with a slight abuse of notation ... "
+  let (senderCode, senderNonce, senderBalance) :=
+    match σ.lookup S_T with
+      | some sender => (sender.code, sender.nonce, sender.balance)
+      | none => (.empty, 0, 0)
+
+
+  if senderCode ≠ .empty then .error <| .InvalidTransaction .SenderCodeNotEmpty
+  if senderNonce ≠ T.base.nonce then .error <| .InvalidTransaction .InvalidSenderNonce
+
+  let v₀ :=
+    match T with
+      | .legacy t | .access t => t.gasLimit * t.gasPrice + t.value
+      | .dynamic t => t.gasLimit * t.maxFeePerGas + t.value
+  if v₀ > senderBalance then .error <| .InvalidTransaction .UpFrontPayment
+
+  if H_f >
+    match T with
+      | .dynamic t => t.maxFeePerGas
+      | .legacy t | .access t => t.gasPrice
+    then .error <| .InvalidTransaction .BaseFeeTooHigh
+
+  let n :=
+    match T.base.recipient with
+      | some _ => T.base.data.size
+      | none => 0
+  if n > 49152 then .error <| .InvalidTransaction .DataGreaterThan9152
+
+  match T with
+    | .dynamic t =>
+      if t.maxPriorityFeePerGas > t.maxFeePerGas then .error <| .InvalidTransaction .InconsistentFees
+      pure S_T
+    | _ => pure S_T
+
+ where
+  L_X (T : Transaction) : Except EVM.Exception 𝕋 := -- (317)
+    let accessEntryRLP : Address × List UInt256 → 𝕋
+      | ⟨a, s⟩ => .𝕃 [.𝔹 (BE a), .𝕃 (s.map (.𝔹 ∘ BE))]
+    let accessEntriesRLP (aEs : List (Address × List UInt256)) : 𝕋 :=
+      .𝕃 (aEs.map accessEntryRLP)
+    match T with
+      | /- 0 -/ .legacy t =>
+        if t.w ∈ [27, 28] then
+          .ok ∘ .𝕃 ∘ List.map .𝔹 <|
+            [ BE t.nonce -- Tₙ
+            , BE t.gasPrice -- Tₚ
+            , BE t.gasLimit -- T_g
+            , -- If Tₜ is ∅ it becomes the RLP empty byte sequence and thus the member of 𝔹₀
+              t.recipient.option .empty BE -- Tₜ
+            , BE t.value -- Tᵥ
+            , t.data
+            ]
+        else
+          if t.w ≠ 35 + chainId * 2 ∧ t.w ≠ 36 + chainId * 2 then
+            .ok ∘ .𝕃 ∘ List.map .𝔹 <|
+              [ BE t.nonce -- Tₙ
+              , BE t.gasPrice -- Tₚ
+              , BE t.gasLimit -- T_g
+              , -- If Tₜ is ∅ it becomes the RLP empty byte sequence and thus the member of 𝔹₀
+                t.recipient.option .empty BE -- Tₜ
+              , BE t.value -- Tᵥ
+              , t.data -- p
+              , BE chainId
+              , .empty
+              , .empty
+              ]
+          else .error <| .InvalidTransaction .IllFormedRLP
+
+      | /- 1 -/ .access t =>
+        .ok ∘ .𝕃 <|
+          [ .𝔹 (BE t.chainId) -- T_c
+          , .𝔹 (BE t.nonce) -- Tₙ
+          , .𝔹 (BE t.gasPrice) -- Tₚ
+          , .𝔹 (BE t.gasLimit) -- T_g
+          , -- If Tₜ is ∅ it becomes the RLP empty byte sequence and thus the member of 𝔹₀
+            .𝔹 (t.recipient.option .empty BE) -- Tₜ
+          , .𝔹 (BE t.value) -- T_v
+          , .𝔹 t.data  -- p
+          , accessEntriesRLP <| RBSet.toList t.accessList -- T_A
+          ]
+      | /- 2 -/ .dynamic t =>
+        .ok ∘ .𝕃 <|
+          [ .𝔹 (BE t.chainId) -- T_c
+          , .𝔹 (BE t.nonce) -- Tₙ
+          , .𝔹 (BE t.maxPriorityFeePerGas) -- T_f
+          , .𝔹 (BE t.maxFeePerGas) -- Tₘ
+          , .𝔹 (BE t.gasLimit) -- T_g
+          , -- If Tₜ is ∅ it becomes the RLP empty byte sequence and thus the member of 𝔹₀
+            .𝔹 (t.recipient.option .empty BE) -- Tₜ
+          , .𝔹 (BE t.value) -- Tᵥ
+          , .𝔹 t.data -- p
+          , accessEntriesRLP <| RBSet.toList t.accessList -- T_A
+          ]
+
+-- Type Υ using \Upsilon or \GU
+def Υ (fuel : ℕ) (σ : YPState) (chainId H_f : ℕ) (H : BlockHeader) (T : Transaction)
+  : Except EVM.Exception (YPState × Substate × Bool)
+:= do
+  let S_T ← checkTransactionGetSender σ chainId H_f T
+  -- "here can be no invalid transactions from this point"
+
+  let senderAccount := (σ.lookup S_T).get!
+  let f := -- (67)
+    match T with
+      | .legacy t | .access t => t.gasPrice - H_f
+      | .dynamic t => min t.maxPriorityFeePerGas (t.maxFeePerGas - H_f)
+  let p := -- (66)
+    match T with
+      | .legacy t | .access t => t.gasPrice
+      | .dynamic _ => f + H_f
+  let senderAccount :=
+    { senderAccount with
+        balance := senderAccount.balance - T.base.gasLimit * p -- (74)
+        nonce := senderAccount.nonce + 1 -- (75)
+    }
+  let σ₀ := σ.insert S_T senderAccount -- the checkpoint state (73)
+  let accessList := T.getAccessList
+  let AStar_K : List (Address × UInt256) := do -- (78)
+    let ⟨Eₐ, Eₛ⟩ ← accessList
+    let eₛ ← Eₛ
+    pure (Eₐ, eₛ)
+  let a := -- (80)
+    A0.accessedAccounts ∪ {S_T} ∪ {H.beneficiary} ∪ List.toFinset (accessList.map Prod.fst)
+  let AStarₐ := -- (79)
+    match T.base.recipient with
+      | some t => a ∪ {t}
+      | none => a
+  let AStar := -- (77)
+    { A0 with accessedAccounts := AStarₐ, accessedStorageKeys := AStar_K.toFinset}
+  let (σ_P, A, z) ← -- (76)
+    match T.base.recipient with
+      | none => do
+        let (_, σ_P, A, z, _) :=
+          (Lambda fuel σ₀ AStar S_T S_T p T.base.value T.base.data 0 none H true).get!
+        pure (σ_P, A, z)
+      | some t =>
+        let g := T.base.gasLimit /- minus g₀ -/
+        let (σ_P, _,  A, z, _) ← Θ fuel σ₀ AStar S_T S_T t (σ₀.lookup t).get!.code g p T.base.value T.base.value T.base.data 0 true
+        pure (σ_P, A, z)
+  let σStar := σ_P -- we don't model gas yet
+  have R : RightCommutative (flip Finmap.erase) := by
+    unfold RightCommutative
+    intros b a₁ a₂
+    simp only [flip, Finmap.erase_erase]
+  let σ' := A.selfDestructSet.1.foldl (flip Finmap.erase) R σStar -- (87)
+  let deadAccounts := A.touchedAccounts.1.filter (State.dead σStar ·)
+  let σ' := deadAccounts.foldl (flip Finmap.erase) R σ' -- (88)
+  .ok (σ', A, z)
 end EVM
 
 end EvmYul

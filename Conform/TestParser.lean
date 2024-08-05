@@ -86,7 +86,7 @@ instance : FromJson Post where
   fromJson? json := json.getObjVals? Address PostEntry
 
 /--
-TODO: We parse ℕ-valued scalars as though they were at most UInt256; could need changing. 
+TODO: We parse ℕ-valued scalars as though they were at most UInt256; could need changing.
 -/
 instance : FromJson BlockHeader where
   fromJson? json := do
@@ -129,6 +129,7 @@ instance : FromJson Transaction where
       gasPrice   := ← json.getObjValAs? UInt256          "gasPrice"
       chainId    := TODO
       accessList := TODO -- TODO - Not sure this needs initialising in tests.
+      yParity    := TODO
     }
 
 instance : FromJson BlockEntry where
@@ -161,7 +162,7 @@ instance : ToString AccountEntry := ⟨ToString.toString ∘ repr⟩
 
 instance : ToString Pre := ⟨ToString.toString ∘ repr⟩
 
-instance : ToString PostEntry := ⟨ToString.toString ∘ repr⟩ 
+instance : ToString PostEntry := ⟨ToString.toString ∘ repr⟩
 
 instance : ToString Post := ⟨ToString.toString ∘ repr⟩
 

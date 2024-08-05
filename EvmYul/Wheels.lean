@@ -11,6 +11,9 @@ def Address.size : Nat := 1461501637330902918203684832716283019655932542976
 
 abbrev Address : Type := Fin Address.size
 
+instance : Ord Address where
+  compare a₁ a₂ := compare a₁.val a₂.val
+
 abbrev Storage : Type := Finmap (λ _ : UInt256 ↦ UInt256)
 
 instance : Inhabited Address := ⟨Fin.ofNat 0⟩

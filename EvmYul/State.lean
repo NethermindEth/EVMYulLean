@@ -33,6 +33,6 @@ structure State where
   keccakRange   : List UInt256
   usedRange     : Finset UInt256
   hashCollision : Bool
-deriving DecidableEq, Inhabited
+deriving Inhabited, BEq
 
 end EvmYul

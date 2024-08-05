@@ -15,7 +15,7 @@ structure Block where
   blockHeader  : BlockHeader
   transactions : List Transaction
   ommers       : Finset BlockHeader := ∅
-  deriving Inhabited, DecidableEq
+  deriving Inhabited, BEq
 
 attribute [deprecated] Block.ommers
 
