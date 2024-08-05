@@ -27,6 +27,16 @@ jobs:
             ~/.profile
           key: ${{ runner.os }}-${{ env.cache-name }}-${{ hashFiles('**/lakefile.lean') }}
 
+      - name: Set up python 3.11
+        uses: actions/setup-python@v2
+        with:
+          python-version: 3.11
+      - name: Install python dependencies
+        run: |
+          python -m pip install --upgrade pip
+          pip install coincurve
+          pip install typing-extensions
+
       - if: ${{ steps.cache-elan-mathlib.outputs.cache-hit != 'true' }}
 
         name: install elan
@@ -61,5 +71,6 @@ jobs:
 
       - name: build conform
         run: |
+          source ~/.profile
           lake build conform
       

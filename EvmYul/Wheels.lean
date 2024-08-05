@@ -94,3 +94,10 @@ partial def Nat.toHex (n : Nat) : String :=
   if n < 16
   then hexDigitRepr n
   else (toHex (n / 16)) ++ hexDigitRepr (n % 16)
+
+def hexOfByte (byte : UInt8) : String :=
+  hexDigitRepr (byte.toNat >>> 4 &&& 0b00001111) ++
+  hexDigitRepr (byte.toNat &&& 0b00001111)
+
+def toHex (bytes : ByteArray) : String :=
+  bytes.foldl (init := "") λ acc byte ↦ acc ++ hexOfByte byte
