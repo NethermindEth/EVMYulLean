@@ -16,6 +16,7 @@ import EvmYul.EVM.Exception
 import EvmYul.EVM.Instr
 import EvmYul.Semantics
 import EvmYul.Wheels
+import EvmYul.EllipticCurves
 
 namespace EvmYul
 
@@ -583,9 +584,6 @@ def Θ (fuel : Nat)
 end
 
 open Batteries (RBMap RBSet)
-
-def ECDSARECOVER (e v r s : ByteArray) : Except String ByteArray :=
-  sorry
 
 def checkTransactionGetSender (σ : YPState) (chainId H_f : ℕ) (T : Transaction)
   : Except EVM.Exception Address
