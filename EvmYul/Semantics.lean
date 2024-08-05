@@ -340,7 +340,8 @@ def step {τ : OperationType} (op : Operation τ) : Transformer τ :=
               | none => .error .NotEncodableRLP
               | some L_A =>
                 let addr : Address :=
-                  (KEC L_A).extract 96 265 |>.data.data |> fromBytesBigEndian |> Fin.ofNat
+                  (KEC L_A).extract 12 32 /- 160 bits = 20 bytes -/
+                    |>.data.data |> fromBytesBigEndian |> Fin.ofNat
                 let code : ByteArray := yulState.toMachineState.lookupMemoryRange poz len
                 match yulState.toState.accountMap.lookup Iₐ with
                   | none => .ok <| (yulState, some 0)

@@ -412,7 +412,8 @@ def Lambda
   let n : UInt256 := (σ.lookup s |>.option 0 Account.nonce) - 1
   let lₐ ← L_A s n ζ i
   let a : Address :=
-    (KEC lₐ).extract 96 265 |>.data.toList.reverse |> fromBytes' |> Fin.ofNat
+    (KEC lₐ).extract 12 32 /- 160 bits = 20 bytes -/
+      |>.data.data |> fromBytesBigEndian |> Fin.ofNat
   -- A*
   let AStar := A.addAccessedAccount a
   -- σ*
