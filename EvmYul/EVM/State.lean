@@ -15,7 +15,7 @@ The EVM `State` (extends EvmYul.SharedState).
 structure State extends EvmYul.SharedState :=
   pc    : UInt256
   stack : Stack UInt256
-  deriving Inhabited, BEq
+  deriving BEq, Inhabited
 
 end EVM
 

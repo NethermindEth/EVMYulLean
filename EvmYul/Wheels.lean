@@ -14,7 +14,8 @@ abbrev Address : Type := Fin Address.size
 instance : Ord Address where
   compare a₁ a₂ := compare a₁.val a₂.val
 
-abbrev Storage : Type := Finmap (λ _ : UInt256 ↦ UInt256)
+-- abbrev Storage : Type := Finmap (λ _ : UInt256 ↦ UInt256)
+-- abbrev Storage : Type := Finmap (λ _ : UInt256 ↦ UInt256)
 
 instance : Inhabited Address := ⟨Fin.ofNat 0⟩
 
@@ -26,10 +27,21 @@ instance {n : Nat} : OfNat Address n := ⟨Fin.ofNat n⟩
 
 end Address
 
+def hexOfByte (byte : UInt8) : String :=
+  hexDigitRepr (byte.toNat >>> 4 &&& 0b00001111) ++
+  hexDigitRepr (byte.toNat &&& 0b00001111)
+
+def toHex (bytes : ByteArray) : String :=
+  bytes.foldl (init := "") λ acc byte ↦ acc ++ hexOfByte byte
+
+instance (priority := high) : Repr ByteArray where
+  reprPrec s _ := toHex s
+
 /--
   Is an enumerate type, but nat is okay for now TODO(model properly)
 -/
 def ChainID : Type := Nat
+  deriving Repr
 
 deriving instance DecidableEq for ChainID
 deriving instance Inhabited for ChainID
@@ -104,3 +116,18 @@ def hexOfByte (byte : UInt8) : String :=
 
 def toHex (bytes : ByteArray) : String :=
   bytes.foldl (init := "") λ acc byte ↦ acc ++ hexOfByte byte
+/--
+TODO - Well this is ever so slightly unfortunate.
+It appears to be the case that some (all?) definitions that have C++ implementations
+use 64bit-width integers to hold numeric arguments.
+
+When this assumption is broken, e.g. `n : Nat := 2^64`, the Lean (4.9.0) gives
+inernal out of memory error.
+
+This implementation works around the issue at the price of using a slower implementation
+in case either of the arguments is too big.
+-/
+def ByteArray.extract' (a : ByteArray) (b e : Nat) : ByteArray :=
+  if b < 2^64 && e < 2^64
+  then a.extract b e -- NB only when `b` and `e` are sufficiently small
+  else ⟨⟨a.toList.drop b |>.take (e - b)⟩⟩

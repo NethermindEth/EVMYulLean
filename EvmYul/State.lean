@@ -1,4 +1,4 @@
-import Mathlib.Data.Finmap
+import Batteries.Data.RBMap
 import Mathlib.Data.Finset.Basic
 
 import EvmYul.State.ExecutionEnv
@@ -20,7 +20,7 @@ The `State`. Section 9.3.
 - `remainingGas` `g`
 -/
 structure State where
-  accountMap    : Finmap (λ _ : Address ↦ Account)
+  accountMap    : Batteries.RBMap Address Account compare
   remainingGas  : ℕ
   substate      : Substate
   executionEnv  : ExecutionEnv
@@ -28,11 +28,11 @@ structure State where
   -- Instead of keeping a map from `parentHash` to `Block`, we instead store the blocks we need.
   blocks        : List Block
 
-  -- TODO(Keccak Stuff)
+  -- TODO(Keccak Stuff + I guess this will be gone so no need to nuke the `Finmap` just now
   keccakMap     : Finmap (λ _ : List UInt256 ↦ UInt256)
   keccakRange   : List UInt256
   usedRange     : Finset UInt256
   hashCollision : Bool
-deriving Inhabited, BEq
+deriving BEq, Inhabited
 
 end EvmYul

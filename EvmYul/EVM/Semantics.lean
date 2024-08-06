@@ -4,19 +4,29 @@ import Mathlib.Data.Finmap
 import Mathlib.Data.List.Defs
 import EvmYul.EVM.Exception
 import EvmYul.Data.Stack
-import EvmYul.Operations
-import EvmYul.UInt256
-import EvmYul.Wheels
+
+import EvmYul.Maps.AccountMap
+import EvmYul.Maps.YPState
+
+import EvmYul.State.AccountOps
 import EvmYul.State.ExecutionEnv
 import EvmYul.State.Substate
+
 import EvmYul.EVM.State
 import EvmYul.EVM.StateOps
-import EvmYul.SharedStateOps
 import EvmYul.EVM.Exception
 import EvmYul.EVM.Instr
+
+import EvmYul.Operations
+import EvmYul.Pretty
+import EvmYul.SharedStateOps
 import EvmYul.Semantics
 import EvmYul.Wheels
 import EvmYul.EllipticCurves
+import EvmYul.UInt256
+
+import Conform.Wheels
+open EvmYul.DebuggingAndProfiling
 
 namespace EvmYul
 
@@ -60,7 +70,7 @@ def argOnNBytesOfInstr : Operation .EVM → ℕ
 
 def N (pc : Nat) (instr : Operation .EVM) := pc.succ + argOnNBytesOfInstr instr
 
-abbrev YPState := Finmap (λ _ : Address ↦ Account)
+
 
 /--
 Returns the instruction from `arr` at `pc` assuming it is valid.
@@ -69,13 +79,17 @@ The `Push` instruction also returns the argument as an EVM word along with the w
 -/
 def decode (arr : ByteArray) (pc : Nat) :
   Option (Operation .EVM × Option (UInt256 × Nat)) := do
+  -- dbg_trace s!"DECODING; arr: {arr} pc: {pc}"
+  -- let wagh := arr.get? pc
+  -- dbg_trace s!"wagh is: {wagh}"
   let instr ← arr.get? pc >>= EvmYul.EVM.parseInstr
+  -- dbg_trace s!"Decoded: {instr.pretty}"
   let argWidth := argOnNBytesOfInstr instr
   .some (
     instr,
     if argWidth == 0
     then .none
-    else .some (EvmYul.uInt256OfByteArray (arr.extract pc.succ (pc.succ + argWidth)), argWidth)
+    else .some (EvmYul.uInt256OfByteArray (arr.extract' pc.succ (pc.succ + argWidth)), argWidth)
   )
 
 def fetchInstr (I : EvmYul.ExecutionEnv) (pc :  UInt256) :
@@ -125,17 +139,23 @@ local instance : MonadLift Option (Except EVM.Exception) :=
 
 mutual
 
-def step (fuel : ℕ) : EVM.Transformer :=
+def step (fuel : ℕ) (instr : Option (Operation .EVM × Option (UInt256 × Nat)) := .none) : EVM.Transformer :=
   match fuel with
     | 0 => .ok
     | .succ f =>
     λ (evmState : EVM.State) ↦ do
-    let (instr, arg) ← fetchInstr evmState.toState.executionEnv evmState.pc
+    -- This will normally be called from `Ξ` (or `X`) with `fetchInstr` already having been called.
+    -- That said, we sometimes want a `step : EVM.Transformer` and as such, we can decode on demand.
+    let (instr, arg) ←
+      match instr with
+        | .none => fetchInstr evmState.toState.executionEnv evmState.pc
+        | .some (instr, arg) => pure (instr, arg)
+    -- dbg_trace s!"step called with: {instr.pretty}"
     -- @Andrei: Of course not all can be shared, so based on `instr` this might not be `EvmYul.step`.
     match instr with
       | .Push _ => do
         let some (arg, argWidth) := arg | .error EVM.Exception.InvalidStackSizeException
-        .ok <| evmState.replaceStackAndIncrPC (evmState.stack.push arg) (pcΔ := argWidth)
+        .ok <| evmState.replaceStackAndIncrPC (evmState.stack.push arg) (pcΔ := argWidth.succ)
       | .JUMP =>
         match evmState.stack.pop with
           | some ⟨stack , μ₀⟩ =>
@@ -158,7 +178,7 @@ def step (fuel : ℕ) : EVM.Transformer :=
           | _ => .error EVM.Exception.InvalidStackSizeException
       | .PC =>
         .ok <| evmState.replaceStackAndIncrPC (evmState.stack.push evmState.pc)
-      | .JUMPDEST => .ok evmState
+      | .JUMPDEST => .ok evmState.incrPC
 
       | .DUP1 => dup 1 evmState
       | .DUP2 => dup 2 evmState
@@ -205,7 +225,7 @@ def step (fuel : ℕ) : EVM.Transformer :=
             let Iₑ := evmState.executionEnv.depth
             let Λ := Lambda f evmState.accountMap evmState.toState.substate Iₐ Iₒ I.gasPrice μ₀ i (Iₑ + 1) ζ I.header I.perm
             let (a, evmState', z, o) : (Address × EVM.State × Bool × ByteArray) :=
-              if μ₀ ≤ (evmState.accountMap.lookup Iₐ |>.option 0 Account.balance) ∧ Iₑ < 1024 then
+              if μ₀ ≤ (evmState.accountMap.find? Iₐ |>.option 0 Account.balance) ∧ Iₑ < 1024 then
                 match Λ with
                   | some (a, σ', A', z, o) =>
                     (a, {evmState with accountMap := σ', substate := A'}, z, o)
@@ -213,7 +233,7 @@ def step (fuel : ℕ) : EVM.Transformer :=
               else
                 (0, evmState, False, .empty)
             let x :=
-              let balance := evmState.accountMap.lookup a |>.option 0 Account.balance
+              let balance := evmState.accountMap.find? a |>.option 0 Account.balance
                 if z = false ∨ Iₑ = 1024 ∨ μ₀ < balance then 0 else a
             let newReturnData : ByteArray := if z = false then .empty else o
             let μᵢ' := MachineState.M evmState.maxAddress μ₁ μ₂
@@ -240,7 +260,7 @@ def step (fuel : ℕ) : EVM.Transformer :=
             let Iₑ := evmState.executionEnv.depth
             let Λ := Lambda f evmState.accountMap evmState.toState.substate Iₐ Iₒ I.gasPrice μ₀ i (Iₑ + 1) ζ I.header I.perm
             let (a, evmState', z, o) : (Address × EVM.State × Bool × ByteArray) :=
-              if μ₀ ≤ (evmState.accountMap.lookup Iₐ |>.option 0 Account.balance) ∧ Iₑ < 1024 then
+              if μ₀ ≤ (evmState.accountMap.find? Iₐ |>.option 0 Account.balance) ∧ Iₑ < 1024 then
                 match Λ with
                   | some (a, σ', A', z, o) =>
                     (a, {evmState with accountMap := σ', substate := A'}, z, o)
@@ -248,7 +268,7 @@ def step (fuel : ℕ) : EVM.Transformer :=
               else
                 (0, evmState, False, .empty)
             let x :=
-              let balance := evmState.accountMap.lookup a |>.option 0 Account.balance
+              let balance := evmState.accountMap.find? a |>.option 0 Account.balance
                 if z = false ∨ Iₑ = 1024 ∨ μ₀ < balance then 0 else a
             let newReturnData : ByteArray := if z = false then .empty else o
             let μᵢ' := MachineState.M evmState.maxAddress μ₁ μ₂
@@ -272,16 +292,23 @@ def step (fuel : ℕ) : EVM.Transformer :=
         -- μ₄ - inSize
         -- μ₅ - outOffsize
         -- μ₆ - outSize
+        -- dbg_trace "POPPING"
         let (stack, μ₀, μ₁, μ₂, μ₃, μ₄, μ₅, μ₆) ← evmState.stack.pop7
+        -- dbg_trace "POPPED OK; μ₁ : {μ₁}"
+        -- dbg_trace s!"Pre call, we have: {Finmap.pretty evmState.accountMap}"
         let (σ', g', A', z, o) ← do
           -- TODO - Refactor condition and possibly share with CREATE
-          if μ₂ ≤ (evmState.accountMap.lookup evmState.executionEnv.codeOwner |>.option 0 Account.balance) ∧ evmState.executionEnv.depth < 1024 then
+          if μ₂ ≤ (evmState.accountMap.find? evmState.executionEnv.codeOwner |>.option 0 Account.balance) ∧ evmState.executionEnv.depth < 1024 then
             let t : Address := Address.ofUInt256 μ₁ -- t ≡ μs[1] mod 2^160
+            -- dbg_trace s!"DBG REMOVE; Calling address: {t}"
             let A' := evmState.addAccessedAccount t |>.substate -- A' ≡ A except A'ₐ ≡ Aₐ ∪ {t}
-            let tDirect := evmState.accountMap.lookup t |>.get!.code -- We use the code directly without an indirection a'la `codeMap[t]`.
+            -- TODO A minor... hack? Are we supposed to run into missing account here?
+            let .some tDirect := evmState.accountMap.find? t | throw (.ReceiverNotInAccounts t)
+            let tDirect := tDirect.code -- We use the code directly without an indirection a'la `codeMap[t]`.
+            -- dbg_trace s!"looking up memory range: {evmState.toMachineState.lookupMemoryRange μ₃ μ₄}"
             let i := evmState.toMachineState.lookupMemoryRange μ₃ μ₄ -- m[μs[3] . . . (μs[3] + μs[4] − 1)]
             Θ (fuel := f)                             -- TODO meh
-              (σ  := evmState.toState.accountMap)     -- σ in  Θ(σ, ..)
+              (σ  := evmState.accountMap)             -- σ in  Θ(σ, ..)
               (A  := A')                              -- A* in Θ(.., A*, ..)
               (s  := evmState.executionEnv.codeOwner) -- Iₐ in Θ(.., Iₐ, ..)
               (o  := evmState.executionEnv.sender)    -- Iₒ in Θ(.., Iₒ, ..)
@@ -296,18 +323,22 @@ def step (fuel : ℕ) : EVM.Transformer :=
               (w  := evmState.executionEnv.perm)      -- I_W in Θ(.., I_W)
           -- TODO gas - CCALLGAS(σ, μ, A)
           else .ok (evmState.toState.accountMap, μ₀, evmState.toState.substate, false, .some .empty) -- otherwise (σ, CCALLGAS(σ, μ, A), A, 0, ())
+        -- dbg_trace s!"THETA OK"
         let n : UInt256 := min μ₆ (o.elim 0 (UInt256.ofNat ∘ ByteArray.size)) -- n ≡ min({μs[6], ‖o‖}) -- TODO - Why is this using... set??? { } brackets ???
         -- TODO I am assuming here that μ' is μ with the updates mentioned in the CALL section. Check.
 
         -- TODO - Note to self. Check how updateMemory/copyMemory is implemented. By a cursory look, we play loose with UInt8 -> UInt256 (c.f. e.g. `calldatacopy`) and then the interplay with the WordSize parameter.
         -- TODO - Check what happens when `o = .none`.
+        -- dbg_trace s!"REPORT - μ₅: {μ₅} n: {n} o: {o}"
+        -- dbg_trace "Θ will copy memory now"
         let μ'ₘ := evmState.toMachineState.copyMemory (o.getD .empty) μ₅ n -- μ′_m[μs[5]  ... (μs[5] + n − 1)] = o[0 ... (n − 1)]
-
+        -- dbg_trace s!"μ'ₘ: {μ'ₘ.memory}"
+        -- dbg_trace s!"REPORT - μ'ₘ: {Finmap.pretty μ'ₘ.memory}"
         let μ'ₒ := o -- μ′o = o
         let μ'_g := g' -- TODO gas - μ′g ≡ μg − CCALLGAS(σ, μ, A) + g
 
         let codeExecutionFailed   : Bool := z -- TODO - This is likely wrong.
-        let notEnoughFunds        : Bool := μ₂ > (evmState.accountMap.lookup evmState.executionEnv.codeOwner |>.elim 0 Account.balance) -- TODO - Unify condition with CREATE.
+        let notEnoughFunds        : Bool := μ₂ > (evmState.accountMap.find? evmState.executionEnv.codeOwner |>.elim 0 Account.balance) -- TODO - Unify condition with CREATE.
         let callDepthLimitReached : Bool := evmState.executionEnv.depth == 1024
         let x : UInt256 := if codeExecutionFailed || notEnoughFunds || callDepthLimitReached then 0 else 1 -- where x = 0 if the code execution for this operation failed, or if μs[2] > σ[Ia]b (not enough funds) or Ie = 1024 (call depth limit reached); x = 1 otherwise.
 
@@ -334,10 +365,9 @@ def X (fuel : ℕ) (evmState : State) : Except EVM.Exception (State × Option By
     | 0 => .ok (evmState, some .empty)
     | .succ f =>
       let I_b := evmState.toState.executionEnv.code
-      let w :=
-        match decode I_b evmState.pc with
-          | some (w, _) => w
-          | none => .STOP
+      -- dbg_trace "X calling decode"
+      let instr@(w, _) := decode I_b evmState.pc |>.getD (.STOP, .none)
+      -- dbg_trace s!"Decoded: {w.pretty}"
       let W (w : Operation .EVM) (s : Stack UInt256) : Bool :=
         w ∈ [.CREATE, .CREATE2, .SSTORE, .SELFDESTRUCT, .LOG0, .LOG1, .LOG2, .LOG3, .LOG4] ∨
         (w = .CALL ∧ s.get? 2 ≠ some 0)
@@ -348,7 +378,8 @@ def X (fuel : ℕ) (evmState : State) : Except EVM.Exception (State × Option By
         (w = .JUMPI ∧ (evmState.stack.get? 0 ≠ some 0) ∧ notIn (evmState.stack.get? 1) (D_J I_b 0)) ∨
         (w = .RETURNDATACOPY ∧ evmState.stack.getD 1 0 + evmState.stack.getD 2 0 > evmState.returnData.size) ∨
         evmState.stack.length - (δ w).getD 0 - (α w).getD 0 > 1024 ∨
-        ( ¬ evmState.executionEnv.perm ∧ W w evmState.stack)
+        ( (¬ evmState.executionEnv.perm) ∧ W w evmState.stack)
+
       let H (μ : MachineState) (w : Operation .EVM) : Option ByteArray :=
         if w ∈ [.RETURN, .REVERT] then
           some μ.returnData
@@ -363,7 +394,7 @@ def X (fuel : ℕ) (evmState : State) : Except EVM.Exception (State × Option By
         if w = .REVERT then
           .ok ({evmState with accountMap := ∅}, some evmState.returnData)
         else
-          let evmState' ← step f evmState
+          let evmState' ← step f instr evmState
           match H evmState.toMachineState w with
             | none => X f evmState'
             | some o => .ok <| (evmState', some o)
@@ -409,7 +440,7 @@ def Lambda
   match fuel with
     | 0 => .none
     | .succ f => do
-  let n : UInt256 := (σ.lookup s |>.option 0 Account.nonce) - 1
+  let n : UInt256 := (σ.find? s |>.option 0 Account.nonce) - 1
   let lₐ ← L_A s n ζ i
   let a : Address :=
     (KEC lₐ).extract 12 32 /- 160 bits = 20 bytes -/
@@ -418,7 +449,7 @@ def Lambda
   let AStar := A.addAccessedAccount a
   -- σ*
   let v' :=
-    match σ.lookup a with
+    match σ.find? a with
       | none => 0
       | some ac => ac.balance
 
@@ -432,7 +463,7 @@ def Lambda
     }
 
   let σStar :=
-    match σ.lookup s with
+    match σ.find? s with
       | none => σ
       | some ac =>
         σ.insert s {ac with balance := ac.balance - v}
@@ -455,17 +486,17 @@ def Lambda
     | .ok (_, _, _, none) => .none
     | .ok (σStarStar, _, AStarStar, some returnedData) =>
       let F₀ : Bool :=
-        match σ.lookup a with
+        match σ.find? a with
           | .some ac => ac.code ≠ .empty ∨ ac.nonce ≠ 0
           | .none => false
       -- let σStarStar := evmState'.accountMap
       let F : Bool :=
-        F₀ ∨ σStarStar ≠ ∅ ∨ returnedData.size > 24576
+        F₀ ∨ σStarStar != ∅ ∨ returnedData.size > 24576
           ∨ returnedData = ⟨⟨(0xef :: returnedData.data.toList.tail)⟩⟩
-      let fail := F ∨ σStarStar = ∅
+      let fail := F || σStarStar == ∅
       let σ' :=
         if fail then σ
-          else if State.dead σStarStar a then (σStarStar.extract a).2
+          else if State.dead σStarStar a then σStarStar.erase a -- TODO - why was this Finmap.extract that threw away the extracted value? @Andrei
             else σStarStar.insert a {newAccount with code := returnedData}
       let A' := if fail then AStar else AStarStar
       let z := not fail
@@ -483,16 +514,6 @@ def Lambda
           | some L_A => .some L_A
       | some ζ =>
         .some <| (toBytesBigEndian 255).toByteArray ++ s ++ ζ ++ KEC i
-
--- /--
--- This invokes precompiled contracts based on the hash of the code.
--- Of course, we store the code directly.
-
--- TODO - Link to precompiles, investigate the return value.
--- Should this return the sender somehow ::thinking::?
--- -/
--- def Ξ (σ₁ : EVM.State) (g : UInt256) (A : Substate) (I : ExecutionEnv) :
---       EVM.State × UInt256 × Substate × ByteArray := sorry -- TODO - Wiat for this to exist.
 
 /--
 `σ`  - evm state
@@ -534,17 +555,17 @@ def Θ (fuel : Nat)
     | fuel + 1 => do
   -- Equation (117)
   let σ₁sender ←
-    if !s ∈ σ && v == 0
+    if !σ.contains s && v == 0
     then throw .SenderMustExist -- TODO - YP explains the semantics of undefined receiver; what about sender? Cf. between (115) and (116).
-    else σ.lookup s |>.get!.subBalance v |>.elim (.error .Underflow) .ok -- Equation (118) TODO - What do we do on underflow?
+    else σ.find? s |>.get!.subBalance v |>.elim (.error .Underflow) .ok -- Equation (118) TODO - What do we do on underflow?
 
   -- Equation (120)
   let σ₁receiver ←
-    if !s ∈ σ && v != 0
+    if !σ.contains s && v != 0
     then default else
-    if !s ∈ σ && v == 0
+    if !σ.contains s && v == 0
     then throw .ReceiverMustExistWithNonZeroValue else -- TODO - It seems that we must only initialise the account if v != 0. Otherwise the same question as with the non-existant sender.
-    σ.lookup r |>.get!.addBalance v |>.elim (.error .Overflow) .ok -- Equation (121) TODO - What do we do on overflow?
+    σ.find? r |>.get!.addBalance v |>.elim (.error .Overflow) .ok -- Equation (121) TODO - What do we do on overflow? TODO - probably remove the panicking get! call
 
   -- (117) and (120) is `let σ₁ ← σ.transferBalance s r v` with some account updates.
   let σ₁ := σ.insert s σ₁sender |>.insert r σ₁receiver
@@ -562,6 +583,7 @@ def Θ (fuel : Nat)
       depth     := e  -- Equation (133)
       perm      := w  -- Equation (134)
     }
+
 
   -- Equation (126)
   -- Note that the `c` used here is the actual code, not the address. TODO - Handle precompiled contracts.

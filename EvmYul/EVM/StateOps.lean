@@ -40,7 +40,7 @@ def initialiseAccount (addr : Address) : EVM.State → EVM.State :=
 def updateAccount (addr : Address) (act : Account) : EVM.State → EVM.State :=
   EvmYul.State.updateAccount addr act
 
-def isEmpty (self : EVM.State) : Bool := self.toState.accountMap = ∅
+def isEmpty (self : EVM.State) : Bool := self.toState.accountMap == ∅
 
 end State
 
