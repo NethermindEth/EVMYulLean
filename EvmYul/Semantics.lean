@@ -344,13 +344,13 @@ def step {τ : OperationType} (op : Operation τ) : Transformer τ :=
                   (KEC L_A).extract 12 32 /- 160 bits = 20 bytes -/
                     |>.data.data |> fromBytesBigEndian |> Fin.ofNat
                 let code : ByteArray := yulState.toMachineState.lookupMemoryRange poz len
-                match yulState.toState.accountMap.lookup Iₐ with
+                match yulState.toState.accountMap.find? Iₐ with
                   | none => .ok <| (yulState, some 0)
                   | some ac_Iₐ =>
                     if v < ac_Iₐ.balance then .ok <| (yulState, some 0) else
                     let ac_Iₐ := {ac_Iₐ with balance := ac_Iₐ.balance - v, nonce := ac_Iₐ.nonce + 1}
                     let v' :=
-                      match yulState.toState.accountMap.lookup addr with
+                      match yulState.toState.accountMap.find? addr with
                         | none => 0
                         | some ac_addr => ac_addr.balance
                     let newAccount : Account :=
@@ -414,13 +414,13 @@ def step {τ : OperationType} (op : Operation τ) : Transformer τ :=
             let a₀ : List UInt8 := [0xff]
             let addr₀ := KEC <| ⟨⟨a₀ ++ this ++ s⟩⟩ ++ KEC code
             let addr : Address := Fin.ofNat <| fromBytesBigEndian addr₀.data.data
-            match yulState.toState.accountMap.lookup Iₐ with
+            match yulState.toState.accountMap.find? Iₐ with
               | none => .ok <| (yulState, some 0)
               | some ac_Iₐ =>
                 if v < ac_Iₐ.balance then .ok <| (yulState, some 0) else
                 let ac_Iₐ' := {ac_Iₐ with balance := ac_Iₐ.balance - v, nonce := ac_Iₐ.nonce + 1}
                 let v' :=
-                  match yulState.toState.accountMap.lookup addr with
+                  match yulState.toState.accountMap.find? addr with
                     | none => 0
                     | some ac_addr => ac_addr.balance
                 let newAccount : Account :=

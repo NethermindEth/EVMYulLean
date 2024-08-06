@@ -645,7 +645,7 @@ def checkTransactionGetSender (σ : YPState) (chainId H_f : ℕ) (T : Transactio
 
   -- "Also, with a slight abuse of notation ... "
   let (senderCode, senderNonce, senderBalance) :=
-    match σ.lookup S_T with
+    match σ.find? S_T with
       | some sender => (sender.code, sender.nonce, sender.balance)
       | none => (.empty, 0, 0)
 
@@ -744,7 +744,7 @@ def Υ (fuel : ℕ) (σ : YPState) (chainId H_f : ℕ) (H : BlockHeader) (T : Tr
   let S_T ← checkTransactionGetSender σ chainId H_f T
   -- "here can be no invalid transactions from this point"
 
-  let senderAccount := (σ.lookup S_T).get!
+  let senderAccount := (σ.find? S_T).get!
   let f := -- (67)
     match T with
       | .legacy t | .access t => t.gasPrice - H_f
@@ -765,13 +765,13 @@ def Υ (fuel : ℕ) (σ : YPState) (chainId H_f : ℕ) (H : BlockHeader) (T : Tr
     let eₛ ← Eₛ
     pure (Eₐ, eₛ)
   let a := -- (80)
-    A0.accessedAccounts ∪ {S_T} ∪ {H.beneficiary} ∪ List.toFinset (accessList.map Prod.fst)
+    A0.accessedAccounts.insert S_T |>.insert H.beneficiary |>.union <| Batteries.RBSet.ofList (accessList.map Prod.fst) compare
   let AStarₐ := -- (79)
     match T.base.recipient with
-      | some t => a ∪ {t}
+      | some t => a.insert t
       | none => a
   let AStar := -- (77)
-    { A0 with accessedAccounts := AStarₐ, accessedStorageKeys := AStar_K.toFinset}
+    { A0 with accessedAccounts := AStarₐ, accessedStorageKeys := Batteries.RBSet.ofList AStar_K Substate.storageKeysCmp}
   let (σ_P, A, z) ← -- (76)
     match T.base.recipient with
       | none => do
@@ -780,16 +780,12 @@ def Υ (fuel : ℕ) (σ : YPState) (chainId H_f : ℕ) (H : BlockHeader) (T : Tr
         pure (σ_P, A, z)
       | some t =>
         let g := T.base.gasLimit /- minus g₀ -/
-        let (σ_P, _,  A, z, _) ← Θ fuel σ₀ AStar S_T S_T t (σ₀.lookup t).get!.code g p T.base.value T.base.value T.base.data 0 true
+        let (σ_P, _,  A, z, _) ← Θ fuel σ₀ AStar S_T S_T t (σ₀.find? t).get!.code g p T.base.value T.base.value T.base.data 0 true
         pure (σ_P, A, z)
   let σStar := σ_P -- we don't model gas yet
-  have R : RightCommutative (flip Finmap.erase) := by
-    unfold RightCommutative
-    intros b a₁ a₂
-    simp only [flip, Finmap.erase_erase]
-  let σ' := A.selfDestructSet.1.foldl (flip Finmap.erase) R σStar -- (87)
-  let deadAccounts := A.touchedAccounts.1.filter (State.dead σStar ·)
-  let σ' := deadAccounts.foldl (flip Finmap.erase) R σ' -- (88)
+  let σ' := A.selfDestructSet.1.foldl Batteries.RBMap.erase σStar -- (87)
+  let deadAccounts := A.touchedAccounts.filter (State.dead σStar ·)
+  let σ' := deadAccounts.foldl RBMap.erase σ' -- (88)
   .ok (σ', A, z)
 end EVM
 

@@ -29,7 +29,7 @@ structure Transaction.Base where
   r         : ByteArray
   s         : ByteArray
   data      : ByteArray
-deriving BEq
+deriving BEq, Repr
 
 -- "EIP-2930 (type 1) and EIP-1559 (type 2) transactions also have:""
 /--
@@ -42,7 +42,7 @@ structure Transaction.WithAccessList where
   chainId : ChainID
   accessList : RBMap Address (List UInt256) compare
   yParity : UInt256
-deriving BEq
+deriving BEq, Repr
 
 -- "type 0 and type 1 transactions specify gas price as a single value:"
 /--
@@ -51,7 +51,7 @@ deriving BEq
 -/
 structure Transaction.WithGasPrice where
   gasPrice : UInt256
-deriving BEq
+deriving BEq, Repr
 
 -- Legacy transactions do not have an `accessList`, while `chainId` and `yParity` for legacy transactions are combined into a single value:
 /--
@@ -68,7 +68,7 @@ Type 0: `LegacyTransaction`. Section 4.3.
 -/
 structure LegacyTransaction extends Transaction.Base, Transaction.WithGasPrice where
   w: UInt256
-deriving BEq
+deriving BEq, Repr
 
 /-- Type 1: `AccessListTransaction`
 - `nonce`     `n`
@@ -85,7 +85,7 @@ deriving BEq
 -/
 structure AccessListTransaction
   extends Transaction.Base, Transaction.WithAccessList, Transaction.WithGasPrice
-deriving BEq
+deriving BEq, Repr
 
 /--
 Type 2: `DynamicFeeTransaction`
@@ -105,13 +105,13 @@ Type 2: `DynamicFeeTransaction`
 structure DynamicFeeTransaction extends Transaction.Base, Transaction.WithAccessList where
   maxFeePerGas         : UInt256
   maxPriorityFeePerGas : UInt256
-deriving BEq
+deriving BEq, Repr
 
 inductive Transaction where
   | legacy  : LegacyTransaction → Transaction
   | access  : AccessListTransaction → Transaction
   | dynamic : DynamicFeeTransaction → Transaction
-deriving BEq
+deriving BEq, Repr
 
 def Transaction.base : Transaction → Transaction.Base
   | legacy t => t.toBase

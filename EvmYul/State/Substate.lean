@@ -46,7 +46,7 @@ The `Substate` `A`. Section 6.1.
 -/
 structure Substate :=
   selfDestructSet     : Batteries.RBSet Address compare
-  touchedAccounts     : Batteries.RBSet Account Substate.accountCmp
+  touchedAccounts     : Batteries.RBSet Address compare
   refundBalance       : UInt256
   accessedAccounts    : Batteries.RBSet Address compare
   accessedStorageKeys : Batteries.RBSet (Address × UInt256) Substate.storageKeysCmp
@@ -56,7 +56,7 @@ structure Substate :=
 /--
   (142) `π ≡ {1, 2, 3, 4, 5, 6, 7, 8, 9}`
 -/
-def π : Finset Address := List.toFinset <| (List.range 10).tail.map Fin.ofNat
+def π : Batteries.RBSet Address compare := Batteries.RBSet.ofList ((List.range 10).tail.map Fin.ofNat) compare
 
 /--
   (63) `A0 ≡ (∅, (), ∅, 0, π, ∅)`
