@@ -51,7 +51,7 @@ structure Substate :=
   accessedAccounts    : Batteries.RBSet Address compare
   accessedStorageKeys : Batteries.RBSet (Address × UInt256) Substate.storageKeysCmp
   logSeries           : Array (Address × List UInt256 × ByteArray)
-  deriving BEq, Inhabited
+  deriving BEq, Inhabited, Repr
 
 /--
   (142) `π ≡ {1, 2, 3, 4, 5, 6, 7, 8, 9}`

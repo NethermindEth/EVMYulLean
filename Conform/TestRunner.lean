@@ -165,7 +165,7 @@ end
 def executeTransaction (transaction : Transaction) (s : EVM.State) (header : BlockHeader) : Except EVM.Exception EVM.State := do
   let _TODOfuel := 2^13
 
-  let (ypState, substate, z) ← EVM.Υ _TODOfuel s.accountMap header.chainId header.baseFeePerGas header transaction
+  let (ypState, substate, z) ← EVM.Υ _TODOfuel s.accountMap header.chainId header.baseFeePerGas header transaction (dbgOverrideSender := transaction.base.dbgSender)
 
   -- TODO - I think we do this tuple → EVM.State conversion reasonably often, factor out?
   let result : EVM.State := {

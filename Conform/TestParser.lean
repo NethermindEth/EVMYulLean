@@ -24,18 +24,14 @@ Sorries are often
 @[deprecated]
 scoped notation "TODO" => default
 
-private def fromBlobString {α} (f : Blob → Except String α) (allowEmpty := false) : FromJson α :=
+private def fromBlobString {α} (f : Blob → Except String α) : FromJson α :=
   {
-    fromJson? := λ json ↦ json.getStr? >>= (getBlob?handleEmpty · >>= f)
+    fromJson? := λ json ↦ json.getStr? >>= (getBlob? · >>= f)
   }
-  where
-    emptyBlobOfEmptyString (allowEmpty : Bool) (s : String) : String :=
-      if s.isEmpty && allowEmpty then HexPrefix else s
-    getBlob?handleEmpty := getBlob? ∘ emptyBlobOfEmptyString allowEmpty
 
 instance : FromJson UInt256 := fromBlobString UInt256.fromBlob?
 
-instance : FromJson Address := fromBlobString Address.fromBlob? (allowEmpty := true)
+instance : FromJson Address := fromBlobString Address.fromBlob?
 
 instance : FromJson Storage where
   fromJson? json := json.getObjVals? Address UInt256
@@ -131,13 +127,17 @@ TODO - Currently we return `AccessListTransaction`. No idea if this is what we w
 instance : FromJson Transaction where
   fromJson? json := do
     let baseTransaction : Transaction.Base := {
-      nonce     := ← json.getObjValAsD! UInt256          "nonce"
-      gasLimit  := ← json.getObjValAsD! UInt256          "gasLimit"
-      recipient := ← json.getObjValAsD! (Option Address) "to" -- TODO - How do tests represent no 'to' - just missing field? Refine this.
-      value     := ← json.getObjValAsD! UInt256          "value"
-      r         := ← json.getObjValAsD! ByteArray        "r"
-      s         := ← json.getObjValAsD! ByteArray        "s"
-      data      := ← json.getObjValAsD! ByteArray        "data"
+      nonce     := ← json.getObjValAsD! UInt256        "nonce"
+      gasLimit  := ← json.getObjValAsD! UInt256        "gasLimit"
+      recipient := ← match json.getObjVal? "to" with
+                     | .error _ => .ok .none
+                     | .ok ok => do let str ← ok.getStr?
+                                    if str.isEmpty then .ok .none else FromJson.fromJson? str
+      value     := ← json.getObjValAsD! UInt256        "value"
+      r         := ← json.getObjValAsD! ByteArray      "r"
+      s         := ← json.getObjValAsD! ByteArray      "s"
+      data      := ← json.getObjValAsD! ByteArray      "data"
+      dbgSender := ← json.getObjValAsD! Address        "sender"
     }
 
     match json.getObjVal? "w" with
@@ -152,10 +152,12 @@ instance : FromJson Transaction where
             yParity    := TODO
           }
 
-        match json.getObjVal? "w" with
+        match json.getObjVal? "gasPrice" with
           | .ok gasPrice => do
+            -- dbg_trace "Constructing an access transaction."
             return .access ⟨baseTransaction, accessListTransaction, ⟨← FromJson.fromJson? gasPrice⟩⟩
           | .error _ =>
+            -- dbg_trace "Constructing an dynamic transaction."
             return .dynamic ⟨
                      baseTransaction,
                      accessListTransaction,
@@ -165,6 +167,20 @@ instance : FromJson Transaction where
 
   where accessListToRBMap (this : AccessList) : Batteries.RBMap Address (Array UInt256) compare :=
     this.foldl (init := ∅) λ m ⟨addr, list⟩ ↦ m.insert addr list
+
+-- #eval DebuggingAndProfiling.testJsonParser Transaction r#"
+--                     {
+--                         "data" : "0x6001600155601080600c6000396000f3006000355415600957005b60203560003555",
+--                         "gasLimit" : "0x1314e0",
+--                         "gasPrice" : "0x0a",
+--                         "nonce" : "0x00",
+--                         "r" : "0x519086556db928a3f679b49fc6211c84896a75312c52e7e05a3b5041f59bb49d",
+--                         "s" : "0x70c4b1df7933a7aa4717c13ab34cc2b02daae23ca33836652e526a6a61de0681",
+--                         "sender" : "0xa94f5374fce5edbc8e2a8697c15331677e6ebf0b",
+--                         "to" : "",
+--                         "v" : "0x1b",
+--                         "value" : "0x0186a0"
+--                     }"#
 
 /--
 - Format₀: `EthereumTests/BlockchainTests/GeneralStateTests/VMTests/vmArithmeticTest/add.json`

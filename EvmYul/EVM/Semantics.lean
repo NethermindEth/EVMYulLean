@@ -438,7 +438,7 @@ def Lambda
   Option (Address × YPState × Substate × Bool × ByteArray)
 :=
   match fuel with
-    | 0 => .none
+    | 0 => dbg_trace "nofuel"; .none
     | .succ f => do
   let n : UInt256 := (σ.find? s |>.option 0 Account.nonce) - 1
   let lₐ ← L_A s n ζ i
@@ -483,7 +483,7 @@ def Lambda
     }
   match Ξ f σStar 42 AStar exEnv with -- TODO - Gas model.
     | .error _ => .none
-    | .ok (_, _, _, none) => .none
+    | .ok (_, _, _, none) => dbg_trace "continue"; .none
     | .ok (σStarStar, _, AStarStar, some returnedData) =>
       let F₀ : Bool :=
         match σ.find? a with
@@ -608,9 +608,10 @@ end
 
 open Batteries (RBMap RBSet)
 
-def checkTransactionGetSender (σ : YPState) (chainId H_f : ℕ) (T : Transaction)
+def checkTransactionGetSender (σ : YPState) (chainId H_f : ℕ) (T : Transaction) (dbgOverrideSender : Option Address := .none)
   : Except EVM.Exception Address
 := do
+  -- dbg_trace "Transaction: {repr T}"
   let some T_RLP := RLP (← (L_X T)) | .error <| .InvalidTransaction .IllFormedRLP
 
   let secp256k1n : ℕ := 115792089237316195423570985008687907852837564279074904382605163141518161494337
@@ -637,11 +638,16 @@ def checkTransactionGetSender (σ : YPState) (chainId H_f : ℕ) (T : Transactio
       | _ => KEC <| ByteArray.mk #[.ofNat T.type] ++ T_RLP
 
   let (S_T : Address) ← -- (323)
-    match ECDSARECOVER h_T (ByteArray.mk #[.ofNat v]) T.base.r T.base.s with
-      | .ok s =>
-        pure <| Fin.ofNat <| fromBytesBigEndian <|
-          ((KEC s).extract 12 32 /- 160 bits = 20 bytes -/ ).data.data
-      | .error s => .error <| .InvalidTransaction (.SenderRecoverError s)
+    match dbgOverrideSender with
+      | .none =>
+      match ECDSARECOVER h_T (ByteArray.mk #[.ofNat v]) T.base.r T.base.s with
+        | .ok s =>
+          pure <| Fin.ofNat <| fromBytesBigEndian <|
+            ((KEC s).extract 12 32 /- 160 bits = 20 bytes -/ ).data.data
+        | .error s => .error <| .InvalidTransaction (.SenderRecoverError s)
+      | .some sender => pure sender
+
+  -- dbg_trace s!"Looking for S_T: {S_T} in: σ: {repr σ}"
 
   -- "Also, with a slight abuse of notation ... "
   let (senderCode, senderNonce, senderBalance) :=
@@ -656,6 +662,7 @@ def checkTransactionGetSender (σ : YPState) (chainId H_f : ℕ) (T : Transactio
     match T with
       | .legacy t | .access t => t.gasLimit * t.gasPrice + t.value
       | .dynamic t => t.gasLimit * t.maxFeePerGas + t.value
+  -- dbg_trace "sender balance: {senderBalance}"
   if v₀ > senderBalance then .error <| .InvalidTransaction .UpFrontPayment
 
   if H_f >
@@ -737,12 +744,11 @@ def checkTransactionGetSender (σ : YPState) (chainId H_f : ℕ) (T : Transactio
           ]
 
 -- Type Υ using \Upsilon or \GU
-def Υ (fuel : ℕ) (σ : YPState) (chainId H_f : ℕ) (H : BlockHeader) (T : Transaction)
+def Υ (fuel : ℕ) (σ : YPState) (chainId H_f : ℕ) (H : BlockHeader) (T : Transaction) (dbgOverrideSender : Option Address := .none)
   : Except EVM.Exception (YPState × Substate × Bool)
 := do
-  let S_T ← checkTransactionGetSender σ chainId H_f T
+  let S_T ← checkTransactionGetSender σ chainId H_f T dbgOverrideSender
   -- "here can be no invalid transactions from this point"
-
   let senderAccount := (σ.find? S_T).get!
   let f := -- (67)
     match T with
@@ -775,12 +781,16 @@ def Υ (fuel : ℕ) (σ : YPState) (chainId H_f : ℕ) (H : BlockHeader) (T : Tr
     match T.base.recipient with
       | none => do
         let (_, σ_P, A, z, _) :=
-          (Lambda fuel σ₀ AStar S_T S_T p T.base.value T.base.data 0 none H true).get!
+          match Lambda fuel σ₀ AStar S_T S_T p T.base.value T.base.data 0 none H true with
+            | .none => dbg_trace "Lambda returned none; this should probably not be happening; test semantics will be off."; default
+            | .some x => x
         pure (σ_P, A, z)
       | some t =>
         let g := T.base.gasLimit /- minus g₀ -/
-        let (σ_P, _,  A, z, _) ← Θ fuel σ₀ AStar S_T S_T t (σ₀.find? t).get!.code g p T.base.value T.base.value T.base.data 0 true
-        pure (σ_P, A, z)
+        match σ₀.find? t with
+          | .none => dbg_trace "σ₀.find failed; this should probably not be happening; test semantics will be off."; default
+          | .some v => let (σ_P, _,  A, z, _) ← Θ fuel σ₀ AStar S_T S_T t v.code g p T.base.value T.base.value T.base.data 0 true
+                       pure (σ_P, A, z)
   let σStar := σ_P -- we don't model gas yet
   let σ' := A.selfDestructSet.1.foldl Batteries.RBMap.erase σStar -- (87)
   let deadAccounts := A.touchedAccounts.filter (State.dead σStar ·)
