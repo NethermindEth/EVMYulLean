@@ -108,65 +108,81 @@ private def somewhatShoddyStateEq (s₁ s₂ : EVM.State) : Bool :=
 
 end
 
-def executeTransaction (transaction : Transaction) (s : EVM.State) : Except EVM.Exception EVM.State := do
-  -- dbg_trace s!"Executing transaction."
-  let target ← transaction.to?.elim (.error (.BogusExceptionToBeReplaced "no target is currently not addressed")) .ok
+-- def executeTransaction (transaction : Transaction) (s : EVM.State) : Except EVM.Exception EVM.State := do
+--   -- dbg_trace s!"Executing transaction."
+--   let target ← transaction.to?.elim (.error (.BogusExceptionToBeReplaced "no target is currently not addressed")) .ok
   
-  -- dbg_trace s!"Identified target: {target}"
+--   -- dbg_trace s!"Identified target: {target}"
 
-  -- TODO - This is not complete, of course.
-  let I' := {
-    s.executionEnv with code      := s.accountMap.find? target |>.elim .empty Account.code
-                        codeOwner := target  
-                        perm      := true
-                        inputData := transaction.data
-  }
+--   -- TODO - This is not complete, of course.
+--   let I' := {
+--     s.executionEnv with code      := s.accountMap.find? target |>.elim .empty Account.code
+--                         codeOwner := target  
+--                         perm      := true
+--                         inputData := transaction.data
+--   }
 
-  -- dbg_trace s!"Initialisied code: {EvmYul.toHex I'.code}"
+--   -- dbg_trace s!"Initialisied code: {EvmYul.toHex I'.code}"
 
+--   let _TODOfuel := 2^13
+
+--   -- dbg_trace s!"Map before execution: {Finmap.pretty s.accountMap}"
+
+--   -- TODO - Ignore g' gas for the time being.
+--   let (σ, g', A', o?) ← EVM.Ξ _TODOfuel s.accountMap s.selfbalance s.substate I'
+
+--   -- dbg_trace s!"post state: {repr <| σ.toList.map λ (addr, acc) ↦ (addr, acc.storage)}"
+
+--   -- TODO - Use proper Υ at some point, this is a hack, just like a majority of this function
+--   -- We manually inject 1000 -> 1000 as tests seem to expect this,
+--   -- as EIP 4788 (https://eips.ethereum.org/EIPS/eip-4788).
+  
+--   -- Block processing
+--   -- At the start of processing any execution block where block.timestamp >= FORK_TIMESTAMP (i.e. before processing any transactions), call BEACON_ROOTS_ADDRESS as SYSTEM_ADDRESS with the 32-byte input of header.parent_beacon_block_root, a gas limit of 30_000_000, and 0 value. This will trigger the set() routine of the beacon roots contract. This is a system operation and therefore:
+
+--   -- the call must execute to completion
+--   -- the call does not count against the block’s gas limit
+--   -- the call does not follow the EIP-1559 burn semantics - no value should be transferred as part of the call
+--   -- if no code exists at BEACON_ROOTS_ADDRESS, the call must fail silently
+--   -- Clients may decide to omit an explicit EVM call and directly set the storage values. Note: While this is a valid optimization for Ethereum mainnet, it could be problematic on non-mainnet situations in case a different contract is used.
+
+--   -- If this EIP is active in a genesis block, the genesis header’s parent_beacon_block_root must be 0x0 and no system transaction may occur.
+  
+--   -- TODO - This is currently not done properly. ^^^^^^^^^^^^^^
+
+--   let _BEACON_ROOTS_ADDRESS_HACK := 0x000f3df6d732807ef1319fb7b8bb8522d0beac02
+--   let .some _BEACON_ROOTS_ACCOUNT_HACK := s.accountMap.find? _BEACON_ROOTS_ADDRESS_HACK | throw (.BogusExceptionToBeReplaced "_BEACON_ROOTS_ADDRESS_HACK not in pre")
+--   let σ := σ.insert _BEACON_ROOTS_ADDRESS_HACK (_BEACON_ROOTS_ACCOUNT_HACK.updateStorage 0x03e8 0x03e8)
+  
+--   -- TODO - I think we do this tuple → EVM.State conversion reasonably often, factor out?
+--   let result : EVM.State := {
+--     s with accountMap := σ
+--            substate := A'
+--            returnData := o?.getD .empty -- TODO - What is up with this .none vs .some .empty.
+--   }
+--   pure result
+
+def executeTransaction (transaction : Transaction) (s : EVM.State) (header : BlockHeader) : Except EVM.Exception EVM.State := do
   let _TODOfuel := 2^13
 
-  -- dbg_trace s!"Map before execution: {Finmap.pretty s.accountMap}"
+  let (ypState, substate, z) ← EVM.Υ _TODOfuel s.accountMap header.chainId header.baseFeePerGas header transaction
 
-  -- TODO - Ignore g' gas for the time being.
-  let (σ, g', A', o?) ← EVM.Ξ _TODOfuel s.accountMap s.selfbalance s.substate I'
-
-  -- dbg_trace s!"post state: {repr <| σ.toList.map λ (addr, acc) ↦ (addr, acc.storage)}"
-
-  -- TODO - Use proper Υ at some point, this is a hack, just like a majority of this function
-  -- We manually inject 1000 -> 1000 as tests seem to expect this,
-  -- as EIP 4788 (https://eips.ethereum.org/EIPS/eip-4788).
-  
-  -- Block processing
-  -- At the start of processing any execution block where block.timestamp >= FORK_TIMESTAMP (i.e. before processing any transactions), call BEACON_ROOTS_ADDRESS as SYSTEM_ADDRESS with the 32-byte input of header.parent_beacon_block_root, a gas limit of 30_000_000, and 0 value. This will trigger the set() routine of the beacon roots contract. This is a system operation and therefore:
-
-  -- the call must execute to completion
-  -- the call does not count against the block’s gas limit
-  -- the call does not follow the EIP-1559 burn semantics - no value should be transferred as part of the call
-  -- if no code exists at BEACON_ROOTS_ADDRESS, the call must fail silently
-  -- Clients may decide to omit an explicit EVM call and directly set the storage values. Note: While this is a valid optimization for Ethereum mainnet, it could be problematic on non-mainnet situations in case a different contract is used.
-
-  -- If this EIP is active in a genesis block, the genesis header’s parent_beacon_block_root must be 0x0 and no system transaction may occur.
-  
-  -- TODO - This is currently not done properly. ^^^^^^^^^^^^^^
-
-  let _BEACON_ROOTS_ADDRESS_HACK := 0x000f3df6d732807ef1319fb7b8bb8522d0beac02
-  let .some _BEACON_ROOTS_ACCOUNT_HACK := s.accountMap.find? _BEACON_ROOTS_ADDRESS_HACK | throw (.BogusExceptionToBeReplaced "_BEACON_ROOTS_ADDRESS_HACK not in pre")
-  let σ := σ.insert _BEACON_ROOTS_ADDRESS_HACK (_BEACON_ROOTS_ACCOUNT_HACK.updateStorage 0x03e8 0x03e8)
-  
   -- TODO - I think we do this tuple → EVM.State conversion reasonably often, factor out?
   let result : EVM.State := {
-    s with accountMap := σ
-           substate := A'
-           returnData := o?.getD .empty -- TODO - What is up with this .none vs .some .empty.
+    s with accountMap := ypState
+           substate := substate
+           executionEnv.perm := z -- TODO - that's probably not this :)
+           -- returnData := TODO?
   }
   pure result
 
 /--
 This assumes that the `transactions` are ordered, as they should be in the test suit.
 -/
-def executeTransactions (transactions : Transactions) : EVM.State → Except EVM.Exception EVM.State :=
-  transactions.foldlM (flip executeTransaction)
+def executeTransactions (blocks : Blocks) (s₀ : EVM.State) : Except EVM.Exception EVM.State := do
+  if blocks.size != 1 then throw (.BogusExceptionToBeReplaced "Currently we process only 1-block tests.")
+  let block := blocks[0]!
+  block.transactions.foldlM (λ s trans ↦ executeTransaction trans s block.blockHeader) s₀
 
 /--
 - `.none` on success
@@ -174,8 +190,8 @@ def executeTransactions (transactions : Transactions) : EVM.State → Except EVM
 
 NB we can throw away the final state if it coincided with the expected one, hence `.none`.
 -/
-def preImpliesPost (pre : Pre) (post : Post) (transactions : Transactions) : Except EVM.Exception (Option EVM.State) := do
-  let result ← executeTransactions transactions pre.toEVMState
+def preImpliesPost (pre : Pre) (post : Post) (blocks : Blocks) : Except EVM.Exception (Option EVM.State) := do
+  let result ← executeTransactions blocks pre.toEVMState
   pure <| if somewhatShoddyStateEq post.toEVMState result
           then .none
           else .some result  
@@ -184,9 +200,9 @@ local instance : MonadLift (Except EVM.Exception) (Except Conform.Exception) := 
 
 def processTest (entry : TestEntry) : Except Exception TestResult := do
   -- From the tests eyeballed, there is a single block in 'blocks', so currently we assume this.
-  let transactions := entry.blocks[0]!.transactions
+  -- let transactions := entry.blocks[0]!.transactions
 
-  let result ← preImpliesPost entry.pre entry.postState transactions
+  let result ← preImpliesPost entry.pre entry.postState entry.blocks
 
   pure <| result.elim .mkSuccess λ errSt ↦
     let (postSubActual, actualSubPost) := storageΔ (entry.postState.toEVMState.accountMap) errSt.accountMap

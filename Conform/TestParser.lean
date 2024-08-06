@@ -99,10 +99,10 @@ instance : FromJson BlockHeader where
       pure {
         parentHash    := ← json.getObjValAsD! UInt256   "parentHash"
         ommersHash    := TODO -- TODO - Set to whatever the KEC(RLP()) evaluates to.
-        beneficiary   := TODO
+        beneficiary   := ← json.getObjValAsD! Address   "coinbase"
         stateRoot     := ← json.getObjValAsD! UInt256   "stateRoot"
-        transRoot     := TODO
-        receiptRoot   := TODO
+        transRoot     := TODO -- TODO - Does not seem to be used in Υ?
+        receiptRoot   := TODO -- TODO - Does not seem to be used in Υ?
         logsBloom     := ← json.getObjValAsD! ByteArray "bloom"
         difficulty    := 0  -- [deprecated] 0.
         number        := ← json.getObjValAsD! _         "number"        <&> UInt256.toNat
@@ -110,9 +110,9 @@ instance : FromJson BlockHeader where
         gasUsed       := ← json.getObjValAsD! _         "gasUsed"       <&> UInt256.toNat
         timestamp     := ← json.getObjValAsD! _         "timestamp"     <&> UInt256.toNat
         extraData     := ← json.getObjValAsD! ByteArray "extraData"
-        minHash       := TODO
-        chainId       := TODO
-        nonce         := 0  -- [deprecated] 0.
+        minHash       := TODO -- TODO - Does not seem to be used in Υ?
+        chainId       := 1 -- (5)
+        nonce         := 0 -- [deprecated] 0.
         baseFeePerGas := ← json.getObjValAsD! _         "baseFeePerGas" <&> UInt256.toNat
       }
     catch exct => dbg_trace s!"OOOOPSIE: {exct}\n json: {json}"
