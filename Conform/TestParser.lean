@@ -130,19 +130,39 @@ TODO - Currently we return `AccessListTransaction`. No idea if this is what we w
 -/
 instance : FromJson Transaction where
   fromJson? json := do
-    pure <| .access {
-      nonce      := ← json.getObjValAsD! UInt256          "nonce"
-      gasLimit   := ← json.getObjValAsD! UInt256          "gasLimit"
-      recipient  := ← json.getObjValAsD! (Option Address) "to" -- TODO - How do tests represent no 'to' - just missing field? Refine this.
-      value      := ← json.getObjValAsD! UInt256          "value"
-      r          := ← json.getObjValAsD! ByteArray        "r"
-      s          := ← json.getObjValAsD! ByteArray        "s"
-      data       := ← json.getObjValAsD! ByteArray        "data"
-      gasPrice   := ← json.getObjValAsD! UInt256          "gasPrice"
-      chainId    := TODO
-      accessList := TODO -- TODO - Not sure this needs initialising in tests.
-      yParity    := TODO
+    let baseTransaction : Transaction.Base := {
+      nonce     := ← json.getObjValAsD! UInt256          "nonce"
+      gasLimit  := ← json.getObjValAsD! UInt256          "gasLimit"
+      recipient := ← json.getObjValAsD! (Option Address) "to" -- TODO - How do tests represent no 'to' - just missing field? Refine this.
+      value     := ← json.getObjValAsD! UInt256          "value"
+      r         := ← json.getObjValAsD! ByteArray        "r"
+      s         := ← json.getObjValAsD! ByteArray        "s"
+      data      := ← json.getObjValAsD! ByteArray        "data"
     }
+
+    match json.getObjVal? "w" with
+      | .ok w => do
+        return .legacy ⟨baseTransaction, ⟨← json.getObjValAsD! UInt256 "gasPrice"⟩, ← FromJson.fromJson? w⟩
+      | .error _ => do
+        -- Any other transaction now necessarily has an access list.
+        let accessListTransaction : Transaction.WithAccessList :=
+          { 
+            chainId    := let mainnet : Nat := 1; mainnet
+            accessList := ← json.getObjValAsD! _ "accessList" <&> accessListToRBMap
+            yParity    := TODO
+          }
+
+        match json.getObjVal? "w" with
+          | .ok gasPrice => do
+            return .access ⟨baseTransaction, accessListTransaction, ⟨← FromJson.fromJson? gasPrice⟩⟩
+          | .error _ =>
+            return .dynamic ⟨
+                     baseTransaction,
+                     accessListTransaction,
+                     ← json.getObjValAsD! UInt256 "maxFeePerGas",
+                     ← json.getObjValAsD! UInt256 "maxPriorityFeePerGas"
+                   ⟩
+
   where accessListToRBMap (this : AccessList) : Batteries.RBMap Address (Array UInt256) compare :=
     this.foldl (init := ∅) λ m ⟨addr, list⟩ ↦ m.insert addr list
 

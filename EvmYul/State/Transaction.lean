@@ -40,7 +40,7 @@ deriving BEq, Repr
 -/
 structure Transaction.WithAccessList where
   chainId : ChainID
-  accessList : RBMap Address (List UInt256) compare
+  accessList : RBMap Address (Array UInt256) compare
   yParity : UInt256
 deriving BEq, Repr
 
@@ -118,10 +118,10 @@ def Transaction.base : Transaction → Transaction.Base
   | access t => t.toBase
   | dynamic t => t.toBase
 
-def Transaction.getAccessList : Transaction → List (Address × List UInt256)
-  | legacy _ => []
-  | access t => RBSet.toList t.accessList
-  | dynamic t => RBSet.toList t.accessList
+def Transaction.getAccessList : Transaction → Array (Address × Array UInt256)
+  | legacy _ => #[]
+  | access t => RBSet.toList t.accessList |>.toArray
+  | dynamic t => RBSet.toList t.accessList |>.toArray
 
 def Transaction.type : Transaction → Nat
   | .legacy  _ => 0

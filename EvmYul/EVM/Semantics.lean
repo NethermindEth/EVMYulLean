@@ -652,7 +652,6 @@ def checkTransactionGetSender (σ : YPState) (chainId H_f : ℕ) (T : Transactio
 
   if senderCode ≠ .empty then .error <| .InvalidTransaction .SenderCodeNotEmpty
   if senderNonce ≠ T.base.nonce then .error <| .InvalidTransaction .InvalidSenderNonce
-
   let v₀ :=
     match T with
       | .legacy t | .access t => t.gasLimit * t.gasPrice + t.value
@@ -679,10 +678,10 @@ def checkTransactionGetSender (σ : YPState) (chainId H_f : ℕ) (T : Transactio
 
  where
   L_X (T : Transaction) : Except EVM.Exception 𝕋 := -- (317)
-    let accessEntryRLP : Address × List UInt256 → 𝕋
-      | ⟨a, s⟩ => .𝕃 [.𝔹 (BE a), .𝕃 (s.map (.𝔹 ∘ BE))]
-    let accessEntriesRLP (aEs : List (Address × List UInt256)) : 𝕋 :=
-      .𝕃 (aEs.map accessEntryRLP)
+    let accessEntryRLP : Address × Array UInt256 → 𝕋
+      | ⟨a, s⟩ => .𝕃 [.𝔹 (BE a), .𝕃 (s.map (EvmYul.𝕋.𝔹 ∘ BE ∘ UInt256.toNat)).toList]
+    let accessEntriesRLP (aEs : Array (Address × Array UInt256)) : 𝕋 :=
+      .𝕃 (aEs.map accessEntryRLP |>.toList)
     match T with
       | /- 0 -/ .legacy t =>
         if t.w ∈ [27, 28] then
@@ -721,7 +720,7 @@ def checkTransactionGetSender (σ : YPState) (chainId H_f : ℕ) (T : Transactio
             .𝔹 (t.recipient.option .empty BE) -- Tₜ
           , .𝔹 (BE t.value) -- T_v
           , .𝔹 t.data  -- p
-          , accessEntriesRLP <| RBSet.toList t.accessList -- T_A
+          , accessEntriesRLP <| RBSet.toList t.accessList |>.toArray -- T_A
           ]
       | /- 2 -/ .dynamic t =>
         .ok ∘ .𝕃 <|
@@ -734,7 +733,7 @@ def checkTransactionGetSender (σ : YPState) (chainId H_f : ℕ) (T : Transactio
             .𝔹 (t.recipient.option .empty BE) -- Tₜ
           , .𝔹 (BE t.value) -- Tᵥ
           , .𝔹 t.data -- p
-          , accessEntriesRLP <| RBSet.toList t.accessList -- T_A
+          , accessEntriesRLP <| RBSet.toList t.accessList |>.toArray -- T_A
           ]
 
 -- Type Υ using \Upsilon or \GU
@@ -761,11 +760,11 @@ def Υ (fuel : ℕ) (σ : YPState) (chainId H_f : ℕ) (H : BlockHeader) (T : Tr
   let σ₀ := σ.insert S_T senderAccount -- the checkpoint state (73)
   let accessList := T.getAccessList
   let AStar_K : List (Address × UInt256) := do -- (78)
-    let ⟨Eₐ, Eₛ⟩ ← accessList
-    let eₛ ← Eₛ
+    let ⟨Eₐ, Eₛ⟩ ← accessList.toList
+    let eₛ ← Eₛ.toList
     pure (Eₐ, eₛ)
   let a := -- (80)
-    A0.accessedAccounts.insert S_T |>.insert H.beneficiary |>.union <| Batteries.RBSet.ofList (accessList.map Prod.fst) compare
+    A0.accessedAccounts.insert S_T |>.insert H.beneficiary |>.union <| Batteries.RBSet.ofList (accessList.map Prod.fst).toList compare
   let AStarₐ := -- (79)
     match T.base.recipient with
       | some t => a.insert t
