@@ -198,12 +198,12 @@ def R_l (l : List 𝕋) : Option ByteArray :=
   match s l with
     | none => none
     | some s_x =>
-      if s_x.size < 65 then
+      if s_x.size < 56 then
         some <| [⟨192 + s_x.size⟩].toByteArray ++ s_x
       else
         if s_x.size < 2^64 then
           let be := BE s_x.size
-          some <| [⟨183 + be.size⟩].toByteArray ++ be ++ s_x
+          some <| [⟨247 + be.size⟩].toByteArray ++ be ++ s_x
         else none
 
 def RLP (t : 𝕋) : Option ByteArray :=
