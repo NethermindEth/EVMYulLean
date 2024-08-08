@@ -92,75 +92,42 @@ def storageΔ (m₁ m₂ : AccountMap) : AccountMap × AccountMap :=
 
 section
 
-local instance (priority := high) : BEq Account := ⟨veryShoddyAccEq⟩
-
 /--
-TODO - Of course fix this later on. Potentially in some `Except Err` monad to report
-precisely on why this failed.
+This section exists for debugging / testing mostly. It's somewhat ad-hoc.
 -/
-private def somewhatShoddyStateEq (s₁ s₂ : EVM.State) : Bool :=
-  -- TODO - Please note here that we're only comparing storage until we have the means to execute
-  -- transactions appropriately. For example, the sender must lose balance, nonce must increase, etc.
-  -- Currently, we only compare with `shoddyInstance` for each account in the storage.
-  -- dbg_trace s!"Post s₁: {repr s₁.accountMap} s₂: {repr s₂.accountMap}"
-  -- dbg_trace s!"Post conforms? - {s₁.accountMap == s₂.accountMap}"
-  s₁.accountMap == s₂.accountMap
+
+notation "TODO" => default
+
+private def almostBEqButNotQuiteEvmYulState (s₁ s₂ : EvmYul.State) : Except String Bool := do
+  let s₁ := bashState s₁
+  let s₂ := bashState s₂
+  dbg_trace s!"s₁: {repr s₁}"
+  dbg_trace s!"s₂: {repr s₂}"
+  if s₁ == s₂ then .ok true else throw "state mismatch"
+  where bashState (s : EvmYul.State) : EvmYul.State := 
+    { s with accountMap := s.accountMap.map (λ (addr, acc) ↦ (addr, { acc with balance := TODO }))
+             executionEnv.perm := TODO
+             substate.accessedAccounts := TODO
+             substate.accessedStorageKeys := TODO }
+    
+/--
+NB it is ever so slightly more convenient to be in `Except String Bool` here rather than `Option String`.
+
+This is morally `s₁ == s₂` except we get a convenient way to both tune what is being compared
+as well as report fine grained errors.
+-/
+private def almostBEqButNotQuite (s₁ s₂ : EVM.State) : Except String Bool := do
+  let miscEq := s₁.pc == s₂.pc && s₁.stack == s₂.stack
+  if !miscEq then throw s!"pc / stack mismatch"
+
+  discard <| almostBEqButNotQuiteEvmYulState s₁.toState s₂.toState
+
+  let machineStEq := s₁.toMachineState == s₂.toMachineState
+  if !machineStEq then throw s!"machine state mismatch"
+
+  pure true -- Yes, we never return false, because we throw along the way. Yes, this is `Option`.
 
 end
-
--- def executeTransaction (transaction : Transaction) (s : EVM.State) : Except EVM.Exception EVM.State := do
---   -- dbg_trace s!"Executing transaction."
---   let target ← transaction.to?.elim (.error (.BogusExceptionToBeReplaced "no target is currently not addressed")) .ok
-  
---   -- dbg_trace s!"Identified target: {target}"
-
---   -- TODO - This is not complete, of course.
---   let I' := {
---     s.executionEnv with code      := s.accountMap.find? target |>.elim .empty Account.code
---                         codeOwner := target  
---                         perm      := true
---                         inputData := transaction.data
---   }
-
---   -- dbg_trace s!"Initialisied code: {EvmYul.toHex I'.code}"
-
---   let _TODOfuel := 2^13
-
---   -- dbg_trace s!"Map before execution: {Finmap.pretty s.accountMap}"
-
---   -- TODO - Ignore g' gas for the time being.
---   let (σ, g', A', o?) ← EVM.Ξ _TODOfuel s.accountMap s.selfbalance s.substate I'
-
---   -- dbg_trace s!"post state: {repr <| σ.toList.map λ (addr, acc) ↦ (addr, acc.storage)}"
-
---   -- TODO - Use proper Υ at some point, this is a hack, just like a majority of this function
---   -- We manually inject 1000 -> 1000 as tests seem to expect this,
---   -- as EIP 4788 (https://eips.ethereum.org/EIPS/eip-4788).
-  
---   -- Block processing
---   -- At the start of processing any execution block where block.timestamp >= FORK_TIMESTAMP (i.e. before processing any transactions), call BEACON_ROOTS_ADDRESS as SYSTEM_ADDRESS with the 32-byte input of header.parent_beacon_block_root, a gas limit of 30_000_000, and 0 value. This will trigger the set() routine of the beacon roots contract. This is a system operation and therefore:
-
---   -- the call must execute to completion
---   -- the call does not count against the block’s gas limit
---   -- the call does not follow the EIP-1559 burn semantics - no value should be transferred as part of the call
---   -- if no code exists at BEACON_ROOTS_ADDRESS, the call must fail silently
---   -- Clients may decide to omit an explicit EVM call and directly set the storage values. Note: While this is a valid optimization for Ethereum mainnet, it could be problematic on non-mainnet situations in case a different contract is used.
-
---   -- If this EIP is active in a genesis block, the genesis header’s parent_beacon_block_root must be 0x0 and no system transaction may occur.
-  
---   -- TODO - This is currently not done properly. ^^^^^^^^^^^^^^
-
---   let _BEACON_ROOTS_ADDRESS_HACK := 0x000f3df6d732807ef1319fb7b8bb8522d0beac02
---   let .some _BEACON_ROOTS_ACCOUNT_HACK := s.accountMap.find? _BEACON_ROOTS_ADDRESS_HACK | throw (.BogusExceptionToBeReplaced "_BEACON_ROOTS_ADDRESS_HACK not in pre")
---   let σ := σ.insert _BEACON_ROOTS_ADDRESS_HACK (_BEACON_ROOTS_ACCOUNT_HACK.updateStorage 0x03e8 0x03e8)
-  
---   -- TODO - I think we do this tuple → EVM.State conversion reasonably often, factor out?
---   let result : EVM.State := {
---     s with accountMap := σ
---            substate := A'
---            returnData := o?.getD .empty -- TODO - What is up with this .none vs .some .empty.
---   }
---   pure result
 
 def executeTransaction (transaction : Transaction) (s : EVM.State) (header : BlockHeader) : Except EVM.Exception EVM.State := do
   let _TODOfuel := 2^13
@@ -213,12 +180,9 @@ NB we can throw away the final state if it coincided with the expected one, henc
 -/
 def preImpliesPost (pre : Pre) (post : Post) (blocks : Blocks) : Except EVM.Exception (Option EVM.State) := do
   let result ← executeTransactions blocks pre.toEVMState
-  pure <| -- if somewhatShoddyStateEq post.toEVMState result -- TODO of course use BEq here in the end
-          dbg_trace s!"post: {repr post.toEVMState}"
-          dbg_trace s!"st: {repr result}"
-          if post.toEVMState == result
-          then .none
-          else .some result  
+  match almostBEqButNotQuite post.toEVMState result with
+    | .error _ => pure (.some result) -- Feel free to inspect this error from `almostBEqButNotQuite`.
+    | .ok _ => pure .none
 
 local instance : MonadLift (Except EVM.Exception) (Except Conform.Exception) := ⟨Except.mapError .EVMError⟩
 
