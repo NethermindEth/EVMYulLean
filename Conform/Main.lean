@@ -37,7 +37,7 @@ def main (args : List String) : IO Unit := do
   let mut numSuccess := 0
 
   for testFile in testFiles do
-    -- dbg_trace s!"File under test: {testFile}"
+    dbg_trace s!"File under test: {testFile}"
     let res ← ExceptT.run <| EvmYul.Conform.processTestsOfFile testFile
     match res with
       | .error err         => IO.println s!"Error: {repr err}"; numThrewAlongTheWay := numThrewAlongTheWay + 1
