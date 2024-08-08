@@ -101,8 +101,6 @@ notation "TODO" => default
 private def almostBEqButNotQuiteEvmYulState (s₁ s₂ : EvmYul.State) : Except String Bool := do
   let s₁ := bashState s₁
   let s₂ := bashState s₂
-  dbg_trace s!"s₁: {repr s₁}"
-  dbg_trace s!"s₂: {repr s₂}"
   if s₁ == s₂ then .ok true else throw "state mismatch"
   where bashState (s : EvmYul.State) : EvmYul.State := 
     { s with accountMap := s.accountMap.map (λ (addr, acc) ↦ (addr, { acc with balance := TODO }))
