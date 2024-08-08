@@ -323,7 +323,7 @@ def step (fuel : ℕ) (instr : Option (Operation .EVM × Option (UInt256 × Nat)
               (w  := evmState.executionEnv.perm)      -- I_W in Θ(.., I_W)
           -- TODO gas - CCALLGAS(σ, μ, A)
           else .ok (evmState.toState.accountMap, μ₀, evmState.toState.substate, false, .some .empty) -- otherwise (σ, CCALLGAS(σ, μ, A), A, 0, ())
-        -- dbg_trace s!"THETA OK"
+        -- dbg_trace s!"THETA OK with accounts: {repr σ'}"
         let n : UInt256 := min μ₆ (o.elim 0 (UInt256.ofNat ∘ ByteArray.size)) -- n ≡ min({μs[6], ‖o‖}) -- TODO - Why is this using... set??? { } brackets ???
         -- TODO I am assuming here that μ' is μ with the updates mentioned in the CALL section. Check.
 
@@ -395,6 +395,8 @@ def X (fuel : ℕ) (evmState : State) : Except EVM.Exception (State × Option By
           .ok ({evmState with accountMap := ∅}, some evmState.returnData)
         else
           let evmState' ← step f instr evmState
+          -- dbg_trace s!"accs: {repr evmState'.accountMap}"
+          -- dbg_trace s!"stack: {evmState'.stack}"
           match H evmState.toMachineState w with
             | none => X f evmState'
             | some o => .ok <| (evmState', some o)
@@ -408,6 +410,7 @@ def X (fuel : ℕ) (evmState : State) : Except EVM.Exception (State × Option By
 def Ξ (fuel : ℕ) (σ : YPState) (g : UInt256) (A : Substate) (I : ExecutionEnv) :
   Except EVM.Exception (YPState × UInt256 × Substate × Option ByteArray)
 := do
+  -- dbg_trace "Ξ fuel: {fuel} σ: {repr σ} g: {g} A: {repr A} I: {repr I}"
   match fuel with
     | 0 => .ok (σ, g, A, some .empty) -- TODO - Gas model
     | .succ f =>
@@ -550,6 +553,7 @@ def Θ (fuel : Nat)
       (d  : ByteArray)
       (e  : Nat)
       (w  : Bool) : Except EVM.Exception (YPState × UInt256 × Substate × Bool × Option ByteArray) :=
+  -- dbg_trace "Θ"
   match fuel with
     | 0 => .error .OutOfFuel
     | fuel + 1 => do
@@ -588,7 +592,7 @@ def Θ (fuel : Nat)
   -- Equation (126)
   -- Note that the `c` used here is the actual code, not the address. TODO - Handle precompiled contracts.
   let (σ'', g'', A'', out) ← Ξ fuel σ₁ g A I
-
+  -- dbg_trace s!"σ'' after Ξ: {repr σ''}"
   -- Equation (122)
   let σ' := if σ'' == ∅ then σ else σ''
 
@@ -790,6 +794,7 @@ def Υ (fuel : ℕ) (σ : YPState) (chainId H_f : ℕ) (H : BlockHeader) (T : Tr
         match σ₀.find? t with
           | .none => dbg_trace "σ₀.find failed; this should probably not be happening; test semantics will be off."; default
           | .some v => let (σ_P, _,  A, z, _) ← Θ fuel σ₀ AStar S_T S_T t v.code g p T.base.value T.base.value T.base.data 0 true
+                      --  dbg_trace "Θ gave back σ_P: {repr σ_P}"
                        pure (σ_P, A, z)
   let σStar := σ_P -- we don't model gas yet
   let σ' := A.selfDestructSet.1.foldl Batteries.RBMap.erase σStar -- (87)

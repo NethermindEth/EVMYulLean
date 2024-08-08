@@ -17,18 +17,19 @@ def main (args : List String) : IO Unit := do
 
   let testFiles ← Array.filter isTestFile <$> System.FilePath.walkDir ("EthereumTests" / "BlockchainTests")
 
-  -- let testFiles := #[SimpleFile]
+  let testFiles := #[SimpleFile]
   -- let testFiles := #[BuggyFile]
   -- let testFiles := #[SpecificFile]
 
   for testFile in testFiles do
     -- IO.println s!"File under test: {testFile}"
     dbg_trace s!"File under test: {testFile}"
-    let res ← ExceptT.run <| EvmYul.Conform.processTestsOfFile testFile -- (whitelist := #["sha3_d5g0v0_Cancun"])
+    let res ← ExceptT.run <| EvmYul.Conform.processTestsOfFile testFile (whitelist := #["add_d0g0v0_Cancun"])
     match res with
       | .error err         => IO.println s!"Error: {repr err}"
-      | .ok    testresults => -- IO.println s!"{repr testresults}"
+      | .ok    testresults => IO.println s!"{repr testresults}"
                               -- IO.println "Tests managed to not crash Lean."
                               -- IO.println s!""
+
                               pure ()
--- #eval main ["EthereumTests"]
+#eval main ["EthereumTests"]

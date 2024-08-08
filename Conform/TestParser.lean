@@ -140,7 +140,7 @@ instance : FromJson Transaction where
       dbgSender := ← json.getObjValAsD! Address        "sender"
     }
 
-    match json.getObjVal? "w" with
+    match json.getObjVal? "v" with
       | .ok w => do
         return .legacy ⟨baseTransaction, ⟨← json.getObjValAsD! UInt256 "gasPrice"⟩, ← FromJson.fromJson? w⟩
       | .error _ => do

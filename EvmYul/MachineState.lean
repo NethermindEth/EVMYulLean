@@ -20,7 +20,7 @@ structure MachineState where
   maxAddress   : UInt256
   memory       : ByteArray
   returnData   : ByteArray
-  deriving BEq, Inhabited
+  deriving BEq, Inhabited, Repr
 
 inductive WordSize := | Standard | Single
 

@@ -4,6 +4,6 @@ import EvmYul.MachineState
 namespace EvmYul
 
 structure SharedState extends EvmYul.State, EvmYul.MachineState
-  deriving BEq, Inhabited
+  deriving BEq, Inhabited, Repr
 
 end EvmYul

@@ -28,6 +28,6 @@ structure ExecutionEnv :=
   header    : BlockHeader
   depth     : ℕ
   perm      : Bool
-  deriving DecidableEq, Inhabited
+  deriving DecidableEq, Inhabited, Repr
 
 end EvmYul

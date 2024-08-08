@@ -12,14 +12,14 @@ section Keccak
 
 def keccak256 (s : SharedState) (p n : UInt256) : Option (UInt256 × SharedState) :=
   let interval : List UInt256 := mkInterval s.toMachineState p n
-  match s.keccakMap.lookup interval with
+  match s.keccakMap.find? interval with
     | .some val => .some (val, s)
     | .none     =>
     match s.toState.keccakRange.partition (λ x ↦ x ∈ s.toState.usedRange) with
       | (_,(r :: rs)) =>
         .some (r, { s with toState.keccakMap := s.toState.keccakMap.insert interval r,
                            toState.keccakRange := rs,
-                           toState.usedRange := {r} ∪ s.toState.usedRange })
+                           toState.usedRange := s.toState.usedRange.insert r })
       | (_, []) => .none
   where mkInterval (ms : MachineState) (p n : UInt256) : List UInt256 :=
     (List.Ico p (p + n)).map ms.lookupMemory

@@ -29,10 +29,10 @@ structure State where
   blocks        : List Block
 
   -- TODO(Keccak Stuff + I guess this will be gone so no need to nuke the `Finmap` just now
-  keccakMap     : Finmap (λ _ : List UInt256 ↦ UInt256)
+  keccakMap     : Batteries.RBMap (List UInt256) UInt256 compare
   keccakRange   : List UInt256
-  usedRange     : Finset UInt256
+  usedRange     : Batteries.RBSet UInt256 compare
   hashCollision : Bool
-deriving BEq, Inhabited
+deriving BEq, Inhabited, Repr
 
 end EvmYul
