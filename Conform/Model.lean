@@ -1,8 +1,10 @@
 import Lean.Data.RBMap
 import Lean.Data.Json
 
-import EvmYul.Wheels
+-- import EvmYul.Maps
 import EvmYul.Operations
+import EvmYul.Wheels
+
 import EvmYul.EVM.State
 
 import Conform.Wheels
@@ -21,6 +23,9 @@ abbrev AddrMap (α : Type) [Inhabited α] := Lean.RBMap Address α compare
 abbrev Storage := AddrMap UInt256
 
 def Storage.toFinmap (self : Storage) : Finmap (λ _ : UInt256 ↦ UInt256) :=
+  self.fold (init := ∅) λ acc k v ↦ acc.insert (UInt256.ofNat k.1) v
+
+def Storage.toEvmYulStorage (self : Storage) : EvmYul.Storage :=
   self.fold (init := ∅) λ acc k v ↦ acc.insert (UInt256.ofNat k.1) v
 
 def AddrMap.keys {α : Type} [Inhabited α] (self : AddrMap α) : Multiset Address :=
@@ -58,13 +63,10 @@ instance : DecidableRel (α := (_ : UInt256) × UInt256) (· ≤ ·) :=
     unfold LE.le instLESigmaUInt256_conform; simp
     aesop (config := {warnOnNonterminal := false}) <;> exact inferInstance
 
-def Storage.ofFinmap (m : Finmap (λ _ : UInt256 ↦ UInt256)) : Storage :=
-  let asList := computeToList! m.entries
-  Lean.RBMap.ofList (asList.map λ ⟨k, v⟩ ↦ (Address.ofUInt256 k, v))
+def Storage.ofFinmap (m : EvmYul.Storage) : Storage :=
+  Lean.RBMap.ofList <| m.toList.map λ (k, v) ↦ (Address.ofUInt256 k, v)
 
 abbrev Code := ByteArray
-
-deriving instance Repr for ByteArray
 
 structure AccountEntry :=
   balance : UInt256
@@ -81,13 +83,20 @@ abbrev Post := AddrMap PostEntry
 
 abbrev Transactions := Array Transaction
 
+/--
+TODO - Temporary.
+-/
+private local instance : Repr Json := ⟨λ s _ ↦ Json.pretty s⟩ 
+
 structure BlockEntry :=
   blockHeader  : BlockHeader
   rlp          : Json
   transactions : Transactions
   uncleHeaders : Json
   withdrawals  : Json
-  deriving Inhabited
+  exception    : String -- TODO - I am guessing there is a closed set of these to turn into a sum.
+  blocknumber  : Nat
+  deriving Inhabited, Repr
 
 abbrev Blocks := Array BlockEntry
 
@@ -112,6 +121,13 @@ structure TestEntry :=
 
 abbrev Test := Lean.RBMap String TestEntry compare 
 
+structure AccessListEntry :=
+  address     : Address
+  storageKeys : Array UInt256
+  deriving Inhabited, Repr
+
+abbrev AccessList := Array AccessListEntry
+
 def TestResult := Option String
   deriving Repr
 
@@ -125,8 +141,8 @@ def mkFailed (reason : String := "") : TestResult := .some reason
 
 def mkSuccess : TestResult := .none
 
-def ofBool (success : Bool) : TestResult :=
-  if success then mkSuccess else mkFailed
+def ofBool (success : Bool) (reason : String := "Semantics error.") : TestResult :=
+  if success then mkSuccess else mkFailed reason
 
 end TestResult
 

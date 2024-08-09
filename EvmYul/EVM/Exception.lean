@@ -28,6 +28,7 @@ instance : Repr InvalidTransactionException where
       | .DataGreaterThan9152  => "DataGreaterThan9152"
       | .SenderRecoverError s => "SenderRecoverError: " ++ s
 
+-- TODO - fix / cleanup.
 inductive Exception where
   | InvalidStackSizeException         : Exception
   | InvalidPC                         : Exception
@@ -42,6 +43,8 @@ inductive Exception where
   | OutOfFuel                         : Exception
   | InvalidTransaction :
           InvalidTransactionException → Exception
+  | ReceiverNotInAccounts (a : Address) : Exception
+  | BogusExceptionToBeReplaced (s : String) : Exception
 
 instance : Repr Exception where
   reprPrec s _ := match s with
@@ -57,6 +60,8 @@ instance : Repr Exception where
                     | .StopInvoked _                     => "Execution halted by STOP."
                     | .OutOfFuel                         => "OutOfFuel"
                     | .InvalidTransaction e              => "InvalidTransaction: " ++ repr e
+                    | .ReceiverNotInAccounts (a : Address) => s!"ReceiverNotInAccounts: {a}"
+                    | .BogusExceptionToBeReplaced s      => s!"BogusExceptionToBeReplaced: {s}"
 
 end EVM
 

@@ -18,16 +18,16 @@ Turn non-existance of the key into default initialisation.
 This silences ONLY the `property not found:` error.
 If the parsing of an existing value fails, we propagate the error.
 -/
-def getObjValAsOrInitWith? (j : Json) (α : Type) [FromJson α] (k : String) (default : α) : Except String α :=
+def getObjValAsD (j : Json) (α : Type) [FromJson α] (k : String) (D : α) : Except String α :=
   match j.getObjVal? k with
-    | .error _   => pure default
+    | .error _   => pure D
     | .ok    val => fromJson? val
 
 /--
-`getObjValAsOrInit = getObjValAsOrInitWith default` for inhabited types.
+`getObjValAsD! = getObjValAsD default` for inhabited types.
 -/
-def getObjValAsOrInit? (j : Json) (α : Type) [FromJson α] [Inhabited α] (k : String) : Except String α :=
-  getObjValAsOrInitWith? j α k default
+def getObjValAsD! (j : Json) (α : Type) [FromJson α] [Inhabited α] (k : String) : Except String α :=
+  getObjValAsD j α k default
 
 open Batteries (RBMap) in
 def getObjVals?
@@ -49,6 +49,8 @@ namespace EvmYul
 
 namespace Conform
 
+def HexPrefix := "0x"
+
 def TargetSchedule := "Cancun"
 
 def isHexDigitChar (c : Char) : Bool :=
@@ -64,14 +66,13 @@ instance : ToString Blob := ⟨Blob.toString⟩
 
 def getBlob? (s : String) : Except String Blob :=
   if isHex s then
-    let rest := s.drop Hex.length
+    let rest := s.drop HexPrefix.length
     if rest.any (not ∘ isHexDigitChar)
     then .error "Blobs must consist of valid hex digits."
     else .ok rest.toLower
   else .error "Input does not begin with 0x."
   where
-    Hex := "0x"
-    isHex (s : String) := s.startsWith Hex
+    isHex (s : String) := s.startsWith HexPrefix
 
 def getBlob! (s : String) : Blob := getBlob? s |>.toOption.get!
 
@@ -85,7 +86,6 @@ def toHex (c : Char) : Except String Nat :=
 
 end Conform
 
-
 section WithConform
 
 open Conform
@@ -94,7 +94,7 @@ namespace UInt256
 
 def fromBlob? (blob : Blob) : Except String UInt256 :=
   Fin.ofNat <$> ((·.1) <| blob.foldr (init := (.ok 0, 0)) λ digit (acc, exp) ↦
-    (do pure <| (←acc) + (16 ^ exp) * (←toHex digit), exp + 1))
+    (do pure <| (←acc) + (16 ^ exp) * (←Conform.toHex digit), exp + 1))
 
 def fromBlob! (blob : Blob) : UInt256 := fromBlob? blob |>.toOption.get!
 
@@ -109,6 +109,27 @@ def fromBlob! (blob : Blob) : Address := fromBlob? blob |>.toOption.get!
 end Address
 
 end WithConform
+
+namespace DebuggingAndProfiling
+
+section
+
+set_option autoImplicit true
+
+unsafe def report [Inhabited β] (s : String) (f : α → β) (a : α) : β :=
+  dbg_trace s!"BEGIN: {s}"
+  let res := timeit s!"The function '{s}' took:" <| pure (f a)
+  dbg_trace s!"END: {s}"
+  unsafeIO res |>.toOption.get!
+
+def testJsonParser (α : Type) [Repr α] [Lean.FromJson α] (s : String) : String :=
+  match Lean.FromJson.fromJson? (α := α) <| (Lean.Json.parse s).toOption.getD Lean.Json.null with
+    | .error e  => s!"err: {e}"
+    | .ok    ok => s!"ok: {repr ok}" 
+
+end
+
+end DebuggingAndProfiling
 
 end EvmYul
 

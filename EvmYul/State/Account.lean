@@ -1,4 +1,5 @@
-import Mathlib.Data.Finmap
+import EvmYul.Maps.StorageMap
+
 import EvmYul.UInt256
 import EvmYul.Wheels
 
@@ -15,7 +16,7 @@ Suppose `a` is some address.
 In the yellow paper it is supposed to be a 256-bit hash of the root node of
 a Merkle Tree. KEVM implemets it as just an key/value map.
 - `storage`  -- σ[a]_s.
-- `tstorage`  -- Added in EIP-1153
+- `tstorage` -- Added in EIP-1153
 - `codeHash` -- σ[a]_c.
 
 For now, we assume no global map `GM` with which `GM[code_hash] ≡ code`.
@@ -27,7 +28,7 @@ structure Account :=
   code     : ByteArray
   codeHash : UInt256 -- TODO - Probably not needed.
   storage  : Storage
-  tstorage  : Finmap (λ _ : UInt256 ↦ UInt256)
-deriving DecidableEq, Inhabited
+  tstorage : Storage
+deriving BEq, Inhabited, Repr
 
 end EvmYul

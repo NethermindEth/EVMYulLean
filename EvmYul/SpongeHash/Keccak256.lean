@@ -2,6 +2,8 @@ import Mathlib.Tactic
 
 import EvmYul.SpongeHash.Wheels
 
+import EvmYul.Wheels
+
 open BigOperators
 open Vector
 
@@ -81,15 +83,19 @@ def keccakF (state : SHA3SR) : SHA3SR :=
 def bytesOfList (l : List (Fin 2)) : List UInt8 :=
   l.toChunks 8 |>.map λ bits ↦ bits.zip (List.iota 8 |>.map Nat.pred) |>.foldl (init := 0)
     λ acc (bit, exp) ↦ acc + (UInt8.ofNat <| bit.val * 2^exp)
-
+    
 namespace Absorb
 
+/--
+TODO - slow.
+-/
 partial def unfoldr {α β} (f : β → Option (α × β)) (b0 : β) : Array α :=
   build λ c n ↦
-    let rec go b := match f b with
-                      | .some (a, new_b) => c a <| go new_b
-                      | .none            => n
-    go b0
+    let rec go i b := -- dbg_trace s!"i: {i}" -- TODO - dbg_trace s!"i: {i}", `i` is unnecessary in go here 
+    match f b with
+      | .some (a, new_b) => c a <| go i.succ new_b
+      | .none            => n
+    go 0 b0
   where build g := g push_front #[]
         push_front (elem : α) (arr : Array α) : Array α := ⟨elem :: arr.toList⟩
 
@@ -123,7 +129,10 @@ partial def absorbBlock (rate : Nat) (state : Array UInt64) (input : Array UInt6
                                                  then el ^^^ (input[z / 5 + 5 * (z % 5)]!)
                                                  else el) state
 
-def absorb (rate : Nat) : ByteArray → Array UInt64 := absorbBlock rate ⟨List.replicate 25 0⟩ ∘ toBlocks
+-- def absorb (rate : Nat) : ByteArray → Array UInt64 := absorbBlock rate ⟨List.replicate 25 0⟩ ∘ toBlocks
+def absorb (rate : Nat) (ba : ByteArray) : Array UInt64 := 
+  -- dbg_trace s!"ba size: {ba.size}"
+  absorbBlock rate ⟨List.replicate 25 0⟩ ∘ toBlocks <| ba
 end Absorb
 
 def multiratePadding (bitrateBytes : Nat) (padByte : UInt8) (input : ByteArray) : ByteArray :=
@@ -162,7 +171,7 @@ def paddingKeccak (bitrateBytes : Nat) : ByteArray → SHA3SR :=
   SHA3SRofByteArray ∘ multiratePadding bitrateBytes 0x01
 
 partial def squeeze' (rate : Nat) (l : Nat) (state : SHA3SR) : ByteArray :=
-  ByteArray.extract (b := 0) (e := l) ∘ toLittleEndian <| stateToBytes state
+  ByteArray.extract' (b := 0) (e := l) ∘ toLittleEndian <| stateToBytes state
   where lanesToExtract := Int.toNat ∘ Rat.ceil <| l / (64 / 8)
         threshold := rate / 64
         extract := λ (x, s) ↦

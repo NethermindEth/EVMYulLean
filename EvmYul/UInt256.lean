@@ -11,8 +11,6 @@ import Mathlib.Tactic.Ring
 
 namespace EvmYul
 
-open Std
-
 def UInt256.size : ℕ := 115792089237316195423570985008687907853269984665640564039457584007913129639936
 
 instance : NeZero UInt256.size := ⟨by decide⟩
@@ -79,8 +77,16 @@ instance : HMod UInt256 ℕ UInt256 := ⟨UInt256.modn⟩
 def complement (a : UInt256) : UInt256 := 0-(a + 1)
 
 instance : Complement UInt256 := ⟨EvmYul.UInt256.complement⟩
-instance : HPow UInt256 UInt256 UInt256 where
-  hPow a n := a ^ n.val
+
+private def powAux (a : UInt256) (c : UInt256) : ℕ → UInt256
+  | 0 => a
+  | n@(k + 1) => if n % 2 == 1
+                 then powAux (a * c) (c * c) (n / 2) 
+                 else powAux a       (c * c) (n / 2)
+
+def pow (b : UInt256) (n : UInt256) := powAux 1 b n.1
+
+instance : HPow UInt256 UInt256 UInt256 := ⟨pow⟩
 instance : AndOp UInt256 := ⟨UInt256.land⟩
 instance : OrOp UInt256 := ⟨UInt256.lor⟩
 instance : Xor UInt256 := ⟨UInt256.xor⟩
@@ -106,6 +112,7 @@ def eq0 (a : UInt256) : Bool := a = 0
 def lnot (a : UInt256) : UInt256 := (UInt256.size - 1) - a
 
 def byteAt (a b : UInt256) : UInt256 :=
+  -- dbg_trace "BYTE AT"
   b >>> (UInt256.ofNat ((31 - a.toNat) * 8)) &&& 0xFF
 
 def sgn (a : UInt256) : UInt256 :=
@@ -116,10 +123,12 @@ def sgn (a : UInt256) : UInt256 :=
     then 0
     else 1
 
-def abs (a : UInt256) : UInt256 :=
+def abs (a : UInt256) : UInt256 := 
   if 2 ^ 255 <= a
   then a * -1
   else a
+
+def bigUInt : UInt256 := 0xffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffff
 
 def sdiv (a b : UInt256) : UInt256 :=
   if 2 ^ 255 <= a then
@@ -193,8 +202,8 @@ def mulMod (a b c : UInt256) : UInt256 :=
   if c = 0 then 0 else
   Fin.mod (a * b) c
 
-def exp (a b : UInt256) : UInt256 :=
-  a ^ b.val
+def exp (a b : UInt256) : UInt256 := pow a b
+  -- a ^ b.val
 
 def lt (a b : UInt256) :=
   fromBool (a < b)
@@ -344,3 +353,68 @@ def uInt256OfByteArray (arr : ByteArray) : UInt256 :=
   fromBytes' arr.data.toList.reverse
 
 end EvmYul
+
+section HicSuntDracones
+-- /-
+-- NB - Everything in this section is not particularly reasoning-friendly.
+
+-- These are currently optimised versions of certain functions to make the model 'actually executable'
+-- on modern computers, rather than 'executable in theory'.
+-- -/
+
+-- private def EvmYul.UInt256.toFourUInt64 (a : UInt256) : UInt64 × UInt64 × UInt64 × UInt64 := Id.run do
+--   let mut a := a
+--   let mut result : Array UInt64 := default
+--   for _ in [0:4] do
+--     result := result.push (UInt64.ofNat <| a &&& (2^64-1 : UInt256))
+--     a := a >>> 64
+--   return (result[3]!, result[2]!, result[1]!, result[0]!)
+
+-- /--
+-- NB - We cannot extract up to 2^64 exclusive because 2^64 doesn't fit into a UInt64; this crashes Lean.
+-- As such, we special-case the last element. 
+-- -/
+-- private def ByteArray.toUInt64Chunks (a : ByteArray) : Option (ByteArray × ByteArray × ByteArray × ByteArray) := do
+--   -- Look, if you have 2^256 bytes, you don't want to be running the 'Lean EVM execution client'.
+--   guard <| a.size <= 2^256
+--   let mut a := a
+--   let mut result : Array ByteArray := #[]
+--   for _ in [0:4] do
+--     -- Extract the first 2^64 bytes, handle the last byte in isolation to not crash Lean 4.9.0
+--     result := result.push <| a.extract 0 (2^64 - 1) |>.push (a.data.getD (2^64 - 1) 0)
+--     -- Drop the first 2^64 bytes
+--     a := ⟨a.data.extract (2^64) a.size⟩
+--   return (result[0]!, result[1]!, result[2]!, result[3]!)
+
+-- open EvmYul.UInt256 (ofNat) in
+-- /--
+-- Viz. `ByteArray.extract'`.
+
+-- TODO
+-- NB - some thoughts.
+-- We could divide and conquer and restitch results back to make sure that none of the nats are greater than 2^64.
+
+-- Currently this is somewhat lazy.
+-- Furthermore, the `ByteARray.extract'` should just call this, of course.
+-- -/
+-- def ByteArray.copySlice' (src : ByteArray) (srcOff : Nat) (dest : ByteArray) (destOff len : Nat) (exact : Bool := true) : ByteArray :=
+--   if srcOff < 2^64 && destOff < 2^64 && len < 2^64
+--   then src.copySlice srcOff dest destOff len exact -- NB only when `srcOff`, `destOff` and `len` are sufficiently small
+--   else let srcOffSliced  := ofNat srcOff  |>.toFourUInt64
+--        let destOffSliced := ofNat destOff |>.toFourUInt64
+--        let lenSliced     := ofNat len     |>.toFourUInt64
+--        _
+
+-- Benchmark before we check if any of this is needed!
+
+def ByteArray.copySlice' (src : ByteArray) (srcOff : Nat) (dest : ByteArray) (destOff len : Nat) (exact : Bool := true) : ByteArray :=
+  if false -- srcOff < 2^64 && destOff < 2^64 && len < 2^64
+  then src.copySlice srcOff dest destOff len exact -- NB only when `srcOff`, `destOff` and `len` are sufficiently small
+  else let srcData := src.data
+       let destData := dest.data
+       let sourceChunk := srcData.extract srcOff (srcOff + len)
+       let destBegin := destData.extract 0 destOff
+       let destEnd := destData.extract (destOff + len) destData.size
+       ⟨destBegin ++ sourceChunk ++ destEnd⟩
+
+end HicSuntDracones
