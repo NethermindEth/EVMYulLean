@@ -547,7 +547,8 @@ inductive SOp : OperationType → Type where
   -/
   | protected INVALID : SOp τ
   /--
-    SELFDESTRUCT: halt and mark account for later deletion.
+    SELFDESTRUCT: halt and send entire balance to target.
+    Deprecated; see EIP-6780
     δ: 1 ; α: 0
   -/
   | protected SELFDESTRUCT : SOp τ

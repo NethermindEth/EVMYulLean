@@ -212,6 +212,7 @@ def RLP (t : 𝕋) : Option ByteArray :=
     | .𝕃 l => R_l l
 end
 
+-- TODO: Yul halting for `SELFDESTRUCT`, `RETURN`, `REVERT`, `STOP`
 def step {τ : OperationType} (op : Operation τ) : Transformer τ :=
   match τ, op with
     -- TODO: Revisit STOP, this is likely not the best way to do it and the Yul version is WIP.
@@ -376,31 +377,114 @@ def step {τ : OperationType} (op : Operation τ) : Transformer τ :=
           | some ⟨ s , μ₁ ⟩ =>
             let Iₐ := evmState.executionEnv.codeOwner
             let r : Address := Address.ofUInt256 μ₁
-            let A' : Substate :=
-              { evmState.substate with
-                  selfDestructSet :=
-                    evmState.substate.selfDestructSet.insert Iₐ
-                  accessedAccounts :=
-                    evmState.substate.accessedAccounts.insert r
-              }
-            let accountMap' :=
-              match evmState.lookupAccount r, evmState.lookupAccount Iₐ with
-                | some σ_r, some σ_Iₐ =>
-                  if r ≠ Iₐ then
-                    evmState.accountMap.insert r
-                      {σ_r with balance := σ_r.balance + σ_Iₐ.balance}
-                        |>.insert Iₐ {σ_Iₐ with balance := 0}
-                  else
-                    evmState.accountMap.insert r {σ_r with balance := 0}
-                      |>.insert Iₐ {σ_Iₐ with balance := 0}
-                | _, _ => evmState.accountMap
-            let evmState' :=
-              {evmState with
-                accountMap := accountMap'
-                substate := A'
-              }
-            .ok <| evmState'.replaceStackAndIncrPC s
+            if evmState.createdAccounts.contains Iₐ then
+              -- When `SELFDESTRUCT` is executed in the same transaction as the contract was created
+              let A' : Substate :=
+                { evmState.substate with
+                    selfDestructSet :=
+                      evmState.substate.selfDestructSet.insert Iₐ
+                    accessedAccounts :=
+                      evmState.substate.accessedAccounts.insert r
+                }
+              let accountMap' :=
+                match evmState.lookupAccount Iₐ with
+                  | none =>
+                    dbg_trace "No 'self' found to be destructed; this should probably not be happening;"; evmState.accountMap
+                  | some σ_Iₐ  =>
+                    match evmState.lookupAccount r with
+                      | none =>
+                        if σ_Iₐ.balance == 0 then
+                          evmState.accountMap
+                        else
+                          evmState.accountMap.insert r
+                            {(default : Account) with balance := σ_Iₐ.balance}
+                              |>.insert Iₐ {σ_Iₐ with balance := 0}
+                      | some σ_r =>
+                        if r ≠ Iₐ then
+                          evmState.accountMap.insert r
+                            {σ_r with balance := σ_r.balance + σ_Iₐ.balance}
+                              |>.insert Iₐ {σ_Iₐ with balance := 0}
+                        else
+                          -- if the target is the same as the contract calling `SELFDESTRUCT` that Ether will be burnt.
+                          evmState.accountMap.insert r {σ_r with balance := 0}
+                            |>.insert Iₐ {σ_Iₐ with balance := 0}
+              let evmState' :=
+                {evmState with
+                  accountMap := accountMap'
+                  substate := A'
+                }
+              .ok <| evmState'.replaceStackAndIncrPC s
+            else
+              /- When SELFDESTRUCT is executed in a transaction that is not the
+                same as the contract calling SELFDESTRUCT was created:
+              -/
+              let A' : Substate :=
+                { evmState.substate with
+                    accessedAccounts :=
+                      evmState.substate.accessedAccounts.insert r
+                }
+              let accountMap' :=
+                match evmState.lookupAccount Iₐ with
+                  | none => dbg_trace "No 'self' found to be destructed; this should probably not be happening;"; evmState.accountMap
+                  | some σ_Iₐ  =>
+                    match evmState.lookupAccount r with
+                      | none =>
+                        if σ_Iₐ.balance == 0 then
+                          evmState.accountMap
+                        else
+                          evmState.accountMap.insert r
+                            {(default : Account) with balance := σ_Iₐ.balance}
+                              |>.insert Iₐ {σ_Iₐ with balance := 0}
+                      | some σ_r =>
+                          evmState.accountMap.insert r
+                            {σ_r with balance := σ_r.balance + σ_Iₐ.balance}
+                              |>.insert Iₐ {σ_Iₐ with balance := 0}
+              let evmState' :=
+                {evmState with
+                  accountMap := accountMap'
+                  substate := A'
+                }
+              .ok <| evmState'.replaceStackAndIncrPC s
           | _ => .error EVM.Exception.InvalidStackSizeException
+    | .Yul, .SELFDESTRUCT => λ yulState lits ↦
+      match lits with
+        | [a] =>
+            let Iₐ := yulState.executionEnv.codeOwner
+            let r : Address := Address.ofUInt256 a
+              let A' : Substate :=
+                { yulState.toState.substate with
+                    selfDestructSet :=
+                      yulState.toState.substate.selfDestructSet.insert Iₐ
+                    accessedAccounts :=
+                      yulState.toState.substate.accessedAccounts.insert r
+                }
+              let accountMap' :=
+                match yulState.toState.lookupAccount Iₐ with
+                  | none =>
+                    dbg_trace "No 'self' found to be destructed; this should probably not be happening;"; yulState.toState.accountMap
+                  | some σ_Iₐ  =>
+                    match yulState.toState.lookupAccount r with
+                      | none =>
+                        if σ_Iₐ.balance == 0 then
+                          yulState.toState.accountMap
+                        else
+                          yulState.toState.accountMap.insert r
+                            {(default : Account) with balance := σ_Iₐ.balance}
+                              |>.insert Iₐ {σ_Iₐ with balance := 0}
+                      | some σ_r =>
+                        if r ≠ Iₐ then
+                          yulState.toState.accountMap.insert r
+                            {σ_r with balance := σ_r.balance + σ_Iₐ.balance}
+                              |>.insert Iₐ {σ_Iₐ with balance := 0}
+                        else
+                          -- if the target is the same as the contract calling `SELFDESTRUCT` that Ether will be burnt.
+                          yulState.toState.accountMap.insert r {σ_r with balance := 0}
+                            |>.insert Iₐ {σ_Iₐ with balance := 0}
+              let yulState' :=
+                yulState.setState
+                  { yulState.toState with accountMap := accountMap', substate := A'}
+              .ok <| (yulState', none)
+        | _ => .error .InvalidArguments
     | τ, .INVALID => dispatchInvalid τ
 
     | .Yul, .CREATE2 => λ yulState lits ↦
