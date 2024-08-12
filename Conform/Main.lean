@@ -42,14 +42,14 @@ def main (args : List String) : IO Unit := do
     match res with
       | .error err         => IO.println s!"Error: {repr err}"; numThrewAlongTheWay := numThrewAlongTheWay + 1
       | .ok    testresults => if ← basicSuccess testFile testresults
-                              then numFailedTest := numFailedTest + 1
-                              else numSuccess := numSuccess + 1
+                              then numSuccess := numSuccess + 1
+                              else numFailedTest := numFailedTest + 1
 
   let total := numThrewAlongTheWay + numFailedTest + numSuccess
   IO.println s!"Total tests: {total}"
   IO.println s!"Threw along the way: {numThrewAlongTheWay}"
   IO.println s!"The post was NOT equal to the resulting state: {numFailedTest}"
   IO.println s!"Succeeded: {numSuccess}"
-  IO.println s!"Glorious success rate of: {(numSuccess.toFloat / total.toFloat) * 100.0}"
+  IO.println s!"Success rate of: {(numSuccess.toFloat / total.toFloat) * 100.0}"
 
 -- #eval main ["EthereumTests"]
