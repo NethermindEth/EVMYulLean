@@ -223,12 +223,12 @@ def step (fuel : ℕ) (instr : Option (Operation .EVM × Option (UInt256 × Nat)
             let Iₐ := evmState.executionEnv.codeOwner
             let Iₒ := evmState.executionEnv.sender
             let Iₑ := evmState.executionEnv.depth
-            let Λ := Lambda f evmState.accountMap evmState.toState.substate Iₐ Iₒ I.gasPrice μ₀ i (Iₑ + 1) ζ I.header I.perm
+            let Λ := Lambda f evmState.createdAccounts evmState.accountMap evmState.toState.substate Iₐ Iₒ I.gasPrice μ₀ i (Iₑ + 1) ζ I.header I.perm
             let (a, evmState', z, o) : (Address × EVM.State × Bool × ByteArray) :=
               if μ₀ ≤ (evmState.accountMap.find? Iₐ |>.option 0 Account.balance) ∧ Iₑ < 1024 then
                 match Λ with
-                  | some (a, σ', A', z, o) =>
-                    (a, {evmState with accountMap := σ', substate := A'}, z, o)
+                  | some (a, cA, σ', A', z, o) =>
+                    (a, {evmState with accountMap := σ', substate := A', createdAccounts := cA}, z, o)
                   | none => (0, evmState, False, .empty)
               else
                 (0, evmState, False, .empty)
@@ -258,12 +258,17 @@ def step (fuel : ℕ) (instr : Option (Operation .EVM × Option (UInt256 × Nat)
             let Iₐ := evmState.executionEnv.codeOwner
             let Iₒ := evmState.executionEnv.sender
             let Iₑ := evmState.executionEnv.depth
-            let Λ := Lambda f evmState.accountMap evmState.toState.substate Iₐ Iₒ I.gasPrice μ₀ i (Iₑ + 1) ζ I.header I.perm
+            let Λ :=
+              Lambda
+                f
+                evmState.createdAccounts
+                evmState.accountMap
+                evmState.toState.substate Iₐ Iₒ I.gasPrice μ₀ i (Iₑ + 1) ζ I.header I.perm
             let (a, evmState', z, o) : (Address × EVM.State × Bool × ByteArray) :=
               if μ₀ ≤ (evmState.accountMap.find? Iₐ |>.option 0 Account.balance) ∧ Iₑ < 1024 then
                 match Λ with
-                  | some (a, σ', A', z, o) =>
-                    (a, {evmState with accountMap := σ', substate := A'}, z, o)
+                  | some (a, cA, σ', A', z, o) =>
+                    (a, {evmState with accountMap := σ', substate := A', createdAccounts := cA}, z, o)
                   | none => (0, evmState, False, .empty)
               else
                 (0, evmState, False, .empty)
@@ -296,7 +301,7 @@ def step (fuel : ℕ) (instr : Option (Operation .EVM × Option (UInt256 × Nat)
         let (stack, μ₀, μ₁, μ₂, μ₃, μ₄, μ₅, μ₆) ← evmState.stack.pop7
         -- dbg_trace "POPPED OK; μ₁ : {μ₁}"
         -- dbg_trace s!"Pre call, we have: {Finmap.pretty evmState.accountMap}"
-        let (σ', g', A', z, o) ← do
+        let (cA, σ', g', A', z, o) ← do
           -- TODO - Refactor condition and possibly share with CREATE
           if μ₂ ≤ (evmState.accountMap.find? evmState.executionEnv.codeOwner |>.option 0 Account.balance) ∧ evmState.executionEnv.depth < 1024 then
             let t : Address := Address.ofUInt256 μ₁ -- t ≡ μs[1] mod 2^160
@@ -308,6 +313,7 @@ def step (fuel : ℕ) (instr : Option (Operation .EVM × Option (UInt256 × Nat)
             -- dbg_trace s!"looking up memory range: {evmState.toMachineState.lookupMemoryRange μ₃ μ₄}"
             let i := evmState.toMachineState.lookupMemoryRange μ₃ μ₄ -- m[μs[3] . . . (μs[3] + μs[4] − 1)]
             Θ (fuel := f)                             -- TODO meh
+              (createdAccounts := evmState.createdAccounts)
               (σ  := evmState.accountMap)             -- σ in  Θ(σ, ..)
               (A  := A')                              -- A* in Θ(.., A*, ..)
               (s  := evmState.executionEnv.codeOwner) -- Iₐ in Θ(.., Iₐ, ..)
@@ -322,7 +328,7 @@ def step (fuel : ℕ) (instr : Option (Operation .EVM × Option (UInt256 × Nat)
               (e  := evmState.executionEnv.depth + 1) -- Iₑ + 1 in Θ(.., Iₑ + 1, ..)
               (w  := evmState.executionEnv.perm)      -- I_W in Θ(.., I_W)
           -- TODO gas - CCALLGAS(σ, μ, A)
-          else .ok (evmState.toState.accountMap, μ₀, evmState.toState.substate, false, .some .empty) -- otherwise (σ, CCALLGAS(σ, μ, A), A, 0, ())
+          else .ok (evmState.createdAccounts, evmState.toState.accountMap, μ₀, evmState.toState.substate, false, .some .empty) -- otherwise (σ, CCALLGAS(σ, μ, A), A, 0, ())
         -- dbg_trace s!"THETA OK with accounts: {repr σ'}"
         let n : UInt256 := min μ₆ (o.elim 0 (UInt256.ofNat ∘ ByteArray.size)) -- n ≡ min({μs[6], ‖o‖}) -- TODO - Why is this using... set??? { } brackets ???
         -- TODO I am assuming here that μ' is μ with the updates mentioned in the CALL section. Check.
@@ -352,7 +358,7 @@ def step (fuel : ℕ) (instr : Option (Operation .EVM × Option (UInt256 × Nat)
               gasAvailable := μ'_g
               maxAddress   := μ'ᵢ }
 
-        let σ' : EVM.State := { evmState with accountMap := σ', substate := A' }
+        let σ' : EVM.State := { evmState with accountMap := σ', substate := A', createdAccounts := cA }
         let σ' := {
           σ' with toMachineState := μ'incomplete
         }.replaceStackAndIncrPC μ'ₛ
@@ -407,12 +413,19 @@ def X (fuel : ℕ) (evmState : State) : Except EVM.Exception (State × Option By
       | some n => n ∈ l
   notIn (o : Option ℕ) (l : List ℕ) : Bool := not (belongs o l)
 
-def Ξ (fuel : ℕ) (σ : YPState) (g : UInt256) (A : Substate) (I : ExecutionEnv) :
-  Except EVM.Exception (YPState × UInt256 × Substate × Option ByteArray)
+def Ξ
+  (fuel : ℕ)
+  (createdAccounts : Batteries.RBSet Address compare)
+  (σ : YPState)
+  (g : UInt256)
+  (A : Substate)
+  (I : ExecutionEnv)
+    :
+  Except EVM.Exception (Batteries.RBSet Address compare × YPState × UInt256 × Substate × Option ByteArray)
 := do
   -- dbg_trace "Ξ fuel: {fuel} σ: {repr σ} g: {g} A: {repr A} I: {repr I}"
   match fuel with
-    | 0 => .ok (σ, g, A, some .empty) -- TODO - Gas model
+    | 0 => .ok (createdAccounts, σ, g, A, some .empty) -- TODO - Gas model
     | .succ f =>
       let defState : EVM.State := default
       let freshEvmState : EVM.State :=
@@ -420,12 +433,14 @@ def Ξ (fuel : ℕ) (σ : YPState) (g : UInt256) (A : Substate) (I : ExecutionEn
             accountMap := σ
             executionEnv := I
             substate := A
+            createdAccounts := createdAccounts
         }
       let (evmState', o) ← X f freshEvmState
-      return (evmState'.accountMap, g, evmState'.substate, o) -- TODO - Gas model
+      return (evmState'.createdAccounts, evmState'.accountMap, g, evmState'.substate, o) -- TODO - Gas model
 
 def Lambda
   (fuel : ℕ)
+  (createdAccounts : Batteries.RBSet Address compare) -- needed for EIP-6780
   (σ : YPState)
   (A : Substate)
   (s : Address) -- sender
@@ -438,7 +453,7 @@ def Lambda
   (H : BlockHeader) -- "I_H has no special treatment and is determined from the blockchain"
   (w : Bool)
   :
-  Option (Address × YPState × Substate × Bool × ByteArray)
+  Option (Address × Batteries.RBSet Address compare × YPState × Substate × Bool × ByteArray)
 :=
   match fuel with
     | 0 => dbg_trace "nofuel"; .none
@@ -448,6 +463,8 @@ def Lambda
   let a : Address :=
     (KEC lₐ).extract 12 32 /- 160 bits = 20 bytes -/
       |>.data.data |> fromBytesBigEndian |> Fin.ofNat
+  let createdAccounts := createdAccounts.insert a
+
   -- A*
   let AStar := A.addAccessedAccount a
   -- σ*
@@ -484,10 +501,10 @@ def Lambda
     , depth     := e + 1
     , perm      := w
     }
-  match Ξ f σStar 42 AStar exEnv with -- TODO - Gas model.
+  match Ξ f createdAccounts σStar 42 AStar exEnv with -- TODO - Gas model.
     | .error _ => .none
-    | .ok (_, _, _, none) => dbg_trace "continue"; .none
-    | .ok (σStarStar, _, AStarStar, some returnedData) =>
+    | .ok (_, _, _, _, none) => dbg_trace "continue"; .none
+    | .ok (createdAccounts', σStarStar, _, AStarStar, some returnedData) =>
       let F₀ : Bool :=
         match σ.find? a with
           | .some ac => ac.code ≠ .empty ∨ ac.nonce ≠ 0
@@ -503,7 +520,7 @@ def Lambda
             else σStarStar.insert a {newAccount with code := returnedData}
       let A' := if fail then AStar else AStarStar
       let z := not fail
-      .some (a, σ', A', z, returnedData)
+      .some (a, createdAccounts', σ', A', z, returnedData)
  where
   L_A (s : Address) (n : UInt256) (ζ : Option ByteArray) (i : ByteArray) :
     Option ByteArray
@@ -540,6 +557,7 @@ NB - This is implemented using the 'boolean' fragment with ==, <=, ||, etc.
      The 'prop' version will come next once we have the comutable one.
 -/
 def Θ (fuel : Nat)
+      (createdAccounts : Batteries.RBSet Address compare)
       (σ  : YPState)
       (A  : Substate)
       (s  : Address)
@@ -552,7 +570,10 @@ def Θ (fuel : Nat)
       (v' : UInt256)
       (d  : ByteArray)
       (e  : Nat)
-      (w  : Bool) : Except EVM.Exception (YPState × UInt256 × Substate × Bool × Option ByteArray) :=
+      (w  : Bool)
+        :
+      Except EVM.Exception (Batteries.RBSet Address compare × YPState × UInt256 × Substate × Bool × Option ByteArray)
+:=
   -- dbg_trace "Θ"
   match fuel with
     | 0 => .error .OutOfFuel
@@ -591,7 +612,7 @@ def Θ (fuel : Nat)
 
   -- Equation (126)
   -- Note that the `c` used here is the actual code, not the address. TODO - Handle precompiled contracts.
-  let (σ'', g'', A'', out) ← Ξ fuel σ₁ g A I
+  let (createdAccounts, σ'', g'', A'', out) ← Ξ fuel createdAccounts σ₁ g A I
   -- dbg_trace s!"σ'' after Ξ: {repr σ''}"
   -- Equation (122)
   let σ' := if σ'' == ∅ then σ else σ''
@@ -606,7 +627,7 @@ def Θ (fuel : Nat)
   let z := σ'' != ∅
 
   -- Equation (114)
-  .ok (σ', g', A', z, out)
+  .ok (createdAccounts, σ', g', A', z, out)
 
 end
 
@@ -781,11 +802,12 @@ def Υ (fuel : ℕ) (σ : YPState) (chainId H_f : ℕ) (H : BlockHeader) (T : Tr
       | none => a
   let AStar := -- (77)
     { A0 with accessedAccounts := AStarₐ, accessedStorageKeys := Batteries.RBSet.ofList AStar_K Substate.storageKeysCmp}
+  let createdAccounts : Batteries.RBSet Address compare := .empty
   let (σ_P, A, z) ← -- (76)
     match T.base.recipient with
       | none => do
-        let (_, σ_P, A, z, _) :=
-          match Lambda fuel σ₀ AStar S_T S_T p T.base.value T.base.data 0 none H true with
+        let (_, _, σ_P, A, z, _) :=
+          match Lambda fuel createdAccounts σ₀ AStar S_T S_T p T.base.value T.base.data 0 none H true with
             | .none => dbg_trace "Lambda returned none; this should probably not be happening; test semantics will be off."; default
             | .some x => x
         pure (σ_P, A, z)
@@ -793,7 +815,7 @@ def Υ (fuel : ℕ) (σ : YPState) (chainId H_f : ℕ) (H : BlockHeader) (T : Tr
         let g := T.base.gasLimit /- minus g₀ -/
         match σ₀.find? t with
           | .none => dbg_trace "σ₀.find failed; this should probably not be happening; test semantics will be off."; default
-          | .some v => let (σ_P, _,  A, z, _) ← Θ fuel σ₀ AStar S_T S_T t v.code g p T.base.value T.base.value T.base.data 0 true
+          | .some v => let (_, σ_P, _,  A, z, _) ← Θ fuel createdAccounts σ₀ AStar S_T S_T t v.code g p T.base.value T.base.value T.base.data 0 true
                       --  dbg_trace "Θ gave back σ_P: {repr σ_P}"
                        pure (σ_P, A, z)
   let σStar := σ_P -- we don't model gas yet

@@ -33,6 +33,8 @@ structure State where
   keccakRange   : List UInt256
   usedRange     : Batteries.RBSet UInt256 compare
   hashCollision : Bool
+
+  createdAccounts : Batteries.RBSet Address compare
 deriving BEq, Inhabited, Repr
 
 end EvmYul
