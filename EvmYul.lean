@@ -32,6 +32,7 @@ import EvmYul.State.ExecutionEnv
 import EvmYul.State.Substate
 import EvmYul.State.SubstateOps
 import EvmYul.State.Transaction
+import EvmYul.State.Withdrawal
 import EvmYul.State.TransactionOps
 
 import EvmYul.Yul.Ast
