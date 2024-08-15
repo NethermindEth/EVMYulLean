@@ -13,7 +13,7 @@ The state trie is the structure responsible for storing
 `.fork_types.Account` objects.
 """
 
-import copy
+# import copy
 from typing import Any
 from dataclasses import dataclass, field
 from typing import (
@@ -30,34 +30,8 @@ from typing import (
     cast,
 )
 
-# from ethereum.crypto.hash import keccak256
-# from ethereum.utils.hexadecimal import hex_to_bytes
-
-# from .. import rlp
 from base_types import U256, Bytes, Bytes20, Uint, slotted_freezable
 from hash import Hash32
-# from .blocks import Receipt
-# from .fork_types import Account, Address, Root, encode_account
-# from .transactions import Transaction
-
-# note: an empty trie (regardless of whether it is secured) has root:
-#
-#   keccak256(RLP(b''))
-#       ==
-#   56e81f171bcc55a6ff8345e692c0f86e5b48e01b996cadc001622fb5e363b421 # noqa: E501,SC10
-#
-# also:
-#
-#   keccak256(RLP(()))
-#       ==
-#   1dcc4de8dec75d7aab85b567b6ccd41ad312451b948a7413f0a142fd40d49347 # noqa: E501,SC10
-#
-# which is the sha3Uncles hash in block header with no uncles
-# EMPTY_TRIE_ROOT = Root(
-#     hex_to_bytes(
-#         "56e81f171bcc55a6ff8345e692c0f86e5b48e01b996cadc001622fb5e363b421"
-#     )
-# )
 
 RLP = Any
 Address = Bytes20
@@ -180,25 +154,6 @@ class Trie(Generic[K, V]):
     default: V
     _data: Dict[K, V] = field(default_factory=dict)
 
-
-def copy_trie(trie: Trie[K, V]) -> Trie[K, V]:
-    """
-    Create a copy of `trie`. Since only frozen objects may be stored in tries,
-    the contents are reused.
-
-    Parameters
-    ----------
-    trie: `Trie`
-        Trie to copy.
-
-    Returns
-    -------
-    new_trie : `Trie[K, V]`
-        A copy of the trie.
-    """
-    return Trie(trie.secured, trie.default, copy.copy(trie._data))
-
-
 def trie_set(trie: Trie[K, V], key: K, value: V) -> None:
     """
     Stores an item in a Merkle Trie.
@@ -220,28 +175,6 @@ def trie_set(trie: Trie[K, V], key: K, value: V) -> None:
             del trie._data[key]
     else:
         trie._data[key] = value
-
-
-def trie_get(trie: Trie[K, V], key: K) -> V:
-    """
-    Gets an item from the Merkle Trie.
-
-    This method returns `trie.default` if the key is missing.
-
-    Parameters
-    ----------
-    trie:
-        Trie to lookup in.
-    key :
-        Key to lookup.
-
-    Returns
-    -------
-    node : `V`
-        Node at `key` in the trie.
-    """
-    return trie._data.get(key, trie.default)
-
 
 def common_prefix_length(a: Sequence, b: Sequence) -> int:
     """

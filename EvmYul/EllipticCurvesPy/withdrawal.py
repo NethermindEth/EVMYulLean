@@ -2,17 +2,7 @@ import sys
 from trie import Trie, root, trie_set
 from base_types import Bytes
 from typing import (
-    Callable,
-    Dict,
-    Generic,
-    List,
-    Mapping,
-    MutableMapping,
     Optional,
-    Sequence,
-    TypeVar,
-    Union,
-    cast,
 )
 n = int(sys.argv[1])
 
