@@ -1,13 +1,8 @@
+-- Requires the following python packages: coincurve, typing-extensions
+
 import EvmYul.Wheels
+import EvmYul.PerformIO
 import Conform.Wheels
-
-unsafe def unsafePerformIO {τ} [Inhabited τ] (io : IO τ) : τ :=
-  match unsafeIO io with
-    | Except.ok    a => a
-    | Except.error _ => panic! "unsafePerformIO was a not great idea after all"
-
-@[implemented_by unsafePerformIO]
-def totallySafePerformIO {τ} [Inhabited τ] (io : IO τ) : τ := Inhabited.default
 
 def blobECDSARECOVER (e v r s : String) : String :=
   totallySafePerformIO ∘ IO.Process.run <|
@@ -24,11 +19,6 @@ def blobSign (e pᵣ : String) : List String :=
     cmd := "python3",
     args := #["EvmYul/EllipticCurvesPy/sign.py", e, pᵣ]
   }
-
-/-- Add `0`s to make the hex representation valid for `ByteArray.ofBlob` -/
-def padLeft (n : ℕ) (s : String) :=
-  let l := s.length
-  if l < n then String.replicate (n - l) '0' ++ s else s
 
 -- Appendix F. Signing Transactions
 

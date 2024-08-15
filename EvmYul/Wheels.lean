@@ -123,6 +123,12 @@ def hexOfByte (byte : UInt8) : String :=
 
 def toHex (bytes : ByteArray) : String :=
   bytes.foldl (init := "") λ acc byte ↦ acc ++ hexOfByte byte
+
+/-- Add `0`s to make the hex representation valid for `ByteArray.ofBlob` -/
+def padLeft (n : ℕ) (s : String) :=
+  let l := s.length
+  if l < n then String.replicate (n - l) '0' ++ s else s
+
 /--
 TODO - Well this is ever so slightly unfortunate.
 It appears to be the case that some (all?) definitions that have C++ implementations
