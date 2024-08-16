@@ -166,9 +166,9 @@ def executeTransaction (transaction : Transaction) (s : EVM.State) (header : Blo
 This assumes that the `transactions` are ordered, as they should be in the test suit.
 -/
 def executeTransactions (blocks : Blocks) (s₀ : EVM.State) : Except EVM.Exception EVM.State := do
-  if blocks.size != 1 then throw (.BogusExceptionToBeReplaced "Currently we process only 1-block tests.")
-  let block := blocks[0]!
-  block.transactions.foldlM (λ s trans ↦ executeTransaction trans s block.blockHeader) s₀
+  blocks.foldlM processBlock s₀
+  where processBlock (s : EVM.State) (block : BlockEntry) :=
+    block.transactions.foldlM (λ s trans ↦ executeTransaction trans s block.blockHeader) s
 
 /--
 - `.none` on success
