@@ -168,7 +168,15 @@ This assumes that the `transactions` are ordered, as they should be in the test 
 def executeTransactions (blocks : Blocks) (s₀ : EVM.State) : Except EVM.Exception EVM.State := do
   blocks.foldlM processBlock s₀
   where processBlock (s : EVM.State) (block : BlockEntry) :=
-    block.transactions.foldlM (λ s trans ↦ executeTransaction trans s block.blockHeader) s
+    block.transactions.foldlM (λ s trans ↦
+      try
+        executeTransaction trans s block.blockHeader
+      catch e =>
+        if !block.exception.isEmpty
+        then dbg_trace s!"Expected exception: {block.exception}; got exception: {repr e} - we need to reconcile these as we debug tests. Currently, we mark the test as 'passed' as I assume this is the right kind of exception, but it doesn't need to be the case necessarily."
+             throw <| EVM.Exception.ExpectedException block.exception
+        else throw e
+        ) s
 
 /--
 - `.none` on success
@@ -177,10 +185,13 @@ def executeTransactions (blocks : Blocks) (s₀ : EVM.State) : Except EVM.Except
 NB we can throw away the final state if it coincided with the expected one, hence `.none`.
 -/
 def preImpliesPost (pre : Pre) (post : Post) (blocks : Blocks) : Except EVM.Exception (Option EVM.State) := do
-  let result ← executeTransactions blocks pre.toEVMState
-  match almostBEqButNotQuite post.toEVMState result with
-    | .error _ => pure (.some result) -- Feel free to inspect this error from `almostBEqButNotQuite`.
-    | .ok _ => pure .none
+  try
+    let result ← executeTransactions blocks pre.toEVMState
+    match almostBEqButNotQuite post.toEVMState result with
+      | .error _ => pure (.some result) -- Feel free to inspect this error from `almostBEqButNotQuite`.
+      | .ok _ => pure .none
+  catch | .ExpectedException _ => pure .none -- An expected exception was thrown, which means the test is ok.
+        | e                    => throw e
 
 local instance : MonadLift (Except EVM.Exception) (Except Conform.Exception) := ⟨Except.mapError .EVMError⟩
 

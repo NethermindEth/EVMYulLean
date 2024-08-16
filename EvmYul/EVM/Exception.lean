@@ -45,6 +45,7 @@ inductive Exception where
           InvalidTransactionException → Exception
   | ReceiverNotInAccounts (a : Address) : Exception
   | BogusExceptionToBeReplaced (s : String) : Exception
+  | ExpectedException (s : String)          : Exception
 
 instance : Repr Exception where
   reprPrec s _ := match s with
@@ -62,6 +63,7 @@ instance : Repr Exception where
                     | .InvalidTransaction e              => "InvalidTransaction: " ++ repr e
                     | .ReceiverNotInAccounts (a : Address) => s!"ReceiverNotInAccounts: {a}"
                     | .BogusExceptionToBeReplaced s      => s!"BogusExceptionToBeReplaced: {s}"
+                    | .ExpectedException s               => s!"Expected exception: {s}"
 
 end EVM
 
