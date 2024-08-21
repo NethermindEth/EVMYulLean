@@ -33,9 +33,7 @@ open EvmYul.Conform in
 def log (testFile : System.FilePath) (testName : String) (result : TestResult) : IO Unit :=
   IO.FS.withFile logFile .append λ h ↦ h.putStrLn s!"{testFile.fileName.get!}[{testName}] - {repr result}"
 
-def main (args : List String) : IO Unit := do
-  if args.length != 1 then IO.println "Usage: conform <path to 'EthereumTests'>"; return ()
-
+def main : IO Unit := do
   let testFiles ← Array.filter isTestFile <$> System.FilePath.walkDir ("EthereumTests" / "BlockchainTests")
 
   -- let testFiles := #[SimpleFile]
@@ -47,7 +45,7 @@ def main (args : List String) : IO Unit := do
   let mut numFailedTest := 0
   let mut numSuccess := 0
 
-  IO.FS.removeFile logFile
+  if ←System.FilePath.pathExists logFile then IO.FS.removeFile logFile
 
   for testFile in testFiles do
     -- dbg_trace s!"File under test: {testFile}"
