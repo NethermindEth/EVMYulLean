@@ -110,6 +110,7 @@ instance : FromJson BlockHeader where
         chainId       := 1 -- (5)
         nonce         := 0 -- [deprecated] 0.
         baseFeePerGas := ← json.getObjValAsD! _         "baseFeePerGas" <&> UInt256.toNat
+        parentBeaconBlockRoot := ← json.getObjValAsD! ByteArray "parentBeaconBlockRoot"
       }
     catch exct => dbg_trace s!"OOOOPSIE: {exct}\n json: {json}"
                   default
@@ -146,7 +147,7 @@ instance : FromJson Transaction where
       | .error _ => do
         -- Any other transaction now necessarily has an access list.
         let accessListTransaction : Transaction.WithAccessList :=
-          { 
+          {
             chainId    := let mainnet : Nat := 1; mainnet
             accessList := ← json.getObjValAsD! _ "accessList" <&> accessListToRBMap
             yParity    := TODO
@@ -186,7 +187,7 @@ instance : FromJson Transaction where
 - Format₀: `EthereumTests/BlockchainTests/GeneralStateTests/VMTests/vmArithmeticTest/add.json`
 - Format₁: `EthereumTests/BlockchainTests/GeneralStateTests/Pyspecs/cancun/eip4844_blobs/invalid_static_excess_blob_gas.json`
 
-TODO - 
+TODO -
 - `EthereumTests/BlockchainTests/GeneralStateTests/Pyspecs/cancun/eip4844_blobs/invalid_blob_tx_contract_creation.json` - ?????
 -/
 private def blockEntryOfJson (json : Json) : Except String BlockEntry := do
@@ -204,7 +205,7 @@ private def blockEntryOfJson (json : Json) : Except String BlockEntry := do
     exception    := exception
   }
   where
-    tryParseBlocknumber (s : String) : Except String Nat := 
+    tryParseBlocknumber (s : String) : Except String Nat :=
       s.toNat?.elim (.error "Cannot parse `blocknumber`.") .ok
 
 instance : FromJson BlockEntry := ⟨blockEntryOfJson⟩

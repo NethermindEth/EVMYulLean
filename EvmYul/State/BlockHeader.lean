@@ -24,7 +24,7 @@ deriving instance Repr for ByteArray
 `minHash`       `m`
 `chainId`       `n` TODO ????
 `nonce`         `n` [deprecated]
-`baseFeePerGas` `f` 
+`baseFeePerGas` `f`
 -/
 structure BlockHeader where
   parentHash    : UInt256
@@ -43,8 +43,9 @@ structure BlockHeader where
   minHash       : UInt256
   chainId       : UInt256 -- TODO(Why is this here?)
   nonce         : UInt64
-  -- prevRandao -- TODO 
+  -- prevRandao -- TODO
   baseFeePerGas : ℕ
+  parentBeaconBlockRoot : ByteArray
 deriving DecidableEq, Inhabited, Repr
 
 attribute [deprecated] BlockHeader.difficulty
