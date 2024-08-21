@@ -129,7 +129,7 @@ structure AccessListEntry :=
 abbrev AccessList := Array AccessListEntry
 
 def TestResult := Option String
-  deriving Repr
+  deriving Repr, Inhabited
 
 namespace TestResult
 
