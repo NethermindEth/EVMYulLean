@@ -87,7 +87,16 @@ notation "TODO" => default
 private def almostBEqButNotQuiteEvmYulState (s₁ s₂ : EvmYul.State) : Except String Bool := do
   let s₁ := bashState s₁
   let s₂ := bashState s₂
-  if s₁ == s₂ then .ok true else throw "state mismatch"
+  -- dbg_trace "State 1"
+  -- dbg_trace repr s₁
+  -- dbg_trace "State 2"
+  -- dbg_trace repr s₂
+  if s₁ == s₂ then
+    -- dbg_trace "Got HERE! OK"
+    .ok true
+  else
+    -- dbg_trace "Got HERE! ERROR"
+    throw "state mismatch"
   where bashState (s : EvmYul.State) : EvmYul.State :=
     { s with accountMap := s.accountMap.map (λ (addr, acc) ↦ (addr, { acc with balance := TODO }))
              executionEnv.perm := TODO
@@ -118,30 +127,11 @@ def executeTransaction (transaction : Transaction) (s : EVM.State) (header : Blo
 
   let (ypState, substate, z) ← EVM.Υ _TODOfuel s.accountMap header.chainId header.baseFeePerGas header transaction -- (dbgOverrideSender := transaction.base.dbgSender)
 
-  -- TODO - This is a hack.
-  -- We manually inject 1000 -> 1000 as tests seem to expect this,
   -- as EIP 4788 (https://eips.ethereum.org/EIPS/eip-4788).
-
-  -- Block processing
-  -- At the start of processing any execution block where block.timestamp >= FORK_TIMESTAMP (i.e. before processing any transactions), call BEACON_ROOTS_ADDRESS as SYSTEM_ADDRESS with the 32-byte input of header.parent_beacon_block_root, a gas limit of 30_000_000, and 0 value. This will trigger the set() routine of the beacon roots contract. This is a system operation and therefore:
-
-  -- the call must execute to completion
-  -- the call does not count against the block’s gas limit
-  -- the call does not follow the EIP-1559 burn semantics - no value should be transferred as part of the call
-  -- if no code exists at BEACON_ROOTS_ADDRESS, the call must fail silently
-  -- Clients may decide to omit an explicit EVM call and directly set the storage values. Note: While this is a valid optimization for Ethereum mainnet, it could be problematic on non-mainnet situations in case a different contract is used.
-
-  -- If this EIP is active in a genesis block, the genesis header’s parent_beacon_block_root must be 0x0 and no system transaction may occur.
-
-  -- TODO - This is currently not done properly. ^^^^^^^^^^^^^^
-
-  let _BEACON_ROOTS_ADDRESS_HACK := 0x000f3df6d732807ef1319fb7b8bb8522d0beac02
-  let .some _BEACON_ROOTS_ACCOUNT_HACK := s.accountMap.find? _BEACON_ROOTS_ADDRESS_HACK | throw (.BogusExceptionToBeReplaced "_BEACON_ROOTS_ADDRESS_HACK not in pre")
-  let σ := ypState.insert _BEACON_ROOTS_ADDRESS_HACK (_BEACON_ROOTS_ACCOUNT_HACK.updateStorage 0x03e8 0x03e8)
 
   -- TODO - I think we do this tuple → EVM.State conversion reasonably often, factor out?
   let result : EVM.State := {
-    s with accountMap := σ
+    s with accountMap := ypState
            substate := substate
            executionEnv.perm := z -- TODO - that's probably not this :)
            -- returnData := TODO?
@@ -153,7 +143,43 @@ This assumes that the `transactions` are ordered, as they should be in the test 
 -/
 def executeTransactions (blocks : Blocks) (s₀ : EVM.State) : Except EVM.Exception EVM.State := do
   blocks.foldlM processBlock s₀
-  where processBlock (s : EVM.State) (block : BlockEntry) :=
+  where processBlock (s : EVM.State) (block : BlockEntry) : Except EVM.Exception EVM.State := do
+    -- We should not check the timestamp. Some tests have timestamp less than 1710338135 but still need EIP-4788
+    -- let FORK_TIMESTAMP := 1710338135
+    let _TODOfuel := 2^13
+    let SYSTEM_ADDRESS := 0xfffffffffffffffffffffffffffffffffffffffe
+    let BEACON_ROOTS_ADDRESS := 0x000F3df6D732807Ef1319fB7B8bB8522d0Beac02
+    -- if no code exists at `BEACON_ROOTS_ADDRESS`, the call must fail silently
+    let s ←
+      match s.accountMap.find? BEACON_ROOTS_ADDRESS with
+        | none => pure s
+        | some roots =>
+          let beaconRootsAddressCode := roots.code
+          -- the call does not count against the block’s gas limit
+          let (createdAccounts, σ, _, substate, _ /- can't fail-/, _) ←
+            EVM.Θ
+              _TODOfuel
+              .empty
+              s.accountMap
+              default
+              SYSTEM_ADDRESS
+              SYSTEM_ADDRESS
+              BEACON_ROOTS_ADDRESS
+              beaconRootsAddressCode
+              0 -- to be 30000000
+              0xe8d4a51000
+              0
+              0
+              block.blockHeader.parentBeaconBlockRoot
+              0
+              block.blockHeader
+              true
+          pure <|
+            {s with
+              createdAccounts := createdAccounts
+              accountMap := σ
+              substate := substate
+            }
     block.transactions.foldlM (λ s trans ↦
       try
         executeTransaction trans s block.blockHeader

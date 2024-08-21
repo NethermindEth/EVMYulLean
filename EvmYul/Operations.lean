@@ -392,6 +392,9 @@ inductive SMSFOp : OperationType → Type where
 /--
   Push operations.
 
+  PUSH0 : pushes `0` to stack.
+    δ: 0 ; α: 1
+
   PUSHn : pushes n bytes to stack.
     δ: 0 ; α: 1
 -/

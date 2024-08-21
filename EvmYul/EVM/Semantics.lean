@@ -153,8 +153,13 @@ def step (fuel : ℕ) (instr : Option (Operation .EVM × Option (UInt256 × Nat)
     -- dbg_trace s!"step called with: {instr.pretty}"
     -- @Andrei: Of course not all can be shared, so based on `instr` this might not be `EvmYul.step`.
     match instr with
+      | .Push .PUSH0 =>
+        -- dbg_trace s!"PUSH0"
+        .ok <|
+          evmState.replaceStackAndIncrPC (evmState.stack.push 0)
       | .Push _ => do
         let some (arg, argWidth) := arg | .error EVM.Exception.InvalidStackSizeException
+        -- dbg_trace s!"PUSH{argWidth} {arg}"
         .ok <| evmState.replaceStackAndIncrPC (evmState.stack.push arg) (pcΔ := argWidth.succ)
       | .JUMP =>
         match evmState.stack.pop with
@@ -167,6 +172,7 @@ def step (fuel : ℕ) (instr : Option (Operation .EVM × Option (UInt256 × Nat)
               | _ => .error EVM.Exception.InvalidPC
           | _ => .error EVM.Exception.InvalidStackSizeException
       | .JUMPI =>
+        -- dbg_trace "JUMPI"
         match evmState.stack.pop2 with
           | some ⟨stack , μ₀, μ₁⟩ =>
             let newPc := if μ₁ = 0 then evmState.pc + 1 else μ₀
@@ -181,7 +187,9 @@ def step (fuel : ℕ) (instr : Option (Operation .EVM × Option (UInt256 × Nat)
       | .JUMPDEST => .ok evmState.incrPC
 
       | .DUP1 => dup 1 evmState
-      | .DUP2 => dup 2 evmState
+      | .DUP2 =>
+        -- dbg_trace "DUP2"
+        dup 2 evmState
       | .DUP3 => dup 3 evmState
       | .DUP4 => dup 4 evmState
       | .DUP5 => dup 5 evmState
@@ -197,7 +205,9 @@ def step (fuel : ℕ) (instr : Option (Operation .EVM × Option (UInt256 × Nat)
       | .DUP15 => dup 15 evmState
       | .DUP16 => dup 16 evmState
 
-      | .SWAP1 => swap 1 evmState
+      | .SWAP1 =>
+        -- dbg_trace "SWAP1"
+        swap 1 evmState
       | .SWAP2 => swap 2 evmState
       | .SWAP3 => swap 3 evmState
       | .SWAP4 => swap 4 evmState
@@ -326,6 +336,7 @@ def step (fuel : ℕ) (instr : Option (Operation .EVM × Option (UInt256 × Nat)
               (v' := μ₂)                              -- μₛ[2] in Θ(.., μₛ[2], ..)
               (d  := i)                               -- i in Θ(.., i, ..)
               (e  := evmState.executionEnv.depth + 1) -- Iₑ + 1 in Θ(.., Iₑ + 1, ..)
+              (H := evmState.executionEnv.header)
               (w  := evmState.executionEnv.perm)      -- I_W in Θ(.., I_W)
           -- TODO gas - CCALLGAS(σ, μ, A)
           else .ok (evmState.createdAccounts, evmState.toState.accountMap, μ₀, evmState.toState.substate, false, .some .empty) -- otherwise (σ, CCALLGAS(σ, μ, A), A, 0, ())
@@ -381,7 +392,7 @@ def X (fuel : ℕ) (evmState : State) : Except EVM.Exception (State × Option By
         δ w = none ∨
         evmState.stack.length < (δ w).getD 0 ∨
         (w = .JUMP ∧ notIn (evmState.stack.get? 0) (D_J I_b 0)) ∨
-        (w = .JUMPI ∧ (evmState.stack.get? 0 ≠ some 0) ∧ notIn (evmState.stack.get? 1) (D_J I_b 0)) ∨
+        (w = .JUMPI ∧ (evmState.stack.get? 1 ≠ some 0) ∧ notIn (evmState.stack.get? 0) (D_J I_b 0)) ∨
         (w = .RETURNDATACOPY ∧ evmState.stack.getD 1 0 + evmState.stack.getD 2 0 > evmState.returnData.size) ∨
         evmState.stack.length - (δ w).getD 0 - (α w).getD 0 > 1024 ∨
         ( (¬ evmState.executionEnv.perm) ∧ W w evmState.stack)
@@ -423,7 +434,8 @@ def Ξ
     :
   Except EVM.Exception (Batteries.RBSet Address compare × YPState × UInt256 × Substate × Option ByteArray)
 := do
-  -- dbg_trace "Ξ fuel: {fuel} σ: {repr σ} g: {g} A: {repr A} I: {repr I}"
+  -- dbg_trace s!"Ξ fuel: {fuel} σ: {repr σ} g: {g} A: {repr A} I: {repr I}"
+  -- dbg_trace s!"Ξ: code: {repr I.code}"
   match fuel with
     | 0 => .ok (createdAccounts, σ, g, A, some .empty) -- TODO - Gas model
     | .succ f =>
@@ -570,30 +582,37 @@ def Θ (fuel : Nat)
       (v' : UInt256)
       (d  : ByteArray)
       (e  : Nat)
+      (H : BlockHeader)
       (w  : Bool)
         :
       Except EVM.Exception (Batteries.RBSet Address compare × YPState × UInt256 × Substate × Bool × Option ByteArray)
 :=
-  -- dbg_trace "Θ"
+  -- dbg_trace s!"Θ receiver: {repr r}"
   match fuel with
     | 0 => .error .OutOfFuel
     | fuel + 1 => do
-  -- Equation (117)
-  let σ₁sender ←
-    if !σ.contains s && v == 0
-    then throw .SenderMustExist -- TODO - YP explains the semantics of undefined receiver; what about sender? Cf. between (115) and (116).
-    else σ.find? s |>.get!.subBalance v |>.elim (.error .Underflow) .ok -- Equation (118) TODO - What do we do on underflow?
 
-  -- Equation (120)
-  let σ₁receiver ←
-    if !σ.contains s && v != 0
-    then default else
-    if !σ.contains s && v == 0
-    then throw .ReceiverMustExistWithNonZeroValue else -- TODO - It seems that we must only initialise the account if v != 0. Otherwise the same question as with the non-existant sender.
-    σ.find? r |>.get!.addBalance v |>.elim (.error .Overflow) .ok -- Equation (121) TODO - What do we do on overflow? TODO - probably remove the panicking get! call
+  -- (124) (125) (126)
+  let σ'₁ :=
+    match σ.find? r with
+      | none =>
+        if v != 0 then
+          σ.insert r { (default : Account) with balance := v}
+        else
+          σ
+      | some acc =>
+        σ.insert r { acc with balance := acc.balance + v}
 
-  -- (117) and (120) is `let σ₁ ← σ.transferBalance s r v` with some account updates.
-  let σ₁ := σ.insert s σ₁sender |>.insert r σ₁receiver
+  -- (121) (122) (123)
+  let σ₁ ←
+    match σ'₁.find? s with
+      | none =>
+        if v == 0 then
+          pure σ'₁
+        else
+          .error .SenderMustExist
+      | some acc =>
+        pure <| σ'₁.insert s { acc with balance := acc.balance - v}
 
   let I : ExecutionEnv :=
     {
@@ -604,7 +623,7 @@ def Θ (fuel : Nat)
       inputData := d  -- Equation (130)
       code      := c  -- Note that we don't use an address, but the actual code. Equation (136)-ish.
       gasPrice  := p  -- Equation (129)
-      header    := default -- TODO - ?
+      header    := H
       depth     := e  -- Equation (133)
       perm      := w  -- Equation (134)
     }
@@ -815,7 +834,7 @@ def Υ (fuel : ℕ) (σ : YPState) (chainId H_f : ℕ) (H : BlockHeader) (T : Tr
         let g := T.base.gasLimit /- minus g₀ -/
         match σ₀.find? t with
           | .none => dbg_trace "σ₀.find failed; this should probably not be happening; test semantics will be off."; default
-          | .some v => let (_, σ_P, _,  A, z, _) ← Θ fuel createdAccounts σ₀ AStar S_T S_T t v.code g p T.base.value T.base.value T.base.data 0 true
+          | .some v => let (_, σ_P, _,  A, z, _) ← Θ fuel createdAccounts σ₀ AStar S_T S_T t v.code g p T.base.value T.base.value T.base.data 0 H true
                       --  dbg_trace "Θ gave back σ_P: {repr σ_P}"
                        pure (σ_P, A, z)
   let σStar := σ_P -- we don't model gas yet

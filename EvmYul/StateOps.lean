@@ -106,6 +106,7 @@ def coinBase (self : State) : Address :=
   self.executionEnv.header.beneficiary
 
 def timeStamp (self : State) : UInt256 :=
+  -- dbg_trace self.executionEnv.header.timestamp
   self.executionEnv.header.timestamp
 
 def number (self : State) : UInt256 :=
