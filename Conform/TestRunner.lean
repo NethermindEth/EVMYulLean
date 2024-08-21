@@ -205,37 +205,40 @@ def preImpliesPost (pre : Pre) (post : Post) (blocks : Blocks) : Except EVM.Exce
   catch | .ExpectedException _ => pure .none -- An expected exception was thrown, which means the test is ok.
         | e                    => throw e
 
-local instance : MonadLift (Except EVM.Exception) (Except Conform.Exception) := ⟨Except.mapError .EVMError⟩
+-- local instance : MonadLift (Except EVM.Exception) (Except Conform.Exception) := ⟨Except.mapError .EVMError⟩
 
-def processTest (entry : TestEntry) : Except Exception TestResult := do
-  -- From the tests eyeballed, there is a single block in 'blocks', so currently we assume this.
-  -- let transactions := entry.blocks[0]!.transactions
-
-  let result ← preImpliesPost entry.pre entry.postState entry.blocks
-
-  pure <| result.elim .mkSuccess λ errSt ↦
-    let (postSubActual, actualSubPost) := storageΔ (entry.postState.toEVMState.accountMap) errSt.accountMap
-    -- .mkFailed s!"post / actual: {repr postSubActual}\nactual / post: {repr actualSubPost}"
-    .mkFailed s!"ERROR"
+def processTest (entry : TestEntry) (verbose : Bool := false) : TestResult :=
+  let result := preImpliesPost entry.pre entry.postState entry.blocks
+  match result with
+    | .error err => .mkFailed s!"{repr err}"
+    | .ok result => errorF <$> result
+  
+  where discardError : EVM.State → String := λ _ ↦ "ERROR."
+        verboseError : EVM.State → String := λ s ↦
+          let (postSubActual, actualSubPost) := storageΔ (entry.postState.toEVMState.accountMap) s.accountMap
+          s!"post / actual: {repr postSubActual} ----- actual / post: {repr actualSubPost}"
+        errorF := if verbose then verboseError else discardError
 
 local instance : MonadLift (Except String) (Except Conform.Exception) := ⟨Except.mapError .CannotParse⟩
 
 def processTestsOfFile (file : System.FilePath)
                        (whitelist : Array String := #[])
                        (blacklist : Array String := #[]) :
-                       ExceptT Exception IO (Lean.RBMap String TestResult compare) := do
+                       ExceptT Exception IO (Batteries.RBMap String TestResult compare) := do
   let file ← Lean.Json.fromFile file
   let test ← Lean.FromJson.fromJson? (α := Test) file
   -- dbg_trace s!"tests before guard: {test.toTests.map Prod.fst}"
   let tests := guardBlacklist ∘ guardWhitelist <| test.toTests
   -- dbg_trace s!"tests after guard: {tests.map Prod.fst}"
-  tests.foldlM (init := ∅) λ acc (testname, test) ↦
-    try
-      processTest test >>= pure ∘ acc.insert testname
-      -- TODO currently the soft errors are the ones I am personally unsure about :)
-    catch | .EVMError e@(.ReceiverNotInAccounts _) => pure (acc.insert testname (.mkFailed s!"{repr e}"))
-          | e => throw e -- hard error, stop executing the tests; malformed input, logic error, etc.
-                         -- This should not happen but makes cause analysis easier if it does.
+  tests.foldlM (init := ∅) λ acc (testname, test) ↦ pure <| acc.insert testname (processTest test)
+    -- try
+    --   processTest test >>= pure ∘ 
+    --   -- TODO currently the soft errors are the ones I am personally unsure about :)
+    -- catch
+    --   | e => pure (acc.insert testname (.mkFailed s!"{repr e}"))
+    -- -- catch | .EVMError e@(.ReceiverNotInAccounts _) => pure (acc.insert testname (.mkFailed s!"{repr e}"))
+    -- --       | e => throw e -- hard error, stop executing the tests; malformed input, logic error, etc.
+    -- --                      -- This should not happen but makes cause analysis easier if it does.
   where
     guardWhitelist (tests : List (String × TestEntry)) :=
       if whitelist.isEmpty then tests else tests.filter (λ (name, _) ↦ name ∈ whitelist)

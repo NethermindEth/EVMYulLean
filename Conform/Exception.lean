@@ -12,7 +12,7 @@ namespace Conform
 -/
 inductive Exception :=
   | CannotParse (why : String)
-  | EVMError (exc : EVM.Exception)
+  -- | EVMError (exc : EVM.Exception)
   | InvalidTestStructure (why : String)
   deriving Repr
 end Conform

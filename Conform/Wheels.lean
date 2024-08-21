@@ -147,3 +147,7 @@ def computeToList! {α}
                    [LE α] [IsTrans α (· ≤ ·)] [IsAntisymm α (· ≤ ·)] [IsTotal α (· ≤ ·)]
                    [DecidableRel (α := α) (· ≤ ·)] (m : Multiset α) : List α :=
   m.sort (· ≤ ·)
+
+def Batteries.RBMap.partition {α β : Type} {cmp : α → α → Ordering}
+  (t : Batteries.RBMap α β cmp) (p : α → β → Bool) : Batteries.RBMap α β cmp × Batteries.RBMap α β cmp :=
+  (t.filter p, t.filter (λ k v ↦ not (p k v)))

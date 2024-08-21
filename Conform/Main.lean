@@ -18,38 +18,50 @@ CannotParse - Missing `postState` entirely.
 -/
 
 private def basicSuccess (name : System.FilePath)
-                         (result : Lean.RBMap String EvmYul.Conform.TestResult compare) : IO Bool := do
+                         (result : Batteries.RBMap String EvmYul.Conform.TestResult compare) : IO Bool := do
   if result.all (λ _ v ↦ v.isNone)
   then IO.println s!"SUCCESS! - {name}"; pure true
   else pure false
 
-def main (args : List String) : IO Unit := do
-  if args.length != 1 then IO.println "Usage: conform <path to 'EthereumTests'>"; return ()
+private def success (result : Batteries.RBMap String EvmYul.Conform.TestResult compare) : Array String × Array String :=
+  let (succeeded, failed) := result.partition (λ _ v ↦ v.isNone)
+  (succeeded.keys, failed.keys)
 
+def logFile : System.FilePath := "tests.txt"
+
+open EvmYul.Conform in
+def log (testFile : System.FilePath) (testName : String) (result : TestResult) : IO Unit :=
+  IO.FS.withFile logFile .append λ h ↦ h.putStrLn s!"{testFile.fileName.get!}[{testName}] - {repr result}"
+
+def main : IO Unit := do
   let testFiles ← Array.filter isTestFile <$> System.FilePath.walkDir ("EthereumTests" / "BlockchainTests")
 
   -- let testFiles := #[SimpleFile]
   -- let testFiles := #[BuggyFile]
   -- let testFiles := #[SpecificFile]
 
-  let mut numThrewAlongTheWay := 0
+  let mut discardedFiles := #[]
+
   let mut numFailedTest := 0
   let mut numSuccess := 0
 
+  if ←System.FilePath.pathExists logFile then IO.FS.removeFile logFile
+
   for testFile in testFiles do
-    dbg_trace s!"File under test: {testFile}"
+    -- dbg_trace s!"File under test: {testFile}"
     let res ← ExceptT.run <| EvmYul.Conform.processTestsOfFile testFile
     match res with
-      | .error err         => IO.println s!"Error: {repr err}"; numThrewAlongTheWay := numThrewAlongTheWay + 1
-      | .ok    testresults => if ← basicSuccess testFile testresults
-                              then numSuccess := numSuccess + 1
-                              else numFailedTest := numFailedTest + 1
+      | .error err         => discardedFiles := discardedFiles.push (testFile, err)
+      | .ok    testresults => for (test, result) in testresults do
+                                log testFile test result
+                                if result.isNone
+                                then numSuccess := numSuccess + 1
+                                else numFailedTest := numFailedTest + 1
 
-  let total := numThrewAlongTheWay + numFailedTest + numSuccess
+  let total := numFailedTest + numSuccess
   IO.println s!"Total tests: {total}"
-  IO.println s!"Threw along the way: {numThrewAlongTheWay}"
   IO.println s!"The post was NOT equal to the resulting state: {numFailedTest}"
   IO.println s!"Succeeded: {numSuccess}"
   IO.println s!"Success rate of: {(numSuccess.toFloat / total.toFloat) * 100.0}"
 
--- #eval main ["EthereumTests"]
+  IO.println s!"Files discarded along the way: {repr discardedFiles}"
