@@ -212,7 +212,7 @@ def processTest (entry : TestEntry) (verbose : Bool := false) : TestResult :=
   match result with
     | .error err => .mkFailed s!"{repr err}"
     | .ok result => errorF <$> result
-  
+
   where discardError : EVM.State → String := λ _ ↦ "ERROR."
         verboseError : EVM.State → String := λ s ↦
           let (postSubActual, actualSubPost) := storageΔ (entry.postState.toEVMState.accountMap) s.accountMap
@@ -232,7 +232,7 @@ def processTestsOfFile (file : System.FilePath)
   -- dbg_trace s!"tests after guard: {tests.map Prod.fst}"
   tests.foldlM (init := ∅) λ acc (testname, test) ↦ pure <| acc.insert testname (processTest test)
     -- try
-    --   processTest test >>= pure ∘ 
+    --   processTest test >>= pure ∘
     --   -- TODO currently the soft errors are the ones I am personally unsure about :)
     -- catch
     --   | e => pure (acc.insert testname (.mkFailed s!"{repr e}"))

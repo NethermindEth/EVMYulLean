@@ -30,4 +30,7 @@ structure ExecutionEnv :=
   perm      : Bool
   deriving DecidableEq, Inhabited, Repr
 
+protected def prevRandao (e : ExecutionEnv) : UInt256 :=
+  e.header.prevRandao
+
 end EvmYul

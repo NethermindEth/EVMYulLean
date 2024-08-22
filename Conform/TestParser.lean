@@ -111,6 +111,14 @@ instance : FromJson BlockHeader where
         nonce         := 0 -- [deprecated] 0.
         baseFeePerGas := ← json.getObjValAsD! _         "baseFeePerGas" <&> UInt256.toNat
         parentBeaconBlockRoot := ← json.getObjValAsD! ByteArray "parentBeaconBlockRoot"
+        /-
+          The tests do not provide `prevRandao` and we do not have a way to compute it.
+          We simply set it to look random.
+        -/
+        prevRandao    :=
+          UInt256.xor
+            (← json.getObjValAsD! UInt256 "parentHash")
+            (← json.getObjValAsD! UInt256 "stateRoot")
       }
     catch exct => dbg_trace s!"OOOOPSIE: {exct}\n json: {json}"
                   default
