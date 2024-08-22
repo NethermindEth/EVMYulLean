@@ -4,6 +4,7 @@ import EvmYul.Wheels
 import EvmYul.Operations
 import EvmYul.EVM.Semantics
 import EvmYul.Wheels
+import EvmYul.State.Withdrawal
 
 import Conform.Model
 import Conform.Wheels
@@ -119,6 +120,7 @@ instance : FromJson BlockHeader where
           UInt256.xor
             (← json.getObjValAsD! UInt256 "parentHash")
             (← json.getObjValAsD! UInt256 "stateRoot")
+        withdrawalsRoot := ← json.getObjValAsD! ByteArray "withdrawalsRoot"
       }
     catch exct => dbg_trace s!"OOOOPSIE: {exct}\n json: {json}"
                   default
@@ -128,6 +130,15 @@ instance : FromJson AccessListEntry where
     pure {
       address     := ← json.getObjValAs? Address         "address"
       storageKeys := ← json.getObjValAs? (Array UInt256) "storageKeys"
+    }
+
+instance : FromJson Withdrawal where
+  fromJson? json := do
+    pure {
+      index     := ← json.getObjValAs? UInt64         "index"
+      validatorIndex := ← json.getObjValAs? UInt64 "validatorIndex"
+      address := ← json.getObjValAs? Address "address"
+      amount := ← json.getObjValAs? UInt64 "amount"
     }
 
 /--
@@ -208,7 +219,7 @@ private def blockEntryOfJson (json : Json) : Except String BlockEntry := do
     rlp          := ← json.getObjValAsD! Json         "rlp"
     transactions := ← json.getObjValAsD! Transactions "transactions"
     uncleHeaders := ← json.getObjValAsD! Json         "uncleHeaders"
-    withdrawals  := ← json.getObjValAsD! Json         "withdrawals"
+    withdrawals  := ← json.getObjValAsD! Withdrawals  "withdrawals"
     blocknumber  := ← json.getObjValAsD  _            "blocknumber" "1" >>= tryParseBlocknumber
     exception    := exception
   }

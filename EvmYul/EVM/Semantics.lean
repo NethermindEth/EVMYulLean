@@ -2,7 +2,6 @@ import Mathlib.Data.BitVec
 import Mathlib.Data.Array.Defs
 import Mathlib.Data.Finmap
 import Mathlib.Data.List.Defs
-import EvmYul.EVM.Exception
 import EvmYul.Data.Stack
 
 import EvmYul.Maps.AccountMap

@@ -2,6 +2,7 @@ import EvmYul.EVM.State
 import EvmYul.EVM.Semantics
 
 import EvmYul.State.TransactionOps
+import EvmYul.State.Withdrawal
 
 import EvmYul.Maps.AccountMap
 
@@ -87,21 +88,32 @@ notation "TODO" => default
 private def almostBEqButNotQuiteEvmYulState (s₁ s₂ : EvmYul.State) : Except String Bool := do
   let s₁ := bashState s₁
   let s₂ := bashState s₂
-  -- dbg_trace "State 1"
-  -- dbg_trace repr s₁
-  -- dbg_trace "State 2"
-  -- dbg_trace repr s₂
-  if s₁ == s₂ then
-    -- dbg_trace "Got HERE! OK"
-    .ok true
-  else
-    -- dbg_trace "Got HERE! ERROR"
-    throw "state mismatch"
+  -- dbg_trace "expected:"
+  -- s₁.accountMap.forM (λ addr acc ↦ dbg_trace (repr addr ++ ": ", repr acc.balance); .ok ())
+  -- dbg_trace "got"
+  -- s₂.accountMap.forM (λ addr acc ↦ dbg_trace (repr addr ++ ": ", repr acc.balance); .ok ())
+  -- dbg_trace "\n"
+  -- dbg_trace "expected:"
+  -- dbg_trace repr s₁.accountMap
+  -- dbg_trace "got"
+  -- dbg_trace repr s₂.accountMap
+  if s₁ == s₂ then .ok true else throw "state mismatch"
+  -- if s₁.accountMap == s₂.accountMap then .ok true else throw "state mismatch: accountMap"
+  -- if s₁.remainingGas == s₂.remainingGas then .ok true else throw "state mismatch: remainingGas"
+  -- if s₁.substate == s₂.substate then .ok true else throw "state mismatch: substate"
+  -- if s₁.executionEnv == s₂.executionEnv then .ok true else throw "state mismatch: executionEnv"
+  -- if s₁.blocks == s₂.blocks then .ok true else throw "state mismatch: blocks"
+  -- if s₁.keccakMap == s₂.keccakMap then .ok true else throw "state mismatch: keccakMap"
+  -- if s₁.keccakRange == s₂.keccakRange then .ok true else throw "state mismatch: keccakRange"
+  -- if s₁.usedRange == s₂.usedRange then .ok true else throw "state mismatch: usedRange"
+  -- if s₁.hashCollision == s₂.hashCollision then .ok true else throw "state mismatch: hashCollision"
+  -- if s₁.createdAccounts == s₂.createdAccounts then .ok true else throw "state mismatch: createdAccounts"
   where bashState (s : EvmYul.State) : EvmYul.State :=
-    { s with accountMap := s.accountMap.map (λ (addr, acc) ↦ (addr, { acc with balance := TODO }))
-             executionEnv.perm := TODO
-             substate.accessedAccounts := TODO
-             substate.accessedStorageKeys := TODO }
+    { s with
+      accountMap := s.accountMap.map (λ (addr, acc) ↦ (addr, { acc with balance := TODO }))
+      executionEnv.perm := TODO
+      substate.accessedAccounts := TODO
+      substate.accessedStorageKeys := TODO }
 
 /--
 NB it is ever so slightly more convenient to be in `Except String Bool` here rather than `Option String`.
