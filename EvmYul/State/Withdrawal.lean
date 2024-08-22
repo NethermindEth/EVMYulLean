@@ -46,14 +46,14 @@ def blobComputeTrieRoot (ws : Array (String × String)) : String :=
         ++ (ws.map (λ (i, w) ↦ #[i, w])).join
   }
 
-def toBlobs (w : Withdrawal) : Option (String × String) := do
-  let rlpᵢ ← RLP (.𝔹 (BE w.index.val))
-  let rlp ← RLP w.to𝕋
+def toBlobs (w : ℕ × Withdrawal) : Option (String × String) := do
+  let rlpᵢ ← RLP (.𝔹 (BE w.1))
+  let rlp ← RLP w.2.to𝕋
   pure (EvmYul.toHex rlpᵢ, EvmYul.toHex rlp)
 
 -- EIP-4895
 def computeTrieRoot (ws : Array Withdrawal) : Except String ByteArray := do
-  match Array.mapM toBlobs ws with
+  match Array.mapM toBlobs ((Array.range ws.size).zip ws) with
     | none => .error "Could not encode withdrawal."
     | some ws => ByteArray.ofBlob (blobComputeTrieRoot ws)
 
@@ -141,5 +141,34 @@ private example :
     =
   (ByteArray.ofBlob
     "04cc2e3f94b587ff46b5f4c0787c589db306b7209f7f212f47022a12bc3e6e16"
+  ).toOption
+:= by native_decide
+
+private def w₀Index : Withdrawal :=
+  { address := 0xc94f5374fce5edbc8e2a8697c15331677e6ebf0b
+  , amount := 0x2710
+  , index := 0x00
+  , validatorIndex := 0x00
+  }
+
+private def w₁Index : Withdrawal :=
+  { address := 0xc94f5374fce5edbc8e2a8697c15331677e6ebf0b
+  , amount := 0x2710
+  , index := 0x01
+  , validatorIndex := 0x00
+  }
+
+private def w₂Index : Withdrawal :=
+  { address := 0xc94f5374fce5edbc8e2a8697c15331677e6ebf0b
+  , amount := 0x2710
+  , index := 0x02
+  , validatorIndex := 0x0
+  }
+
+private example :
+  (computeTrieRoot #[w₀Index, w₂Index, w₁Index, w₂Index]).toOption
+    =
+  (ByteArray.ofBlob
+    "a95b9a7b58a6b3cb4001eb0be67951c5517141cb0183a255b5cae027a7b10b36"
   ).toOption
 := by native_decide

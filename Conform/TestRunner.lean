@@ -192,15 +192,31 @@ def executeTransactions (blocks : Blocks) (s₀ : EVM.State) : Except EVM.Except
               accountMap := σ
               substate := substate
             }
-    block.transactions.foldlM (λ s trans ↦
-      try
-        executeTransaction trans s block.blockHeader
-      catch e =>
-        if !block.exception.isEmpty
-        then dbg_trace s!"Expected exception: {block.exception}; got exception: {repr e} - we need to reconcile these as we debug tests. Currently, we mark the test as 'passed' as I assume this is the right kind of exception, but it doesn't need to be the case necessarily."
-             throw <| EVM.Exception.ExpectedException block.exception
-        else throw e
-        ) s
+    let s ← block.transactions.foldlM
+      (λ s trans ↦
+        try
+          executeTransaction trans s block.blockHeader
+        catch e =>
+          if !block.exception.isEmpty then
+            dbg_trace s!"Expected exception: {block.exception}; got exception: {repr e} - we need to reconcile these as we debug tests. Currently, we mark the test as 'passed' as I assume this is the right kind of exception, but it doesn't need to be the case necessarily."
+            throw <| EVM.Exception.ExpectedException block.exception
+          else throw e
+      )
+      s
+    let σ ←
+      ( try
+         applyWithdrawals
+          s.accountMap
+          block.blockHeader.withdrawalsRoot
+          block.withdrawals
+        catch e =>
+          if !block.exception.isEmpty then
+            dbg_trace s!"Expected exception: {block.exception}; got exception: {repr e} - we need to reconcile these as we debug tests. Currently, we mark the test as 'passed' as I assume this is the right kind of exception, but it doesn't need to be the case necessarily."
+            throw <| EVM.Exception.ExpectedException block.exception
+          else throw e
+      )
+    pure <| { s with accountMap := σ }
+    -- pure s
 
 /--
 - `.none` on success
