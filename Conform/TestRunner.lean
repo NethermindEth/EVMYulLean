@@ -207,7 +207,21 @@ def preImpliesPost (pre : Pre) (post : Post) (blocks : Blocks) : Except EVM.Exce
 
 -- local instance : MonadLift (Except EVM.Exception) (Except Conform.Exception) := ⟨Except.mapError .EVMError⟩
 
-def processTest (entry : TestEntry) (verbose : Bool := false) : TestResult :=
+-- vvvvvvvvvvvvvv DO NOT DELETE PLEASE vvvvvvvvvvvvvvvvvv
+def DONOTDELETEMEFORNOW : AccountMap := Batteries.RBMap.ofList [(1, { dflt with storage := Batteries.RBMap.ofList [(44, 45), (46, 47)] compare }), (3, default)] compare
+  where dflt : Account := default
+
+instance (priority := high) : Repr AccountMap := ⟨λ m _ ↦
+  Id.run do
+    let mut result := ""
+    for (k, v) in m do
+      result := result ++ s!"\nAccount[...{ToString.toString k |>.takeRight 5}]\n"
+      result := result ++ s!"balance: {v.balance}\nstorage: \n"
+      for (sk, sv) in v.storage do
+        result := result ++ s!"{sk} → {sv}\n"
+    return result⟩
+
+def processTest (entry : TestEntry) (verbose : Bool := true) : TestResult :=
   let result := preImpliesPost entry.pre entry.postState entry.blocks
   match result with
     | .error err => .mkFailed s!"{repr err}"
@@ -215,8 +229,8 @@ def processTest (entry : TestEntry) (verbose : Bool := false) : TestResult :=
 
   where discardError : EVM.State → String := λ _ ↦ "ERROR."
         verboseError : EVM.State → String := λ s ↦
-          let (postSubActual, actualSubPost) := storageΔ (entry.postState.toEVMState.accountMap) s.accountMap
-          s!"post / actual: {repr postSubActual} ----- actual / post: {repr actualSubPost}"
+          let (postSubActual, actualSubPost) := storageΔ entry.postState.toEVMState.accountMap s.accountMap
+          s!"\npost / actual: {repr postSubActual} \nactual / post: {repr actualSubPost}"
         errorF := if verbose then verboseError else discardError
 
 local instance : MonadLift (Except String) (Except Conform.Exception) := ⟨Except.mapError .CannotParse⟩

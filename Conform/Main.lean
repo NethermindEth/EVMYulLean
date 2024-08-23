@@ -30,8 +30,12 @@ private def success (result : Batteries.RBMap String EvmYul.Conform.TestResult c
 def logFile : System.FilePath := "tests.txt"
 
 open EvmYul.Conform in
+instance : ToString TestResult where
+  toString tr := tr.elim "Success." id
+
+open EvmYul.Conform in
 def log (testFile : System.FilePath) (testName : String) (result : TestResult) : IO Unit :=
-  IO.FS.withFile logFile .append λ h ↦ h.putStrLn s!"{testFile.fileName.get!}[{testName}] - {repr result}"
+  IO.FS.withFile logFile .append λ h ↦ h.putStrLn s!"{testFile.fileName.get!}[{testName}] - {result}\n"
 
 def main : IO Unit := do
   let testFiles ← Array.filter isTestFile <$> System.FilePath.walkDir ("EthereumTests" / "BlockchainTests")
