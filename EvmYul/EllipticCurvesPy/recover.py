@@ -6,7 +6,7 @@
 import sys
 
 from elliptic_curve import secp256k1_recover
-from base_types import Bytes, Bytes32, U256, Uint
+from base_types import Bytes32, U256, Uint
 from hash import Hash32
 
 msg_hash : Hash32 = bytes.fromhex(sys.argv[1])

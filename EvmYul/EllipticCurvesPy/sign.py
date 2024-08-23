@@ -1,6 +1,6 @@
 from typing import Tuple
 from hash import Hash32
-from base_types import Bytes, Bytes32, U256, Uint
+from base_types import Bytes32, U256, Uint
 import sys
 import coincurve
 

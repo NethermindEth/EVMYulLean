@@ -2,7 +2,6 @@ import Mathlib.Data.BitVec
 import Mathlib.Data.Array.Defs
 import Mathlib.Data.Finmap
 import Mathlib.Data.List.Defs
-import EvmYul.EVM.Exception
 import EvmYul.Data.Stack
 
 import EvmYul.Maps.AccountMap
@@ -743,7 +742,7 @@ def checkTransactionGetSender (σ : YPState) (chainId H_f : ℕ) (T : Transactio
  where
   L_X (T : Transaction) : Except EVM.Exception 𝕋 := -- (317)
     let accessEntryRLP : Address × Array UInt256 → 𝕋
-      | ⟨a, s⟩ => .𝕃 [.𝔹 (BE a), .𝕃 (s.map (EvmYul.𝕋.𝔹 ∘ BE ∘ UInt256.toNat)).toList]
+      | ⟨a, s⟩ => .𝕃 [.𝔹 (Address.toByteArray a), .𝕃 (s.map (𝕋.𝔹 ∘ BE ∘ UInt256.toNat)).toList]
     let accessEntriesRLP (aEs : Array (Address × Array UInt256)) : 𝕋 :=
       .𝕃 (aEs.map accessEntryRLP |>.toList)
     match T with
@@ -754,7 +753,7 @@ def checkTransactionGetSender (σ : YPState) (chainId H_f : ℕ) (T : Transactio
             , BE t.gasPrice -- Tₚ
             , BE t.gasLimit -- T_g
             , -- If Tₜ is ∅ it becomes the RLP empty byte sequence and thus the member of 𝔹₀
-              t.recipient.option .empty BE -- Tₜ
+              t.recipient.option .empty Address.toByteArray -- Tₜ
             , BE t.value -- Tᵥ
             , t.data
             ]
@@ -765,7 +764,7 @@ def checkTransactionGetSender (σ : YPState) (chainId H_f : ℕ) (T : Transactio
               , BE t.gasPrice -- Tₚ
               , BE t.gasLimit -- T_g
               , -- If Tₜ is ∅ it becomes the RLP empty byte sequence and thus the member of 𝔹₀
-                t.recipient.option .empty BE -- Tₜ
+                t.recipient.option .empty Address.toByteArray -- Tₜ
               , BE t.value -- Tᵥ
               , t.data -- p
               , BE chainId
@@ -781,7 +780,7 @@ def checkTransactionGetSender (σ : YPState) (chainId H_f : ℕ) (T : Transactio
           , .𝔹 (BE t.gasPrice) -- Tₚ
           , .𝔹 (BE t.gasLimit) -- T_g
           , -- If Tₜ is ∅ it becomes the RLP empty byte sequence and thus the member of 𝔹₀
-            .𝔹 (t.recipient.option .empty BE) -- Tₜ
+            .𝔹 (t.recipient.option .empty Address.toByteArray) -- Tₜ
           , .𝔹 (BE t.value) -- T_v
           , .𝔹 t.data  -- p
           , accessEntriesRLP <| RBSet.toList t.accessList |>.toArray -- T_A
@@ -794,7 +793,7 @@ def checkTransactionGetSender (σ : YPState) (chainId H_f : ℕ) (T : Transactio
           , .𝔹 (BE t.maxFeePerGas) -- Tₘ
           , .𝔹 (BE t.gasLimit) -- T_g
           , -- If Tₜ is ∅ it becomes the RLP empty byte sequence and thus the member of 𝔹₀
-            .𝔹 (t.recipient.option .empty BE) -- Tₜ
+            .𝔹 (t.recipient.option .empty Address.toByteArray) -- Tₜ
           , .𝔹 (BE t.value) -- Tᵥ
           , .𝔹 t.data -- p
           , accessEntriesRLP <| RBSet.toList t.accessList |>.toArray -- T_A

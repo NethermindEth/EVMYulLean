@@ -4,6 +4,7 @@ import Lean.Data.Json
 -- import EvmYul.Maps
 import EvmYul.Operations
 import EvmYul.Wheels
+import EvmYul.State.Withdrawal
 
 import EvmYul.EVM.State
 
@@ -83,17 +84,19 @@ abbrev Post := AddrMap PostEntry
 
 abbrev Transactions := Array Transaction
 
+abbrev Withdrawals := Array Withdrawal
+
 /--
 TODO - Temporary.
 -/
-private local instance : Repr Json := ⟨λ s _ ↦ Json.pretty s⟩ 
+private local instance : Repr Json := ⟨λ s _ ↦ Json.pretty s⟩
 
 structure BlockEntry :=
   blockHeader  : BlockHeader
   rlp          : Json
   transactions : Transactions
   uncleHeaders : Json
-  withdrawals  : Json
+  withdrawals  : Withdrawals
   exception    : String -- TODO - I am guessing there is a closed set of these to turn into a sum.
   blocknumber  : Nat
   deriving Inhabited, Repr
@@ -119,7 +122,7 @@ structure TestEntry :=
   sealEngine         : Json := ""
   deriving Inhabited
 
-abbrev Test := Lean.RBMap String TestEntry compare 
+abbrev Test := Lean.RBMap String TestEntry compare
 
 structure AccessListEntry :=
   address     : Address

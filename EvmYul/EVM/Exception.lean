@@ -44,6 +44,7 @@ inductive Exception where
   | InvalidTransaction :
           InvalidTransactionException → Exception
   | ReceiverNotInAccounts (a : Address) : Exception
+  | InvalidWithdrawal (s : String) : Exception
   | BogusExceptionToBeReplaced (s : String) : Exception
   | ExpectedException (s : String)          : Exception
 
@@ -62,6 +63,7 @@ instance : Repr Exception where
                     | .OutOfFuel                         => "OutOfFuel"
                     | .InvalidTransaction e              => "InvalidTransaction: " ++ repr e
                     | .ReceiverNotInAccounts (a : Address) => s!"ReceiverNotInAccounts: {a}"
+                    | .InvalidWithdrawal s               => s!"InvalidWithdrawal: {s}"
                     | .BogusExceptionToBeReplaced s      => s!"BogusExceptionToBeReplaced: {s}"
                     | .ExpectedException s               => s!"Expected exception: {s}"
 

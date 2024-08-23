@@ -1,6 +1,8 @@
 import EvmYul.UInt256
-
 import Mathlib.Data.Finmap
+
+-- (195)
+def BE : ℕ → ByteArray := List.toByteArray ∘ EvmYul.toBytesBigEndian
 
 namespace EvmYul
 
@@ -21,9 +23,14 @@ instance : Inhabited Address := ⟨Fin.ofNat 0⟩
 
 namespace Address
 
-def ofNat {n : ℕ} : Address := Fin.ofNat n
+def ofNat (n : ℕ) : Address := Fin.ofNat n
 def ofUInt256 (v : UInt256) : Address := Fin.ofNat (v.val % Address.size)
 instance {n : Nat} : OfNat Address n := ⟨Fin.ofNat n⟩
+
+def toByteArray (a : Address) : ByteArray :=
+  let b := BE a
+  let l := b.size
+  .append ⟨⟨List.replicate (20 - l) 0⟩⟩ (BE a)
 
 end Address
 
@@ -116,6 +123,12 @@ def hexOfByte (byte : UInt8) : String :=
 
 def toHex (bytes : ByteArray) : String :=
   bytes.foldl (init := "") λ acc byte ↦ acc ++ hexOfByte byte
+
+/-- Add `0`s to make the hex representation valid for `ByteArray.ofBlob` -/
+def padLeft (n : ℕ) (s : String) :=
+  let l := s.length
+  if l < n then String.replicate (n - l) '0' ++ s else s
+
 /--
 TODO - Well this is ever so slightly unfortunate.
 It appears to be the case that some (all?) definitions that have C++ implementations
@@ -131,3 +144,169 @@ def ByteArray.extract' (a : ByteArray) (b e : Nat) : ByteArray :=
   if b < 2^64 && e < 2^64
   then a.extract b e -- NB only when `b` and `e` are sufficiently small
   else ⟨⟨a.toList.drop b |>.take (e - b)⟩⟩
+
+inductive 𝕋 :=
+  | 𝔹 : ByteArray → 𝕋
+  | 𝕃 : (List 𝕋) → 𝕋
+
+private def R_b (x : ByteArray) : Option ByteArray :=
+  if x.size = 1 ∧ x.get! 0 < 128 then some x
+  else
+    if x.size < 56 then some <| [⟨128 + x.size⟩].toByteArray ++ x
+    else
+      if x.size < 2^64 then
+        let be := BE x.size
+        some <| [⟨183 + be.size⟩].toByteArray ++ be ++ x
+      else none
+
+mutual
+
+private def s (l : List 𝕋) : Option ByteArray :=
+  match l with
+    | [] => some .empty
+    | t :: ts =>
+      match RLP t, s ts with
+        | none     , _         => none
+        | _        , none      => none
+        | some rlpₗ, some rlpᵣ => rlpₗ ++ rlpᵣ
+
+def R_l (l : List 𝕋) : Option ByteArray :=
+  match s l with
+    | none => none
+    | some s_x =>
+      if s_x.size < 56 then
+        some <| [⟨192 + s_x.size⟩].toByteArray ++ s_x
+      else
+        if s_x.size < 2^64 then
+          let be := BE s_x.size
+          some <| [⟨247 + be.size⟩].toByteArray ++ be ++ s_x
+        else none
+
+def RLP (t : 𝕋) : Option ByteArray :=
+  match t with
+    | .𝔹 ba => R_b ba
+    | .𝕃 l => R_l l
+
+end
+
+example :
+  (RLP (.𝔹 (EvmYul.toBytesBigEndian 123456789).toByteArray) |>.map toHex) == some "84075bcd15"
+:= by native_decide
+
+example :
+  RLP (.𝔹 .empty) == ByteArray.mk #[0x80]
+:= by  native_decide
+
+example :
+  RLP (.𝔹 (ByteArray.mk #[0x78])) == ByteArray.mk #[0x78]
+:= by  native_decide
+
+example :
+  RLP (.𝔹 (ByteArray.mk #[0x80])) == ByteArray.mk #[0x81, 0x80]
+:= by  native_decide
+
+example :
+  RLP (.𝔹 (ByteArray.mk #[0x83])) == ByteArray.mk #[0x81, 0x83]
+:= by  native_decide
+
+private def fiftyFiveBytes : List UInt8 := List.replicate 55 0x83
+example :
+  RLP (.𝔹 ⟨⟨fiftyFiveBytes⟩⟩) == some ⟨⟨0xB7 :: fiftyFiveBytes⟩⟩
+:= by  native_decide
+
+-- private def largeBytes : List UInt8 := List.replicate (2^20) 0x83
+-- example :
+--   RLP (.𝔹 ⟨⟨largeBytes⟩⟩) == some ⟨⟨0xBA :: 0x10 :: 0x00 :: 0x00 :: largeBytes⟩⟩
+-- := by  native_decide
+
+example :
+  RLP (.𝔹 (BE 0)) == ByteArray.mk #[0x80]
+:= by  native_decide
+
+example :
+  RLP (.𝔹 (BE 255)) == ByteArray.mk #[0x81, 0xff]
+:= by  native_decide
+
+example :
+  RLP (.𝕃 []) == ByteArray.mk #[0xC0]
+:= by native_decide
+
+private def hello : Array UInt8 := #[104, 101, 108, 108, 111]
+private def how : Array UInt8 := #[104, 111, 119]
+private def are : Array UInt8 := #[97, 114, 101]
+private def you : Array UInt8 := #[121, 111, 117]
+private def doing : Array UInt8 := #[100, 111, 105, 110, 103]
+
+example :
+  RLP (.𝕃 [.𝔹 (ByteArray.mk hello)]) ==
+    ByteArray.mk (#[0xC6, 0x85] ++ hello)
+:= by  native_decide
+
+example :
+  RLP (.𝕃 [.𝔹 (BE 255)]) == ByteArray.mk #[0xC2, 0x81, 0xff]
+:= by  native_decide
+
+example :
+  RLP (.𝕃 (List.replicate 5 (.𝔹 ⟨hello⟩) ++ List.replicate 5 (.𝔹 (BE 35))))
+    ==
+  ByteArray.mk
+    ( #[0xE3]
+      ++ #[0x85] ++ hello
+      ++ #[0x85] ++ hello
+      ++ #[0x85] ++ hello
+      ++ #[0x85] ++ hello
+      ++ #[0x85] ++ hello
+      ++ #[35, 35, 35, 35, 35]
+    )
+:= by native_decide
+
+example :
+  RLP (.𝕃 (List.replicate 10 (.𝔹 (BE 35)) ++ List.replicate 10 (.𝔹 ⟨hello⟩)))
+    ==
+  ByteArray.mk
+    ( #[0xF8] ++ #[70]
+      ++ #[35, 35, 35, 35, 35, 35, 35, 35, 35, 35]
+      ++ #[0x85] ++ hello
+      ++ #[0x85] ++ hello
+      ++ #[0x85] ++ hello
+      ++ #[0x85] ++ hello
+      ++ #[0x85] ++ hello
+      ++ #[0x85] ++ hello
+      ++ #[0x85] ++ hello
+      ++ #[0x85] ++ hello
+      ++ #[0x85] ++ hello
+      ++ #[0x85] ++ hello
+    )
+:= by native_decide
+
+private def nestedSequence : 𝕋 :=
+  .𝕃
+    [ .𝔹 ⟨hello⟩
+    , .𝔹 (BE 255)
+    , .𝕃 [.𝔹 ⟨how⟩, .𝕃 [.𝔹 ⟨are⟩, .𝔹 ⟨you⟩, .𝕃 [.𝔹 ⟨doing⟩]]]
+    ]
+
+example :
+  RLP nestedSequence
+    ==
+  ByteArray.mk
+    ( #[0xdd, 0x85]
+      ++ hello
+      ++ #[0x81,0xff,0xd4,0x83]
+      ++ how
+      ++ #[0xcf,0x83]
+      ++ are
+      ++ #[0x83]
+      ++ you
+      ++ #[0xc6, 0x85]
+      ++ doing
+      )
+:= by native_decide
+
+private def willFail₁ : 𝕋 := .𝔹 (BE 123)
+private def willFail₂ : 𝕋 :=
+  .𝕃
+    [ .𝔹 ⟨hello⟩
+    , .𝔹 (BE 255)
+    , .𝕃 [.𝔹 ⟨how⟩, .𝕃 [.𝔹 ⟨are⟩, .𝕃 [.𝔹 ⟨you⟩, .𝔹 (BE 123)]]]
+    ]
