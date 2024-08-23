@@ -6,6 +6,8 @@ import EvmYul.EVM.Exception
 
 namespace EvmYul
 
+namespace EVM
+
 /-
 Appendix G. Fee Schedule
 -/
@@ -131,16 +133,70 @@ def Cₘ(a : UInt256) : ℕ := Gmemory * a + ((a * a) / QuadraticCeofficient) --
   where QuadraticCeofficient : ℕ := 512
 
 /--
-H.1. Gas Cost - the remaining summand.
+TODO
 -/
-private def C' (σ : YPState) (μ : MachineState) (μ'ᵢ : UInt256)
-               (instr : Operation .EVM) (A : Substate) (I : ExecutionEnv) : UInt256 := sorry
-  where STOP : Operation .EVM × Option (UInt256 × ℕ) := (Operation.STOP, Option.none)
-        -- /--
-        -- (327)
+def Csstore (s : State) : UInt256 := 42
 
-        -- NB this should be `Option.get!`-able but I'd rather not hard crash for the time being and log the error.
-        -- -/
+/--
+TODO
+-/
+def Caccess (a : Address) (A : Substate) : UInt256 := 42
+
+/--
+TODO
+-/
+def Cselfdestruct (σ : AccountMap) (μ : MachineState) : UInt256 := 42
+
+/--
+TODO
+-/
+def Csload (μ : MachineState) (A : Substate) (I : ExecutionEnv) : UInt256 := 42
+
+/--
+TODO
+-/
+def Ccall (σ : AccountMap) (μ : MachineState) (A : Substate) : UInt256 := 42
+
+/--
+(65)
+-/
+def R (x : UInt256) : UInt256 := Ginitcodeword * (x / 32 : ℚ).ceil
+
+/--
+H.1. Gas Cost - the third summand.
+
+NB Stack accesses are assumed guarded here and we access with `!`.
+This is for keeping in sync with the way the YP is structures, at least for the time being.
+-/
+private def C' (s : State) (instr : Operation .EVM) : UInt256 :=
+  let { accountMap := σ, stack := μₛ, substate := A, toMachineState := μ, executionEnv := I, ..} := s
+  match instr with
+    | .SSTORE => Csstore s
+    | .EXP => let μ₁ := μₛ[1]!; if μ₁ == 0 then Gexp else Gexp + Gexpbyte * (1 + Nat.log 256 μ₁) -- TODO(check) I think this floors by itself. cf. H.1. YP.
+    | .EXTCODECOPY => Caccess (Address.ofUInt256 μₛ[0]!) A
+    | .LOG0 => Glog + Glogdata * μₛ[1]!
+    | .LOG1 => Glog + Glogdata * μₛ[1]! + Glogtopic
+    | .LOG2 => Glog + Glogdata * μₛ[1]! + 2 * Glogtopic
+    | .LOG3 => Glog + Glogdata * μₛ[1]! + 3 * Glogtopic
+    | .LOG4 => Glog + Glogdata * μₛ[1]! + 4 * Glogtopic
+    | .SELFDESTRUCT => Cselfdestruct σ μ
+    | .CREATE => Gcreate + R μₛ[2]!
+    | .CREATE2 => let μ₂ := μₛ[2]!; Gcreate + Gkeccak256word * (μ₂ / 32 : ℚ).ceil + R μ₂
+    | .KECCAK256 => Gkeccak256 + Gkeccak256word * (μₛ[1]! / 32 : ℚ).ceil
+    | .JUMPDEST => Gjumpdest
+    | .SLOAD => Csload μ A I
+    | .BLOCKHASH => Gblockhash
+    | w =>
+      if w ∈ Wcopy then Gverylow + Gcopy * (μₛ[2]! / 32 : ℚ).ceil else
+      if w ∈ Wextaccount then Caccess (Address.ofUInt256 μₛ[0]!) A else
+      if w ∈ Wcall then Ccall σ μ A else
+      if w ∈ Wzero then Gzero else
+      if w ∈ Wbase then Gbase else
+      if w ∈ Wverylow then Gverylow else
+      if w ∈ Wlow then Glow else
+      if w ∈ Wmid then Gmid else
+      if w ∈ Whigh then Ghigh else
+      dbg_trace s!"TODO - C called with an unknown instruction."; 42
 
 /--
 H.1. Gas Cost
@@ -148,22 +204,12 @@ H.1. Gas Cost
 NB this differs ever so slightly from how it is defined in the YP, please refer to
 `EVM/Semantics.lean`, function `X` for further discussion.
 -/
-def C (σ : YPState) (μ : MachineState) (μ'ᵢ : UInt256)
-      (instr : Operation .EVM) (A : Substate) (I : ExecutionEnv) : UInt256 :=
-  Cₘ μ'ᵢ - Cₘ μ.activeWords + C' σ μ μ'ᵢ instr A I
-  -- where STOP : Operation .EVM × Option (UInt256 × ℕ) := (Operation.STOP, Option.none)
-  --       /--
-  --       (327)
-
-  --       NB this should be `Option.get!`-able but I'd rather not hard crash for the time being and log the error.
-  --       -/
-  --       -- w := if pc < I.code.size
-  --       --      then match EVM.decode I.code pc with
-  --       --             | .none => dbg_trace s!"TODO - This should always succeed."; STOP
-  --       --             | .some instr => instr
-  --       --      else STOP
-  --       -- μ'i :=
+def C (s : EVM.State) (μ'ᵢ : UInt256) (instr : Operation .EVM) : UInt256 :=
+  let { toMachineState := μ, ..} := s
+  Cₘ μ'ᵢ - Cₘ μ.activeWords + C' s instr
 
 end Gas
+
+end EVM
 
 end EvmYul
