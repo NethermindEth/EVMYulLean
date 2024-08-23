@@ -3,6 +3,7 @@ import EvmYul.MachineState
 import EvmYul.State.Substate
 import EvmYul.State.ExecutionEnv
 import EvmYul.EVM.Exception
+import EvmYul.StateOps
 
 namespace EvmYul
 
@@ -153,9 +154,36 @@ TODO
 def Csload (μ : MachineState) (A : Substate) (I : ExecutionEnv) : UInt256 := 42
 
 /--
-TODO
+(331)
 -/
-def Ccall (σ : AccountMap) (μ : MachineState) (A : Substate) : UInt256 := 42
+def L (n : UInt256) := n - (n / 64 : ℚ).floor
+
+/--
+NB Assumes stack coherence.
+-/
+def Ccall (μₛ : Stack UInt256) (σ : AccountMap) (μ : MachineState) (A : Substate) : UInt256 :=
+  Cgascap σ μ μₛ A + Cextra σ μₛ A
+  where
+    /-
+    NB Slightly redundant as we could reference the `Ccall` parameters directly,
+       but this is a bit closer to the YP for now.
+    -/
+    t := Address.ofUInt256 μₛ[1]!
+
+    Cnew (σ : AccountMap) (μₛ : Stack UInt256) :=
+      if EvmYul.State.dead σ t && μₛ[2]! != 0 then Gnewaccount else 0
+
+    Cxfer (μₛ : Stack UInt256) :=
+      if μₛ[2]! != 0 then Gcallvalue else 0
+    
+    Cextra (σ : AccountMap) (μₛ : Stack UInt256) (A : Substate) :=
+      Caccess t A + Cxfer μₛ + Cnew σ μₛ
+    
+    Cgascap (σ : AccountMap) (μ : MachineState) (μₛ : Stack UInt256) (A : Substate) :=
+      if μ.gasAvailable >= Cextra σ μₛ A then min (L (μ.gasAvailable - Cextra σ μₛ A)) μₛ[0]! else μₛ[0]!
+    
+    Ccallgas (σ : AccountMap) (μₛ : Stack UInt256) (A : Substate) :=
+      if μₛ[2]! != 0 then Cgascap σ μ μₛ A + Gcallstipend else Cgascap σ μ μₛ A
 
 /--
 (65)
