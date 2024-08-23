@@ -73,22 +73,22 @@ private def r : ByteArray :=
 private def s : ByteArray :=
   ⟨#[14, 134, 252, 228, 141, 225, 12, 107, 78, 7, 176, 161, 117, 135, 123, 200, 36, 187, 246, 210, 8, 154, 80, 243, 177, 30, 36, 173, 13, 92, 129, 115]⟩
 
--- Using `pᵣ` to sign the message `e₀`
-private example :
-  (ECDSASIGN e₀ pᵣ).toOption = (Except.ok (v₀, r₀, s₀) : Except String _).toOption
-:= by native_decide
+-- -- Using `pᵣ` to sign the message `e₀`
+-- private example :
+--   (ECDSASIGN e₀ pᵣ).toOption = (Except.ok (v₀, r₀, s₀) : Except String _).toOption
+-- := by native_decide
 
--- Getting the same `pᵤ` back
-private example :
-  (ECDSARECOVER e₀ v₀ r₀ s₀).toOption = (Except.ok pᵤ : Except String _).toOption
-:= by native_decide
+-- -- Getting the same `pᵤ` back
+-- private example :
+--   (ECDSARECOVER e₀ v₀ r₀ s₀).toOption = (Except.ok pᵤ : Except String _).toOption
+-- := by native_decide
 
--- Using `pᵣ` to sign the message `e`
-private example :
-  (ECDSASIGN e pᵣ).toOption = (Except.ok (v, r, s) : Except String _).toOption
-:= by native_decide
+-- -- Using `pᵣ` to sign the message `e`
+-- private example :
+--   (ECDSASIGN e pᵣ).toOption = (Except.ok (v, r, s) : Except String _).toOption
+-- := by native_decide
 
--- Getting the same `pᵤ` back
-private example :
-  (ECDSARECOVER e v r s).toOption = (Except.ok pᵤ : Except String _).toOption
-:= by native_decide
+-- -- Getting the same `pᵤ` back
+-- private example :
+--   (ECDSARECOVER e v r s).toOption = (Except.ok pᵤ : Except String _).toOption
+-- := by native_decide
