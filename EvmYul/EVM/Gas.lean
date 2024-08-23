@@ -134,9 +134,23 @@ def Cₘ(a : UInt256) : ℕ := Gmemory * a + ((a * a) / QuadraticCeofficient) --
   where QuadraticCeofficient : ℕ := 512
 
 /--
-TODO
+NB we currently run in 'this' monad because of the way YP interleaves the definition of `C`
+with the definition of `C_<>` functions that are described inline along with their operations.
+
+It would be worth restructing everything to obtain cleaner separation of concerns.
 -/
-def Csstore (s : State) : UInt256 := 42
+def Csstore (s : State) : Except EVM.Exception UInt256 := do
+  let { stack := μₛ, accountMap := σ, executionEnv.codeOwner := Iₐ, .. } := s
+  let .some { storage := σ, ostorage := σ₀, .. } := σ.find? Iₐ | throw .SenderMustExist
+  let storeAddr := μₛ[0]!
+  let v₀ := σ₀.find! storeAddr
+  let v := σ.find! storeAddr
+  let v' := μₛ[1]!
+  let loadComponent := if s.substate.accessedStorageKeys.contains (Iₐ, storeAddr) then 0 else Gcoldsload
+  let storeComponent := if v = v' || v₀ ≠ v           then Gwarmaccess else
+                        if v ≠ v' && v₀ = v && v₀ = 0 then Gsset else
+                        /- v ≠ v' ∧ v₀ = v ∧ v₀ ≠ 0 -/     Gsreset
+  pure <| loadComponent + storeComponent
 
 /--
 TODO
@@ -151,7 +165,7 @@ def Cselfdestruct (σ : AccountMap) (μ : MachineState) : UInt256 := 42
 /--
 TODO
 -/
-def Csload (μ : MachineState) (A : Substate) (I : ExecutionEnv) : UInt256 := 42
+def Csload (μₛ : Stack UInt256) (A : Substate) (I : ExecutionEnv) : UInt256 := 42
 
 /--
 (331)
@@ -175,13 +189,13 @@ def Ccall (μₛ : Stack UInt256) (σ : AccountMap) (μ : MachineState) (A : Sub
 
     Cxfer (μₛ : Stack UInt256) :=
       if μₛ[2]! != 0 then Gcallvalue else 0
-    
+
     Cextra (σ : AccountMap) (μₛ : Stack UInt256) (A : Substate) :=
       Caccess t A + Cxfer μₛ + Cnew σ μₛ
-    
+
     Cgascap (σ : AccountMap) (μ : MachineState) (μₛ : Stack UInt256) (A : Substate) :=
       if μ.gasAvailable >= Cextra σ μₛ A then min (L (μ.gasAvailable - Cextra σ μₛ A)) μₛ[0]! else μₛ[0]!
-    
+
     Ccallgas (σ : AccountMap) (μₛ : Stack UInt256) (A : Substate) :=
       if μₛ[2]! != 0 then Cgascap σ μ μₛ A + Gcallstipend else Cgascap σ μ μₛ A
 
@@ -196,10 +210,10 @@ H.1. Gas Cost - the third summand.
 NB Stack accesses are assumed guarded here and we access with `!`.
 This is for keeping in sync with the way the YP is structures, at least for the time being.
 -/
-private def C' (s : State) (instr : Operation .EVM) : UInt256 :=
+private def C' (s : State) (instr : Operation .EVM) : Except EVM.Exception UInt256 :=
   let { accountMap := σ, stack := μₛ, substate := A, toMachineState := μ, executionEnv := I, ..} := s
-  match instr with
-    | .SSTORE => Csstore s
+  pure <| match instr with
+    | .SSTORE => 42 -- Csstore s
     | .EXP => let μ₁ := μₛ[1]!; if μ₁ == 0 then Gexp else Gexp + Gexpbyte * (1 + Nat.log 256 μ₁) -- TODO(check) I think this floors by itself. cf. H.1. YP.
     | .EXTCODECOPY => Caccess (Address.ofUInt256 μₛ[0]!) A
     | .LOG0 => Glog + Glogdata * μₛ[1]!
@@ -212,12 +226,12 @@ private def C' (s : State) (instr : Operation .EVM) : UInt256 :=
     | .CREATE2 => let μ₂ := μₛ[2]!; Gcreate + Gkeccak256word * (μ₂ / 32 : ℚ).ceil + R μ₂
     | .KECCAK256 => Gkeccak256 + Gkeccak256word * (μₛ[1]! / 32 : ℚ).ceil
     | .JUMPDEST => Gjumpdest
-    | .SLOAD => Csload μ A I
+    | .SLOAD => Csload μₛ A I
     | .BLOCKHASH => Gblockhash
     | w =>
       if w ∈ Wcopy then Gverylow + Gcopy * (μₛ[2]! / 32 : ℚ).ceil else
       if w ∈ Wextaccount then Caccess (Address.ofUInt256 μₛ[0]!) A else
-      if w ∈ Wcall then Ccall σ μ A else
+      if w ∈ Wcall then Ccall μₛ σ μ A else
       if w ∈ Wzero then Gzero else
       if w ∈ Wbase then Gbase else
       if w ∈ Wverylow then Gverylow else
@@ -232,9 +246,10 @@ H.1. Gas Cost
 NB this differs ever so slightly from how it is defined in the YP, please refer to
 `EVM/Semantics.lean`, function `X` for further discussion.
 -/
-def C (s : EVM.State) (μ'ᵢ : UInt256) (instr : Operation .EVM) : UInt256 :=
+def C (s : EVM.State) (μ'ᵢ : UInt256) (instr : Operation .EVM) : Except EVM.Exception UInt256 :=
   let { toMachineState := μ, ..} := s
-  Cₘ μ'ᵢ - Cₘ μ.activeWords + C' s instr
+  -- Cₘ μ'ᵢ - Cₘ μ.maxAddress + C' s instr
+  pure 42
 
 end Gas
 

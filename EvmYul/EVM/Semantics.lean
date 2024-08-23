@@ -682,7 +682,7 @@ def X (debugMode : Bool) (fuel : ℕ) (evmState : State) : Except EVM.Exception 
       else
         -- TODO - Probably an exceptional gas scenario, as we should have technically checked apriori.
         if w = .REVERT then
-          .ok ({evmState with accountMap := ∅}, some evmState.returnData)
+          .ok ({evmState with accountMap := ∅}, .some evmState.returnData)
         else
           -- NB we still need to check gas, because `Z` needs to call `C`, which needs `μ'ᵢ`.
           -- We first call `step` to obtain `μ'ᵢ`, which we then use to compute `C`.
@@ -805,6 +805,7 @@ def Lambda
     , codeHash := fromBytes' (KEC default).data.data
     , storage := default
     , tstorage := default
+    , ostorage := default
     }
 
   let σStar :=
@@ -1124,6 +1125,7 @@ def Υ (debugMode : Bool) (fuel : ℕ) (σ : YPState) (chainId H_f : ℕ) (H : B
     { senderAccount with
         balance := senderAccount.balance - T.base.gasLimit * p -- (74)
         nonce := senderAccount.nonce + 1 -- (75)
+        ostorage := senderAccount.storage -- Needed for `Csstore`.
     }
   let σ₀ := σ.insert S_T senderAccount -- the checkpoint state (73)
   let accessList := T.getAccessList
