@@ -129,8 +129,8 @@ open GasConstants InstructionGasGroups
 /--
 (328)
 -/
-def Cₘ(a : UInt256) : ℕ := Gmemory * a + ((a * a) / QuadraticCeofficient) -- TODO(check) - What is subject to `% 2^256` here?
-                                                                          --               Note that the YP takes an explicit floor, we have division in Nat.
+def Cₘ(a : UInt256) : UInt256 := Gmemory * a + ((a * a) / QuadraticCeofficient) -- TODO(check) - What is subject to `% 2^256` here?
+                                                                                --               Note that the YP takes an explicit floor, we have division in Nat.
   where QuadraticCeofficient : ℕ := 512
 
 /--
@@ -173,9 +173,12 @@ def Cselfdestruct (s : EVM.State) : UInt256 :=
   if Aₐ.contains r then 0 else Gcoldaccountaccess
 
 /--
-TODO
+NB Assumes stack coherency.
 -/
-def Csload (μₛ : Stack UInt256) (A : Substate) (I : ExecutionEnv) : UInt256 := 42
+def Csload (μₛ : Stack UInt256) (A : Substate) (I : ExecutionEnv) : UInt256 :=
+  if A.accessedStorageKeys.contains (I.codeOwner, μₛ[0]!)
+  then Gwarmaccess
+  else Gcoldsload
 
 /--
 (331)
@@ -238,17 +241,17 @@ private def C' (s : State) (instr : Operation .EVM) : Except EVM.Exception UInt2
     | .JUMPDEST => return Gjumpdest
     | .SLOAD => return Csload μₛ A I
     | .BLOCKHASH => return Gblockhash
-    | w =>
-      if w ∈ Wcopy then return Gverylow + Gcopy * (μₛ[2]! / 32 : ℚ).ceil else
-      if w ∈ Wextaccount then return Caccess (Address.ofUInt256 μₛ[0]!) A else
-      if w ∈ Wcall then return Ccall μₛ σ μ A else
-      if w ∈ Wzero then return Gzero else
-      if w ∈ Wbase then return Gbase else
-      if w ∈ Wverylow then return Gverylow else
-      if w ∈ Wlow then return Glow else
-      if w ∈ Wmid then return Gmid else
-      if w ∈ Whigh then return Ghigh else
-      dbg_trace s!"TODO - C called with an unknown instruction."; return 42
+    | w => pure <|
+      if w ∈ Wcopy then Gverylow + Gcopy * (μₛ[2]! / 32 : ℚ).ceil else
+      if w ∈ Wextaccount then Caccess (Address.ofUInt256 μₛ[0]!) A else
+      if w ∈ Wcall then Ccall μₛ σ μ A else
+      if w ∈ Wzero then Gzero else
+      if w ∈ Wbase then Gbase else
+      if w ∈ Wverylow then Gverylow else
+      if w ∈ Wlow then Glow else
+      if w ∈ Wmid then Gmid else
+      if w ∈ Whigh then Ghigh else
+      dbg_trace s!"TODO - C called with an unknown instruction."; 42
 
 /--
 H.1. Gas Cost
@@ -256,10 +259,9 @@ H.1. Gas Cost
 NB this differs ever so slightly from how it is defined in the YP, please refer to
 `EVM/Semantics.lean`, function `X` for further discussion.
 -/
-def C (s : EVM.State) (μ'ᵢ : UInt256) (instr : Operation .EVM) : Except EVM.Exception UInt256 :=
+def C (s : EVM.State) (μ'ᵢ : UInt256) (instr : Operation .EVM) : Except EVM.Exception UInt256 := do
   let { toMachineState := μ, ..} := s
-  -- Cₘ μ'ᵢ - Cₘ μ.maxAddress + C' s instr
-  pure 42
+  pure <| Cₘ μ'ᵢ - Cₘ μ.activeWords + (← C' s instr)
 
 end Gas
 
