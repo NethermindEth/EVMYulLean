@@ -700,12 +700,7 @@ def X (debugMode : Bool) (fuel : ℕ) (evmState : State) : Except EVM.Exception 
           -- that neither really was the YP.
           -- Similarly, we cannot reach a situation in which the stack elements are not available
           -- on the stack because this is guarded above. As such, `C` can be pure here.
-          let gasCost := C evmState.accountMap
-                           evmState.toMachineState
-                           evmState'.activeWords
-                           w
-                           evmState.substate
-                           evmState.executionEnv
+          let gasCost ← C evmState evmState'.activeWords w
           if evmState.gasAvailable < gasCost
           then -- Out of gas. This is a part of `Z`, as such, we have the same return value.
                .ok ({evmState with accountMap := ∅}, none)
