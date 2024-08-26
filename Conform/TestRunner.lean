@@ -71,6 +71,7 @@ def Pre.toEVMState (self : Pre) : EVM.State :=
         code     := acc.code
         codeHash := 0 -- TODO - We can of course compute this but we probably do not need this.
         storage  := acc.storage.toEvmYulStorage
+        ostorage := acc.storage.toEvmYulStorage -- Remember the original storage.
       }
     { s with toState := s.setAccount addr account }
 
