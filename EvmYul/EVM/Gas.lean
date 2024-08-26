@@ -153,14 +153,24 @@ def Csstore (s : State) : Except EVM.Exception UInt256 := do
   pure <| loadComponent + storeComponent
 
 /--
-TODO
+(328)
 -/
-def Caccess (a : Address) (A : Substate) : UInt256 := 42
+def Caccess (a : Address) (A : Substate) : UInt256 :=
+  if A.accessedAccounts.contains a
+  then Gwarmaccess
+  else Gcoldaccountaccess
 
 /--
-TODO
+CHECK -
+In YP we have `Cselfdestruct(σ, μ)`; if we were to compute `Aₐ` that we need, we would need an
+address in `σ` - is this address supposed to be obvious?
+CURRENT SOLUTION -
+We take `EVM.State`.
 -/
-def Cselfdestruct (σ : AccountMap) (μ : MachineState) : UInt256 := 42
+def Cselfdestruct (s : EVM.State) : UInt256 :=
+  let r := Address.ofUInt256 s.stack[0]!
+  let { substate.accessedAccounts := Aₐ, .. } := s
+  if Aₐ.contains r then 0 else Gcoldaccountaccess
 
 /--
 TODO
@@ -212,33 +222,33 @@ This is for keeping in sync with the way the YP is structures, at least for the 
 -/
 private def C' (s : State) (instr : Operation .EVM) : Except EVM.Exception UInt256 :=
   let { accountMap := σ, stack := μₛ, substate := A, toMachineState := μ, executionEnv := I, ..} := s
-  pure <| match instr with
-    | .SSTORE => 42 -- Csstore s
-    | .EXP => let μ₁ := μₛ[1]!; if μ₁ == 0 then Gexp else Gexp + Gexpbyte * (1 + Nat.log 256 μ₁) -- TODO(check) I think this floors by itself. cf. H.1. YP.
-    | .EXTCODECOPY => Caccess (Address.ofUInt256 μₛ[0]!) A
-    | .LOG0 => Glog + Glogdata * μₛ[1]!
-    | .LOG1 => Glog + Glogdata * μₛ[1]! + Glogtopic
-    | .LOG2 => Glog + Glogdata * μₛ[1]! + 2 * Glogtopic
-    | .LOG3 => Glog + Glogdata * μₛ[1]! + 3 * Glogtopic
-    | .LOG4 => Glog + Glogdata * μₛ[1]! + 4 * Glogtopic
-    | .SELFDESTRUCT => Cselfdestruct σ μ
-    | .CREATE => Gcreate + R μₛ[2]!
-    | .CREATE2 => let μ₂ := μₛ[2]!; Gcreate + Gkeccak256word * (μ₂ / 32 : ℚ).ceil + R μ₂
-    | .KECCAK256 => Gkeccak256 + Gkeccak256word * (μₛ[1]! / 32 : ℚ).ceil
-    | .JUMPDEST => Gjumpdest
-    | .SLOAD => Csload μₛ A I
-    | .BLOCKHASH => Gblockhash
+  match instr with
+    | .SSTORE => Csstore s
+    | .EXP => let μ₁ := μₛ[1]!; return if μ₁ == 0 then Gexp else Gexp + Gexpbyte * (1 + Nat.log 256 μ₁) -- TODO(check) I think this floors by itself. cf. H.1. YP.
+    | .EXTCODECOPY => return Caccess (Address.ofUInt256 μₛ[0]!) A
+    | .LOG0 => return Glog + Glogdata * μₛ[1]!
+    | .LOG1 => return Glog + Glogdata * μₛ[1]! + Glogtopic
+    | .LOG2 => return Glog + Glogdata * μₛ[1]! + 2 * Glogtopic
+    | .LOG3 => return Glog + Glogdata * μₛ[1]! + 3 * Glogtopic
+    | .LOG4 => return Glog + Glogdata * μₛ[1]! + 4 * Glogtopic
+    | .SELFDESTRUCT => return Cselfdestruct s
+    | .CREATE => return Gcreate + R μₛ[2]!
+    | .CREATE2 => let μ₂ := μₛ[2]!; return Gcreate + Gkeccak256word * (μ₂ / 32 : ℚ).ceil + R μ₂
+    | .KECCAK256 => return Gkeccak256 + Gkeccak256word * (μₛ[1]! / 32 : ℚ).ceil
+    | .JUMPDEST => return Gjumpdest
+    | .SLOAD => return Csload μₛ A I
+    | .BLOCKHASH => return Gblockhash
     | w =>
-      if w ∈ Wcopy then Gverylow + Gcopy * (μₛ[2]! / 32 : ℚ).ceil else
-      if w ∈ Wextaccount then Caccess (Address.ofUInt256 μₛ[0]!) A else
-      if w ∈ Wcall then Ccall μₛ σ μ A else
-      if w ∈ Wzero then Gzero else
-      if w ∈ Wbase then Gbase else
-      if w ∈ Wverylow then Gverylow else
-      if w ∈ Wlow then Glow else
-      if w ∈ Wmid then Gmid else
-      if w ∈ Whigh then Ghigh else
-      dbg_trace s!"TODO - C called with an unknown instruction."; 42
+      if w ∈ Wcopy then return Gverylow + Gcopy * (μₛ[2]! / 32 : ℚ).ceil else
+      if w ∈ Wextaccount then return Caccess (Address.ofUInt256 μₛ[0]!) A else
+      if w ∈ Wcall then return Ccall μₛ σ μ A else
+      if w ∈ Wzero then return Gzero else
+      if w ∈ Wbase then return Gbase else
+      if w ∈ Wverylow then return Gverylow else
+      if w ∈ Wlow then return Glow else
+      if w ∈ Wmid then return Gmid else
+      if w ∈ Whigh then return Ghigh else
+      dbg_trace s!"TODO - C called with an unknown instruction."; return 42
 
 /--
 H.1. Gas Cost
