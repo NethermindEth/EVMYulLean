@@ -153,7 +153,7 @@ def step (fuel : ℕ) (instr : Option (Operation .EVM × Option (UInt256 × Nat)
     -- @Andrei: Of course not all can be shared, so based on `instr` this might not be `EvmYul.step`.
     match instr with
       | .Push .PUSH0 =>
-        -- dbg_trace s!"PUSH0"
+        -- dbg_trace "PUSH0"
         .ok <|
           evmState.replaceStackAndIncrPC (evmState.stack.push 0)
       | .Push _ => do
@@ -161,25 +161,19 @@ def step (fuel : ℕ) (instr : Option (Operation .EVM × Option (UInt256 × Nat)
         -- dbg_trace s!"PUSH{argWidth} {arg}"
         .ok <| evmState.replaceStackAndIncrPC (evmState.stack.push arg) (pcΔ := argWidth.succ)
       | .JUMP =>
+        -- dbg_trace "JUMP"
         match evmState.stack.pop with
           | some ⟨stack , μ₀⟩ =>
             let newPc := μ₀
-            match fetchInstr evmState.toState.executionEnv newPc with
-              | .ok (.JUMPDEST, _) =>
-                let evmState' := {evmState with pc := newPc}
-                .ok <| evmState'.replaceStackAndIncrPC stack
-              | _ => .error EVM.Exception.InvalidPC
+            -- dbg_trace newPc
+            .ok <| {evmState with pc := newPc, stack := stack}
           | _ => .error EVM.Exception.InvalidStackSizeException
       | .JUMPI =>
         -- dbg_trace "JUMPI"
         match evmState.stack.pop2 with
           | some ⟨stack , μ₀, μ₁⟩ =>
-            let newPc := if μ₁ = 0 then evmState.pc + 1 else μ₀
-            match fetchInstr evmState.toState.executionEnv newPc with
-              | .ok (.JUMPDEST, _) =>
-                let evmState' := {evmState with pc := newPc}
-                .ok <| evmState'.replaceStackAndIncrPC stack
-              | _ => .error EVM.Exception.InvalidPC
+            let newPc := if μ₁ != 0 then μ₀ else evmState.pc + 1
+            .ok <| {evmState with pc := newPc, stack := stack}
           | _ => .error EVM.Exception.InvalidStackSizeException
       | .PC =>
         .ok <| evmState.replaceStackAndIncrPC (evmState.stack.push evmState.pc)
@@ -298,6 +292,7 @@ def step (fuel : ℕ) (instr : Option (Operation .EVM × Option (UInt256 × Nat)
           | _ =>
           .error .InvalidStackSizeException
       | .CALL => do
+        -- dbg_trace "CALL"
         -- Names are from the YP, these are:
         -- μ₀ - gas
         -- μ₁ - to
@@ -316,8 +311,7 @@ def step (fuel : ℕ) (instr : Option (Operation .EVM × Option (UInt256 × Nat)
             let t : Address := Address.ofUInt256 μ₁ -- t ≡ μs[1] mod 2^160
             -- dbg_trace s!"DBG REMOVE; Calling address: {t}"
             let A' := evmState.addAccessedAccount t |>.substate -- A' ≡ A except A'ₐ ≡ Aₐ ∪ {t}
-            -- TODO A minor... hack? Are we supposed to run into missing account here?
-            let .some tDirect := evmState.accountMap.find? t | throw (.ReceiverNotInAccounts t)
+            let .some tDirect := evmState.accountMap.find? t | default
             let tDirect := tDirect.code -- We use the code directly without an indirection a'la `codeMap[t]`.
             -- dbg_trace s!"looking up memory range: {evmState.toMachineState.lookupMemoryRange μ₃ μ₄}"
             let i := evmState.toMachineState.lookupMemoryRange μ₃ μ₄ -- m[μs[3] . . . (μs[3] + μs[4] − 1)]

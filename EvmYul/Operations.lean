@@ -744,14 +744,6 @@ end Operation
 
 open EvmYul.UInt256
 
-def addMod (a b c : UInt256) : UInt256 :=
-  if c = 0 then 0 else
-  Fin.mod (a + b) c
-
-def mulMod (a b c : UInt256) : UInt256 :=
-  if c = 0 then 0 else
-  Fin.mod (a * b) c
-
 def exp (a b : UInt256) : UInt256 :=
   a ^ b.val
 

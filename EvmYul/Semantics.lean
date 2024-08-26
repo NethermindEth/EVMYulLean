@@ -181,15 +181,21 @@ def step {τ : OperationType} (op : Operation τ) : Transformer τ :=
       -- dbg_trace "ADD"
       dispatchBinary τ UInt256.add
     | τ, .MUL => dispatchBinary τ UInt256.mul
-    | τ, .SUB => dispatchBinary τ UInt256.add
+    | τ, .SUB =>
+      -- dbg_trace "SUB"
+      dispatchBinary τ UInt256.sub
     | τ, .DIV => dispatchBinary τ UInt256.div
     | τ, .SDIV => dispatchBinary τ UInt256.sdiv
     | τ, .MOD =>
       -- dbg_trace "MOD"
       dispatchBinary τ UInt256.mod
-    | τ, .SMOD => dispatchBinary τ UInt256.smod
+    | τ, .SMOD =>
+      -- dbg_trace "SMOD"
+      dispatchBinary τ UInt256.smod
     | τ, .ADDMOD => dispatchTernary τ UInt256.addMod
-    | τ, .MULMOD => dispatchTernary τ UInt256.mulMod
+    | τ, .MULMOD =>
+      -- dbg_trace "MULMOD"
+      dispatchTernary τ UInt256.mulMod
     | τ, .EXP => dispatchBinary τ UInt256.exp
     | τ, .SIGNEXTEND => dispatchBinary τ UInt256.signextend
 
@@ -266,6 +272,7 @@ def step {τ : OperationType} (op : Operation τ) : Transformer τ :=
     | τ, .SELFBALANCE => dispatchStateOp τ EvmYul.State.selfbalance
 
     | .EVM, .POP =>
+      -- dbg_trace "POP"
       λ evmState ↦
       match evmState.stack.pop with
         | some ⟨ s , _ ⟩ => .ok <| evmState.replaceStackAndIncrPC s

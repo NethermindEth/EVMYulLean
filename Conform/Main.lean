@@ -11,7 +11,6 @@ def SpecificFile := "EthereumTests/BlockchainTests/GeneralStateTests/Pyspecs/can
 
 def TestsSubdir := "BlockchainTests"
 def isTestFile (file : System.FilePath) : Bool := file.extension.option false (· == "json")
-
 /--
 CannotParse - Missing `postState` entirely.
             - There's a single test that says :intMax or some such before giving an 0x value. What?
@@ -53,7 +52,12 @@ def main : IO Unit := do
 
   for testFile in testFiles do
     -- dbg_trace s!"File under test: {testFile}"
-    let res ← ExceptT.run <| EvmYul.Conform.processTestsOfFile testFile
+    let res ←
+      ExceptT.run <|
+        EvmYul.Conform.processTestsOfFile
+          -- (whitelist := #["twoOps_d0g0v0_Cancun"])
+          -- (whitelist := #["mulmod_d1g0v0_Cancun"])
+          testFile
     match res with
       | .error err         => discardedFiles := discardedFiles.push (testFile, err)
       | .ok    testresults => for (test, result) in testresults do

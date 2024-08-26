@@ -243,7 +243,7 @@ instance (priority := high) : Repr AccountMap := ⟨λ m _ ↦
   Id.run do
     let mut result := ""
     for (k, v) in m do
-      result := result ++ s!"\nAccount[...{ToString.toString k |>.takeRight 5}]\n"
+      result := result ++ s!"\nAccount[...{(EvmYul.toHex k.toByteArray) |>.takeRight 5}]\n"
       result := result ++ s!"balance: {v.balance}\nstorage: \n"
       for (sk, sv) in v.storage do
         result := result ++ s!"{sk} → {sv}\n"
