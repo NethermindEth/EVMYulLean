@@ -1,7 +1,9 @@
 import EvmYul.Maps.ByteMap
 import EvmYul.UInt256
-
+import Batteries.Data.HashMap
 namespace EvmYul
+
+open Batteries
 
 instance : DecidableEq ByteArray
   | a, b => match decEq a.data b.data with

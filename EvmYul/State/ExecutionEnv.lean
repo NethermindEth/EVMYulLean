@@ -7,7 +7,7 @@ namespace EvmYul
 /--
 The execution envorinment `I` `ExecutionEnv`. Section 9.3.
 - `codeOwner` `Iₐ`
-- `sender`    `I₀`
+- `sender`    `Iₒ`
 - `source`    `Iₛ`
 - `weiValue`  `Iᵥ`
 - `inputData` `I_d`

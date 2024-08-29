@@ -244,7 +244,7 @@ def serializeInstr : Operation .EVM → UInt8
     | .SELFBALANCE  => some 0
     | .BASEFEE => some 0
     | .POP => some 1
-    | .MLOAD => some 2
+    | .MLOAD => some 1
     | .MSTORE => some 2
     | .MSTORE8  => some 1
     | .SLOAD  => some 1

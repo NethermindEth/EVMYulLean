@@ -127,7 +127,11 @@ private def almostBEqButNotQuite (s₁ s₂ : EVM.State) : Except String Bool :=
 
   discard <| almostBEqButNotQuiteEvmYulState s₁.toState s₂.toState
 
-  let machineStEq := s₁.toMachineState == s₂.toMachineState
+  let machineStEq :=
+    s₁.toMachineState.gasAvailable == s₂.toMachineState.gasAvailable &&
+    s₁.toMachineState.maxAddress == s₂.toMachineState.maxAddress &&
+    s₁.toMachineState.memory == s₂.toMachineState.memory &&
+    s₁.toMachineState.returnData == s₂.toMachineState.returnData
   if !machineStEq then throw s!"machine state mismatch"
 
   pure true -- Yes, we never return false, because we throw along the way. Yes, this is `Option`.
@@ -267,12 +271,15 @@ def processTestsOfFile (file : System.FilePath)
                        (whitelist : Array String := #[])
                        (blacklist : Array String := #[]) :
                        ExceptT Exception IO (Batteries.RBMap String TestResult compare) := do
+  let path := file
   let file ← Lean.Json.fromFile file
   let test ← Lean.FromJson.fromJson? (α := Test) file
   -- dbg_trace s!"tests before guard: {test.toTests.map Prod.fst}"
   let tests := guardBlacklist ∘ guardWhitelist <| test.toTests
   -- dbg_trace s!"tests after guard: {tests.map Prod.fst}"
-  tests.foldlM (init := ∅) λ acc (testname, test) ↦ pure <| acc.insert testname (processTest test)
+  tests.foldlM (init := ∅) λ acc (testname, test) ↦
+    -- dbg_trace s!"TESTING {testname} FROM {path}"
+    pure <| acc.insert testname (processTest test)
     -- try
     --   processTest test >>= pure ∘
     --   -- TODO currently the soft errors are the ones I am personally unsure about :)

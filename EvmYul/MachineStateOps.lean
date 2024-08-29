@@ -47,7 +47,7 @@ def copyMemory (self : MachineState) (source : ByteArray) (s n : Nat) : MachineS
 -- /--
 -- TODO - Currently a debug version.
 
--- -- Failing at least `sha3_d0g0v0_Cancun` in 
+-- -- Failing at least `sha3_d0g0v0_Cancun` in
 -- -- `EthereumTests/BlockchainTests/GeneralStateTests/VMTests/vmTests/sha3.json`.
 -- -/
 -- def lookupMemory (self : MachineState) (addr : UInt256) : UInt256 :=
@@ -63,7 +63,7 @@ def copyMemory (self : MachineState) (source : ByteArray) (s n : Nat) : MachineS
 /--
 TODO - Currently a debug version.
 
--- Failing at least `sha3_d0g0v0_Cancun` in 
+-- Failing at least `sha3_d0g0v0_Cancun` in
 -- `EthereumTests/BlockchainTests/GeneralStateTests/VMTests/vmTests/sha3.json`.
 -/
 def lookupMemory (self : MachineState) (addr : UInt256) : UInt256 :=
@@ -97,7 +97,7 @@ def lookupMemoryRange (self : MachineState) (addr size : UInt256) : ByteArray :=
 -- termination_by k => k
 -- decreasing_by {
 --   simp_wf; simp [Fin.lt_def]
---   rw [Nat.mod_eq_of_lt] <;> omega 
+--   rw [Nat.mod_eq_of_lt] <;> omega
 -- }
 
 -- def lookupMemoryRange'' (self : MachineState) (addr size : UInt256) : ByteArray :=
@@ -122,6 +122,9 @@ def mstore8 (self : MachineState) (spos sval : UInt256) : MachineState :=
 def mcopy (self : MachineState) (mstart datastart s : UInt256) : MachineState :=
   let arr := self.lookupMemoryRange datastart.val s.val
   (·.1) <| arr.foldl (init := (self, mstart)) λ (sa , j) i ↦ (sa.updateMemory j i.val, j + 1)
+
+def gas (self : MachineState) : UInt256 :=
+  self.gasAvailable
 
 -- Apendix H, (320)
 def M (s f l : UInt256) : UInt256 :=
