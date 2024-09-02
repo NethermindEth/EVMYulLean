@@ -53,3 +53,8 @@ The test running infrastructure can be found in:
 ```
 Conform/
 ```
+
+To execute conformance tests, make sure the `EthereumTests` directory is the appropriate git submodule and run:
+```
+lake exec conform
+```
