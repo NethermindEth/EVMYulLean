@@ -141,7 +141,7 @@ end
 def executeTransaction (transaction : Transaction) (s : EVM.State) (header : BlockHeader) : Except EVM.Exception EVM.State := do
   let _TODOfuel := 2^13
 
-  let (ypState, substate, z) ← EVM.Υ _TODOfuel s.accountMap header.chainId header.baseFeePerGas header transaction -- (dbgOverrideSender := transaction.base.dbgSender)
+  let (ypState, substate, z) ← EVM.Υ (debugMode := false) _TODOfuel s.accountMap header.chainId header.baseFeePerGas header transaction -- (dbgOverrideSender := transaction.base.dbgSender)
 
   -- as EIP 4788 (https://eips.ethereum.org/EIPS/eip-4788).
 
@@ -174,6 +174,7 @@ def executeTransactions (blocks : Blocks) (s₀ : EVM.State) : Except EVM.Except
           -- the call does not count against the block’s gas limit
           let (createdAccounts, σ, _, substate, _ /- can't fail-/, _) ←
             EVM.Θ
+              (debugMode := false)
               _TODOfuel
               .empty
               s.accountMap

@@ -36,7 +36,7 @@ def multifill' (vars : List Identifier) : Yul.State × List Literal → Yul.Stat
 TODO: Temporary EvmYul artefact with separate primop implementations.
 -/
 abbrev primCall (s : Yul.State) (prim : Operation .Yul) (args : List Literal) :=
-  step prim s args |>.toOption.map (λ (s, lit) ↦ (s, lit.toList)) |>.getD default
+  step (debugMode := false) prim s args |>.toOption.map (λ (s, lit) ↦ (s, lit.toList)) |>.getD default
 
 mutual
   def evalTail (fuel : Nat) (args : List Expr) : Yul.State × Literal → Yul.State × List Literal

@@ -55,8 +55,10 @@ def main : IO Unit := do
     let res ←
       ExceptT.run <|
         EvmYul.Conform.processTestsOfFile
-          -- (whitelist := #["twoOps_d0g0v0_Cancun"])
-          -- (whitelist := #["mulmod_d1g0v0_Cancun"])
+          -- (whitelist := #["add_d0g0v0_Cancun"])
+          -- (whitelist := #["add_d1g0v0_Cancun"])
+          -- (whitelist := #["add_d3g0v0_Cancun"])
+          -- (whitelist := #["add_d4g0v0_Cancun"])
           testFile
     match res with
       | .error err         => discardedFiles := discardedFiles.push (testFile, err)
