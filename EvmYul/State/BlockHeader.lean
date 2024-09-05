@@ -3,8 +3,6 @@ import EvmYul.Wheels
 
 namespace EvmYul
 
-deriving instance Repr for ByteArray
-
 /--
 `BlockHeader`. `H_<x>`. Section 4.3.
 

@@ -46,19 +46,19 @@ private def dispatchUnary (τ : OperationType) : Primop.Unary → Transformer τ
     | .EVM => EVM.execUnOp
     | .Yul => Yul.execUnOp
 
-private def dispatchBinary (τ : OperationType) : Primop.Binary → Transformer τ :=
+private def dispatchBinary (debugMode : Bool) (τ : OperationType) : Primop.Binary → Transformer τ :=
   match τ with
-    | .EVM => EVM.execBinOp
+    | .EVM => EVM.execBinOp debugMode
     | .Yul => Yul.execBinOp
 
-private def dispatchTernary (τ : OperationType) : Primop.Ternary → Transformer τ :=
+private def dispatchTernary (debugMode : Bool) (τ : OperationType) : Primop.Ternary → Transformer τ :=
   match τ with
-    | .EVM => EVM.execTriOp
+    | .EVM => EVM.execTriOp debugMode
     | .Yul => Yul.execTriOp
 
-private def dispatchQuartiary (τ : OperationType) : Primop.Quaternary → Transformer τ :=
+private def dispatchQuartiary (debugMode : Bool) (τ : OperationType) : Primop.Quaternary → Transformer τ :=
   match τ with
-    | .EVM => EVM.execQuadOp
+    | .EVM => EVM.execQuadOp debugMode
     | .Yul => Yul.execQuadOp
 
 private def dispatchExecutionEnvOp (τ : OperationType) (op : ExecutionEnv → UInt256) : Transformer τ :=
@@ -71,57 +71,57 @@ private def dispatchMachineStateOp (τ : OperationType) (op : MachineState → U
     | .EVM => EVM.machineStateOp op
     | .Yul => Yul.machineStateOp op
 
-private def dispatchUnaryStateOp (τ : OperationType) (op : State → UInt256 → State × UInt256) : Transformer τ :=
+private def dispatchUnaryStateOp (debugMode : Bool) (τ : OperationType) (op : State → UInt256 → State × UInt256) : Transformer τ :=
   match τ with
-    | .EVM => EVM.unaryStateOp op
+    | .EVM => EVM.unaryStateOp debugMode op
     | .Yul => Yul.unaryStateOp op
 
 private def dispatchTernaryCopyOp
-  (τ : OperationType) (op : SharedState → UInt256 → UInt256 → UInt256 → SharedState) :
+  (debugMode : Bool) (τ : OperationType) (op : SharedState → UInt256 → UInt256 → UInt256 → SharedState) :
   Transformer τ
 :=
   match τ with
-    | .EVM => EVM.ternaryCopyOp op
+    | .EVM => EVM.ternaryCopyOp debugMode op
     | .Yul => Yul.ternaryCopyOp op
 
 private def dispatchQuaternaryCopyOp
-  (τ : OperationType) (op : SharedState → UInt256 → UInt256 → UInt256 → UInt256 → SharedState) :
+  (debugMode : Bool) (τ : OperationType) (op : SharedState → UInt256 → UInt256 → UInt256 → UInt256 → SharedState) :
   Transformer τ
 :=
   match τ with
-    | .EVM => EVM.quaternaryCopyOp op
+    | .EVM => EVM.quaternaryCopyOp (debugMode : Bool) op
     | .Yul => Yul.quaternaryCopyOp op
 
 private def dispatchBinaryMachineStateOp
-  (τ : OperationType) (op : MachineState → UInt256 → UInt256 → MachineState) :
+  (debugMode : Bool) (τ : OperationType) (op : MachineState → UInt256 → UInt256 → MachineState) :
   Transformer τ
 :=
   match τ with
-    | .EVM => EVM.binaryMachineStateOp op
+    | .EVM => EVM.binaryMachineStateOp debugMode op
     | .Yul => Yul.binaryMachineStateOp op
 
 private def dispatchTernaryMachineStateOp
-  (τ : OperationType) (op : MachineState → UInt256 → UInt256 → UInt256 → MachineState) :
+  (debugMode : Bool) (τ : OperationType) (op : MachineState → UInt256 → UInt256 → UInt256 → MachineState) :
   Transformer τ
 :=
   match τ with
-    | .EVM => EVM.ternaryMachineStateOp op
+    | .EVM => EVM.ternaryMachineStateOp debugMode op
     | .Yul => Yul.ternaryMachineStateOp op
 
 private def dispatchBinaryMachineStateOp'
-  (τ : OperationType) (op : MachineState → UInt256 → UInt256 → UInt256 × MachineState) :
+  (debugMode : Bool) (τ : OperationType) (op : MachineState → UInt256 → UInt256 → UInt256 × MachineState) :
   Transformer τ
 :=
   match τ with
-    | .EVM => EVM.binaryMachineStateOp' op
+    | .EVM => EVM.binaryMachineStateOp' debugMode op
     | .Yul => Yul.binaryMachineStateOp' op
 
 private def dispatchBinaryStateOp
-  (τ : OperationType) (op : State → UInt256 → UInt256 → State) :
+  (debugMode : Bool) (τ : OperationType) (op : State → UInt256 → UInt256 → State) :
   Transformer τ
 :=
   match τ with
-    | .EVM => EVM.binaryStateOp op
+    | .EVM => EVM.binaryStateOp debugMode op
     | .Yul => Yul.binaryStateOp op
 
 private def dispatchStateOp (τ : OperationType) (op : State → UInt256) : Transformer τ :=
@@ -129,29 +129,29 @@ private def dispatchStateOp (τ : OperationType) (op : State → UInt256) : Tran
     | .EVM => EVM.stateOp op
     | .Yul => Yul.stateOp op
 
-private def dispatchLog0 (τ : OperationType) : Transformer τ :=
+private def dispatchLog0 (debugMode : Bool) (τ : OperationType) : Transformer τ :=
   match τ with
-    | .EVM => EVM.log0Op
+    | .EVM => EVM.log0Op debugMode
     | .Yul => Yul.log0Op
 
-private def dispatchLog1 (τ : OperationType) : Transformer τ :=
+private def dispatchLog1 (debugMode : Bool) (τ : OperationType) : Transformer τ :=
   match τ with
-    | .EVM => EVM.log1Op
+    | .EVM => EVM.log1Op debugMode
     | .Yul => Yul.log1Op
 
-private def dispatchLog2 (τ : OperationType) : Transformer τ :=
+private def dispatchLog2 (debugMode : Bool) (τ : OperationType) : Transformer τ :=
   match τ with
-    | .EVM => EVM.log2Op
+    | .EVM => EVM.log2Op debugMode
     | .Yul => Yul.log2Op
 
-private def dispatchLog3 (τ : OperationType) : Transformer τ :=
+private def dispatchLog3 (debugMode : Bool) (τ : OperationType) : Transformer τ :=
   match τ with
-    | .EVM => EVM.log3Op
+    | .EVM => EVM.log3Op debugMode
     | .Yul => Yul.log3Op
 
-private def dispatchLog4 (τ : OperationType) : Transformer τ :=
+private def dispatchLog4 (debugMode : Bool) (τ : OperationType) : Transformer τ :=
   match τ with
-    | .EVM => EVM.log4Op
+    | .EVM => EVM.log4Op debugMode
     | .Yul => Yul.log4Op
 
 private def L (n : ℕ) := n - n / 64
@@ -168,72 +168,102 @@ def longInput := "Lean 4 is a reimplementation of the Lean theorem prover in Lea
 -- := by native_decide
 
 -- TODO: Yul halting for `SELFDESTRUCT`, `RETURN`, `REVERT`, `STOP`
-def step {τ : OperationType} (op : Operation τ) : Transformer τ :=
+def step {τ : OperationType} (debugMode : Bool) (op : Operation τ) : Transformer τ := Id.run do
+  let log : Id Unit :=
+    match τ with
+      | .EVM => dbg_trace op.pretty; pure ()
+      | .Yul => pure ()
+  if debugMode then log
   match τ, op with
     -- TODO: Revisit STOP, this is likely not the best way to do it and the Yul version is WIP.
     | τ, .STOP =>
-      -- dbg_trace "STOP"
       match τ with
         | .EVM => λ evmState ↦ .ok <| {evmState with toMachineState := evmState.toMachineState.setReturnData .empty}
         | .Yul => λ yulState _ ↦ .ok (yulState, none)
     | τ, .ADD =>
-
-      -- dbg_trace "ADD"
-      dispatchBinary τ UInt256.add
-    | τ, .MUL => dispatchBinary τ UInt256.mul
-    | τ, .SUB => dispatchBinary τ UInt256.add
-    | τ, .DIV => dispatchBinary τ UInt256.div
-    | τ, .SDIV => dispatchBinary τ UInt256.sdiv
+      dispatchBinary debugMode τ UInt256.add
+    | τ, .MUL =>
+      dispatchBinary debugMode τ UInt256.mul
+    | τ, .SUB =>
+      dispatchBinary debugMode τ UInt256.sub
+    | τ, .DIV =>
+      dispatchBinary debugMode τ UInt256.div
+    | τ, .SDIV =>
+      dispatchBinary debugMode τ UInt256.sdiv
     | τ, .MOD =>
-      -- dbg_trace "MOD"
-      dispatchBinary τ UInt256.mod
-    | τ, .SMOD => dispatchBinary τ UInt256.smod
-    | τ, .ADDMOD => dispatchTernary τ UInt256.addMod
-    | τ, .MULMOD => dispatchTernary τ UInt256.mulMod
-    | τ, .EXP => dispatchBinary τ UInt256.exp
-    | τ, .SIGNEXTEND => dispatchBinary τ UInt256.signextend
-
-    | τ, .LT => dispatchBinary τ UInt256.lt
-    | τ, .GT => dispatchBinary τ UInt256.gt
-    | τ, .SLT => dispatchBinary τ UInt256.slt
-    | τ, .SGT => dispatchBinary τ UInt256.sgt
+      dispatchBinary debugMode τ UInt256.mod
+    | τ, .SMOD =>
+      dispatchBinary debugMode τ UInt256.smod
+    | τ, .ADDMOD =>
+      dispatchTernary debugMode τ UInt256.addMod
+    | τ, .MULMOD =>
+      dispatchTernary debugMode τ UInt256.mulMod
+    | τ, .EXP =>
+      dispatchBinary debugMode τ UInt256.exp
+    | τ, .SIGNEXTEND =>
+      dispatchBinary debugMode τ UInt256.signextend
+    | τ, .LT =>
+      dispatchBinary debugMode τ UInt256.lt
+    | τ, .GT =>
+      dispatchBinary debugMode τ UInt256.gt
+    | τ, .SLT =>
+      dispatchBinary debugMode τ UInt256.slt
+    | τ, .SGT =>
+      dispatchBinary debugMode τ UInt256.sgt
     | τ, .EQ =>
-      -- dbg_trace "EQ"
-      dispatchBinary τ UInt256.eq
-    | τ, .ISZERO => dispatchUnary τ UInt256.isZero
-    | τ, .AND => dispatchBinary τ UInt256.land
-    | τ, .OR => dispatchBinary τ UInt256.lor
-    | τ, .XOR => dispatchBinary τ UInt256.xor
-    | τ, .NOT => dispatchUnary τ UInt256.lnot
-    | τ, .BYTE => dispatchBinary τ UInt256.byteAt
-    | τ, .SHL => dispatchBinary τ UInt256.shiftLeft
-    | τ, .SHR => dispatchBinary τ UInt256.shiftRight
-    | τ, .SAR => dispatchBinary τ UInt256.sar
+      dispatchBinary debugMode τ UInt256.eq
+    | τ, .ISZERO =>
+      dispatchUnary τ UInt256.isZero
+    | τ, .AND =>
+      dispatchBinary debugMode τ UInt256.land
+    | τ, .OR =>
+      dispatchBinary debugMode τ UInt256.lor
+    | τ, .XOR =>
+      dispatchBinary debugMode τ UInt256.xor
+    | τ, .NOT =>
+      dispatchUnary τ UInt256.lnot
+    | τ, .BYTE =>
+      dispatchBinary debugMode τ UInt256.byteAt
+    | τ, .SHL =>
+      dispatchBinary debugMode τ UInt256.shiftLeft
+    | τ, .SHR =>
+      dispatchBinary debugMode τ UInt256.shiftRight
+    | τ, .SAR =>
+      dispatchBinary debugMode τ UInt256.sar
 
-    | τ, .KECCAK256 => dispatchBinaryMachineStateOp' τ MachineState.keccak256
+    | τ, .KECCAK256 =>
+      dispatchBinaryMachineStateOp' debugMode τ MachineState.keccak256
 
-    | τ, .ADDRESS => dispatchExecutionEnvOp τ (Fin.ofNat ∘ Fin.val ∘ ExecutionEnv.codeOwner)
-    | τ, .BALANCE => dispatchUnaryStateOp τ EvmYul.State.balance
-    | τ, .ORIGIN => dispatchExecutionEnvOp τ (Fin.ofNat ∘ Fin.val ∘ ExecutionEnv.sender)
+    | τ, .ADDRESS =>
+      dispatchExecutionEnvOp τ (Fin.ofNat ∘ Fin.val ∘ ExecutionEnv.codeOwner)
+    | τ, .BALANCE =>
+      dispatchUnaryStateOp debugMode τ EvmYul.State.balance
+    | τ, .ORIGIN =>
+      dispatchExecutionEnvOp τ (Fin.ofNat ∘ Fin.val ∘ ExecutionEnv.sender)
     | τ, .CALLER =>
-      -- dbg_trace "CALLER"
       dispatchExecutionEnvOp τ (Fin.ofNat ∘ Fin.val ∘ ExecutionEnv.source)
-    | τ, .CALLVALUE => dispatchExecutionEnvOp τ (Fin.ofNat ∘ Fin.val ∘ ExecutionEnv.weiValue)
+    | τ, .CALLVALUE =>
+      dispatchExecutionEnvOp τ (Fin.ofNat ∘ Fin.val ∘ ExecutionEnv.weiValue)
     | τ, .CALLDATALOAD =>
-      -- dbg_trace "CALLDATALOAD"
-      dispatchUnaryStateOp τ (λ s v ↦ (s, EvmYul.State.calldataload s v))
+      dispatchUnaryStateOp debugMode τ (λ s v ↦ (s, EvmYul.State.calldataload s v))
     | τ, .CALLDATASIZE =>
-      -- dbg_trace "CALLDATASIZE"
       dispatchExecutionEnvOp τ (.size ∘ ExecutionEnv.inputData)
-    | τ, .CALLDATACOPY => dispatchTernaryCopyOp τ .calldatacopy
-    | τ, .CODESIZE => dispatchExecutionEnvOp τ (.size ∘ ExecutionEnv.code)
-    | τ, .CODECOPY => dispatchTernaryCopyOp τ .codeCopy
-    | τ, .GASPRICE => dispatchExecutionEnvOp τ (.ofNat ∘ ExecutionEnv.gasPrice)
-    | τ, .EXTCODESIZE => dispatchUnaryStateOp τ EvmYul.State.extCodeSize
-    | τ, .EXTCODECOPY => dispatchQuaternaryCopyOp τ EvmYul.SharedState.extCodeCopy'
-    | τ, .RETURNDATASIZE => dispatchMachineStateOp τ EvmYul.MachineState.returndatasize
+    | τ, .CALLDATACOPY =>
+      dispatchTernaryCopyOp debugMode τ .calldatacopy
+    | τ, .CODESIZE =>
+      dispatchExecutionEnvOp τ (.size ∘ ExecutionEnv.code)
+    | τ, .CODECOPY =>
+      dispatchTernaryCopyOp debugMode τ .codeCopy
+    | τ, .GASPRICE =>
+      dispatchExecutionEnvOp τ (.ofNat ∘ ExecutionEnv.gasPrice)
+    | τ, .EXTCODESIZE =>
+      dispatchUnaryStateOp debugMode τ EvmYul.State.extCodeSize
+    | τ, .EXTCODECOPY =>
+      dispatchQuaternaryCopyOp debugMode τ EvmYul.SharedState.extCodeCopy'
+    | τ, .RETURNDATASIZE =>
+      dispatchMachineStateOp τ EvmYul.MachineState.returndatasize
     | .EVM, .RETURNDATACOPY =>
-      λ evmState ↦
+            λ evmState ↦
         match evmState.stack.pop3 with
           | some ⟨stack', μ₀, μ₁, μ₂⟩ => do
             let .some mState' := evmState.toMachineState.returndatacopy μ₀ μ₁ μ₂
@@ -249,12 +279,11 @@ def step {τ : OperationType} (op : Operation τ) : Transformer τ :=
               | .error .InvalidArguments
             .ok <| (yulState.setMachineState mState', .none)
           | _ => .error .InvalidArguments
-    | τ, .EXTCODEHASH => dispatchUnaryStateOp τ (λ s v ↦ (s, EvmYul.State.extCodeHash s v))
+    | τ, .EXTCODEHASH => dispatchUnaryStateOp debugMode τ (λ s v ↦ (s, EvmYul.State.extCodeHash s v))
 
-    | τ, .BLOCKHASH => dispatchUnaryStateOp τ (λ s v ↦ (s, EvmYul.State.blockHash s v))
+    | τ, .BLOCKHASH => dispatchUnaryStateOp debugMode τ (λ s v ↦ (s, EvmYul.State.blockHash s v))
     | τ, .COINBASE => dispatchStateOp τ (Fin.ofNat ∘ Fin.val ∘ EvmYul.State.coinBase)
     | τ, .TIMESTAMP =>
-      -- dbg_trace "TIMESTAMP"
       dispatchStateOp τ EvmYul.State.timeStamp
     | τ, .NUMBER => dispatchStateOp τ EvmYul.State.number
     -- "RANDAO is a pseudorandom value generated by validators on the Ethereum consensus layer"
@@ -273,7 +302,9 @@ def step {τ : OperationType} (op : Operation τ) : Transformer τ :=
 
     | .EVM, .MLOAD => λ evmState ↦
       match evmState.stack.pop with
-        | some ⟨ s , μ₀ ⟩ =>
+        | some ⟨ s , μ₀ ⟩ => Id.run do
+          if debugMode then
+            dbg_trace s!"called with μ₀: {μ₀}"
           let (v, mState') := evmState.toMachineState.mload μ₀
           let evmState' := {evmState with toMachineState := mState'}
           .ok <| evmState'.replaceStackAndIncrPC (s.push v)
@@ -286,25 +317,24 @@ def step {τ : OperationType} (op : Operation τ) : Transformer τ :=
             .ok <| (yulState', some v)
           | _ => .error .InvalidArguments
     | τ, .MSTORE =>
-      -- dbg_trace "MSTORE"
-      dispatchBinaryMachineStateOp τ MachineState.mstore
-    | τ, .MSTORE8 => dispatchBinaryMachineStateOp τ MachineState.mstore8
+      dispatchBinaryMachineStateOp debugMode τ MachineState.mstore
+    | τ, .MSTORE8 => dispatchBinaryMachineStateOp debugMode τ MachineState.mstore8
     | τ, .SLOAD =>
-      -- dbg_trace "SLOAD"
-      dispatchUnaryStateOp τ EvmYul.State.sload
+      dispatchUnaryStateOp debugMode τ EvmYul.State.sload
     | τ, .SSTORE =>
-      -- dbg_trace s!"SSTORE"
-      dispatchBinaryStateOp τ EvmYul.State.sstore
-    | τ, .TLOAD => dispatchUnaryStateOp τ EvmYul.State.tload
-    | τ, .TSTORE => dispatchBinaryStateOp τ EvmYul.State.tstore
+      dispatchBinaryStateOp debugMode τ EvmYul.State.sstore
+    | τ, .TLOAD => dispatchUnaryStateOp debugMode τ EvmYul.State.tload
+    | τ, .TSTORE => dispatchBinaryStateOp debugMode τ EvmYul.State.tstore
     | τ, .MSIZE => dispatchMachineStateOp τ MachineState.msize
-    | τ, .MCOPY => dispatchTernaryMachineStateOp τ MachineState.mcopy
+    | τ, .GAS =>
+      dispatchMachineStateOp τ MachineState.gas
+    | τ, .MCOPY => dispatchTernaryMachineStateOp debugMode τ MachineState.mcopy
 
-    | τ, .LOG0 => dispatchLog0 τ
-    | τ, .LOG1 => dispatchLog1 τ
-    | τ, .LOG2 => dispatchLog2 τ
-    | τ, .LOG3 => dispatchLog3 τ
-    | τ, .LOG4 => dispatchLog4 τ
+    | τ, .LOG0 => dispatchLog0 debugMode τ
+    | τ, .LOG1 => dispatchLog1 debugMode τ
+    | τ, .LOG2 => dispatchLog2 debugMode τ
+    | τ, .LOG3 => dispatchLog3 debugMode τ
+    | τ, .LOG4 => dispatchLog4 debugMode τ
 
     | .Yul, .CREATE => λ yulState lits ↦
         match lits with
@@ -345,10 +375,9 @@ def step {τ : OperationType} (op : Operation τ) : Transformer τ :=
 
                     .ok <| (yulState', some addr)
           | _ => .error .InvalidArguments
-    | τ, .RETURN => dispatchBinaryMachineStateOp τ MachineState.evmReturn
-    | τ, .REVERT => dispatchBinaryMachineStateOp τ MachineState.evmRevert
+    | τ, .RETURN => dispatchBinaryMachineStateOp debugMode τ MachineState.evmReturn
+    | τ, .REVERT => dispatchBinaryMachineStateOp debugMode τ MachineState.evmRevert
     | .EVM, .SELFDESTRUCT =>
-      -- dbg_trace "RETURN"
       λ evmState ↦
         match evmState.stack.pop with
           | some ⟨ s , μ₁ ⟩ =>

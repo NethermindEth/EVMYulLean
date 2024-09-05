@@ -53,7 +53,7 @@ def add (a b : UInt256) : UInt256 := a.1 + b.1
 def sub (a b : UInt256) : UInt256 := a.1 - b.1
 def mul (a b : UInt256) : UInt256 := a.1 * b.1
 def div (a b : UInt256) : UInt256 := a.1 / b.1
-def mod (a b : UInt256) : UInt256 := a.1 % b.1
+def mod (a b : UInt256) : UInt256 := if b == 0 then 0 else a.1 % b.1
 def modn (a : UInt256) (n : ℕ) : UInt256 := Fin.modn a.1 n
 def land (a b : UInt256) : UInt256 := Fin.land a.1 b.1
 def lor (a b : UInt256) : UInt256 := Fin.lor a.1 b.1
@@ -81,7 +81,7 @@ instance : Complement UInt256 := ⟨EvmYul.UInt256.complement⟩
 private def powAux (a : UInt256) (c : UInt256) : ℕ → UInt256
   | 0 => a
   | n@(k + 1) => if n % 2 == 1
-                 then powAux (a * c) (c * c) (n / 2) 
+                 then powAux (a * c) (c * c) (n / 2)
                  else powAux a       (c * c) (n / 2)
 
 def pow (b : UInt256) (n : UInt256) := powAux 1 b n.1
@@ -123,7 +123,7 @@ def sgn (a : UInt256) : UInt256 :=
     then 0
     else 1
 
-def abs (a : UInt256) : UInt256 := 
+def abs (a : UInt256) : UInt256 :=
   if 2 ^ 255 <= a
   then a * -1
   else a
@@ -141,13 +141,14 @@ def sdiv (a b : UInt256) : UInt256 :=
     else a / b
 
 def smod (a b : UInt256) : UInt256 :=
-  if 2 ^ 255 <= a
-  then if 2 ^ 255 <= b
-       then (abs a) % (abs b)
-       else -1 * (abs a) % b
-  else if 2 ^ 255 <= b
-       then -1 * a % (abs b)
-       else a % b
+  if b == 0 then 0
+  else
+    let sgnA := if 2 ^ 255 <= a then -1 else 1
+    let sgnB := if 2 ^ 255 <= b then -1 else 1
+    let mask : UInt256 := ofNat (2 ^ 256 - 1 : ℕ)
+    let absA := if sgnA == 1 then a else - (UInt256.xor a mask + 1)
+    let absB := if sgnB == 1 then b else - (UInt256.xor b mask + 1)
+    sgnA * (absA % absB)
 
 def sltBool (a b : UInt256) : Bool :=
   if a ≥ 2 ^ 255 then
@@ -195,12 +196,15 @@ def signextend (a b : UInt256) : UInt256 :=
   else b
 
 def addMod (a b c : UInt256) : UInt256 :=
+  -- "All intermediate calculations of this operation are **not** subject to the 2^256 modulo."
   if c = 0 then 0 else
-  Fin.mod (a + b) c
+    Nat.mod (a.val + b.val) c
 
 def mulMod (a b c : UInt256) : UInt256 :=
+  -- "All intermediate calculations of this operation are **not** subject to the 2^256 modulo."
+  -- dbg_trace s!"mulmod: {a} {b} {c}"
   if c = 0 then 0 else
-  Fin.mod (a * b) c
+    Nat.mod (a.val * b.val) c
 
 def exp (a b : UInt256) : UInt256 := pow a b
   -- a ^ b.val
@@ -212,6 +216,7 @@ def gt (a b : UInt256) :=
   fromBool (a > b)
 
 def eq (a b : UInt256) :=
+  -- dbg_trace fromBool (a = b)
   fromBool (a = b)
 
 def isZero (a : UInt256) :=
@@ -372,7 +377,7 @@ section HicSuntDracones
 
 -- /--
 -- NB - We cannot extract up to 2^64 exclusive because 2^64 doesn't fit into a UInt64; this crashes Lean.
--- As such, we special-case the last element. 
+-- As such, we special-case the last element.
 -- -/
 -- private def ByteArray.toUInt64Chunks (a : ByteArray) : Option (ByteArray × ByteArray × ByteArray × ByteArray) := do
 --   -- Look, if you have 2^256 bytes, you don't want to be running the 'Lean EVM execution client'.

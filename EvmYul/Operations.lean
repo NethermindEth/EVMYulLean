@@ -576,7 +576,6 @@ inductive Operation : OperationType → Type where
   | protected Log          : LOp    τ → Operation τ
   | protected System       : SOp    τ → Operation τ
   deriving DecidableEq, Repr
-
 namespace Operation
 
 @[match_pattern]
@@ -739,18 +738,47 @@ abbrev REVERT       {τ : OperationType} : Operation τ := .System .REVERT
 abbrev INVALID      {τ : OperationType} : Operation τ := .System .INVALID
 abbrev SELFDESTRUCT {τ : OperationType} : Operation τ := .System .SELFDESTRUCT
 
+def isPush {τ : OperationType} : Operation τ → Bool
+  | .Push _ => true
+  | _ => false
+
+def isJump {τ : OperationType} : Operation τ → Bool
+  | .JUMP => true
+  | .JUMPI => true
+  | _ => false
+
+def isPC {τ : OperationType} : Operation τ → Bool
+  | .PC => true
+  | _ => false
+
+def isJumpdest {τ : OperationType} : Operation τ → Bool
+  | .JUMPDEST => true
+  | _ => false
+
+def isDup {τ : OperationType} : Operation τ → Bool
+  | .Dup _ => true
+  | _ => false
+
+def isSwap {τ : OperationType} : Operation τ → Bool
+  | .Exchange _ => true
+  | _ => false
+
+def isCreate {τ : OperationType} : Operation τ → Bool
+  | .CREATE => true
+  | .CREATE2 => true
+  | _ => false
+
+def isCall {τ : OperationType} : Operation τ → Bool
+  | .CALL => true
+  | .CALLCODE => true
+  | .DELEGATECALL => true
+  | .STATICCALL => true
+  | _ => false
+
 
 end Operation
 
 open EvmYul.UInt256
-
-def addMod (a b c : UInt256) : UInt256 :=
-  if c = 0 then 0 else
-  Fin.mod (a + b) c
-
-def mulMod (a b c : UInt256) : UInt256 :=
-  if c = 0 then 0 else
-  Fin.mod (a * b) c
 
 def exp (a b : UInt256) : UInt256 :=
   a ^ b.val

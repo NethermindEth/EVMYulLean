@@ -127,7 +127,11 @@ private def almostBEqButNotQuite (s₁ s₂ : EVM.State) : Except String Bool :=
 
   discard <| almostBEqButNotQuiteEvmYulState s₁.toState s₂.toState
 
-  let machineStEq := s₁.toMachineState == s₂.toMachineState
+  let machineStEq :=
+    s₁.toMachineState.gasAvailable == s₂.toMachineState.gasAvailable &&
+    s₁.toMachineState.maxAddress == s₂.toMachineState.maxAddress &&
+    s₁.toMachineState.memory == s₂.toMachineState.memory &&
+    s₁.toMachineState.returnData == s₂.toMachineState.returnData
   if !machineStEq then throw s!"machine state mismatch"
 
   pure true -- Yes, we never return false, because we throw along the way. Yes, this is `Option`.
@@ -137,7 +141,7 @@ end
 def executeTransaction (transaction : Transaction) (s : EVM.State) (header : BlockHeader) : Except EVM.Exception EVM.State := do
   let _TODOfuel := 2^13
 
-  let (ypState, substate, z) ← EVM.Υ _TODOfuel s.accountMap header.chainId header.baseFeePerGas header transaction -- (dbgOverrideSender := transaction.base.dbgSender)
+  let (ypState, substate, z) ← EVM.Υ (debugMode := false) _TODOfuel s.accountMap header.chainId header.baseFeePerGas header transaction -- (dbgOverrideSender := transaction.base.dbgSender)
 
   -- as EIP 4788 (https://eips.ethereum.org/EIPS/eip-4788).
 
@@ -170,6 +174,7 @@ def executeTransactions (blocks : Blocks) (s₀ : EVM.State) : Except EVM.Except
           -- the call does not count against the block’s gas limit
           let (createdAccounts, σ, _, substate, _ /- can't fail-/, _) ←
             EVM.Θ
+              (debugMode := false)
               _TODOfuel
               .empty
               s.accountMap
@@ -243,7 +248,7 @@ instance (priority := high) : Repr AccountMap := ⟨λ m _ ↦
   Id.run do
     let mut result := ""
     for (k, v) in m do
-      result := result ++ s!"\nAccount[...{ToString.toString k |>.takeRight 5}]\n"
+      result := result ++ s!"\nAccount[...{(EvmYul.toHex k.toByteArray) |>.takeRight 5}]\n"
       result := result ++ s!"balance: {v.balance}\nstorage: \n"
       for (sk, sv) in v.storage do
         result := result ++ s!"{sk} → {sv}\n"
@@ -267,12 +272,15 @@ def processTestsOfFile (file : System.FilePath)
                        (whitelist : Array String := #[])
                        (blacklist : Array String := #[]) :
                        ExceptT Exception IO (Batteries.RBMap String TestResult compare) := do
+  let path := file
   let file ← Lean.Json.fromFile file
   let test ← Lean.FromJson.fromJson? (α := Test) file
   -- dbg_trace s!"tests before guard: {test.toTests.map Prod.fst}"
   let tests := guardBlacklist ∘ guardWhitelist <| test.toTests
   -- dbg_trace s!"tests after guard: {tests.map Prod.fst}"
-  tests.foldlM (init := ∅) λ acc (testname, test) ↦ pure <| acc.insert testname (processTest test)
+  tests.foldlM (init := ∅) λ acc (testname, test) ↦
+    -- dbg_trace s!"TESTING {testname} FROM {path}"
+    pure <| acc.insert testname (processTest test)
     -- try
     --   processTest test >>= pure ∘
     --   -- TODO currently the soft errors are the ones I am personally unsure about :)

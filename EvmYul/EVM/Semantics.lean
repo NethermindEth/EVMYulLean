@@ -82,8 +82,8 @@ def decode (arr : ByteArray) (pc : Nat) :
   -- let wagh := arr.get? pc
   -- dbg_trace s!"wagh is: {wagh}"
   let instr ← arr.get? pc >>= EvmYul.EVM.parseInstr
-  -- dbg_trace s!"Decoded: {instr.pretty}"
   let argWidth := argOnNBytesOfInstr instr
+  -- dbg_trace s!"pc: {pc}; Decoded: {instr.pretty}; argWidth={argWidth}"
   .some (
     instr,
     if argWidth == 0
@@ -137,8 +137,7 @@ local instance : MonadLift Option (Except EVM.Exception) :=
   ⟨Option.option (.error .InvalidStackSizeException) .ok⟩
 
 mutual
-
-def step (fuel : ℕ) (instr : Option (Operation .EVM × Option (UInt256 × Nat)) := .none) : EVM.Transformer :=
+def step (debugMode : Bool) (fuel : ℕ) (instr : Option (Operation .EVM × Option (UInt256 × Nat)) := .none) : EVM.Transformer :=
   match fuel with
     | 0 => .ok
     | .succ f =>
@@ -149,46 +148,49 @@ def step (fuel : ℕ) (instr : Option (Operation .EVM × Option (UInt256 × Nat)
       match instr with
         | .none => fetchInstr evmState.toState.executionEnv evmState.pc
         | .some (instr, arg) => pure (instr, arg)
-    -- dbg_trace s!"step called with: {instr.pretty}"
-    -- @Andrei: Of course not all can be shared, so based on `instr` this might not be `EvmYul.step`.
+    if
+      debugMode &&
+        (instr.isPush || instr.isJump || instr.isPC || instr.isJumpdest || instr.isDup || instr.isSwap || instr.isCreate || instr.isCall)
+    then
+        dbg_trace instr.pretty
+
     match instr with
       | .Push .PUSH0 =>
-        -- dbg_trace s!"PUSH0"
         .ok <|
           evmState.replaceStackAndIncrPC (evmState.stack.push 0)
       | .Push _ => do
         let some (arg, argWidth) := arg | .error EVM.Exception.InvalidStackSizeException
-        -- dbg_trace s!"PUSH{argWidth} {arg}"
+        if debugMode then
+          dbg_trace s!"called with {arg} | 0x{padLeft (2*argWidth) <| toHex (BE arg)}"
         .ok <| evmState.replaceStackAndIncrPC (evmState.stack.push arg) (pcΔ := argWidth.succ)
       | .JUMP =>
         match evmState.stack.pop with
           | some ⟨stack , μ₀⟩ =>
+            if debugMode then
+              dbg_trace s!"called with μ₀: {μ₀}"
             let newPc := μ₀
-            match fetchInstr evmState.toState.executionEnv newPc with
-              | .ok (.JUMPDEST, _) =>
-                let evmState' := {evmState with pc := newPc}
-                .ok <| evmState'.replaceStackAndIncrPC stack
-              | _ => .error EVM.Exception.InvalidPC
+            .ok <| {evmState with pc := newPc, stack := stack}
           | _ => .error EVM.Exception.InvalidStackSizeException
       | .JUMPI =>
-        -- dbg_trace "JUMPI"
         match evmState.stack.pop2 with
           | some ⟨stack , μ₀, μ₁⟩ =>
-            let newPc := if μ₁ = 0 then evmState.pc + 1 else μ₀
-            match fetchInstr evmState.toState.executionEnv newPc with
-              | .ok (.JUMPDEST, _) =>
-                let evmState' := {evmState with pc := newPc}
-                .ok <| evmState'.replaceStackAndIncrPC stack
-              | _ => .error EVM.Exception.InvalidPC
+            if debugMode then
+              dbg_trace s!"called with μ₀: {μ₀} μ₁: {μ₁}"
+            let newPc :=
+            if μ₁ != 0 then
+              -- dbg_trace s!"jumped to {μ₀}"
+              μ₀
+            else
+              evmState.pc + 1
+            .ok <| {evmState with pc := newPc, stack := stack}
           | _ => .error EVM.Exception.InvalidStackSizeException
       | .PC =>
         .ok <| evmState.replaceStackAndIncrPC (evmState.stack.push evmState.pc)
-      | .JUMPDEST => .ok evmState.incrPC
+      | .JUMPDEST =>
+        .ok evmState.incrPC
 
       | .DUP1 => dup 1 evmState
-      | .DUP2 =>
-        -- dbg_trace "DUP2"
-        dup 2 evmState
+      | .DUP2 => dup 2 evmState
       | .DUP3 => dup 3 evmState
       | .DUP4 => dup 4 evmState
       | .DUP5 => dup 5 evmState
@@ -204,9 +206,7 @@ def step (fuel : ℕ) (instr : Option (Operation .EVM × Option (UInt256 × Nat)
       | .DUP15 => dup 15 evmState
       | .DUP16 => dup 16 evmState
 
-      | .SWAP1 =>
-        -- dbg_trace "SWAP1"
-        swap 1 evmState
+      | .SWAP1 => swap 1 evmState
       | .SWAP2 => swap 2 evmState
       | .SWAP3 => swap 3 evmState
       | .SWAP4 => swap 4 evmState
@@ -226,13 +226,15 @@ def step (fuel : ℕ) (instr : Option (Operation .EVM × Option (UInt256 × Nat)
       | .CREATE =>
         match evmState.stack.pop3 with
           | some ⟨stack, μ₀, μ₁, μ₂⟩ => do
+            if debugMode then
+              dbg_trace s!"called with μ₀: {μ₀} μ₁: {μ₁} μ₂: {μ₂}"
             let i : ByteArray := evmState.toMachineState.lookupMemoryRange μ₁ μ₂
             let ζ := none
             let I := evmState.executionEnv
             let Iₐ := evmState.executionEnv.codeOwner
             let Iₒ := evmState.executionEnv.sender
             let Iₑ := evmState.executionEnv.depth
-            let Λ := Lambda f evmState.createdAccounts evmState.accountMap evmState.toState.substate Iₐ Iₒ I.gasPrice μ₀ i (Iₑ + 1) ζ I.header I.perm
+            let Λ := Lambda debugMode f evmState.createdAccounts evmState.accountMap evmState.toState.substate Iₐ Iₒ I.gasPrice μ₀ i (Iₑ + 1) ζ I.header I.perm
             let (a, evmState', z, o) : (Address × EVM.State × Bool × ByteArray) :=
               if μ₀ ≤ (evmState.accountMap.find? Iₐ |>.option 0 Account.balance) ∧ Iₑ < 1024 then
                 match Λ with
@@ -261,6 +263,8 @@ def step (fuel : ℕ) (instr : Option (Operation .EVM × Option (UInt256 × Nat)
         -- Exactly equivalent to CREATE except ζ ≡ μₛ[3]
         match evmState.stack.pop4 with
           | some ⟨stack, μ₀, μ₁, μ₂, μ₃⟩ => do
+            if debugMode then
+              dbg_trace s!"called with μ₀: {μ₀} μ₁: {μ₁} μ₂: {μ₂}"
             let i : ByteArray := evmState.toMachineState.lookupMemoryRange μ₁ μ₂
             let ζ := some ⟨⟨toBytesBigEndian μ₃.val⟩⟩
             let I := evmState.executionEnv
@@ -269,6 +273,7 @@ def step (fuel : ℕ) (instr : Option (Operation .EVM × Option (UInt256 × Nat)
             let Iₑ := evmState.executionEnv.depth
             let Λ :=
               Lambda
+                debugMode
                 f
                 evmState.createdAccounts
                 evmState.accountMap
@@ -297,7 +302,9 @@ def step (fuel : ℕ) (instr : Option (Operation .EVM × Option (UInt256 × Nat)
             .ok <| evmState'.replaceStackAndIncrPC (evmState.stack.push x)
           | _ =>
           .error .InvalidStackSizeException
-      | .CALL => do
+      | .CALL =>
+        -- dbg_trace /- op -/ "CALL"
+        do
         -- Names are from the YP, these are:
         -- μ₀ - gas
         -- μ₁ - to
@@ -308,6 +315,8 @@ def step (fuel : ℕ) (instr : Option (Operation .EVM × Option (UInt256 × Nat)
         -- μ₆ - outSize
         -- dbg_trace "POPPING"
         let (stack, μ₀, μ₁, μ₂, μ₃, μ₄, μ₅, μ₆) ← evmState.stack.pop7
+        if debugMode then
+          dbg_trace s!"called with μ₀: {μ₀} μ₁: {μ₁} μ₂: {μ₂} μ₃: {μ₃} μ₄: {μ₄} μ₅: {μ₅} μ₆: {μ₆}"
         -- dbg_trace "POPPED OK; μ₁ : {μ₁}"
         -- dbg_trace s!"Pre call, we have: {Finmap.pretty evmState.accountMap}"
         let (cA, σ', g', A', z, o) ← do
@@ -316,12 +325,12 @@ def step (fuel : ℕ) (instr : Option (Operation .EVM × Option (UInt256 × Nat)
             let t : Address := Address.ofUInt256 μ₁ -- t ≡ μs[1] mod 2^160
             -- dbg_trace s!"DBG REMOVE; Calling address: {t}"
             let A' := evmState.addAccessedAccount t |>.substate -- A' ≡ A except A'ₐ ≡ Aₐ ∪ {t}
-            -- TODO A minor... hack? Are we supposed to run into missing account here?
-            let .some tDirect := evmState.accountMap.find? t | throw (.ReceiverNotInAccounts t)
+            let .some tDirect := evmState.accountMap.find? t | default
             let tDirect := tDirect.code -- We use the code directly without an indirection a'la `codeMap[t]`.
             -- dbg_trace s!"looking up memory range: {evmState.toMachineState.lookupMemoryRange μ₃ μ₄}"
             let i := evmState.toMachineState.lookupMemoryRange μ₃ μ₄ -- m[μs[3] . . . (μs[3] + μs[4] − 1)]
-            Θ (fuel := f)                             -- TODO meh
+            Θ (debugMode := debugMode)
+              (fuel := f)                             -- TODO meh
               (createdAccounts := evmState.createdAccounts)
               (σ  := evmState.accountMap)             -- σ in  Θ(σ, ..)
               (A  := A')                              -- A* in Θ(.., A*, ..)
@@ -374,9 +383,91 @@ def step (fuel : ℕ) (instr : Option (Operation .EVM × Option (UInt256 × Nat)
         }.replaceStackAndIncrPC μ'ₛ
 
         .ok σ'
-      | instr => EvmYul.step instr evmState
+      | .DELEGATECALL =>
+        -- dbg_trace /- op -/ "DELEGATECALL"
+        do
+        -- Names are from the YP, these are:
+        -- μ₀ - gas
+        -- μ₁ - to
+        -- μ₃ - inOffset
+        -- μ₄ - inSize
+        -- μ₅ - outOffsize
+        -- μ₆ - outSize
+        -- dbg_trace "POPPING"
+        -- TODO: Use indices correctly
+        let (stack, μ₀, μ₁, /-μ₂,-/ μ₃, μ₄, μ₅, μ₆) ← evmState.stack.pop6
+        if debugMode then
+          dbg_trace s!"called with μ₀: {μ₀} μ₁: {μ₁} μ₂: {μ₃} μ₃: {μ₄} μ₄: {μ₅} μ₅: {μ₆}"
+        -- dbg_trace "POPPED OK; μ₁ : {μ₁}"
+        -- dbg_trace s!"Pre call, we have: {Finmap.pretty evmState.accountMap}"
+        let (cA, σ', g', A', z, o) ← do
+          -- TODO - Refactor condition and possibly share with CREATE
+          if evmState.executionEnv.depth < 1024 then
+            let t : Address := Address.ofUInt256 μ₁ -- t ≡ μs[1] mod 2^160
+            -- dbg_trace s!"DBG REMOVE; Calling address: {t}"
+            let A' := evmState.addAccessedAccount t |>.substate -- A' ≡ A except A'ₐ ≡ Aₐ ∪ {t}
+            let .some tDirect := evmState.accountMap.find? t | default
+            let tDirect := tDirect.code -- We use the code directly without an indirection a'la `codeMap[t]`.
+            -- dbg_trace s!"looking up memory range: {evmState.toMachineState.lookupMemoryRange μ₃ μ₄}"
+            let i := evmState.toMachineState.lookupMemoryRange μ₃ μ₄ -- m[μs[3] . . . (μs[3] + μs[4] − 1)]
+            -- dbg_trace s!"code: {toHex tDirect}"
+            Θ (debugMode := debugMode)
+              (fuel := f)                             -- TODO meh
+              (createdAccounts := evmState.createdAccounts)
+              (σ  := evmState.accountMap)             -- σ in  Θ(σ, ..)
+              (A  := A')                              -- A* in Θ(.., A*, ..)
+              (s  := evmState.executionEnv.source) -- Iₐ in Θ(.., Iₐ, ..)
+              (o  := evmState.executionEnv.sender)    -- Iₒ in Θ(.., Iₒ, ..)
+              (r  := evmState.executionEnv.codeOwner)                               -- t in Θ(.., t, ..)
+              (c  := tDirect)                         -- t in Θ(.., t, ..) except 'dereferenced'
+              (g  := μ₀)                              -- TODO gas - CCALLGAS(σ, μ, A)
+              (p  := evmState.executionEnv.gasPrice)  -- Iₚ in Θ(.., Iₚ, ..)
+              (v  := 0)                              -- μₛ[2] in Θ(.., μₛ[2], ..)
+              (v' := evmState.executionEnv.weiValue)                              -- μₛ[2] in Θ(.., μₛ[2], ..)
+              (d  := i)                               -- i in Θ(.., i, ..)
+              (e  := evmState.executionEnv.depth + 1) -- Iₑ + 1 in Θ(.., Iₑ + 1, ..)
+              (H := evmState.executionEnv.header)
+              (w  := evmState.executionEnv.perm)      -- I_W in Θ(.., I_W)
+          -- TODO gas - CCALLGAS(σ, μ, A)
+          else .ok (evmState.createdAccounts, evmState.toState.accountMap, μ₀, evmState.toState.substate, false, .some .empty) -- otherwise (σ, CCALLGAS(σ, μ, A), A, 0, ())
+        -- dbg_trace s!"THETA OK with accounts: {repr σ'}"
+        let n : UInt256 := min μ₆ (o.elim 0 (UInt256.ofNat ∘ ByteArray.size)) -- n ≡ min({μs[6], ‖o‖}) -- TODO - Why is this using... set??? { } brackets ???
+        -- TODO I am assuming here that μ' is μ with the updates mentioned in the CALL section. Check.
 
-def X (fuel : ℕ) (evmState : State) : Except EVM.Exception (State × Option ByteArray) := do
+        -- TODO - Note to self. Check how updateMemory/copyMemory is implemented. By a cursory look, we play loose with UInt8 -> UInt256 (c.f. e.g. `calldatacopy`) and then the interplay with the WordSize parameter.
+        -- TODO - Check what happens when `o = .none`.
+        -- dbg_trace s!"REPORT - μ₅: {μ₅} n: {n} o: {o}"
+        -- dbg_trace "Θ will copy memory now"
+        let μ'ₘ := evmState.toMachineState.copyMemory (o.getD .empty) μ₅ n -- μ′_m[μs[5]  ... (μs[5] + n − 1)] = o[0 ... (n − 1)]
+        -- dbg_trace s!"μ'ₘ: {μ'ₘ.memory}"
+        -- dbg_trace s!"REPORT - μ'ₘ: {Finmap.pretty μ'ₘ.memory}"
+        let μ'ₒ := o -- μ′o = o
+        let μ'_g := g' -- TODO gas - μ′g ≡ μg − CCALLGAS(σ, μ, A) + g
+
+        let codeExecutionFailed   : Bool := z -- TODO - This is likely wrong.
+        -- let notEnoughFunds        : Bool := μ₂ > (evmState.accountMap.find? evmState.executionEnv.codeOwner |>.elim 0 Account.balance) -- TODO - Unify condition with CREATE.
+        let callDepthLimitReached : Bool := evmState.executionEnv.depth == 1024
+        let x : UInt256 := if codeExecutionFailed || callDepthLimitReached then 0 else 1 -- where x = 0 if the code execution for this operation failed, or if μs[2] > σ[Ia]b (not enough funds) or Ie = 1024 (call depth limit reached); x = 1 otherwise.
+
+        let μ'ₛ := stack.push x -- μ′s[0] ≡ x
+        let μ'ᵢ := MachineState.M (MachineState.M evmState.maxAddress μ₃ μ₄) μ₅ μ₆ -- μ′i ≡ M (M (μi, μs[3], μs[4]), μs[5], μs[6])
+
+        -- NB. `MachineState` here does not contain the `Stack` nor the `PC`, thus incomplete.
+        let μ'incomplete : MachineState :=
+          { μ'ₘ with
+              returnData   := μ'ₒ.getD .empty -- TODO - Check stuff wrt. .none
+              gasAvailable := μ'_g
+              maxAddress   := μ'ᵢ }
+
+        let σ' : EVM.State := { evmState with accountMap := σ', substate := A', createdAccounts := cA }
+        let σ' := {
+          σ' with toMachineState := μ'incomplete
+        }.replaceStackAndIncrPC μ'ₛ
+
+        .ok σ'
+      | instr => EvmYul.step debugMode instr evmState
+
+def X (debugMode : Bool) (fuel : ℕ) (evmState : State) : Except EVM.Exception (State × Option ByteArray) := do
   match fuel with
     | 0 => .ok (evmState, some .empty)
     | .succ f =>
@@ -405,16 +496,17 @@ def X (fuel : ℕ) (evmState : State) : Except EVM.Exception (State × Option By
           else none
 
       if Z then
+        -- dbg_trace "exceptional halting"
         .ok ({evmState with accountMap := ∅}, none)
       else
         if w = .REVERT then
           .ok ({evmState with accountMap := ∅}, some evmState.returnData)
         else
-          let evmState' ← step f instr evmState
+          let evmState' ← step debugMode f instr evmState
           -- dbg_trace s!"accs: {repr evmState'.accountMap}"
           -- dbg_trace s!"stack: {evmState'.stack}"
           match H evmState.toMachineState w with
-            | none => X f evmState'
+            | none => X debugMode f evmState'
             | some o => .ok <| (evmState', some o)
  where
   belongs (o : Option ℕ) (l : List ℕ) : Bool :=
@@ -424,6 +516,7 @@ def X (fuel : ℕ) (evmState : State) : Except EVM.Exception (State × Option By
   notIn (o : Option ℕ) (l : List ℕ) : Bool := not (belongs o l)
 
 def Ξ
+  (debugMode : Bool)
   (fuel : ℕ)
   (createdAccounts : Batteries.RBSet Address compare)
   (σ : YPState)
@@ -446,10 +539,11 @@ def Ξ
             substate := A
             createdAccounts := createdAccounts
         }
-      let (evmState', o) ← X f freshEvmState
+      let (evmState', o) ← X debugMode f freshEvmState
       return (evmState'.createdAccounts, evmState'.accountMap, g, evmState'.substate, o) -- TODO - Gas model
 
 def Lambda
+  (debugMode : Bool)
   (fuel : ℕ)
   (createdAccounts : Batteries.RBSet Address compare) -- needed for EIP-6780
   (σ : YPState)
@@ -521,7 +615,7 @@ def Lambda
     , depth     := e + 1
     , perm      := w
     }
-  match Ξ f createdAccounts σStar 42 AStar exEnv with -- TODO - Gas model.
+  match Ξ debugMode f createdAccounts σStar 42 AStar exEnv with -- TODO - Gas model.
     | .error _ => .none
     | .ok (_, _, _, _, none) => dbg_trace "continue"; .none
     | .ok (createdAccounts', σStarStar, _, AStarStar, some returnedData) =>
@@ -580,7 +674,8 @@ TODO check - There's some stuff with .none and .some .empty ByteArray on return.
 NB - This is implemented using the 'boolean' fragment with ==, <=, ||, etc.
      The 'prop' version will come next once we have the comutable one.
 -/
-def Θ (fuel : Nat)
+def Θ (debugMode : Bool)
+      (fuel : Nat)
       (createdAccounts : Batteries.RBSet Address compare)
       (σ  : YPState)
       (A  : Substate)
@@ -643,7 +738,7 @@ def Θ (fuel : Nat)
 
   -- Equation (126)
   -- Note that the `c` used here is the actual code, not the address. TODO - Handle precompiled contracts.
-  let (createdAccounts, σ'', g'', A'', out) ← Ξ fuel createdAccounts σ₁ g A I
+  let (createdAccounts, σ'', g'', A'', out) ← Ξ debugMode fuel createdAccounts σ₁ g A I
   -- dbg_trace s!"σ'' after Ξ: {repr σ''}"
   -- Equation (122)
   let σ' := if σ'' == ∅ then σ else σ''
@@ -800,7 +895,7 @@ def checkTransactionGetSender (σ : YPState) (chainId H_f : ℕ) (T : Transactio
           ]
 
 -- Type Υ using \Upsilon or \GU
-def Υ (fuel : ℕ) (σ : YPState) (chainId H_f : ℕ) (H : BlockHeader) (T : Transaction) (dbgOverrideSender : Option Address := .none)
+def Υ (debugMode : Bool) (fuel : ℕ) (σ : YPState) (chainId H_f : ℕ) (H : BlockHeader) (T : Transaction) (dbgOverrideSender : Option Address := .none)
   : Except EVM.Exception (YPState × Substate × Bool)
 := do
   let S_T ← checkTransactionGetSender σ chainId H_f T dbgOverrideSender
@@ -838,7 +933,7 @@ def Υ (fuel : ℕ) (σ : YPState) (chainId H_f : ℕ) (H : BlockHeader) (T : Tr
     match T.base.recipient with
       | none => do
         let (_, _, σ_P, A, z, _) :=
-          match Lambda fuel createdAccounts σ₀ AStar S_T S_T p T.base.value T.base.data 0 none H true with
+          match Lambda debugMode fuel createdAccounts σ₀ AStar S_T S_T p T.base.value T.base.data 0 none H true with
             | .none => dbg_trace "Lambda returned none; this should probably not be happening; test semantics will be off."; default
             | .some x => x
         pure (σ_P, A, z)
@@ -846,7 +941,7 @@ def Υ (fuel : ℕ) (σ : YPState) (chainId H_f : ℕ) (H : BlockHeader) (T : Tr
         let g := T.base.gasLimit /- minus g₀ -/
         match σ₀.find? t with
           | .none => dbg_trace "σ₀.find failed; this should probably not be happening; test semantics will be off."; default
-          | .some v => let (_, σ_P, _,  A, z, _) ← Θ fuel createdAccounts σ₀ AStar S_T S_T t v.code g p T.base.value T.base.value T.base.data 0 H true
+          | .some v => let (_, σ_P, _,  A, z, _) ← Θ debugMode fuel createdAccounts σ₀ AStar S_T S_T t v.code g p T.base.value T.base.value T.base.data 0 H true
                       --  dbg_trace "Θ gave back σ_P: {repr σ_P}"
                        pure (σ_P, A, z)
   let σStar := σ_P -- we don't model gas yet

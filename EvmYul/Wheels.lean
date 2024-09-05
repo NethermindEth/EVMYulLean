@@ -41,7 +41,7 @@ def hexOfByte (byte : UInt8) : String :=
 def toHex (bytes : ByteArray) : String :=
   bytes.foldl (init := "") λ acc byte ↦ acc ++ hexOfByte byte
 
-instance (priority := high) : Repr ByteArray where
+instance : Repr ByteArray where
   reprPrec s _ := toHex s
 
 /--
