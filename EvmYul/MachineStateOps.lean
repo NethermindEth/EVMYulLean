@@ -145,7 +145,7 @@ def mstore8 (self : MachineState) (spos sval : UInt256) : MachineState :=
 
 def mcopy (self : MachineState) (mstart datastart s : UInt256) : MachineState :=
   let arr := self.lookupMemoryRange datastart.val s.val
-  (·.1) <| arr.foldl (init := (self, mstart)) λ (sa , j) i ↦ (sa.updateMemory j i.val, j + 1)
+  self.copyMemory arr mstart s
 
 def gas (self : MachineState) : UInt256 :=
   self.gasAvailable
