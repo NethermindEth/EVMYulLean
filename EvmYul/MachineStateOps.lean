@@ -181,9 +181,7 @@ def returndatacopy (self : MachineState) (mstart rstart s : UInt256) : Option Ma
   else
     let arr := self.returnData
     let rdata := arr.extract' rstart.val (rstart.val + s.val - 1)
-    let s := rdata.data.foldr (init := (self , mstart))
-                              λ v (ac, p) ↦ (ac.updateMemory p v.val, p +1)
-    .some s.1
+    self.copyMemory rdata mstart s
 
 def evmReturn (self : MachineState) (mstart s : UInt256) : MachineState :=
   let vals := self.returnData.extract' mstart.val s.val
