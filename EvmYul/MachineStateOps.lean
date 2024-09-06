@@ -91,6 +91,9 @@ def lookupMemory (self : MachineState) (addr : UInt256) : UInt256 :=
 --   -- ⟨⟨List.map (λ i ↦ (self.memory.lookup (addr + i)).get!) (List.range size)⟩⟩
 --   ⟨⟨List.range size |>.map λ i ↦ self.memory.findD (addr + i) 0⟩⟩
 
+#check (default : MachineState).updateMemory (addr := 2^255) (v := 2^255) |>.lookupMemory (2^255)
+#eval ((default : MachineState).updateMemory (addr := 0) (v := 123) |>.lookupMemory (0)) == 123
+
 /--
 TODO - Currently a debug version.
 -/
@@ -98,6 +101,11 @@ def lookupMemoryRange (self : MachineState) (addr size : UInt256) : ByteArray :=
   self.memory.readMemory addr size
   -- extract' addr (addr + size)
 
+#check (default : MachineState).copyMemory (source := ⟨#[0]⟩) (s := 2^255) (n := 1) |>.lookupMemoryRange (2^255)
+#eval (default : MachineState).copyMemory (source := ⟨#[1]⟩) (s := 2^255) (n := 1) |>.lookupMemoryRange (2^255) 1
+
+#eval 2^248
+#eval 8*31
 -- def lookupMemoryRange' (self : MachineState) (addr size : UInt256) : ByteArray := Id.run do
 --   let mut result : ByteArray := ∅
 --   let mut i := 0

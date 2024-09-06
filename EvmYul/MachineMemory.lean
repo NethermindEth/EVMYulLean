@@ -11,25 +11,27 @@ open Batteries
 
 abbrev Memory := HashMap ℕ ByteArray
 
--- 2²²⁶ intervals of length 2³⁰
--- Interval i: [i * 2³⁰, (i + 1) * 2³⁰)
+abbrev SIZE := 2^30
 
-def indexInterval (i : ℕ) : ℕ := i / 2^30
+-- 2²²⁶ intervals of size `SIZE`
+-- Interval i: [i * `SIZE`, (i + 1) * `SIZE`)
+
+def indexInterval (i : ℕ) : ℕ := i / SIZE
 
 def Memory.writeMemory (self : Memory) (source : ByteArray) (addr len : ℕ) : Memory := Id.run do
   let mut self := self
   let mut sourceOffset := 0
   let left₀ := indexInterval addr
   let right₀ := left₀ + 1
-  -- dbg_trace s!"W - first inteval: [{left₀} * 2^30, {right₀} * 2^30)"
+  -- dbg_trace s!"W - first inteval: [{left₀} * {SIZE}, {right₀} * {SIZE})"
 
-  -- The first interval is [`left₀` * 2³⁰, `right₀` * 2³⁰),
+  -- The first interval is [`left₀` * `SIZE`, `right₀` * `SIZE`),
   -- stored at key `left₀`
 
-  let offset : ℕ := addr - left₀ * 2^30
-  let firstLength := right₀ * 2^30 - addr
+  let offset : ℕ := addr - left₀ * SIZE
+  let firstLength := right₀ * SIZE - addr
 
-  let firstDestination := self.find? left₀ |>.getD (ByteArray.zeroes ⟨2^30⟩)
+  let firstDestination := self.find? left₀ |>.getD (ByteArray.zeroes ⟨SIZE⟩)
   let firstInterval : ByteArray :=
     ByteArray.copySlice
       source
@@ -47,22 +49,22 @@ def Memory.writeMemory (self : Memory) (source : ByteArray) (addr len : ℕ) : M
   -- dbg_trace s!"W - lastIndex: {lastIndex}"
 
   for left in [right₀ : lastIndex] do
-    -- dbg_trace s!"W - inteval: [{left} * 2^30, {left+1} * 2^30)"
-    let interval : ByteArray := source.extract sourceOffset (sourceOffset + 2^30)
+    -- dbg_trace s!"W - inteval: [{left} * `SIZE`, {left+1} * `SIZE`)"
+    let interval : ByteArray := source.extract sourceOffset (sourceOffset + SIZE)
     self := self.insert left interval
-    sourceOffset := sourceOffset + 2^30
+    sourceOffset := sourceOffset + SIZE
 
   if left₀ < lastIndex then
     let left := lastIndex
-    -- dbg_trace s!"W - last inteval: [{left} * 2^30, {left+1} * 2^30)"
-    let lastDestination := self.find? left₀ |>.getD (ByteArray.zeroes ⟨2^30⟩)
+    -- dbg_trace s!"W - last inteval: [{left} * `SIZE`, {left+1} * `SIZE`)"
+    let lastDestination := self.find? left₀ |>.getD (ByteArray.zeroes ⟨SIZE⟩)
     let interval : ByteArray :=
       ByteArray.copySlice
         source
         (srcOff := sourceOffset)
         (dest := lastDestination)
         (destOff := 0)
-        (len := addr + len - left * 2^30)
+        (len := addr + len - left * SIZE)
     self := self.insert lastIndex interval
   self
 
@@ -70,15 +72,15 @@ def Memory.readMemory (self : Memory) (addr len : ℕ) : ByteArray := Id.run do
   let mut result : ByteArray := .empty
   let left₀ := indexInterval addr
   let right₀ := left₀ + 1
-  -- dbg_trace s!"R - first inteval: [{left₀} * 2^30, {right₀} * 2^30)"
+  -- dbg_trace s!"R - first inteval: [{left₀} * `SIZE`, {right₀} * `SIZE`)"
 
   let firstInterval : ByteArray :=
-    let len₀ : ℕ := min len (right₀ * 2^30 - addr)
+    let len₀ : ℕ := min len (right₀ * SIZE - addr)
     match self.find? left₀ with
       | none => ByteArray.zeroes ⟨len₀⟩
       | some be =>
-        let offset := addr - left₀ * 2^30
-        be.extract offset (addr - left₀ * 2^30 + len)
+        let offset := addr - left₀ * SIZE
+        be.extract offset (addr - left₀ * SIZE + len)
 
   result := result ++ firstInterval
 
@@ -86,18 +88,18 @@ def Memory.readMemory (self : Memory) (addr len : ℕ) : ByteArray := Id.run do
   let lastIndex := indexInterval lastAddress
 
   for left in [right₀ : lastIndex] do
-    -- dbg_trace s!"R - inteval: [{left} * 2^30, {left+1} * 2^30)"
+    -- dbg_trace s!"R - inteval: [{left} * `SIZE`, {left+1} * `SIZE`)"
     let interval : ByteArray :=
       match self.find? left with
-        | none => ByteArray.zeroes ⟨2^30⟩
+        | none => ByteArray.zeroes ⟨SIZE⟩
         | some be => be
     result := result ++ interval
 
   if left₀ < lastIndex then
     let left := lastIndex
-    -- dbg_trace s!"R - last inteval: [{left} * 2^30, {left+1} * 2^30)"
+    -- dbg_trace s!"R - last inteval: [{left} * `SIZE`, {left+1} * `SIZE`)"
     let interval : ByteArray :=
-      let len₀ : ℕ := addr + len - left * 2^30
+      let len₀ : ℕ := addr + len - left * SIZE
       match self.find? left with
         | none => ByteArray.zeroes ⟨len₀⟩
         | some be => be.extract 0 len₀
@@ -118,7 +120,7 @@ private example :
 := by native_decide
 
 /-- Read uninitialized memory -/
-private example : (readMemory .empty (addr := 0) (len := 2^30)).size == 2^30 :=
+private example : (readMemory .empty (addr := 0) (len := SIZE)).size == SIZE :=
   by native_decide
 
 -- Write and read long ByteArray
