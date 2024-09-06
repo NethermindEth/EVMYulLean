@@ -130,7 +130,8 @@ private def almostBEqButNotQuite (s₁ s₂ : EVM.State) : Except String Bool :=
   let machineStEq :=
     s₁.toMachineState.gasAvailable == s₂.toMachineState.gasAvailable &&
     s₁.toMachineState.maxAddress == s₂.toMachineState.maxAddress &&
-    s₁.toMachineState.memory == s₂.toMachineState.memory &&
+    -- s₁.toMachineState.memory == s₂.toMachineState.memory &&
+    s₁.toMachineState.memory.toArray == s₂.toMachineState.memory.toArray &&
     s₁.toMachineState.returnData == s₂.toMachineState.returnData
   if !machineStEq then throw s!"machine state mismatch"
 

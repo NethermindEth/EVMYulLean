@@ -26,22 +26,37 @@ def y : ByteArray := "kokusho".toUTF8
 
 def updateMemory (self : MachineState) (addr v : UInt256) (numOctets : WordSize := WordSize.Standard) : MachineState :=
   -- dbg_trace "updateMemory"
-  { self with memory := ByteArray.copySlice' (src     := ⟨⟨toBytes! v⟩⟩)
-                                            (srcOff  := 0)
-                                            (dest    := self.memory)
-                                            (destOff := addr)
-                                            (len     := numOctets) -- TODO - this will need an interface a'la `ByteArray.extract'`.
-              maxAddress := self.newMax addr numOctets }
+  let source : ByteArray := ⟨⟨toBytesBigEndian v⟩⟩
+  { self with
+      memory :=
+        self.memory.writeMemory
+          source
+          (addr + 32 - source.size)
+          (len := source.size)
+    -- ByteArray.copySlice'
+    --   (src     := ⟨⟨toBytes! v⟩⟩)
+    --   (srcOff  := 0)
+    --   (dest    := self.memory)
+    --   (destOff := addr)
+    --   (len     := numOctets) -- TODO - this will need an interface a'la `ByteArray.extract'`.
+      maxAddress := self.newMax addr numOctets
+  }
 
 def copyMemory (self : MachineState) (source : ByteArray) (s n : Nat) : MachineState :=
   -- dbg_trace "copyMemory"
   -- dbg_trace s!"current mem: {self.memory} source: {source} s: {s} n: {n}"
-  { self with memory := ByteArray.copySlice' (src     := source)
-                                            (srcOff  := 0)
-                                            (dest    := self.memory)
-                                            (destOff := s)
-                                            (len     := n)
-              maxAddress := self.newMax (s + n) WordSize.Standard
+  { self with
+      memory :=
+        self.memory.writeMemory
+          source
+          (addr := s)
+          (len := n)
+      -- ByteArray.copySlice' (src     := source)
+      --                                       (srcOff  := 0)
+      --                                       (dest    := self.memory)
+      --                                       (destOff := s)
+      --                                       (len     := n)
+      maxAddress := self.newMax (s + n) WordSize.Standard
   }
 
 -- /--
@@ -67,7 +82,7 @@ TODO - Currently a debug version.
 -- `EthereumTests/BlockchainTests/GeneralStateTests/VMTests/vmTests/sha3.json`.
 -/
 def lookupMemory (self : MachineState) (addr : UInt256) : UInt256 :=
-  fromBytes! (self.memory.extract' addr (addr + 32) |>.data.toList)
+  self.memory.readMemory addr 32 |>.data.data |> fromBytesBigEndian
 
 -- /--
 -- TODO - Currently a debug version.
@@ -76,12 +91,21 @@ def lookupMemory (self : MachineState) (addr : UInt256) : UInt256 :=
 --   -- ⟨⟨List.map (λ i ↦ (self.memory.lookup (addr + i)).get!) (List.range size)⟩⟩
 --   ⟨⟨List.range size |>.map λ i ↦ self.memory.findD (addr + i) 0⟩⟩
 
+#check (default : MachineState).updateMemory (addr := 2^255) (v := 2^255) |>.lookupMemory (2^255)
+#eval ((default : MachineState).updateMemory (addr := 0) (v := 123) |>.lookupMemory (0)) == 123
+
 /--
 TODO - Currently a debug version.
 -/
 def lookupMemoryRange (self : MachineState) (addr size : UInt256) : ByteArray := -- dbg_trace s!"lookupMemoryRange addr: {addr} size: {size}"
-  self.memory.extract' addr (addr + size)
+  self.memory.readMemory addr size
+  -- extract' addr (addr + size)
 
+#check (default : MachineState).copyMemory (source := ⟨#[0]⟩) (s := 2^255) (n := 1) |>.lookupMemoryRange (2^255)
+#eval (default : MachineState).copyMemory (source := ⟨#[1]⟩) (s := 2^255) (n := 1) |>.lookupMemoryRange (2^255) 1
+
+#eval 2^248
+#eval 8*31
 -- def lookupMemoryRange' (self : MachineState) (addr size : UInt256) : ByteArray := Id.run do
 --   let mut result : ByteArray := ∅
 --   let mut i := 0
