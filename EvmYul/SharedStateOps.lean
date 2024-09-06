@@ -37,13 +37,11 @@ def copyMemory (self : SharedState) (source : ByteArray) (s n : Nat) : SharedSta
 def calldatacopy (self : SharedState) (mstart datastart s : UInt256) : SharedState :=
   let arr := self.toState.executionEnv.inputData.extract' datastart.val s.val
   -- dbg_trace s!"{arr}"
-  (·.1) <| arr.foldl (init := (self, mstart)) λ (sa , j) i ↦ (sa.updateMemory j i.val, j + 1)
-
-def big : UInt256 := 0xfffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffa
+  self.copyMemory arr mstart s
 
 def codeCopy (self : SharedState) (mstart cstart s : UInt256) : SharedState :=
   let Ib := self.toState.executionEnv.code.extract' cstart.val s.val -- TODO(double check, changed in a fast-and-loose manner)
-  (·.1) <| Ib.foldl (init := (self, mstart)) λ (sa, j) i ↦ (sa.updateMemory j i.toUInt256, j + 1)
+  self.copyMemory Ib mstart s
 
 -- def extCodeCopy (self : SharedState) (acc mstart cstart s : UInt256) : SharedState :=
 --   dbg_trace s!"mstart: {mstart} cstart: {cstart} s: {s}"
@@ -70,7 +68,7 @@ def extCodeCopy' (self : SharedState) (acc mstart cstart s : UInt256) : SharedSt
       self.copyMemory Ib mstart s
     | _ => let zeroes := Array.mkArray s 0
            self.copyMemory ⟨zeroes⟩ mstart s
-          -- TODO - Probably a bug, although zeroes need copying (I think?) so maybe we can address it somehow elsewhere 
+          -- TODO - Probably a bug, although zeroes need copying (I think?) so maybe we can address it somehow elsewhere
            -- Might need to write some FFI for this; need an array of 2^160 bytes that does not crash Lean.
   {sState' with toState.substate := .addAccessedAccount self.toState.substate addr}
 
