@@ -1,6 +1,12 @@
+import FastMemset
+
+import Batteries
+
 import EvmYul.Maps.ByteMap
 import EvmYul.UInt256
 import Batteries.Data.HashMap
+import EvmYul.MachineMemory
+
 namespace EvmYul
 
 open Batteries
@@ -20,9 +26,9 @@ The partial shared `MachineState` `μ`. Section 9.4.1.
 structure MachineState where
   gasAvailable : UInt256
   maxAddress   : UInt256
-  memory       : ByteArray
+  memory       : Memory
   returnData   : ByteArray
-  deriving BEq, Inhabited, Repr
+  deriving Inhabited
 
 inductive WordSize := | Standard | Single
 
