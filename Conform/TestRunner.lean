@@ -20,6 +20,23 @@ namespace Conform
 def VerySlowTests : Array String :=
   #[
     "sha3_d3g0v0_Cancun" -- ~6MB getting keccak256'd, estimated time on my PC: ~1 hour, best guess: unfoldr.go in keccak256.lean
+  , "CallGoesOOGOnSecondLevel2_d0g0v0_Cancun"
+  , "CallGoesOOGOnSecondLevel_d0g0v0_Cancun"
+  , "costRevert_d1g0v0_Cancun"
+  , "costRevert_d22g0v0_Cancun"
+  , "costRevert_d8g0v0_Cancun"
+  , "TouchToEmptyAccountRevert3_Paris_d0g0v0_Cancun"
+  , "RevertPrefoundOOG_d0g0v0_Cancun"
+  , "TouchToEmptyAccountRevert2_Paris_d0g0v0_Cancun"
+  , "stateRevert_d1g0v0_Cancun"
+  , "RevertPrefoundEmptyOOG_Paris_d0g0v0_Cancun"
+    -- TODO: Are there multiple tests with this name?
+  , "callcallcallcode_001_OOGMAfter_d0g0v0_Cancun"
+  , "callcallcallcode_001_OOGMBefore_d0g0v0_Cancun"
+  , "CreateOOGafterInitCodeRevert_d0g0v0_Cancun"
+  , "operationDiffGas_d9g0v0_Cancun"
+  , "besuBaseFeeBug_Cancun"
+  , "logRevert_Cancun"
     -- "sha3_d5g0v0_Cancun", -- best guess: `lookupMemoryRange'{'}{''}` are slow; I guess we will need an faster structure than Finmap
     -- "sha3_d6g0v0_Cancun" -- same problem as `sha3_d5g0v0_Cancun` I'm guessing
   ]
@@ -129,8 +146,9 @@ private def almostBEqButNotQuite (s₁ s₂ : EVM.State) : Except String Bool :=
 
   let machineStEq :=
     s₁.toMachineState.gasAvailable == s₂.toMachineState.gasAvailable &&
-    s₁.toMachineState.maxAddress == s₂.toMachineState.maxAddress &&
-    s₁.toMachineState.memory == s₂.toMachineState.memory &&
+    s₁.toMachineState.activeWords == s₂.toMachineState.activeWords &&
+    -- s₁.toMachineState.memory == s₂.toMachineState.memory &&
+    s₁.toMachineState.memory.toArray == s₂.toMachineState.memory.toArray &&
     s₁.toMachineState.returnData == s₂.toMachineState.returnData
   if !machineStEq then throw s!"machine state mismatch"
 

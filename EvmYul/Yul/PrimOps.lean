@@ -116,7 +116,7 @@ def quaternaryCopyOp
 private def yulLogOp (yulState : State) (a b : UInt256) (t : List UInt256) : State × Option Literal :=
   let (substate', μᵢ') := SharedState.logOp a b t yulState.toSharedState
   ( yulState.setSharedState
-      { yulState.sharedState with substate := substate', maxAddress := μᵢ'}
+      { yulState.sharedState with substate := substate', activeWords := μᵢ'}
   , none
   )
 

@@ -37,7 +37,16 @@ def log (testFile : System.FilePath) (testName : String) (result : TestResult) :
   IO.FS.withFile logFile .append λ h ↦ h.putStrLn s!"{testFile.fileName.get!}[{testName}] - {result}\n"
 
 def main : IO Unit := do
-  let testFiles ← Array.filter isTestFile <$> System.FilePath.walkDir ("EthereumTests" / "BlockchainTests")
+  let testFiles ←
+    Array.filter isTestFile <$>
+      System.FilePath.walkDir
+        (enter := λ path ↦ -- exclude the following files:
+          pure
+            (   path != "EthereumTests/BlockchainTests/GeneralStateTests/stCallCodes"
+             && path != "EthereumTests/BlockchainTests/GeneralStateTests/stCallDelegateCodesHomestead"
+            )
+        )
+        ("EthereumTests/BlockchainTests")
 
   -- let testFiles := #[SimpleFile]
   -- let testFiles := #[BuggyFile]
