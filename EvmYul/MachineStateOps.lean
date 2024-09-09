@@ -12,14 +12,25 @@ section Memory
 
 open Batteries (RBMap)
 
+-- Apendix H, (320)
+def M (s f l : ℕ) : ℕ :=
+  match l with
+  | 0 => s
+  | l =>
+    -- ⌈ (f + l) ÷ 32 ⌉
+    -- The addition is not subject to s²⁵⁶ division (at least that's what MSTORE suggests)
+    let rem := (f + l) % 32
+    let divided := (f + l) / 32
+    max s (if rem == 0 then divided else divided + 1)
+
 def newMax (self : MachineState) (addr : UInt256) (numOctets : WordSize) : ℕ :=
-  max self.maxAddress (Rat.ceil ((addr.1 + numOctets) / 32)).toNat
+  M self.activeWords addr.1 numOctets
 
 -- def updateMemory (self : MachineState) (addr v : UInt256) (numOctets : WordSize := WordSize.Standard) : MachineState :=
 --   { self with memory := let addrs   := List.range 32 |>.map (·+addr)
 --                         let inserts := addrs.zipWith (λ k v m ↦ RBMap.insert m k v) (toBytes! v)
 --                         inserts.foldl (flip id) self.memory
---               maxAddress := self.newMax addr numOctets }
+--               activeWords := self.newMax addr numOctets }
 
 def x : ByteArray := "hello".toUTF8
 def y : ByteArray := "kokusho".toUTF8
@@ -39,24 +50,26 @@ def updateMemory (self : MachineState) (addr v : UInt256) (numOctets : WordSize 
     --   (dest    := self.memory)
     --   (destOff := addr)
     --   (len     := numOctets) -- TODO - this will need an interface a'la `ByteArray.extract'`.
-      maxAddress := self.newMax addr numOctets
+      activeWords := self.newMax addr numOctets
   }
 
 def copyMemory (self : MachineState) (source : ByteArray) (s n : Nat) : MachineState :=
   -- dbg_trace "copyMemory"
   -- dbg_trace s!"current mem: {self.memory} source: {source} s: {s} n: {n}"
+  let maxAddress := self.activeWords * 32
+  let len := if s + n < maxAddress then n else min source.size n
   { self with
       memory :=
         self.memory.writeMemory
           source
           (addr := s)
-          (len := n)
+          len
       -- ByteArray.copySlice' (src     := source)
       --                                       (srcOff  := 0)
       --                                       (dest    := self.memory)
       --                                       (destOff := s)
       --                                       (len     := n)
-      maxAddress := self.newMax (s + n) WordSize.Standard
+      activeWords := self.newMax (s + n) WordSize.Standard
   }
 
 -- /--
@@ -98,6 +111,10 @@ def lookupMemory (self : MachineState) (addr : UInt256) : UInt256 :=
 TODO - Currently a debug version.
 -/
 def lookupMemoryRange (self : MachineState) (addr size : UInt256) : ByteArray := -- dbg_trace s!"lookupMemoryRange addr: {addr} size: {size}"
+  let size :=
+    if size > 2^35 then
+      panic! s!"Can not handle reding byte arrays larger than 2^35 ({2^35})"
+    else size
   self.memory.readMemory addr size
   -- extract' addr (addr + size)
 
@@ -128,14 +145,12 @@ def lookupMemoryRange (self : MachineState) (addr size : UInt256) : ByteArray :=
 --   lookupMemoryRange''_aux self addr .empty size
 
 def msize (self : MachineState) : UInt256 :=
-  self.maxAddress
+  self.activeWords * 32
 
 def mload (self : MachineState) (spos : UInt256) : UInt256 × MachineState :=
   let val := self.lookupMemory spos
-  let rem := (spos + 32) % 32
-  let divided := (spos + 32) / 32
-  let maxAddress' := max self.maxAddress (if rem == 0 then divided else divided + 1)
-  (val, {self with maxAddress := maxAddress'})
+  let activeWords' := newMax self spos WordSize.Standard
+  (val, {self with activeWords := activeWords'})
 
 def mstore (self : MachineState) (spos sval : UInt256) : MachineState :=
   self.updateMemory spos sval
@@ -149,16 +164,6 @@ def mcopy (self : MachineState) (mstart datastart s : UInt256) : MachineState :=
 
 def gas (self : MachineState) : UInt256 :=
   self.gasAvailable
-
--- Apendix H, (320)
-def M (s f l : UInt256) : UInt256 :=
-  match l with
-  | 0 => s
-  | l =>
-    -- ⌈ (f + l) ÷ 32 ⌉
-    let rem := (f + l) % 32
-    let divided := (f + l) / 32
-    max s (if rem == 0 then divided else divided + 1)
 
 end Memory
 
@@ -185,8 +190,8 @@ def returndatacopy (self : MachineState) (mstart rstart s : UInt256) : Option Ma
 
 def evmReturn (self : MachineState) (mstart s : UInt256) : MachineState :=
   let vals := self.returnData.extract' mstart.val s.val
-  let maxAddress' := M self.maxAddress mstart s
-  {self with maxAddress := maxAddress'}.setReturnData vals
+  let activeWords' := M self.activeWords mstart s
+  {self with activeWords := activeWords'}.setReturnData vals
 
 def evmRevert (self : MachineState) (mstart s : UInt256) : MachineState :=
   self.evmReturn mstart s
@@ -199,8 +204,8 @@ def keccak256 (self : MachineState) (mstart s : UInt256) : UInt256 × MachineSta
   -- dbg_trace s!"got vals {vals}"
   let kec := KEC vals
   -- dbg_trace s!"got kec {kec}"
-  let maxAddress' := M self.maxAddress mstart s
-  (fromBytesBigEndian kec.data.data, {self with maxAddress := maxAddress'})
+  let activeWords' := M self.activeWords mstart s
+  (fromBytesBigEndian kec.data.data, {self with activeWords := activeWords'})
 
 section Gas
 

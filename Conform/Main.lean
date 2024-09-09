@@ -39,7 +39,14 @@ def log (testFile : System.FilePath) (testName : String) (result : TestResult) :
 def main : IO Unit := do
   let testFiles ←
     Array.filter isTestFile <$>
-      System.FilePath.walkDir ("EthereumTests/BlockchainTests/GeneralStateTests/VMTests/vmArithmeticTest")
+      System.FilePath.walkDir
+        (enter := λ path ↦ -- exclude the following files:
+          pure
+            (   path != "EthereumTests/BlockchainTests/GeneralStateTests/stCallCodes"
+             && path != "EthereumTests/BlockchainTests/GeneralStateTests/stCallDelegateCodesHomestead"
+            )
+        )
+        ("EthereumTests/BlockchainTests")
 
   -- let testFiles := #[SimpleFile]
   -- let testFiles := #[BuggyFile]

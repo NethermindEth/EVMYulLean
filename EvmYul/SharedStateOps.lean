@@ -78,7 +78,7 @@ def logOp (μ₀ μ₁ : UInt256) (t : List UInt256) (sState : SharedState) : Su
     let Iₐ := sState.executionEnv.codeOwner
     let mem := sState.toMachineState.lookupMemoryRange μ₀ μ₁
     let logSeries' := sState.toState.substate.logSeries.push (Iₐ, t, mem)
-    let μᵢ' := MachineState.M sState.maxAddress μ₀ μ₁
+    let μᵢ' := MachineState.M sState.activeWords μ₀ μ₁
     ({sState.substate with logSeries := logSeries'}, μᵢ')
 
 end SharedState
