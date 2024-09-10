@@ -76,7 +76,7 @@
   {"url": "https://github.com/NethermindEth/Lean4UtilMemset.git",
    "type": "git",
    "subDir": null,
-   "rev": "8f6404f6fa7f4a9783e52d2ae782011383970bbf",
+   "rev": "40ad3dd1dc42bc1c46f41a691e86a77171391f18",
    "name": "FastMemset",
    "manifestFile": "lake-manifest.json",
    "inputRev": null,
