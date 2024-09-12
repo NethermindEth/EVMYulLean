@@ -36,6 +36,14 @@ open EvmYul.Conform in
 def log (testFile : System.FilePath) (testName : String) (result : TestResult) : IO Unit :=
   IO.FS.withFile logFile .append λ h ↦ h.putStrLn s!"{testFile.fileName.get!}[{testName}] - {result}\n"
 
+/-
+Cancun 3m24
+Pyspecs 18m5
+Shanghai 0m45
+stArgsZeroOneBalance 1m57
+stAttackTest 0m16
+stBadOpcode
+-/
 def main : IO Unit := do
   let testFiles ←
     Array.filter isTestFile <$>

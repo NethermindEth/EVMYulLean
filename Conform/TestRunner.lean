@@ -37,6 +37,8 @@ def VerySlowTests : Array String :=
   , "operationDiffGas_d9g0v0_Cancun"
   , "besuBaseFeeBug_Cancun"
   , "logRevert_Cancun"
+  , "costRevert_d15g0v0_Cancun"
+  , "static_callWithHighValueAndGasOOG_d1g0v0_Cancun"
     -- "sha3_d5g0v0_Cancun", -- best guess: `lookupMemoryRange'{'}{''}` are slow; I guess we will need an faster structure than Finmap
     -- "sha3_d6g0v0_Cancun" -- same problem as `sha3_d5g0v0_Cancun` I'm guessing
   ]
