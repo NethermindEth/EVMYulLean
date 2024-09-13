@@ -32,9 +32,9 @@ def y : ByteArray := "kokusho".toUTF8
 def writeBytes (self : MachineState) (source : ByteArray) (addr : UInt256) (size : ℕ) : MachineState :=
   -- dbg_trace "writeBytes"
   -- dbg_trace s!"current mem: {self.memory} source: {source} s: {s} n: {n}"
-  let maxAddress := self.activeWords * 32
+  let maxPracticalAddress := self.activeWordsWritten * 32
   let practicalSize₁ := min source.size size
-  let practicalSize₂ : ℕ := maxAddress.val - (addr + practicalSize₁).val
+  let practicalSize₂ : ℕ := maxPracticalAddress.val - (addr + practicalSize₁).val
   { self with
       memory :=
         self.memory.writeMemory
@@ -42,6 +42,7 @@ def writeBytes (self : MachineState) (source : ByteArray) (addr : UInt256) (size
           addr
           (practicalSize₁ + practicalSize₂)
       activeWords := self.newMax addr size
+      activeWordsWritten := self.newMax addr practicalSize₁
   }
 
 def writeWord (self : MachineState) (addr val : UInt256) : MachineState :=
@@ -71,8 +72,8 @@ def readBytes (self : MachineState) (addr size : UInt256) : ByteArray × Machine
     if size > 2^35 then
       panic! s!"Can not handle reding byte arrays larger than 2^35 ({2^35})"
     else size
-  let maxAddress := self.activeWords * 32
-  let practicalLastAddr := min maxAddress (addr + size)
+  let maxPracticalAddress := self.activeWordsWritten * 32
+  let practicalLastAddr := min maxPracticalAddress (addr + size)
   let practicalSize : ℕ := practicalLastAddr.val - addr.val
   let bytes := self.memory.readMemory addr practicalSize ++ ByteArray.zeroes ⟨size.val - practicalSize⟩
   let newMachineState := { self with activeWords := self.newMax addr size}

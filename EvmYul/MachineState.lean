@@ -24,10 +24,11 @@ The partial shared `MachineState` `μ`. Section 9.4.1.
 - `returnData`   `o` - Data from the previous call from the current environment.
 -/
 structure MachineState where
-  gasAvailable : UInt256
-  activeWords  : UInt256
-  memory       : Memory
-  returnData   : ByteArray
+  gasAvailable        : UInt256
+  activeWords         : UInt256
+  activeWordsWritten  : UInt256
+  memory              : Memory
+  returnData          : ByteArray
   deriving Inhabited
 
 -- inductive WordSize := | Standard | Single
