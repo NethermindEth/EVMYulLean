@@ -86,7 +86,7 @@ def main : IO Unit := do
             --  && path != "EthereumTests/BlockchainTests/GeneralStateTests/stEIP1559"
             )
         )
-        ("EthereumTests/BlockchainTests/GeneralStateTests/VMTests")
+        ("EthereumTests/BlockchainTests")
 
   -- let testFiles := #[SimpleFile]
   -- let testFiles := #[BuggyFile]
