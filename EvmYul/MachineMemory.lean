@@ -20,8 +20,6 @@ abbrev Memory := HashMap ℕ ByteArray
 
 def indexInterval (i : ℕ) : ℕ := i / SIZE
 
--- #eval ByteArray.copySlice default 0 ⟨#[1]⟩ 0 10
-
 def Memory.writeMemory (self : Memory) (source : ByteArray) (addr len : ℕ) : Memory := Id.run do
   if len == 0 then self else
     -- dbg_trace s!"writeMemory {len} bytes at addr {addr} from source of {source.size} bytes"

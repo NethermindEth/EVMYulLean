@@ -42,7 +42,33 @@ Pyspecs 18m5
 Shanghai 0m45
 stArgsZeroOneBalance 1m57
 stAttackTest 0m16
-stBadOpcode
+^^^ old
+stBadOpcode 76m31 -- and we pass almost none
+stBugs 0m23
+stCallDelegateCodesCallCodeHomestead 1m9
+stCallDelegateCodesHomestead 1m5
+stChainId 0m16
+stCodeCopyTest 0m20
+stCodeSizeLimit 0m27
+stCreate2 3m35
+stCreateTest 3m51
+stDelegatecallTestHomestead 1m
+stEIP150singleCodeGasPrices 8m28
+stEIP150Specific 0m38
+stEIP158Specific 0m22
+stEIP1559 17m45
+stEIP2930 1m37
+stEIP3607 0m27
+stExample 1m
+stExtCodeHash 1m32
+stHomesteadSpecific 0m23
+stInitCodeTest 0m42
+stLogTests 1m6
+stMemExpandingEIP150Calls 0m33
+stMemoryStressTest 3m39
+stMemoryTest 10m35
+VMTests 10m16
+
 -/
 def main : IO Unit := do
   let testFiles ←
@@ -51,10 +77,16 @@ def main : IO Unit := do
         (enter := λ path ↦ -- exclude the following files:
           pure
             (   path != "EthereumTests/BlockchainTests/GeneralStateTests/stCallCodes"
-             && path != "EthereumTests/BlockchainTests/GeneralStateTests/stCallDelegateCodesHomestead"
+             && path != "EthereumTests/BlockchainTests/GeneralStateTests/stCallCreateCallCodeTest"
+             && path != "EthereumTests/BlockchainTests/GeneralStateTests/stPreCompiledContracts"
+             && path != "EthereumTests/BlockchainTests/GeneralStateTests/stPreCompiledContracts2"
+
+              -- already tested
+            --  && path != "EthereumTests/BlockchainTests/GeneralStateTests/stEIP150singleCodeGasPrices"
+            --  && path != "EthereumTests/BlockchainTests/GeneralStateTests/stEIP1559"
             )
         )
-        ("EthereumTests/BlockchainTests")
+        ("EthereumTests/BlockchainTests/GeneralStateTests/stRandom")
 
   -- let testFiles := #[SimpleFile]
   -- let testFiles := #[BuggyFile]
@@ -68,7 +100,7 @@ def main : IO Unit := do
   if ←System.FilePath.pathExists logFile then IO.FS.removeFile logFile
 
   for testFile in testFiles do
-    -- dbg_trace s!"File under test: {testFile}"
+    dbg_trace s!"File under test: {testFile}"
     let res ←
       ExceptT.run <|
         EvmYul.Conform.processTestsOfFile

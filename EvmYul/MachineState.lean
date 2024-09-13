@@ -30,13 +30,13 @@ structure MachineState where
   returnData   : ByteArray
   deriving Inhabited
 
-inductive WordSize := | Standard | Single
+-- inductive WordSize := | Standard | Single
 
-def WordSize.toNat (this : WordSize) : ℕ :=
-  match this with
-    | WordSize.Standard => 32
-    | WordSize.Single   => 1
+-- def WordSize.toNat (this : WordSize) : ℕ :=
+--   match this with
+--     | WordSize.Standard => 32
+--     | WordSize.Single   => 1
 
-instance : Coe WordSize Nat := ⟨WordSize.toNat⟩
+-- instance : Coe WordSize Nat := ⟨WordSize.toNat⟩
 
 end EvmYul
