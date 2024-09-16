@@ -10,7 +10,7 @@ namespace EvmYul
 open Batteries
 
 -- I thought 20 is ok
-abbrev exponent := 20
+abbrev exponent := 15
 abbrev SIZE := 2^exponent
 
 abbrev Memory := HashMap ℕ ByteArray
