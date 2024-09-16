@@ -107,7 +107,7 @@ def main : IO Unit := do
         (enter := λ path ↦ -- exclude the following files:
           pure
             (   path != "EthereumTests/BlockchainTests/GeneralStateTests/stCallCodes"
-             && path != "EthereumTests/BlockchainTests/GeneralStateTests/stCallCreateCallCodeTest -"
+             && path != "EthereumTests/BlockchainTests/GeneralStateTests/stCallCreateCallCodeTest"
              && path != "EthereumTests/BlockchainTests/GeneralStateTests/stPreCompiledContracts"
              && path != "EthereumTests/BlockchainTests/GeneralStateTests/stPreCompiledContracts2"
              && path != "EthereumTests/BlockchainTests/GeneralStateTests/stEIP150singleCodeGasPrices"
