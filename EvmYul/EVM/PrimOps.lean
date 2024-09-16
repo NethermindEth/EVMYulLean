@@ -170,8 +170,8 @@ def quaternaryCopyOp
         | _ => .error EVM.Exception.InvalidStackSizeException
 
 private def evmLogOp (evmState : State) (μ₀ μ₁ : UInt256) (t : List UInt256) : State :=
-  let (substate', μᵢ') := SharedState.logOp μ₀ μ₁ t evmState.toSharedState
-  { evmState with substate := substate', maxAddress := μᵢ' }
+  let sharedState' := SharedState.logOp μ₀ μ₁ t evmState.toSharedState
+  { evmState with toSharedState := sharedState'}
 
 def log0Op (debugMode : Bool) : Transformer :=
   λ evmState ↦

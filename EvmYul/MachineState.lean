@@ -1,6 +1,12 @@
+import FastMemset
+
+import Batteries
+
 import EvmYul.Maps.ByteMap
 import EvmYul.UInt256
 import Batteries.Data.HashMap
+import EvmYul.MachineMemory
+
 namespace EvmYul
 
 open Batteries
@@ -14,23 +20,24 @@ instance : DecidableEq ByteArray
 The partial shared `MachineState` `μ`. Section 9.4.1.
 - `gasAvailable` `g`
 - `memory`       `m`
-- `maxAddress`   `i` - # active words (modelled as the highest accessed address).
+- `activeWords`   `i` - # active words.
 - `returnData`   `o` - Data from the previous call from the current environment.
 -/
 structure MachineState where
-  gasAvailable : UInt256
-  maxAddress   : UInt256
-  memory       : ByteArray
-  returnData   : ByteArray
-  deriving BEq, Inhabited, Repr
+  gasAvailable        : UInt256
+  activeWords         : UInt256
+  activeWordsWritten  : UInt256
+  memory              : Memory
+  returnData          : ByteArray
+  deriving Inhabited
 
-inductive WordSize := | Standard | Single
+-- inductive WordSize := | Standard | Single
 
-def WordSize.toNat (this : WordSize) : ℕ :=
-  match this with
-    | WordSize.Standard => 32
-    | WordSize.Single   => 1
+-- def WordSize.toNat (this : WordSize) : ℕ :=
+--   match this with
+--     | WordSize.Standard => 32
+--     | WordSize.Single   => 1
 
-instance : Coe WordSize Nat := ⟨WordSize.toNat⟩
+-- instance : Coe WordSize Nat := ⟨WordSize.toNat⟩
 
 end EvmYul

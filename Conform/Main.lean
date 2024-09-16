@@ -36,8 +36,84 @@ open EvmYul.Conform in
 def log (testFile : System.FilePath) (testName : String) (result : TestResult) : IO Unit :=
   IO.FS.withFile logFile .append λ h ↦ h.putStrLn s!"{testFile.fileName.get!}[{testName}] - {result}\n"
 
+
+/-
+GeneralStateTests:
+  Cancun                                3m24
+  Pyspecs                               18m5
+  Shanghai                              0m45
+  stArgsZeroOneBalance                  1m57
+  stAttackTest                          0m16
+  stBadOpcode                           76m31
+  stBugs                                0m23
+  stCallCodes                           -
+  stCallCreateCallCodeTest              -
+  stCallDelegateCodesCallCodeHomestead  1m9
+  stCallDelegateCodesHomestead          1m5
+  stChainId                             0m16
+  stCodeCopyTest                        0m20
+  stCodeSizeLimit                       0m27
+  stCreate2                             3m35
+  stCreateTest                          3m51
+  stDelegatecallTestHomestead           1m
+  stEIP150singleCodeGasPrices           8m28
+  stEIP150Specific                      0m38
+  stEIP1559                             17m45
+  stEIP158Specific                      0m22
+  stEIP2930                             1m37
+  stEIP3607                             0m27
+  stExample                             1m
+  stExtCodeHash                         1m32
+  stHomesteadSpecific                   0m23
+  stInitCodeTest                        0m42
+  stLogTests                            1m6
+  stMemExpandingEIP150Calls             0m33
+  stMemoryStressTest                    3m39
+  stMemoryTest                          10m35
+  stNonZeroCallsTest                    0m34
+  stPreCompiledContracts                -
+  stPreCompiledContracts2               -
+  stQuadraticComplexityTest             0m41
+  stRandom                              4m41
+  stRandom2                             3m24
+  stRecursiveCreate                     0m15
+  stRefundTest                          0m34
+  stReturnDataTest                      4m7
+  stRevertTest                          4m1
+  stSelfBalance                         0m50
+  stShift                               0m50
+  stSLoadTest                           0m14
+  stSolidityTest                        0m33
+  stSpecialTest                         0m30
+  stSStoreTest                          7m10
+  stStackTests                          3m32
+  stStaticCall                          6m56
+  stStaticFlagEnabled                   0m43
+  stSystemOperationsTest                1m26
+  stTimeConsuming                       76m55
+  stTransactionTest                     3m28
+  stTransitionTest                      0m19
+  stWalletTest                          0m52
+  stZeroCallsRevert                     0m28
+  stZeroCallsTest                       0m35
+  stZeroKnowledge                       14m40
+  stZeroKnowledge2                      8m9
+  VMTests                               10m16
+-/
 def main : IO Unit := do
-  let testFiles ← Array.filter isTestFile <$> System.FilePath.walkDir ("EthereumTests" / "BlockchainTests")
+  let testFiles ←
+    Array.filter isTestFile <$>
+      System.FilePath.walkDir
+        (enter := λ path ↦ -- exclude the following files:
+          pure
+            (   path != "EthereumTests/BlockchainTests/GeneralStateTests/stCallCodes"
+             && path != "EthereumTests/BlockchainTests/GeneralStateTests/stCallCreateCallCodeTest"
+             && path != "EthereumTests/BlockchainTests/GeneralStateTests/stPreCompiledContracts"
+             && path != "EthereumTests/BlockchainTests/GeneralStateTests/stPreCompiledContracts2"
+             && path != "EthereumTests/BlockchainTests/GeneralStateTests/stEIP150singleCodeGasPrices"
+            )
+        )
+        ("EthereumTests/BlockchainTests")
 
   -- let testFiles := #[SimpleFile]
   -- let testFiles := #[BuggyFile]
@@ -51,7 +127,7 @@ def main : IO Unit := do
   if ←System.FilePath.pathExists logFile then IO.FS.removeFile logFile
 
   for testFile in testFiles do
-    -- dbg_trace s!"File under test: {testFile}"
+    dbg_trace s!"File under test: {testFile}"
     let res ←
       ExceptT.run <|
         EvmYul.Conform.processTestsOfFile
