@@ -128,7 +128,7 @@ def mstore (self : MachineState) (spos sval : UInt256) : MachineState :=
   self.writeWord spos sval
 
 def mstore8 (self : MachineState) (spos sval : UInt256) : MachineState :=
-  self.writeWord spos (Fin.ofNat (sval.val % (2^8)))
+  self.writeBytes ⟨#[UInt8.ofNat sval]⟩ spos 1
 
 def mcopy (self : MachineState) (mstart datastart s : UInt256) : MachineState :=
   let (arr, newMachineState) := self.readBytes datastart.val s.val
