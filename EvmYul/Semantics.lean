@@ -367,6 +367,7 @@ def step {τ : OperationType} (debugMode : Bool) (op : Operation τ) : Transform
                       , codeHash := fromBytesBigEndian (KEC code).data.data
                       , storage := default
                       , tstorage := default
+                      , ostorage := default
                       }
                     let yulState' :=
                       yulState.setState <|
@@ -520,6 +521,7 @@ def step {τ : OperationType} (debugMode : Bool) (op : Operation τ) : Transform
                   , codeHash := fromBytesBigEndian (KEC code).data.data
                   , storage := default
                   , tstorage := default
+                  , ostorage := default
                   }
                 let yulState' :=
                   yulState.setState <|

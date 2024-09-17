@@ -11,6 +11,8 @@ import EvmYul.State.AccountOps
 import EvmYul.State.ExecutionEnv
 import EvmYul.State.Substate
 
+import EvmYul.EVM.Exception
+import EvmYul.EVM.Gas
 import EvmYul.EVM.State
 import EvmYul.EVM.StateOps
 import EvmYul.EVM.Exception
@@ -25,6 +27,7 @@ import EvmYul.EllipticCurves
 import EvmYul.UInt256
 
 import Conform.Wheels
+
 open EvmYul.DebuggingAndProfiling
 
 namespace EvmYul
@@ -69,7 +72,13 @@ def argOnNBytesOfInstr : Operation .EVM → ℕ
 
 def N (pc : Nat) (instr : Operation .EVM) := pc.succ + argOnNBytesOfInstr instr
 
-
+-- /--
+-- Computes `μᵢ'`, i.e. the maximum memory touched by `instr`.
+-- -/
+-- def maxMemoryOfInstr (old : μᵢ) (stack : Stack UInt256) (instr : Operation .EVM) : Except EVM.Exception UInt256 :=
+--   match instr with
+--     | .KECCAK256 => _ -- YP: M (μi, μs[0], μs[1])
+--     | _ => _
 
 /--
 Returns the instruction from `arr` at `pc` assuming it is valid.
@@ -91,7 +100,7 @@ def decode (arr : ByteArray) (pc : Nat) :
     else .some (EvmYul.uInt256OfByteArray (arr.extract' pc.succ (pc.succ + argWidth)), argWidth)
   )
 
-def fetchInstr (I : EvmYul.ExecutionEnv) (pc :  UInt256) :
+def fetchInstr (I : EvmYul.ExecutionEnv) (pc : UInt256) :
                Except EVM.Exception (Operation .EVM × Option (UInt256 × Nat)) :=
   decode I.code pc |>.option (.error .InvalidStackSizeException) Except.ok
 
@@ -222,7 +231,6 @@ def step (debugMode : Bool) (fuel : ℕ) (instr : Option (Operation .EVM × Opti
       | .SWAP14 => swap 14 evmState
       | .SWAP15 => swap 15 evmState
       | .SWAP16 => swap 16 evmState
-
       | .CREATE =>
         match evmState.stack.pop3 with
           | some ⟨stack, μ₀, μ₁, μ₂⟩ => do
@@ -352,11 +360,7 @@ def step (debugMode : Bool) (fuel : ℕ) (instr : Option (Operation .EVM × Opti
 
         -- TODO - Note to self. Check how writeWord/writeBytes is implemented. By a cursory look, we play loose with UInt8 -> UInt256 (c.f. e.g. `calldatacopy`) and then the interplay with the WordSize parameter.
         -- TODO - Check what happens when `o = .none`.
-        -- dbg_trace s!"REPORT - μ₅: {μ₅} n: {n} o: {o}"
-        -- dbg_trace "Θ will copy memory now"
         let μ'ₘ := newMachineState.writeBytes (o.getD .empty) μ₅ n -- μ′_m[μs[5]  ... (μs[5] + n − 1)] = o[0 ... (n − 1)]
-        -- dbg_trace s!"μ'ₘ: {μ'ₘ.memory}"
-        -- dbg_trace s!"REPORT - μ'ₘ: {Finmap.pretty μ'ₘ.memory}"
         let μ'ₒ := o -- μ′o = o
         let μ'_g := g' -- TODO gas - μ′g ≡ μg − CCALLGAS(σ, μ, A) + g
 
@@ -651,9 +655,7 @@ def X (debugMode : Bool) (fuel : ℕ) (evmState : State) : Except EVM.Exception 
     | 0 => .ok (evmState, some .empty)
     | .succ f =>
       let I_b := evmState.toState.executionEnv.code
-      -- dbg_trace "X calling decode"
       let instr@(w, _) := decode I_b evmState.pc |>.getD (.STOP, .none)
-      -- dbg_trace s!"Decoded: {w.pretty}"
       let W (w : Operation .EVM) (s : Stack UInt256) : Bool :=
         w ∈ [.CREATE, .CREATE2, .SSTORE, .SELFDESTRUCT, .LOG0, .LOG1, .LOG2, .LOG3, .LOG4] ∨
         (w = .CALL ∧ s.get? 2 ≠ some 0)
@@ -678,15 +680,41 @@ def X (debugMode : Bool) (fuel : ℕ) (evmState : State) : Except EVM.Exception 
         -- dbg_trace "exceptional halting"
         .ok ({evmState with accountMap := ∅}, none)
       else
+        -- TODO - Probably an exceptional gas scenario, as we should have technically checked apriori.
         if w = .REVERT then
-          .ok ({evmState with accountMap := ∅}, some evmState.returnData)
+          .ok ({evmState with accountMap := ∅}, .some evmState.returnData)
         else
+          -- NB we still need to check gas, because `Z` needs to call `C`, which needs `μ'ᵢ`.
+          -- We first call `step` to obtain `μ'ᵢ`, which we then use to compute `C`.
           let evmState' ← step debugMode f instr evmState
-          -- dbg_trace s!"accs: {repr evmState'.accountMap}"
-          -- dbg_trace s!"stack: {evmState'.stack}"
-          match H evmState.toMachineState w with
-            | none => X debugMode f evmState'
-            | some o => .ok <| (evmState', some o)
+          -- NB: (327)
+          -- w := if pc < I.code.size
+          --      then match EVM.decode I.code pc with
+          --             | .none => .STOP
+          --             | .some instr => instr
+          --      else .STOP
+          -- Is not necessary - we have already decoded the instruction,
+          -- and computing with a default `.STOP` that costs 0 is not necessary.
+          -- Maybe we should restructure in a way such that it is more meaningful to compute
+          -- gas independently, but the model has not been set up thusly and it seems
+          -- that neither really was the YP.
+          -- Similarly, we cannot reach a situation in which the stack elements are not available
+          -- on the stack because this is guarded above. As such, `C` can be pure here.
+          let gasCost ← C evmState evmState'.activeWords w
+          if evmState.gasAvailable < gasCost
+          then -- Out of gas. This is a part of `Z`, as such, we have the same return value.
+               .ok ({evmState with accountMap := ∅}, none)
+          else
+            match H evmState.toMachineState w with
+              -- NB in our model, we need the max memory touched of the executed instruction
+              -- before we can check whether there is enough gas to execute the instruction.
+              -- It might turn out to be the case that we need to separate these two
+              -- and compute just the `maxMemory` before doing 'full execution', then check
+              -- the gas cost and only then execute, I am unsure as of right now.
+              -- Interestingly, the YP is defining `C` with parameters that are much 'broader'
+              -- than what is strictly necessary, e.g. we are decoding an instruction, instead of getting one in input.
+              | none => X debugMode f {evmState' with gasAvailable := evmState.gasAvailable - gasCost}
+              | some o => .ok <| (evmState', some o)
  where
   belongs (o : Option ℕ) (l : List ℕ) : Bool :=
     match o with
@@ -705,8 +733,6 @@ def Ξ
     :
   Except EVM.Exception (Batteries.RBSet Address compare × YPState × UInt256 × Substate × Option ByteArray)
 := do
-  -- dbg_trace s!"Ξ fuel: {fuel} σ: {repr σ} g: {g} A: {repr A} I: {repr I}"
-  -- dbg_trace s!"Ξ: code: {repr I.code}"
   match fuel with
     | 0 => .ok (createdAccounts, σ, g, A, some .empty) -- TODO - Gas model
     | .succ f =>
@@ -719,7 +745,8 @@ def Ξ
             createdAccounts := createdAccounts
         }
       let (evmState', o) ← X debugMode f freshEvmState
-      return (evmState'.createdAccounts, evmState'.accountMap, g, evmState'.substate, o) -- TODO - Gas model
+      let finalGas := evmState'.gasAvailable -- TODO(check): Do we need to compute `C` here one more time?
+      return (evmState'.createdAccounts, evmState'.accountMap, finalGas, evmState'.substate, o)
 
 def Lambda
   (debugMode : Bool)
@@ -773,6 +800,7 @@ def Lambda
     , codeHash := fromBytes' (KEC default).data.data
     , storage := default
     , tstorage := default
+    , ostorage := default
     }
 
   let σStar :=
@@ -796,7 +824,7 @@ def Lambda
     }
   match Ξ debugMode f createdAccounts σStar 42 AStar exEnv with -- TODO - Gas model.
     | .error _ => .none
-    | .ok (_, _, _, _, none) => dbg_trace "continue"; .none
+    | .ok (_, _, _, _, none) => .none
     | .ok (createdAccounts', σStarStar, _, AStarStar, some returnedData) =>
       -- EIP-170 (required for EIP-386):
       if H.number ≥ FORK_BLKNUM ∧ returnedData.size > MAX_CODE_SIZE
@@ -1092,6 +1120,7 @@ def Υ (debugMode : Bool) (fuel : ℕ) (σ : YPState) (chainId H_f : ℕ) (H : B
     { senderAccount with
         balance := senderAccount.balance - T.base.gasLimit * p -- (74)
         nonce := senderAccount.nonce + 1 -- (75)
+        ostorage := senderAccount.storage -- Needed for `Csstore`.
     }
   let σ₀ := σ.insert S_T senderAccount -- the checkpoint state (73)
   let accessList := T.getAccessList

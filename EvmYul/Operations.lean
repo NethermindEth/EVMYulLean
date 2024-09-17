@@ -806,13 +806,3 @@ def isZero (a : UInt256) :=
 end EvmYul
 
 open EvmYul
-
--- Apendix H, (320)
-def M (s f l : UInt256) : UInt256 :=
-  match l with
-  | 0 => s
-  | l =>
-    -- ⌈ (f + l) ÷ 32 ⌉
-    let rem := (f + l) % 32
-    let divided := (f + l) / 32
-    max s (if rem == 0 then divided else divided + 1)

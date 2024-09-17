@@ -6,6 +6,8 @@ import EvmYul.State.Substate
 import EvmYul.State.Account
 import EvmYul.State.Block
 
+import EvmYul.Maps.AccountMap
+
 import EvmYul.UInt256
 import EvmYul.Wheels
 
@@ -20,7 +22,7 @@ The `State`. Section 9.3.
 - `remainingGas` `g`
 -/
 structure State where
-  accountMap    : Batteries.RBMap Address Account compare
+  accountMap    : AccountMap
   remainingGas  : ℕ
   substate      : Substate
   executionEnv  : ExecutionEnv
