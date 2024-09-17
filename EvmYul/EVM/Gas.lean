@@ -143,8 +143,8 @@ def Csstore (s : State) : Except EVM.Exception UInt256 := do
   let { stack := μₛ, accountMap := σ, executionEnv.codeOwner := Iₐ, .. } := s
   let .some { storage := σ, ostorage := σ₀, .. } := σ.find? Iₐ | throw .SenderMustExist
   let storeAddr := μₛ[0]!
-  let v₀ := σ₀.find! storeAddr
-  let v := σ.find! storeAddr
+  let v₀ := σ₀.findD storeAddr 0
+  let v := σ.findD storeAddr 0
   let v' := μₛ[1]!
   let loadComponent := if s.substate.accessedStorageKeys.contains (Iₐ, storeAddr) then 0 else Gcoldsload
   let storeComponent := if v = v' || v₀ ≠ v           then Gwarmaccess else

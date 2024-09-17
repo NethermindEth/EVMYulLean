@@ -677,7 +677,7 @@ def X (debugMode : Bool) (fuel : ℕ) (evmState : State) : Except EVM.Exception 
           else none
 
       if Z then
-        -- dbg_trace "exceptional halting"
+        dbg_trace "exceptional halting"
         .ok ({evmState with accountMap := ∅}, none)
       else
         -- TODO - Probably an exceptional gas scenario, as we should have technically checked apriori.
@@ -702,8 +702,11 @@ def X (debugMode : Bool) (fuel : ℕ) (evmState : State) : Except EVM.Exception 
           -- on the stack because this is guarded above. As such, `C` can be pure here.
           let gasCost ← C evmState evmState'.activeWords w
           if evmState.gasAvailable < gasCost
-          then -- Out of gas. This is a part of `Z`, as such, we have the same return value.
-               .ok ({evmState with accountMap := ∅}, none)
+          then
+            -- Out of gas. This is a part of `Z`, as such, we have the same return value.
+            dbg_trace "Out of gass!"
+            dbg_trace s!"gas available: {evmState.gasAvailable}; gas cost: {gasCost}"
+            .ok ({evmState with accountMap := ∅}, none)
           else
             match H evmState.toMachineState w with
               -- NB in our model, we need the max memory touched of the executed instruction
@@ -743,6 +746,7 @@ def Ξ
             executionEnv := I
             substate := A
             createdAccounts := createdAccounts
+            gasAvailable := g
         }
       let (evmState', o) ← X debugMode f freshEvmState
       let finalGas := evmState'.gasAvailable -- TODO(check): Do we need to compute `C` here one more time?
@@ -861,6 +865,7 @@ def Lambda
         .some <| (toBytesBigEndian 255).toByteArray ++ s ++ ζ ++ KEC i
 
 /--
+Message cal
 `σ`  - evm state
 `A`  - accrued substate
 `s`  - sender
@@ -1149,9 +1154,11 @@ def Υ (debugMode : Bool) (fuel : ℕ) (σ : YPState) (chainId H_f : ℕ) (H : B
         let g := T.base.gasLimit /- minus g₀ -/
         match σ₀.find? t with
           | .none => dbg_trace "σ₀.find failed; this should probably not be happening; test semantics will be off."; default
-          | .some v => let (_, σ_P, _,  A, z, _) ← Θ debugMode fuel createdAccounts σ₀ AStar S_T S_T t v.code g p T.base.value T.base.value T.base.data 0 H true
-                      --  dbg_trace "Θ gave back σ_P: {repr σ_P}"
-                       pure (σ_P, A, z)
+          | .some v =>
+            let (_, σ_P, _,  A, z, _) ←
+              Θ debugMode fuel createdAccounts σ₀ AStar S_T S_T t v.code g p T.base.value T.base.value T.base.data 0 H true
+              --  dbg_trace "Θ gave back σ_P: {repr σ_P}"
+            pure (σ_P, A, z)
   let σStar := σ_P -- we don't model gas yet
   let σ' := A.selfDestructSet.1.foldl Batteries.RBMap.erase σStar -- (87)
   let deadAccounts := A.touchedAccounts.filter (State.dead σStar ·)

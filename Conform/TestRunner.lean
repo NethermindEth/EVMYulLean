@@ -132,20 +132,20 @@ private def almostBEqButNotQuiteEvmYulState (s₁ s₂ : EvmYul.State) : Except 
   -- dbg_trace repr s₁.accountMap
   -- dbg_trace "got"
   -- dbg_trace repr s₂.accountMap
-  if s₁ == s₂ then .ok true else throw "state mismatch"
-  -- if s₁.accountMap == s₂.accountMap then .ok true else throw "state mismatch: accountMap"
-  -- if s₁.remainingGas == s₂.remainingGas then .ok true else throw "state mismatch: remainingGas"
-  -- if s₁.substate == s₂.substate then .ok true else throw "state mismatch: substate"
-  -- if s₁.executionEnv == s₂.executionEnv then .ok true else throw "state mismatch: executionEnv"
-  -- if s₁.blocks == s₂.blocks then .ok true else throw "state mismatch: blocks"
-  -- if s₁.keccakMap == s₂.keccakMap then .ok true else throw "state mismatch: keccakMap"
-  -- if s₁.keccakRange == s₂.keccakRange then .ok true else throw "state mismatch: keccakRange"
-  -- if s₁.usedRange == s₂.usedRange then .ok true else throw "state mismatch: usedRange"
-  -- if s₁.hashCollision == s₂.hashCollision then .ok true else throw "state mismatch: hashCollision"
-  -- if s₁.createdAccounts == s₂.createdAccounts then .ok true else throw "state mismatch: createdAccounts"
+  -- if s₁ == s₂ then .ok true else throw "state mismatch"
+  if s₁.accountMap == s₂.accountMap then .ok true else throw "state mismatch: accountMap"
+  if s₁.remainingGas == s₂.remainingGas then .ok true else throw "state mismatch: remainingGas"
+  if s₁.substate == s₂.substate then .ok true else throw "state mismatch: substate"
+  if s₁.executionEnv == s₂.executionEnv then .ok true else throw "state mismatch: executionEnv"
+  if s₁.blocks == s₂.blocks then .ok true else throw "state mismatch: blocks"
+  if s₁.keccakMap == s₂.keccakMap then .ok true else throw "state mismatch: keccakMap"
+  if s₁.keccakRange == s₂.keccakRange then .ok true else throw "state mismatch: keccakRange"
+  if s₁.usedRange == s₂.usedRange then .ok true else throw "state mismatch: usedRange"
+  if s₁.hashCollision == s₂.hashCollision then .ok true else throw "state mismatch: hashCollision"
+  if s₁.createdAccounts == s₂.createdAccounts then .ok true else throw "state mismatch: createdAccounts"
   where bashState (s : EvmYul.State) : EvmYul.State :=
     { s with
-      accountMap := s.accountMap.map (λ (addr, acc) ↦ (addr, { acc with balance := TODO }))
+      accountMap := s.accountMap.map (λ (addr, acc) ↦ (addr, { acc with balance := TODO, ostorage := TODO }))
       executionEnv.perm := TODO
       substate.accessedAccounts := TODO
       substate.accessedStorageKeys := TODO }
@@ -219,7 +219,7 @@ def executeTransactions (blocks : Blocks) (s₀ : EVM.State) : Except EVM.Except
               SYSTEM_ADDRESS
               BEACON_ROOTS_ADDRESS
               beaconRootsAddressCode
-              0 -- to be 30000000
+              30000000
               0xe8d4a51000
               0
               0
@@ -233,6 +233,7 @@ def executeTransactions (blocks : Blocks) (s₀ : EVM.State) : Except EVM.Except
               accountMap := σ
               substate := substate
             }
+    -- dbg_trace "\nStarting transactions"
     let s ← block.transactions.foldlM
       (λ s trans ↦
         try
@@ -269,7 +270,9 @@ def preImpliesPost (pre : Pre) (post : Post) (blocks : Blocks) : Except EVM.Exce
   try
     let result ← executeTransactions blocks pre.toEVMState
     match almostBEqButNotQuite post.toEVMState result with
-      | .error _ => pure (.some result) -- Feel free to inspect this error from `almostBEqButNotQuite`.
+      | .error e =>
+        dbg_trace e
+        pure (.some result) -- Feel free to inspect this error from `almostBEqButNotQuite`.
       | .ok _ => pure .none
   catch | .ExpectedException _ => pure .none -- An expected exception was thrown, which means the test is ok.
         | e                    => throw e
