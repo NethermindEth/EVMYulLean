@@ -243,21 +243,37 @@ def step (debugMode : Bool) (fuel : ℕ) (instr : Option (Operation .EVM × Opti
             let Iₒ := evmState.executionEnv.sender
             let Iₑ := evmState.executionEnv.depth
             let Λ := Lambda debugMode f evmState.createdAccounts evmState.accountMap evmState.toState.substate Iₐ Iₒ I.gasPrice μ₀ i (Iₑ + 1) ζ I.header I.perm
-            let (a, evmState', z, o) : (Address × EVM.State × Bool × ByteArray) :=
+            let (a, evmState', g', z, o)
+                  : (Address × EVM.State × UInt256 × Bool × ByteArray)
+              :=
               if μ₀ ≤ (evmState.accountMap.find? Iₐ |>.option 0 Account.balance) ∧ Iₑ < 1024 then
                 match Λ with
-                  | some (a, cA, σ', A', z, o) =>
-                    (a, {evmState with accountMap := σ', substate := A', createdAccounts := cA}, z, o)
-                  | none => (0, evmState, False, .empty)
+                  | some (a, cA, σ', g', A', z, o) =>
+                    ( a
+                    , { evmState with
+                          accountMap := σ'
+                          substate := A'
+                          createdAccounts := cA
+                      }
+                    , g'
+                    , z
+                    , o
+                    )
+                  | none => (0, evmState, 0, False, .empty)
               else
-                (0, evmState, False, .empty)
+                (0, evmState, 0, False, .empty)
             let x :=
               let balance := evmState.accountMap.find? a |>.option 0 Account.balance
                 if z = false ∨ Iₑ = 1024 ∨ μ₀ < balance then 0 else a
             let newReturnData : ByteArray := if z = false then .empty else o
             let evmState' :=
               {evmState' with
-                toMachineState := {newMachineState with returnData := newReturnData}
+                toMachineState :=
+                  { newMachineState with
+                      returnData := newReturnData
+                      gasAvailable :=
+                        evmState'.gasAvailable - L (evmState'.gasAvailable) + g'
+                  }
               }
             .ok <| evmState'.replaceStackAndIncrPC (evmState.stack.push x)
           | _ =>
@@ -281,21 +297,25 @@ def step (debugMode : Bool) (fuel : ℕ) (instr : Option (Operation .EVM × Opti
                 evmState.createdAccounts
                 evmState.accountMap
                 evmState.toState.substate Iₐ Iₒ I.gasPrice μ₀ i (Iₑ + 1) ζ I.header I.perm
-            let (a, evmState', z, o) : (Address × EVM.State × Bool × ByteArray) :=
+            let (a, evmState', g', z, o) : (Address × EVM.State × UInt256 × Bool × ByteArray) :=
               if μ₀ ≤ (evmState.accountMap.find? Iₐ |>.option 0 Account.balance) ∧ Iₑ < 1024 then
                 match Λ with
-                  | some (a, cA, σ', A', z, o) =>
-                    (a, {evmState with accountMap := σ', substate := A', createdAccounts := cA}, z, o)
-                  | none => (0, evmState, False, .empty)
+                  | some (a, cA, σ', g', A', z, o) =>
+                    (a, {evmState with accountMap := σ', substate := A', createdAccounts := cA}, g', z, o)
+                  | none => (0, evmState, 0, False, .empty)
               else
-                (0, evmState, False, .empty)
+                (0, evmState, 0, False, .empty)
             let x :=
               let balance := evmState.accountMap.find? a |>.option 0 Account.balance
                 if z = false ∨ Iₑ = 1024 ∨ μ₀ < balance then 0 else a
             let newReturnData : ByteArray := if z = false then .empty else o
             let evmState' :=
               {evmState' with
-                toMachineState := {newMachineState with returnData := newReturnData}
+                toMachineState :=
+                  { newMachineState with
+                      returnData := newReturnData
+                      gasAvailable := evmState'.gasAvailable - L (evmState'.gasAvailable) + g'
+                  }
               }
             .ok <| evmState'.replaceStackAndIncrPC (evmState.stack.push x)
           | _ =>
@@ -768,7 +788,15 @@ def Lambda
   (H : BlockHeader) -- "I_H has no special treatment and is determined from the blockchain"
   (w : Bool)
   :
-  Option (Address × Batteries.RBSet Address compare × YPState × Substate × Bool × ByteArray)
+  Option
+    ( Address
+    × Batteries.RBSet Address compare
+    × YPState
+    × UInt256
+    × Substate
+    × Bool
+    × ByteArray
+    )
 :=
   match fuel with
     | 0 => dbg_trace "nofuel"; .none
@@ -829,7 +857,7 @@ def Lambda
   match Ξ debugMode f createdAccounts σStar 42 AStar exEnv with -- TODO - Gas model.
     | .error _ => .none
     | .ok (_, _, _, _, none) => .none
-    | .ok (createdAccounts', σStarStar, _, AStarStar, some returnedData) =>
+    | .ok (createdAccounts', σStarStar, gStarStar, AStarStar, some returnedData) =>
       -- EIP-170 (required for EIP-386):
       if H.number ≥ FORK_BLKNUM ∧ returnedData.size > MAX_CODE_SIZE
         -- TODO: out of gas error
@@ -843,13 +871,15 @@ def Lambda
         F₀ ∨ σStarStar != ∅ ∨ returnedData.size > 24576
           ∨ returnedData = ⟨⟨(0xef :: returnedData.data.toList.tail)⟩⟩
       let fail := F || σStarStar == ∅
+      let c := GasConstants.Gcodedeposit * returnedData.size
+      let g' := if F then 0 else gStarStar - c
       let σ' :=
         if fail then σ
           else if State.dead σStarStar a then σStarStar.erase a -- TODO - why was this Finmap.extract that threw away the extracted value? @Andrei
             else σStarStar.insert a {newAccount with code := returnedData}
       let A' := if fail then AStar else AStarStar
       let z := not fail
-      .some (a, createdAccounts', σ', A', z, returnedData)
+      .some (a, createdAccounts', σ', g', A', z, returnedData)
  where
   L_A (s : Address) (n : UInt256) (ζ : Option ByteArray) (i : ByteArray) :
     Option ByteArray
@@ -1112,11 +1142,35 @@ def Υ (debugMode : Bool) (fuel : ℕ) (σ : YPState) (chainId H_f : ℕ) (H : B
 := do
   let S_T ← checkTransactionGetSender σ chainId H_f T dbgOverrideSender
   -- "here can be no invalid transactions from this point"
+  let g₀ := -- (64)
+    let g₀_data :=
+      T.base.data.foldl
+        (λ acc b ↦
+          acc +
+            if b == 0 then
+              GasConstants.Gtxdatazero
+            else GasConstants.Gtxdatanonzero
+        )
+        0
+    let g₀_create :=
+      if T.base.recipient == none then
+        GasConstants.Gtxcreate + R T.base.data.size
+      else 0
+    let g₀_accessList :=
+      T.getAccessList.foldl
+        (λ acc (_, s) ↦
+          acc + GasConstants.Gaccesslistaddress + s.size * GasConstants.Gaccessliststorage
+        )
+        0
+    g₀_data + g₀_create + GasConstants.Gtransaction + g₀_accessList
+
   let senderAccount := (σ.find? S_T).get!
-  let f := -- (67)
+  -- The priority fee (67)
+  let f :=
     match T with
       | .legacy t | .access t => t.gasPrice - H_f
       | .dynamic t => min t.maxPriorityFeePerGas (t.maxFeePerGas - H_f)
+  -- The effective gas price
   let p := -- (66)
     match T with
       | .legacy t | .access t => t.gasPrice
@@ -1142,24 +1196,29 @@ def Υ (debugMode : Bool) (fuel : ℕ) (σ : YPState) (chainId H_f : ℕ) (H : B
   let AStar := -- (77)
     { A0 with accessedAccounts := AStarₐ, accessedStorageKeys := Batteries.RBSet.ofList AStar_K Substate.storageKeysCmp}
   let createdAccounts : Batteries.RBSet Address compare := .empty
-  let (σ_P, A, z) ← -- (76)
+  let (/- provisional state -/ σ_P, g', A, z) ← -- (76)
     match T.base.recipient with
       | none => do
-        let (_, _, σ_P, A, z, _) :=
+        let (_, _, σ_P, g', A, z, _) :=
           match Lambda debugMode fuel createdAccounts σ₀ AStar S_T S_T p T.base.value T.base.data 0 none H true with
             | .none => dbg_trace "Lambda returned none; this should probably not be happening; test semantics will be off."; default
             | .some x => x
-        pure (σ_P, A, z)
+        pure (σ_P, g', A, z)
       | some t =>
-        let g := T.base.gasLimit /- minus g₀ -/
+        let g := T.base.gasLimit - g₀ -- (81)
         match σ₀.find? t with
           | .none => dbg_trace "σ₀.find failed; this should probably not be happening; test semantics will be off."; default
           | .some v =>
-            let (_, σ_P, _,  A, z, _) ←
+            let (_, σ_P, g',  A, z, _) ←
               Θ debugMode fuel createdAccounts σ₀ AStar S_T S_T t v.code g p T.base.value T.base.value T.base.data 0 H true
               --  dbg_trace "Θ gave back σ_P: {repr σ_P}"
-            pure (σ_P, A, z)
-  let σStar := σ_P -- we don't model gas yet
+            pure (σ_P, g', A, z)
+  -- The amount to be refunded (82)
+  let gStar := g' + min ((T.base.gasLimit - g') / 5) A.refundBalance
+  -- The pre-final state (83)
+  let σStar :=
+    σ_P.increaseBalance S_T (gStar * p)
+    |>.increaseBalance H.beneficiary (T.base.gasLimit - gStar * f)
   let σ' := A.selfDestructSet.1.foldl Batteries.RBMap.erase σStar -- (87)
   let deadAccounts := A.touchedAccounts.filter (State.dead σStar ·)
   let σ' := deadAccounts.foldl RBMap.erase σ' -- (88)

@@ -145,7 +145,9 @@ private def almostBEqButNotQuiteEvmYulState (s₁ s₂ : EvmYul.State) : Except 
   if s₁.createdAccounts == s₂.createdAccounts then .ok true else throw "state mismatch: createdAccounts"
   where bashState (s : EvmYul.State) : EvmYul.State :=
     { s with
-      accountMap := s.accountMap.map (λ (addr, acc) ↦ (addr, { acc with balance := TODO, ostorage := TODO }))
+      accountMap :=
+        s.accountMap.map
+          λ (addr, acc) ↦ (addr, { acc with ostorage := TODO, tstorage := TODO })
       executionEnv.perm := TODO
       substate.accessedAccounts := TODO
       substate.accessedStorageKeys := TODO }

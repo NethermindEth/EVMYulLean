@@ -113,7 +113,7 @@ def main : IO Unit := do
              && path != "EthereumTests/BlockchainTests/GeneralStateTests/stEIP150singleCodeGasPrices"
             )
         )
-        ("EthereumTests/BlockchainTests")
+        ("EthereumTests/BlockchainTests/GeneralStateTests/VMTests/vmArithmeticTest")
 
   -- let testFiles := #[SimpleFile]
   -- let testFiles := #[BuggyFile]
@@ -131,7 +131,7 @@ def main : IO Unit := do
     let res ←
       ExceptT.run <|
         EvmYul.Conform.processTestsOfFile
-          -- (whitelist := #["add_d0g0v0_Cancun"])
+          (whitelist := #["add_d0g0v0_Cancun"])
           -- (whitelist := #["add_d1g0v0_Cancun"])
           -- (whitelist := #["add_d3g0v0_Cancun"])
           -- (whitelist := #["add_d4g0v0_Cancun"])
