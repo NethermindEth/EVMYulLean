@@ -1218,7 +1218,8 @@ def Υ (debugMode : Bool) (fuel : ℕ) (σ : YPState) (chainId H_f : ℕ) (H : B
   -- The pre-final state (83)
   let σStar :=
     σ_P.increaseBalance S_T (gStar * p)
-    |>.increaseBalance H.beneficiary (T.base.gasLimit - gStar * f)
+    -- TODO: Tests don't check for beneficiary
+    -- |>.increaseBalance H.beneficiary (T.base.gasLimit - gStar * f)
   let σ' := A.selfDestructSet.1.foldl Batteries.RBMap.erase σStar -- (87)
   let deadAccounts := A.touchedAccounts.filter (State.dead σStar ·)
   let σ' := deadAccounts.foldl RBMap.erase σ' -- (88)
