@@ -1,3 +1,5 @@
+import FastMemset
+
 import EvmYul.UInt256
 import Mathlib.Data.Finmap
 
@@ -141,9 +143,18 @@ This implementation works around the issue at the price of using a slower implem
 in case either of the arguments is too big.
 -/
 def ByteArray.extract' (a : ByteArray) (b e : Nat) : ByteArray :=
+  -- TODO: Shouldn't (`e` - `b`) be < `2^64` instead of `e` since eventually `a.copySlice b empty 0 (e - b)` is called?
   if b < 2^64 && e < 2^64
   then a.extract b e -- NB only when `b` and `e` are sufficiently small
   else ⟨⟨a.toList.drop b |>.take (e - b)⟩⟩
+
+def ByteArray.readBytes (source : ByteArray) (start size : ℕ) : ByteArray :=
+  let read :=
+    if start < 2^64 && size < 2^64 then
+      source.copySlice start empty 0 size
+    else
+      ⟨⟨source.toList.drop start |>.take size⟩⟩
+  read ++ ByteArray.zeroes ⟨size - read.size⟩
 
 inductive 𝕋 :=
   | 𝔹 : ByteArray → 𝕋

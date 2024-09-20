@@ -49,10 +49,13 @@ def execQuadOp (debugMode : Bool) (f : Primop.Quaternary) : Transformer :=
       | _ =>
         .error .InvalidStackSizeException
 
-def executionEnvOp (op : ExecutionEnv → UInt256) : Transformer :=
-  λ evmState ↦
+def executionEnvOp (debugMode : Bool) (op : ExecutionEnv → UInt256) : Transformer :=
+  λ evmState ↦ Id.run do
+    let result := op evmState.executionEnv
+    if debugMode then
+      dbg_trace s!"result: {result}"
     .ok <|
-      evmState.replaceStackAndIncrPC (evmState.stack.push <| op evmState.executionEnv)
+      evmState.replaceStackAndIncrPC (evmState.stack.push result)
 
 def machineStateOp (op : MachineState → UInt256) : Transformer :=
   λ evmState ↦

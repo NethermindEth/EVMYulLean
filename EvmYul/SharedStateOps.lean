@@ -34,14 +34,15 @@ def writeWord (self : SharedState) (addr v : UInt256) : SharedState :=
 def writeBytes (self : SharedState) (source : ByteArray) (s n : Nat) : SharedState :=
   { self with toMachineState := self.toMachineState.writeBytes source s n }
 
-def calldatacopy (self : SharedState) (mstart datastart s : UInt256) : SharedState :=
-  let arr := self.toState.executionEnv.inputData.extract' datastart.val s.val
+def calldatacopy (self : SharedState) (mstart datastart size : UInt256) : SharedState :=
+  let arr := self.toState.executionEnv.inputData.readBytes datastart.val size.val
   -- dbg_trace s!"{arr}"
-  self.writeBytes arr mstart s
+  self.writeBytes arr mstart size
 
-def codeCopy (self : SharedState) (mstart cstart s : UInt256) : SharedState :=
-  let Ib := self.toState.executionEnv.code.extract' cstart.val s.val -- TODO(double check, changed in a fast-and-loose manner)
-  self.writeBytes Ib mstart s
+def codeCopy (self : SharedState) (mstart cstart size : UInt256) : SharedState :=
+  let Ib := self.toState.executionEnv.code.readBytes cstart.val size.val -- TODO(double check, changed in a fast-and-loose manner)
+  -- dbg_trace s!"code: {toHex Ib}"
+  self.writeBytes Ib mstart size
 
 -- def extCodeCopy (self : SharedState) (acc mstart cstart s : UInt256) : SharedState :=
 --   dbg_trace s!"mstart: {mstart} cstart: {cstart} s: {s}"
@@ -58,18 +59,12 @@ def codeCopy (self : SharedState) (mstart cstart s : UInt256) : SharedState :=
 /--
 TODO - wrong
 -/
-def extCodeCopy' (self : SharedState) (acc mstart cstart s : UInt256) : SharedState :=
-  if 2^16 < s then dbg_trace s!"TODO - extCodeCopy called on a state which does _not_ recognise the address {acc} and with too big size: {s}; currently, this fails silently"; self else
+def extCodeCopy' (self : SharedState) (acc mstart cstart size : UInt256) : SharedState :=
+  if 2^16 < size then dbg_trace s!"TODO - extCodeCopy called on a state which does _not_ recognise the address {acc} and with too big size: {size}; currently, this fails silently"; self else
   let addr := Address.ofUInt256 acc
-  let sState' : SharedState :=
-    match self.toState.lookupAccount addr with
-    | .some act1 =>
-      let Ib := act1.code.extract' cstart.val s.val
-      self.writeBytes Ib mstart s
-    | _ => let zeroes := Array.mkArray s 0
-           self.writeBytes ⟨zeroes⟩ mstart s
-          -- TODO - Probably a bug, although zeroes need copying (I think?) so maybe we can address it somehow elsewhere
-           -- Might need to write some FFI for this; need an array of 2^160 bytes that does not crash Lean.
+  let b : ByteArray := self.toState.lookupAccount addr |>.option .empty Account.code
+  let b : ByteArray := b.extract' cstart (cstart + size)
+  let sState' := (self.writeBytes b mstart size)
   {sState' with toState.substate := .addAccessedAccount self.toState.substate addr}
 
 end Memory

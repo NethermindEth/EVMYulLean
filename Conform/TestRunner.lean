@@ -34,6 +34,10 @@ def VerySlowTests : Array String :=
   , "callcallcallcode_001_OOGMAfter_d0g0v0_Cancun"
   , "callcallcallcode_001_OOGMBefore_d0g0v0_Cancun"
   , "CreateOOGafterInitCodeRevert_d0g0v0_Cancun"
+  , "CREATE2_Bounds2_d0g0v0_Cancun"
+  , "CREATE2_Bounds2_d0g1v0_Cancun"
+  , "CREATE2_Bounds_d0g0v0_Cancun"
+  , "CREATE2_Bounds_d0g1v0_Cancun"
   , "operationDiffGas_d9g0v0_Cancun"
   , "besuBaseFeeBug_Cancun"
   , "logRevert_Cancun"
@@ -69,7 +73,6 @@ def Pre.toEVMState (self : Pre) : EVM.State :=
         nonce    := acc.nonce
         balance  := acc.balance
         code     := acc.code
-        codeHash := 0 -- TODO - We can of course compute this but we probably do not need this.
         storage  := acc.storage.toEvmYulStorage
         ostorage := acc.storage.toEvmYulStorage -- Remember the original storage.
       }
@@ -147,7 +150,14 @@ private def almostBEqButNotQuiteEvmYulState (s₁ s₂ : EvmYul.State) : Except 
     { s with
       accountMap :=
         s.accountMap.map
-          λ (addr, acc) ↦ (addr, { acc with ostorage := TODO, tstorage := TODO })
+          λ (addr, acc) ↦
+            ( addr
+            , { acc with
+                  ostorage := TODO
+                  tstorage := TODO
+                  -- TODO: We do need to check for balance
+                  balance := TODO }
+            )
       executionEnv.perm := TODO
       substate.accessedAccounts := TODO
       substate.accessedStorageKeys := TODO }
@@ -290,7 +300,7 @@ instance (priority := high) : Repr AccountMap := ⟨λ m _ ↦
     let mut result := ""
     for (k, v) in m do
       result := result ++ s!"\nAccount[...{(EvmYul.toHex k.toByteArray) |>.takeRight 5}]\n"
-      result := result ++ s!"balance: {v.balance}\nstorage: \n"
+      result := result ++ s!"balance: {v.balance}\nnonce: {v.nonce}\ncode: {EvmYul.toHex v.code}\nstorage: \n"
       for (sk, sv) in v.storage do
         result := result ++ s!"{sk} → {sv}\n"
     return result⟩

@@ -100,6 +100,7 @@ GeneralStateTests:
   stZeroKnowledge2                      8m9
   VMTests                               10m16
 -/
+
 def main : IO Unit := do
   let testFiles ←
     Array.filter isTestFile <$>
@@ -113,7 +114,7 @@ def main : IO Unit := do
              && path != "EthereumTests/BlockchainTests/GeneralStateTests/stEIP150singleCodeGasPrices"
             )
         )
-        ("EthereumTests/BlockchainTests/GeneralStateTests/VMTests/vmArithmeticTest")
+        ("EthereumTests/BlockchainTests/GeneralStateTests/stCreate2")
 
   -- let testFiles := #[SimpleFile]
   -- let testFiles := #[BuggyFile]
@@ -127,11 +128,11 @@ def main : IO Unit := do
   if ←System.FilePath.pathExists logFile then IO.FS.removeFile logFile
 
   for testFile in testFiles do
-    dbg_trace s!"File under test: {testFile}"
+    -- dbg_trace s!"File under test: {testFile}"
     let res ←
       ExceptT.run <|
         EvmYul.Conform.processTestsOfFile
-          (whitelist := #["add_d0g0v0_Cancun"])
+          -- (whitelist := #["create2checkFieldsInInitcode_d0g0v0_Cancun"])
           -- (whitelist := #["add_d1g0v0_Cancun"])
           -- (whitelist := #["add_d3g0v0_Cancun"])
           -- (whitelist := #["add_d4g0v0_Cancun"])
