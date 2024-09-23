@@ -545,7 +545,7 @@ def step (debugMode : Bool) (fuel : ℕ) (instr : Option (Operation .EVM × Opti
             let t : Address := Address.ofUInt256 μ₁ -- t ≡ μs[1] mod 2^160
             -- dbg_trace s!"DBG REMOVE; Calling address: {t}"
             let A' := evmState.addAccessedAccount t |>.substate -- A' ≡ A except A'ₐ ≡ Aₐ ∪ {t}
-            let .some tDirect := evmState.accountMap.find? evmState.executionEnv.source | default
+            let .some tDirect := evmState.accountMap.find? t | default
             let tDirect := tDirect.code -- We use the code directly without an indirection a'la `codeMap[t]`.
             -- dbg_trace s!"looking up memory range: {evmState.toMachineState.readBytes μ₃ μ₄}"
             let (i, newMachineState) := evmState.toMachineState.readBytes μ₃ μ₄ -- m[μs[3] . . . (μs[3] + μs[4] − 1)]
@@ -556,7 +556,7 @@ def step (debugMode : Bool) (fuel : ℕ) (instr : Option (Operation .EVM × Opti
                 (createdAccounts := evmState.createdAccounts)
                 (σ  := evmState.accountMap)             -- σ in  Θ(σ, ..)
                 (A  := A')                              -- A* in Θ(.., A*, ..)
-                (s  := evmState.executionEnv.source) -- Iₐ in Θ(.., Iₐ, ..)
+                (s  := evmState.executionEnv.source) -- Iₛ in Θ(.., Iₐ, ..)
                 (o  := evmState.executionEnv.sender)    -- Iₒ in Θ(.., Iₒ, ..)
                 (r  := evmState.executionEnv.codeOwner)                               -- t in Θ(.., t, ..)
                 (c  := tDirect)                         -- t in Θ(.., t, ..) except 'dereferenced'
@@ -979,8 +979,7 @@ def Lambda
   L_A (s : Address) (n : UInt256) (ζ : Option ByteArray) (i : ByteArray) :
     Option ByteArray
   := -- (96)
-    let s := BE s
-    let s := ByteArray.zeroes ⟨20 - s.size⟩ ++ s
+    let s := s.toByteArray
     let n := BE n
     match ζ with
       | none   => RLP <| .𝕃 [.𝔹 s, .𝔹 n]
