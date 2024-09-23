@@ -183,7 +183,7 @@ def Csload (μₛ : Stack UInt256) (A : Substate) (I : ExecutionEnv) : UInt256 :
 /--
 (331)
 -/
-def L (n : UInt256) := n - (n / 64 : ℚ).floor
+def L (n : UInt256) := n.val - (n.val / 64)
 
 /--
 NB Assumes stack coherence.

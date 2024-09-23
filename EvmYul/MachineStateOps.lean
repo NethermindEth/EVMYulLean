@@ -144,6 +144,9 @@ section ReturnData
 def setReturnData (self : MachineState) (r : ByteArray) : MachineState :=
   { self with returnData := r }
 
+def setHReturn (self : MachineState) (r : ByteArray) : MachineState :=
+  { self with H_return := r }
+
 def returndatasize (self : MachineState) : UInt256 :=
   self.returnData.size
 
@@ -159,9 +162,9 @@ def returndatacopy (self : MachineState) (mstart rstart size : UInt256) : Option
     let rdata := self.returnData.readBytes rstart.val size.val
     self.writeBytes rdata mstart size
 
-def evmReturn (self : MachineState) (mstart s : UInt256) : MachineState :=
+def evmReturn (self : MachineState) (mstart s : UInt256) : MachineState := Id.run do
   let (bytes, newMachineState) := self.readBytes mstart.val s.val
-  newMachineState.setReturnData bytes
+  newMachineState.setHReturn bytes
 
 def evmRevert (self : MachineState) (mstart s : UInt256) : MachineState :=
   self.evmReturn mstart s

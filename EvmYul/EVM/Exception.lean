@@ -41,6 +41,7 @@ inductive Exception where
   | Overflow                          : Exception
   | StopInvoked (s : EVM.State)       : Exception
   | OutOfFuel                         : Exception
+  | OutOfGass                         : Exception
   | InvalidTransaction :
           InvalidTransactionException → Exception
   | ReceiverNotInAccounts (a : Address) : Exception
@@ -61,6 +62,7 @@ instance : Repr Exception where
                     | .Overflow                          => "Overflow"
                     | .StopInvoked _                     => "Execution halted by STOP."
                     | .OutOfFuel                         => "OutOfFuel"
+                    | .OutOfGass                         => "OutOfGass"
                     | .InvalidTransaction e              => "InvalidTransaction: " ++ repr e
                     | .ReceiverNotInAccounts (a : Address) => s!"ReceiverNotInAccounts: {a}"
                     | .InvalidWithdrawal s               => s!"InvalidWithdrawal: {s}"

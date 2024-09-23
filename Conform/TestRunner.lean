@@ -58,6 +58,7 @@ def VerySlowTests : Array String :=
   , "walletConstruction_d0g0v0_Cancun"
   , "walletConstruction_d0g1v0_Cancun"
   , "walletConstructionPartial_d0g0v0_Cancun"
+  , "randomStatetest177_d0g0v0_Cancun"
     -- "sha3_d5g0v0_Cancun", -- best guess: `lookupMemoryRange'{'}{''}` are slow; I guess we will need an faster structure than Finmap
     -- "sha3_d6g0v0_Cancun" -- same problem as `sha3_d5g0v0_Cancun` I'm guessing
   ]
@@ -300,7 +301,7 @@ instance (priority := high) : Repr AccountMap := ⟨λ m _ ↦
     let mut result := ""
     for (k, v) in m do
       result := result ++ s!"\nAccount[...{(EvmYul.toHex k.toByteArray) |>.takeRight 5}]\n"
-      result := result ++ s!"balance: {v.balance}\nnonce: {v.nonce}\ncode: {EvmYul.toHex v.code}\nstorage: \n"
+      result := result ++ s!"balance: {v.balance}\nnonce: {v.nonce}\nstorage: \n"
       for (sk, sv) in v.storage do
         result := result ++ s!"{sk} → {sv}\n"
     return result⟩

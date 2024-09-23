@@ -49,6 +49,7 @@ namespace EvmYul
 
 namespace UInt256
 
+
 def add (a b : UInt256) : UInt256 := a.1 + b.1
 def sub (a b : UInt256) : UInt256 := a.1 - b.1
 def mul (a b : UInt256) : UInt256 := a.1 * b.1
@@ -58,8 +59,8 @@ def modn (a : UInt256) (n : ℕ) : UInt256 := Fin.modn a.1 n
 def land (a b : UInt256) : UInt256 := Fin.land a.1 b.1
 def lor (a b : UInt256) : UInt256 := Fin.lor a.1 b.1
 def xor (a b : UInt256) : UInt256 := Fin.xor a.1 b.1
-def shiftLeft (a b : UInt256) : UInt256 := a.1 <<< (modn b 256).1
-def shiftRight (a b : UInt256) : UInt256 := a.1 >>> (modn b 256).1
+def shiftLeft (a b : UInt256) : UInt256 := if a >= 256 then 0 else b <<< a
+def shiftRight (a b : UInt256) : UInt256 := if a >= 256 then 0 else b >>> a
 -- def lt (a b : UInt256) : Prop := a.1 < b.1
 -- def le (a b : UInt256) : Prop := a.1 ≤ b.1
 def log2 (a : UInt256) : UInt256 := Fin.log2 a.1

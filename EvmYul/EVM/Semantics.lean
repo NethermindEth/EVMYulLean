@@ -284,6 +284,8 @@ def step (debugMode : Bool) (fuel : ℕ) (instr : Option (Operation .EVM × Opti
               let balance := σ.find? a |>.option 0 Account.balance
                 if z = false ∨ Iₑ = 1024 ∨ μ₀ < balance then 0 else a
             let newReturnData : ByteArray := if z = false then .empty else o
+            if evmState'.gasAvailable + g' < L (evmState'.gasAvailable) then
+              .error .OutOfGass
             let evmState' :=
               {evmState' with
                 toMachineState :=
@@ -339,6 +341,8 @@ def step (debugMode : Bool) (fuel : ℕ) (instr : Option (Operation .EVM × Opti
               let balance := σ.find? a |>.option 0 Account.balance
                 if z = false ∨ Iₑ = 1024 ∨ μ₀ < balance then 0 else a
             let newReturnData : ByteArray := if z = false then .empty else o
+            if evmState'.gasAvailable + g' < L (evmState'.gasAvailable) then
+              .error .OutOfGass
             let evmState' :=
               {evmState' with
                 toMachineState :=
@@ -742,7 +746,7 @@ def X (debugMode : Bool) (fuel : ℕ) (evmState : State) : Except EVM.Exception 
 
       let H (μ : MachineState) (w : Operation .EVM) : Option ByteArray :=
         if w ∈ [.RETURN, .REVERT] then
-          some μ.returnData
+          some <| μ.H_return
         else
           if w ∈ [.STOP, .SELFDESTRUCT] then
             some .empty
@@ -773,6 +777,7 @@ def X (debugMode : Bool) (fuel : ℕ) (evmState : State) : Except EVM.Exception 
           -- Similarly, we cannot reach a situation in which the stack elements are not available
           -- on the stack because this is guarded above. As such, `C` can be pure here.
           let gasCost ← C evmState evmState'.activeWords w
+          -- dbg_trace s!"gasCost: {gasCost}, gasAvailable: {evmState.gasAvailable}"
           if evmState.gasAvailable < gasCost
           then
             -- Out of gas. This is a part of `Z`, as such, we have the same return value.
@@ -780,7 +785,7 @@ def X (debugMode : Bool) (fuel : ℕ) (evmState : State) : Except EVM.Exception 
             dbg_trace s!"gas available: {evmState.gasAvailable}; gas cost: {gasCost}"
             .ok ({evmState with accountMap := ∅}, none)
           else
-            match H evmState.toMachineState w with
+            match H evmState'.toMachineState w with -- The YP does this in a weird way.
               -- NB in our model, we need the max memory touched of the executed instruction
               -- before we can check whether there is enough gas to execute the instruction.
               -- It might turn out to be the case that we need to separate these two
@@ -789,7 +794,8 @@ def X (debugMode : Bool) (fuel : ℕ) (evmState : State) : Except EVM.Exception 
               -- Interestingly, the YP is defining `C` with parameters that are much 'broader'
               -- than what is strictly necessary, e.g. we are decoding an instruction, instead of getting one in input.
               | none => X debugMode f {evmState' with gasAvailable := evmState.gasAvailable - gasCost}
-              | some o => .ok <| (evmState', some o)
+              | some o =>
+                .ok <| (evmState', some o)
  where
   belongs (o : Option ℕ) (l : List ℕ) : Bool :=
     match o with
@@ -875,6 +881,10 @@ def Lambda
   let a : Address := -- (94) (95)
     (KEC lₐ).extract 12 32 /- 160 bits = 20 bytes -/
       |>.data.data |> fromBytesBigEndian |> Fin.ofNat
+  -- dbg_trace s!"addr: {toHex a.toByteArray}"
+  -- dbg_trace s!"s: {toHex s.toByteArray}"
+  -- dbg_trace s!"n: {toHex (BE n)}"
+  -- dbg_trace s!"code: {toHex i}"
   let createdAccounts := createdAccounts.insert a
 
   -- A* (97)

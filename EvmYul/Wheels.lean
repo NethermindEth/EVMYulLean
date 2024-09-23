@@ -31,8 +31,7 @@ instance {n : Nat} : OfNat Address n := ⟨Fin.ofNat n⟩
 
 def toByteArray (a : Address) : ByteArray :=
   let b := BE a
-  let l := b.size
-  .append ⟨⟨List.replicate (20 - l) 0⟩⟩ (BE a)
+  ByteArray.zeroes ⟨20 - b.size⟩ ++ b
 
 end Address
 

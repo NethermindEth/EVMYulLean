@@ -44,7 +44,12 @@ GeneralStateTests:
   Shanghai                              0m45
   stArgsZeroOneBalance                  1m57
   stAttackTest                          0m16
-  stBadOpcode                           76m31
+  stBadOpcode                           66m45
+    Total tests: 4249
+    The post was NOT equal to the resulting state: 4239
+    Succeeded: 10
+    Success rate of: 0.235349
+
   stBugs                                0m23
   stCallCodes                           -
   stCallCreateCallCodeTest              -
@@ -114,7 +119,7 @@ def main : IO Unit := do
              && path != "EthereumTests/BlockchainTests/GeneralStateTests/stEIP150singleCodeGasPrices"
             )
         )
-        ("EthereumTests/BlockchainTests/GeneralStateTests/stCreate2")
+        ("EthereumTests/BlockchainTests/GeneralStateTests/stTimeConsuming")
 
   -- let testFiles := #[SimpleFile]
   -- let testFiles := #[BuggyFile]
@@ -132,7 +137,7 @@ def main : IO Unit := do
     let res ←
       ExceptT.run <|
         EvmYul.Conform.processTestsOfFile
-          -- (whitelist := #["create2checkFieldsInInitcode_d0g0v0_Cancun"])
+          -- (whitelist := #["create2InitCodes_d1g0v0_Cancun"])
           -- (whitelist := #["add_d1g0v0_Cancun"])
           -- (whitelist := #["add_d3g0v0_Cancun"])
           -- (whitelist := #["add_d4g0v0_Cancun"])
