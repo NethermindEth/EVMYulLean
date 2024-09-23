@@ -470,7 +470,7 @@ def step (debugMode : Bool) (fuel : ℕ) (instr : Option (Operation .EVM × Opti
                 (A  := A')                              -- A* in Θ(.., A*, ..)
                 (s  := evmState.executionEnv.codeOwner) -- Iₐ in Θ(.., Iₐ, ..)
                 (o  := evmState.executionEnv.sender)    -- Iₒ in Θ(.., Iₒ, ..)
-                (r  := t)                               -- t in Θ(.., t, ..)
+                (r  := evmState.executionEnv.codeOwner)                               -- t in Θ(.., t, ..)
                 (c  := tDirect)                         -- t in Θ(.., t, ..) except 'dereferenced'
                 (g  := μ₀)                              -- TODO gas - CCALLGAS(σ, μ, A)
                 (p  := evmState.executionEnv.gasPrice)  -- Iₚ in Θ(.., Iₚ, ..)
@@ -980,6 +980,7 @@ def Lambda
     Option ByteArray
   := -- (96)
     let s := BE s
+    let s := ByteArray.zeroes ⟨20 - s.size⟩ ++ s
     let n := BE n
     match ζ with
       | none   => RLP <| .𝕃 [.𝔹 s, .𝔹 n]
