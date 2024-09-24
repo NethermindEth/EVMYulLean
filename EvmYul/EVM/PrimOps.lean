@@ -11,10 +11,12 @@ namespace EVM
 
 def Transformer := EVM.State → Except EVM.Exception EVM.State
 
-def execUnOp (f : Primop.Unary) : Transformer :=
+def execUnOp (debugMode : Bool) (f : Primop.Unary) : Transformer :=
   λ s ↦
     match s.stack.pop with
-      | some ⟨stack, μ₀⟩ =>
+      | some ⟨stack, μ₀⟩ => Id.run do
+        if debugMode then
+          dbg_trace s!"called with μ₀: {μ₀}"
         .ok <| s.replaceStackAndIncrPC (stack.push <| f μ₀)
       | _ =>
         .error .InvalidStackSizeException

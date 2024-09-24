@@ -251,7 +251,7 @@ private def C' (s : State) (instr : Operation .EVM) : Except EVM.Exception UInt2
       if w ∈ Wlow then Glow else
       if w ∈ Wmid then Gmid else
       if w ∈ Whigh then Ghigh else
-      dbg_trace s!"TODO - C called with an unknown instruction."; 42
+      dbg_trace s!"TODO - C called with an unknown instruction: {w.pretty}"; 42
 
 /--
 H.1. Gas Cost

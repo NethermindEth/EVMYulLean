@@ -778,8 +778,7 @@ def X (debugMode : Bool) (fuel : ℕ) (evmState : State) : Except EVM.Exception 
           -- on the stack because this is guarded above. As such, `C` can be pure here.
           let gasCost ← C evmState evmState'.activeWords w
           -- dbg_trace s!"gasCost: {gasCost}, gasAvailable: {evmState.gasAvailable}"
-          if evmState.gasAvailable < gasCost
-          then
+          if evmState.gasAvailable < gasCost then
             -- Out of gas. This is a part of `Z`, as such, we have the same return value.
             dbg_trace "Out of gass!"
             dbg_trace s!"gas available: {evmState.gasAvailable}; gas cost: {gasCost}"
@@ -794,8 +793,7 @@ def X (debugMode : Bool) (fuel : ℕ) (evmState : State) : Except EVM.Exception 
               -- Interestingly, the YP is defining `C` with parameters that are much 'broader'
               -- than what is strictly necessary, e.g. we are decoding an instruction, instead of getting one in input.
               | none => X debugMode f {evmState' with gasAvailable := evmState.gasAvailable - gasCost}
-              | some o =>
-                .ok <| (evmState', some o)
+              | some o => .ok <| (evmState', some o)
  where
   belongs (o : Option ℕ) (l : List ℕ) : Bool :=
     match o with
@@ -1321,10 +1319,14 @@ def Υ (debugMode : Bool) (fuel : ℕ) (σ : YPState) (chainId H_f : ℕ) (H : B
   -- The pre-final state (83)
   let σStar :=
     σ_P.increaseBalance S_T (gStar * p)
-    -- TODO: Tests don't check for beneficiary
-    -- |>.increaseBalance H.beneficiary (T.base.gasLimit - gStar * f)
-  let σ' := A.selfDestructSet.1.foldl Batteries.RBMap.erase σStar -- (87)
-  let deadAccounts := A.touchedAccounts.filter (State.dead σStar ·)
+    -- TODO: Tests don't check for beneficiary?
+  let beneficiaryFee := (T.base.gasLimit - gStar) * f
+  let σStar' :=
+    if beneficiaryFee != 0 then
+      σStar.increaseBalance H.beneficiary beneficiaryFee
+    else σStar
+  let σ' := A.selfDestructSet.1.foldl Batteries.RBMap.erase σStar' -- (87)
+  let deadAccounts := A.touchedAccounts.filter (State.dead σStar' ·)
   let σ' := deadAccounts.foldl RBMap.erase σ' -- (88)
   .ok (σ', A, z)
 end EVM

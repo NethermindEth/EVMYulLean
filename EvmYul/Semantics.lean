@@ -41,9 +41,9 @@ private def dispatchInvalid (τ : OperationType) : Transformer τ :=
     | .EVM => λ _ ↦ .error EVM.Exception.InvalidInstruction
     | .Yul => λ _ _ ↦ .error Yul.Exception.InvalidInstruction
 
-private def dispatchUnary (τ : OperationType) : Primop.Unary → Transformer τ :=
+private def dispatchUnary (debugMode : Bool) (τ : OperationType) : Primop.Unary → Transformer τ :=
   match τ with
-    | .EVM => EVM.execUnOp
+    | .EVM => EVM.execUnOp debugMode
     | .Yul => Yul.execUnOp
 
 private def dispatchBinary (debugMode : Bool) (τ : OperationType) : Primop.Binary → Transformer τ :=
@@ -213,7 +213,7 @@ def step {τ : OperationType} (debugMode : Bool) (op : Operation τ) : Transform
     | τ, .EQ =>
       dispatchBinary debugMode τ UInt256.eq
     | τ, .ISZERO =>
-      dispatchUnary τ UInt256.isZero
+      dispatchUnary debugMode τ UInt256.isZero
     | τ, .AND =>
       dispatchBinary debugMode τ UInt256.land
     | τ, .OR =>
@@ -221,12 +221,12 @@ def step {τ : OperationType} (debugMode : Bool) (op : Operation τ) : Transform
     | τ, .XOR =>
       dispatchBinary debugMode τ UInt256.xor
     | τ, .NOT =>
-      dispatchUnary τ UInt256.lnot
+      dispatchUnary debugMode τ UInt256.lnot
     | τ, .BYTE =>
       dispatchBinary debugMode τ UInt256.byteAt
-    | τ, .SHL =>
+    | τ, .SHL => -- TODO: different argument order for EVM and Yul?
       dispatchBinary debugMode τ UInt256.shiftLeft
-    | τ, .SHR =>
+    | τ, .SHR => -- TODO: different argument order for EVM and Yul?
       dispatchBinary debugMode τ UInt256.shiftRight
     | τ, .SAR =>
       dispatchBinary debugMode τ UInt256.sar
