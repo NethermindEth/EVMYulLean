@@ -95,7 +95,12 @@ GeneralStateTests:
   stStaticCall                          6m56
   stStaticFlagEnabled                   0m43
   stSystemOperationsTest                1m26
-  stTimeConsuming                       76m55
+  stTimeConsuming                       81m20
+    Total tests: 5190
+    The post was NOT equal to the resulting state: 2
+    Succeeded: 5188
+    Success rate of: 99.961464
+
   stTransactionTest                     3m28
   stTransitionTest                      0m19
   stWalletTest                          0m52
