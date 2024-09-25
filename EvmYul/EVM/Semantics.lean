@@ -753,7 +753,7 @@ def X (debugMode : Bool) (fuel : ℕ) (evmState : State) : Except EVM.Exception 
           else none
 
       if Z then
-        dbg_trace "exceptional halting"
+        -- dbg_trace "exceptional halting"
         .ok ({evmState with accountMap := ∅}, none)
       else
         -- TODO - Probably an exceptional gas scenario, as we should have technically checked apriori.
@@ -780,8 +780,8 @@ def X (debugMode : Bool) (fuel : ℕ) (evmState : State) : Except EVM.Exception 
           -- dbg_trace s!"gasCost: {gasCost}, gasAvailable: {evmState.gasAvailable}"
           if evmState.gasAvailable < gasCost then
             -- Out of gas. This is a part of `Z`, as such, we have the same return value.
-            dbg_trace "Out of gass!"
-            dbg_trace s!"gas available: {evmState.gasAvailable}; gas cost: {gasCost}"
+            -- dbg_trace "Out of gass!"
+            -- dbg_trace s!"gas available: {evmState.gasAvailable}; gas cost: {gasCost}"
             .ok ({evmState with accountMap := ∅}, none)
           else
             match H evmState'.toMachineState w with -- The YP does this in a weird way.

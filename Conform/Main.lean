@@ -7,7 +7,7 @@ def SimpleFile := "EthereumTests/BlockchainTests/GeneralStateTests/VMTests/vmAri
 -- def BuggyFile := "EthereumTests/BlockchainTests/GeneralStateTests/VMTests/vmArithmeticTest/exp.json"
 def BuggyFile := "Conform/testfile.json"
 -- def BuggyFile := "EthereumTests/BlockchainTests/GeneralStateTests/VMTests/vmTests/calldatacopy.json"
-def SpecificFile := "EthereumTests/BlockchainTests/GeneralStateTests/Pyspecs/cancun/eip4844_blobs/correct_increasing_blob_gas_costs.json"
+def SpecificFile := "EthereumTests/BlockchainTests/GeneralStateTests/stCreateTest/CREATE_ContractRETURNBigOffset.json"
 
 def TestsSubdir := "BlockchainTests"
 def isTestFile (file : System.FilePath) : Bool := file.extension.option false (· == "json")
@@ -69,13 +69,17 @@ GeneralStateTests:
     Succeeded: 0
     Success rate of: 0.000000
 
-  stBadOpcode                           66m45
+  stBadOpcode                           75m51
     Total tests: 4249
-    The post was NOT equal to the resulting state: 4239
-    Succeeded: 10
-    Success rate of: 0.235349
+    The post was NOT equal to the resulting state: 574
+    Succeeded: 3675
+    Success rate of: 86.490939
 
   stBugs                                0m23
+    Total tests: 9
+    The post was NOT equal to the resulting state: 2
+    Succeeded: 7
+    Success rate of: 77.777778
 
   stCallCodes                           -
 
@@ -95,9 +99,17 @@ GeneralStateTests:
 
   stCodeSizeLimit                       0m27
 
-  stCreate2                             3m35
+  stCreate2                             3m28
+    Total tests: 183
+    The post was NOT equal to the resulting state: 114
+    Succeeded: 69
+    Success rate of: 37.704918
 
-  stCreateTest                          3m51
+  stCreateTest                          3m31
+    Total tests: 198
+    The post was NOT equal to the resulting state: 147
+    Succeeded: 51
+    Success rate of: 25.757576
 
   stDelegatecallTestHomestead           1m
 
@@ -133,7 +145,11 @@ GeneralStateTests:
 
   stMemExpandingEIP150Calls             0m33
 
-  stMemoryStressTest                    3m39
+  stMemoryStressTest                    2m46
+    Total tests: 82
+    The post was NOT equal to the resulting state: 3
+    Succeeded: 79
+    Success rate of: 96.341463
 
   stMemoryTest                          4m12
     Total tests: 218
@@ -161,9 +177,17 @@ GeneralStateTests:
 
   stRefundTest                          0m34
 
-  stReturnDataTest                      4m7
+  stReturnDataTest                      4m35
+    Total tests: 273
+    The post was NOT equal to the resulting state: 229
+    Succeeded: 44
+    Success rate of: 16.117216
 
-  stRevertTest                          4m1
+  stRevertTest                          4m54
+    Total tests: 262
+    The post was NOT equal to the resulting state: 61
+    Succeeded: 201
+    Success rate of: 76.717557
 
   stSelfBalance                         0m50
 
@@ -183,7 +207,11 @@ GeneralStateTests:
 
   stStackTests                          3m32
 
-  stStaticCall                          6m56
+  stStaticCall                          7m56
+    Total tests: 469
+    The post was NOT equal to the resulting state: 397
+    Succeeded: 72
+    Success rate of: 15.351812
 
   stStaticFlagEnabled                   0m43
 
@@ -241,7 +269,7 @@ def main : IO Unit := do
     Array.filter isTestFile <$>
       System.FilePath.walkDir
         (enter := λ path ↦ pure <| path ∉ directoryBlacklist)
-        ("EthereumTests/BlockchainTests/GeneralStateTests/stBadOpcode")
+        ("EthereumTests/BlockchainTests/GeneralStateTests/Pyspecs")
 
   -- let testFiles := #[SimpleFile]
   -- let testFiles := #[BuggyFile]
@@ -255,12 +283,12 @@ def main : IO Unit := do
   if ←System.FilePath.pathExists logFile then IO.FS.removeFile logFile
 
   for testFile in testFiles do
-    if testFile ∈ fileBlacklist then continue
-    -- dbg_trace s!"File under test: {testFile}"
+    if fileBlacklist.contains testFile then continue
+    dbg_trace s!"File under test: {testFile}"
     let res ←
       ExceptT.run <|
         EvmYul.Conform.processTestsOfFile
-          -- (whitelist := #["opc2FDiffPlaces_d0g0v0_Cancun"])
+          -- (whitelist := #["opc2FDiffPlaces_d24g0v0_Cancun"])
           -- (whitelist := #["add_d1g0v0_Cancun"])
           -- (whitelist := #["add_d3g0v0_Cancun"])
           -- (whitelist := #["add_d4g0v0_Cancun"])
