@@ -29,7 +29,6 @@ structure Account :=
   nonce    : UInt256
   balance  : UInt256
   code     : ByteArray
-  -- codeHash : UInt256 -- TODO - Probably not needed.
   ostorage : Storage
   storage  : Storage
   tstorage : Storage

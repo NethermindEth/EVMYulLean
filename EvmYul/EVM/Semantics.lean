@@ -1319,7 +1319,6 @@ def Υ (debugMode : Bool) (fuel : ℕ) (σ : YPState) (chainId H_f : ℕ) (H : B
   -- The pre-final state (83)
   let σStar :=
     σ_P.increaseBalance S_T (gStar * p)
-    -- TODO: Tests don't check for beneficiary?
   let beneficiaryFee := (T.base.gasLimit - gStar) * f
   let σStar' :=
     if beneficiaryFee != 0 then
