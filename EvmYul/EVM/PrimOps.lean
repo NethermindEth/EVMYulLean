@@ -11,10 +11,12 @@ namespace EVM
 
 def Transformer := EVM.State → Except EVM.Exception EVM.State
 
-def execUnOp (f : Primop.Unary) : Transformer :=
+def execUnOp (debugMode : Bool) (f : Primop.Unary) : Transformer :=
   λ s ↦
     match s.stack.pop with
-      | some ⟨stack, μ₀⟩ =>
+      | some ⟨stack, μ₀⟩ => Id.run do
+        if debugMode then
+          dbg_trace s!"called with μ₀: {μ₀}"
         .ok <| s.replaceStackAndIncrPC (stack.push <| f μ₀)
       | _ =>
         .error .InvalidStackSizeException
@@ -49,10 +51,13 @@ def execQuadOp (debugMode : Bool) (f : Primop.Quaternary) : Transformer :=
       | _ =>
         .error .InvalidStackSizeException
 
-def executionEnvOp (op : ExecutionEnv → UInt256) : Transformer :=
-  λ evmState ↦
+def executionEnvOp (debugMode : Bool) (op : ExecutionEnv → UInt256) : Transformer :=
+  λ evmState ↦ Id.run do
+    let result := op evmState.executionEnv
+    if debugMode then
+      dbg_trace s!"result: {result}"
     .ok <|
-      evmState.replaceStackAndIncrPC (evmState.stack.push <| op evmState.executionEnv)
+      evmState.replaceStackAndIncrPC (evmState.stack.push result)
 
 def machineStateOp (op : MachineState → UInt256) : Transformer :=
   λ evmState ↦

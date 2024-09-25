@@ -29,6 +29,7 @@ structure MachineState where
   activeWordsWritten  : UInt256
   memory              : Memory
   returnData          : ByteArray
+  H_return            : ByteArray
   deriving Inhabited
 
 -- inductive WordSize := | Standard | Single

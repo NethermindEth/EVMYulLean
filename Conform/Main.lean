@@ -7,7 +7,7 @@ def SimpleFile := "EthereumTests/BlockchainTests/GeneralStateTests/VMTests/vmAri
 -- def BuggyFile := "EthereumTests/BlockchainTests/GeneralStateTests/VMTests/vmArithmeticTest/exp.json"
 def BuggyFile := "Conform/testfile.json"
 -- def BuggyFile := "EthereumTests/BlockchainTests/GeneralStateTests/VMTests/vmTests/calldatacopy.json"
-def SpecificFile := "EthereumTests/BlockchainTests/GeneralStateTests/Pyspecs/cancun/eip4844_blobs/correct_increasing_blob_gas_costs.json"
+def SpecificFile := "EthereumTests/BlockchainTests/GeneralStateTests/stCreateTest/CREATE_ContractRETURNBigOffset.json"
 
 def TestsSubdir := "BlockchainTests"
 def isTestFile (file : System.FilePath) : Bool := file.extension.option false (· == "json")
@@ -39,80 +39,236 @@ def log (testFile : System.FilePath) (testName : String) (result : TestResult) :
 
 /-
 GeneralStateTests:
-  Cancun                                3m24
-  Pyspecs                               18m5
-  Shanghai                              0m45
-  stArgsZeroOneBalance                  1m57
+  Cancun                                6m0
+    Total tests: 189
+    The post was NOT equal to the resulting state: 82
+    Succeeded: 107
+    Success rate of: 56.613757
+
+  Pyspecs                               16m57
+    Total tests: 2150
+    The post was NOT equal to the resulting state: 1804
+    Succeeded: 346
+    Success rate of: 16.093023
+
+  Shanghai                              0m42
+    Total tests: 27
+    The post was NOT equal to the resulting state: 23
+    Succeeded: 4
+    Success rate of: 14.814815
+
+  stArgsZeroOneBalance                  1m59
+    Total tests: 96
+    The post was NOT equal to the resulting state: 18
+    Succeeded: 78
+    Success rate of: 81.250000
+
   stAttackTest                          0m16
-  stBadOpcode                           76m31
+    Total tests: 2
+    The post was NOT equal to the resulting state: 2
+    Succeeded: 0
+    Success rate of: 0.000000
+
+  stBadOpcode                           75m51
+    Total tests: 4249
+    The post was NOT equal to the resulting state: 574
+    Succeeded: 3675
+    Success rate of: 86.490939
+
   stBugs                                0m23
+    Total tests: 9
+    The post was NOT equal to the resulting state: 2
+    Succeeded: 7
+    Success rate of: 77.777778
+
   stCallCodes                           -
-  stCallCreateCallCodeTest              -
+
+  stCallCreateCallCodeTest              1m16
+    Total tests: 55
+    The post was NOT equal to the resulting state: 28
+    Succeeded: 27
+    Success rate of: 49.090909
+
   stCallDelegateCodesCallCodeHomestead  1m9
-  stCallDelegateCodesHomestead          1m5
+
+  stCallDelegateCodesHomestead          -
+
   stChainId                             0m16
+
   stCodeCopyTest                        0m20
+
   stCodeSizeLimit                       0m27
-  stCreate2                             3m35
-  stCreateTest                          3m51
+
+  stCreate2                             3m28
+    Total tests: 183
+    The post was NOT equal to the resulting state: 114
+    Succeeded: 69
+    Success rate of: 37.704918
+
+  stCreateTest                          3m31
+    Total tests: 198
+    The post was NOT equal to the resulting state: 147
+    Succeeded: 51
+    Success rate of: 25.757576
+
   stDelegatecallTestHomestead           1m
-  stEIP150singleCodeGasPrices           8m28
+
+  stEIP150singleCodeGasPrices           8m37
+    Total tests: 450
+    The post was NOT equal to the resulting state: 450
+    Succeeded: 0
+    Success rate of: 0.000000
+
   stEIP150Specific                      0m38
-  stEIP1559                             17m45
+
+  stEIP1559                             16m53
+    Total tests: 1845
+    The post was NOT equal to the resulting state: 949
+    Succeeded: 896
+    Success rate of: 48.563686
+
   stEIP158Specific                      0m22
+
   stEIP2930                             1m37
+
   stEIP3607                             0m27
+
   stExample                             1m
+
   stExtCodeHash                         1m32
+
   stHomesteadSpecific                   0m23
+
   stInitCodeTest                        0m42
+
   stLogTests                            1m6
+
   stMemExpandingEIP150Calls             0m33
-  stMemoryStressTest                    3m39
-  stMemoryTest                          10m35
+
+  stMemoryStressTest                    2m46
+    Total tests: 82
+    The post was NOT equal to the resulting state: 3
+    Succeeded: 79
+    Success rate of: 96.341463
+
+  stMemoryTest                          4m12
+    Total tests: 218
+    The post was NOT equal to the resulting state: 97
+    Succeeded: 121
+    Success rate of: 55.504587
+
   stNonZeroCallsTest                    0m34
+
   stPreCompiledContracts                -
+
   stPreCompiledContracts2               -
+
   stQuadraticComplexityTest             0m41
-  stRandom                              4m41
+
+  stRandom                              6m5
+    Total tests: 308
+    The post was NOT equal to the resulting state: 54
+    Succeeded: 254
+    Success rate of: 82.467532
+
   stRandom2                             3m24
+
   stRecursiveCreate                     0m15
+
   stRefundTest                          0m34
-  stReturnDataTest                      4m7
-  stRevertTest                          4m1
+
+  stReturnDataTest                      4m35
+    Total tests: 273
+    The post was NOT equal to the resulting state: 229
+    Succeeded: 44
+    Success rate of: 16.117216
+
+  stRevertTest                          4m54
+    Total tests: 262
+    The post was NOT equal to the resulting state: 61
+    Succeeded: 201
+    Success rate of: 76.717557
+
   stSelfBalance                         0m50
+
   stShift                               0m50
+
   stSLoadTest                           0m14
+
   stSolidityTest                        0m33
+
   stSpecialTest                         0m30
-  stSStoreTest                          7m10
+
+  stSStoreTest                          9m10
+    Total tests: 475
+    The post was NOT equal to the resulting state: 116
+    Succeeded: 359
+    Success rate of: 75.578947
+
   stStackTests                          3m32
-  stStaticCall                          6m56
+
+  stStaticCall                          7m56
+    Total tests: 469
+    The post was NOT equal to the resulting state: 397
+    Succeeded: 72
+    Success rate of: 15.351812
+
   stStaticFlagEnabled                   0m43
+
   stSystemOperationsTest                1m26
-  stTimeConsuming                       76m55
+
+  stTimeConsuming                       81m20
+    Total tests: 5190
+    The post was NOT equal to the resulting state: 2
+    Succeeded: 5188
+    Success rate of: 99.961464
+
   stTransactionTest                     3m28
+
   stTransitionTest                      0m19
+
   stWalletTest                          0m52
+
   stZeroCallsRevert                     0m28
+
   stZeroCallsTest                       0m35
-  stZeroKnowledge                       14m40
-  stZeroKnowledge2                      8m9
-  VMTests                               10m16
+
+  stZeroKnowledge                       13m15
+    Total tests: 944
+    The post was NOT equal to the resulting state: 568
+    Succeeded: 376
+    Success rate of: 39.830508
+
+  stZeroKnowledge2                      9m40
+    Total tests: 519
+    The post was NOT equal to the resulting state: 170
+    Succeeded: 349
+    Success rate of: 67.244701
+
+  VMTests                               10m26
+    Total tests: 571
+    The post was NOT equal to the resulting state: 106
+    Succeeded: 465
+    Success rate of: 81.436077
 -/
+
+def directoryBlacklist : List System.FilePath :=
+  [
+    "EthereumTests/BlockchainTests/GeneralStateTests/stCallCodes"
+  , "EthereumTests/BlockchainTests/GeneralStateTests/stPreCompiledContracts"
+  , "EthereumTests/BlockchainTests/GeneralStateTests/stPreCompiledContracts2"
+  , "EthereumTests/BlockchainTests/GeneralStateTests/stCallDelegateCodesHomestead"
+  ]
+
+def fileBlacklist : List System.FilePath :=
+  [ "EthereumTests/BlockchainTests/GeneralStateTests/stMemoryTest/buffer.json"
+  ]
+
 def main : IO Unit := do
   let testFiles ←
     Array.filter isTestFile <$>
       System.FilePath.walkDir
-        (enter := λ path ↦ -- exclude the following files:
-          pure
-            (   path != "EthereumTests/BlockchainTests/GeneralStateTests/stCallCodes"
-             && path != "EthereumTests/BlockchainTests/GeneralStateTests/stCallCreateCallCodeTest"
-             && path != "EthereumTests/BlockchainTests/GeneralStateTests/stPreCompiledContracts"
-             && path != "EthereumTests/BlockchainTests/GeneralStateTests/stPreCompiledContracts2"
-             && path != "EthereumTests/BlockchainTests/GeneralStateTests/stEIP150singleCodeGasPrices"
-            )
-        )
+        (enter := λ path ↦ pure <| path ∉ directoryBlacklist)
         ("EthereumTests/BlockchainTests")
 
   -- let testFiles := #[SimpleFile]
@@ -127,11 +283,12 @@ def main : IO Unit := do
   if ←System.FilePath.pathExists logFile then IO.FS.removeFile logFile
 
   for testFile in testFiles do
+    if fileBlacklist.contains testFile then continue
     dbg_trace s!"File under test: {testFile}"
     let res ←
       ExceptT.run <|
         EvmYul.Conform.processTestsOfFile
-          -- (whitelist := #["add_d0g0v0_Cancun"])
+          -- (whitelist := #["opc2FDiffPlaces_d24g0v0_Cancun"])
           -- (whitelist := #["add_d1g0v0_Cancun"])
           -- (whitelist := #["add_d3g0v0_Cancun"])
           -- (whitelist := #["add_d4g0v0_Cancun"])

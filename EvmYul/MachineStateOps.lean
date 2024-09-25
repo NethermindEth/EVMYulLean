@@ -144,25 +144,27 @@ section ReturnData
 def setReturnData (self : MachineState) (r : ByteArray) : MachineState :=
   { self with returnData := r }
 
+def setHReturn (self : MachineState) (r : ByteArray) : MachineState :=
+  { self with H_return := r }
+
 def returndatasize (self : MachineState) : UInt256 :=
   self.returnData.size
 
 def returndataat (self : MachineState) (pos : UInt256) : UInt8 :=
   self.returnData.data.getD pos.val 0
 
-def returndatacopy (self : MachineState) (mstart rstart s : UInt256) : Option MachineState :=
-  let pos := rstart.val + s.val
+def returndatacopy (self : MachineState) (mstart rstart size : UInt256) : Option MachineState :=
+  let pos := rstart.val + size.val
   -- TODO:
   -- "The additions in μₛ[1]+i are not subject to the 2^256 modulo"
   if UInt256.size ≤ pos || self.returndatasize.val ≤ pos then .none
   else
-    let arr := self.returnData
-    let rdata := arr.extract' rstart.val (rstart.val + s.val - 1)
-    self.writeBytes rdata mstart s
+    let rdata := self.returnData.readBytes rstart.val size.val
+    self.writeBytes rdata mstart size
 
-def evmReturn (self : MachineState) (mstart s : UInt256) : MachineState :=
+def evmReturn (self : MachineState) (mstart s : UInt256) : MachineState := Id.run do
   let (bytes, newMachineState) := self.readBytes mstart.val s.val
-  newMachineState.setReturnData bytes
+  newMachineState.setHReturn bytes
 
 def evmRevert (self : MachineState) (mstart s : UInt256) : MachineState :=
   self.evmReturn mstart s

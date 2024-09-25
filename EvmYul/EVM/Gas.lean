@@ -143,8 +143,8 @@ def Csstore (s : State) : Except EVM.Exception UInt256 := do
   let { stack := μₛ, accountMap := σ, executionEnv.codeOwner := Iₐ, .. } := s
   let .some { storage := σ, ostorage := σ₀, .. } := σ.find? Iₐ | throw .SenderMustExist
   let storeAddr := μₛ[0]!
-  let v₀ := σ₀.find! storeAddr
-  let v := σ.find! storeAddr
+  let v₀ := σ₀.findD storeAddr 0
+  let v := σ.findD storeAddr 0
   let v' := μₛ[1]!
   let loadComponent := if s.substate.accessedStorageKeys.contains (Iₐ, storeAddr) then 0 else Gcoldsload
   let storeComponent := if v = v' || v₀ ≠ v           then Gwarmaccess else
@@ -183,7 +183,7 @@ def Csload (μₛ : Stack UInt256) (A : Substate) (I : ExecutionEnv) : UInt256 :
 /--
 (331)
 -/
-def L (n : UInt256) := n - (n / 64 : ℚ).floor
+def L (n : UInt256) := n.val - (n.val / 64)
 
 /--
 NB Assumes stack coherence.
@@ -251,7 +251,8 @@ private def C' (s : State) (instr : Operation .EVM) : Except EVM.Exception UInt2
       if w ∈ Wlow then Glow else
       if w ∈ Wmid then Gmid else
       if w ∈ Whigh then Ghigh else
-      dbg_trace s!"TODO - C called with an unknown instruction."; 42
+      -- TODO: MCOPY, TLOAD, TSTORE, DIFFICULTY
+      dbg_trace s!"TODO - C called with an unknown instruction: {w.pretty}"; 42
 
 /--
 H.1. Gas Cost

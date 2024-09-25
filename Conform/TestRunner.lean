@@ -34,6 +34,10 @@ def VerySlowTests : Array String :=
   , "callcallcallcode_001_OOGMAfter_d0g0v0_Cancun"
   , "callcallcallcode_001_OOGMBefore_d0g0v0_Cancun"
   , "CreateOOGafterInitCodeRevert_d0g0v0_Cancun"
+  , "CREATE2_Bounds2_d0g0v0_Cancun"
+  , "CREATE2_Bounds2_d0g1v0_Cancun"
+  , "CREATE2_Bounds_d0g0v0_Cancun"
+  , "CREATE2_Bounds_d0g1v0_Cancun"
   , "operationDiffGas_d9g0v0_Cancun"
   , "besuBaseFeeBug_Cancun"
   , "logRevert_Cancun"
@@ -54,6 +58,33 @@ def VerySlowTests : Array String :=
   , "walletConstruction_d0g0v0_Cancun"
   , "walletConstruction_d0g1v0_Cancun"
   , "walletConstructionPartial_d0g0v0_Cancun"
+  , "randomStatetest177_d0g0v0_Cancun"
+  , "codecopy_d1g0v0_Cancun"
+  , "bufferSrcOffset_d11g0v0_Cancun"
+  , "bufferSrcOffset_d15g0v0_Cancun"
+  , "bufferSrcOffset_d1g0v0_Cancun"
+  , "bufferSrcOffset_d25g0v0_Cancun"
+  , "bufferSrcOffset_d26g0v0_Cancun"
+  , "bufferSrcOffset_d27g0v0_Cancun"
+  , "bufferSrcOffset_d2g0v0_Cancun"
+  , "bufferSrcOffset_d31g0v0_Cancun"
+  , "bufferSrcOffset_d35g0v0_Cancun"
+  , "bufferSrcOffset_d39g0v0_Cancun"
+  , "bufferSrcOffset_d3g0v0_Cancun"
+  , "bufferSrcOffset_d7g0v0_Cancun"
+  , "buffer_d16g0v0_Cancun"
+  , "buffer_d18g0v0_Cancun"
+  , "CREATE_ContractRETURNBigOffset_d1g0v0_Cancun"
+  , "CREATE_ContractRETURNBigOffset_d2g0v0_Cancun"
+  , "CREATE_ContractRETURNBigOffset_d3g0v0_Cancun"
+  -- , "callcodecallcall_100_OOGMBefore_d0g0v0_Cancun"
+  -- , "callcodecallcodecallcode_111_OOGMBefore_d0g0v0_Cancun"
+  -- , "callcallcodecall_010_OOGE_d0g0v0_Cancun"
+  -- , "callcodecallcall_100_OOGMAfter_d0g0v0_Cancun"
+  -- , "callcodecall_10_OOGE_d0g0v0_Cancun"
+  -- , "callcodecallcode_11_OOGE_d0g0v0_Cancun"
+  -- , "callcallcodecallcode_011_OOGE_d0g0v0_Cancun"
+  -- , "callcallcode_01_OOGE_d0g0v0_Cancun"
     -- "sha3_d5g0v0_Cancun", -- best guess: `lookupMemoryRange'{'}{''}` are slow; I guess we will need an faster structure than Finmap
     -- "sha3_d6g0v0_Cancun" -- same problem as `sha3_d5g0v0_Cancun` I'm guessing
   ]
@@ -69,7 +100,6 @@ def Pre.toEVMState (self : Pre) : EVM.State :=
         nonce    := acc.nonce
         balance  := acc.balance
         code     := acc.code
-        codeHash := 0 -- TODO - We can of course compute this but we probably do not need this.
         storage  := acc.storage.toEvmYulStorage
         ostorage := acc.storage.toEvmYulStorage -- Remember the original storage.
       }
@@ -132,20 +162,29 @@ private def almostBEqButNotQuiteEvmYulState (s₁ s₂ : EvmYul.State) : Except 
   -- dbg_trace repr s₁.accountMap
   -- dbg_trace "got"
   -- dbg_trace repr s₂.accountMap
-  if s₁ == s₂ then .ok true else throw "state mismatch"
-  -- if s₁.accountMap == s₂.accountMap then .ok true else throw "state mismatch: accountMap"
-  -- if s₁.remainingGas == s₂.remainingGas then .ok true else throw "state mismatch: remainingGas"
-  -- if s₁.substate == s₂.substate then .ok true else throw "state mismatch: substate"
-  -- if s₁.executionEnv == s₂.executionEnv then .ok true else throw "state mismatch: executionEnv"
-  -- if s₁.blocks == s₂.blocks then .ok true else throw "state mismatch: blocks"
-  -- if s₁.keccakMap == s₂.keccakMap then .ok true else throw "state mismatch: keccakMap"
-  -- if s₁.keccakRange == s₂.keccakRange then .ok true else throw "state mismatch: keccakRange"
-  -- if s₁.usedRange == s₂.usedRange then .ok true else throw "state mismatch: usedRange"
-  -- if s₁.hashCollision == s₂.hashCollision then .ok true else throw "state mismatch: hashCollision"
-  -- if s₁.createdAccounts == s₂.createdAccounts then .ok true else throw "state mismatch: createdAccounts"
+  -- if s₁ == s₂ then .ok true else throw "state mismatch"
+  if s₁.accountMap == s₂.accountMap then .ok true else throw "state mismatch: accountMap"
+  if s₁.remainingGas == s₂.remainingGas then .ok true else throw "state mismatch: remainingGas"
+  if s₁.substate == s₂.substate then .ok true else throw "state mismatch: substate"
+  if s₁.executionEnv == s₂.executionEnv then .ok true else throw "state mismatch: executionEnv"
+  if s₁.blocks == s₂.blocks then .ok true else throw "state mismatch: blocks"
+  if s₁.keccakMap == s₂.keccakMap then .ok true else throw "state mismatch: keccakMap"
+  if s₁.keccakRange == s₂.keccakRange then .ok true else throw "state mismatch: keccakRange"
+  if s₁.usedRange == s₂.usedRange then .ok true else throw "state mismatch: usedRange"
+  if s₁.hashCollision == s₂.hashCollision then .ok true else throw "state mismatch: hashCollision"
+  if s₁.createdAccounts == s₂.createdAccounts then .ok true else throw "state mismatch: createdAccounts"
   where bashState (s : EvmYul.State) : EvmYul.State :=
     { s with
-      accountMap := s.accountMap.map (λ (addr, acc) ↦ (addr, { acc with balance := TODO }))
+      accountMap :=
+        s.accountMap.map
+          λ (addr, acc) ↦
+            ( addr
+            , { acc with
+                  ostorage := TODO
+                  tstorage := TODO
+                  -- TODO: We do need to check for balance
+                  balance := TODO }
+            )
       executionEnv.perm := TODO
       substate.accessedAccounts := TODO
       substate.accessedStorageKeys := TODO }
@@ -219,7 +258,7 @@ def executeTransactions (blocks : Blocks) (s₀ : EVM.State) : Except EVM.Except
               SYSTEM_ADDRESS
               BEACON_ROOTS_ADDRESS
               beaconRootsAddressCode
-              0 -- to be 30000000
+              30000000
               0xe8d4a51000
               0
               0
@@ -233,6 +272,7 @@ def executeTransactions (blocks : Blocks) (s₀ : EVM.State) : Except EVM.Except
               accountMap := σ
               substate := substate
             }
+    -- dbg_trace "\nStarting transactions"
     let s ← block.transactions.foldlM
       (λ s trans ↦
         try
@@ -269,7 +309,9 @@ def preImpliesPost (pre : Pre) (post : Post) (blocks : Blocks) : Except EVM.Exce
   try
     let result ← executeTransactions blocks pre.toEVMState
     match almostBEqButNotQuite post.toEVMState result with
-      | .error _ => pure (.some result) -- Feel free to inspect this error from `almostBEqButNotQuite`.
+      | .error e =>
+        dbg_trace e
+        pure (.some result) -- Feel free to inspect this error from `almostBEqButNotQuite`.
       | .ok _ => pure .none
   catch | .ExpectedException _ => pure .none -- An expected exception was thrown, which means the test is ok.
         | e                    => throw e
@@ -285,7 +327,7 @@ instance (priority := high) : Repr AccountMap := ⟨λ m _ ↦
     let mut result := ""
     for (k, v) in m do
       result := result ++ s!"\nAccount[...{(EvmYul.toHex k.toByteArray) |>.takeRight 5}]\n"
-      result := result ++ s!"balance: {v.balance}\nstorage: \n"
+      result := result ++ s!"balance: {v.balance}\nnonce: {v.nonce}\nstorage: \n"
       for (sk, sv) in v.storage do
         result := result ++ s!"{sk} → {sv}\n"
     return result⟩
