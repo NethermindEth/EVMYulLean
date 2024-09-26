@@ -284,11 +284,6 @@ inductive BOp : OperationType → Type where
   | protected NUMBER : BOp τ
   | protected PREVRANDAO : BOp τ
   /--
-    DIFFICULTY: get current block's difficulty
-    δ: 0 ; α: 1
-  -/
-  | protected DIFFICULTY : BOp τ
-  /--
     GASLIMIT: get the gas limit for the current block
     δ: 0 ; α: 1
   -/
@@ -631,7 +626,6 @@ abbrev COINBASE    {τ : OperationType} : Operation τ := .Block .COINBASE
 abbrev TIMESTAMP   {τ : OperationType} : Operation τ := .Block .TIMESTAMP
 abbrev NUMBER      {τ : OperationType} : Operation τ := .Block .NUMBER
 abbrev PREVRANDAO  {τ : OperationType} : Operation τ := .Block .PREVRANDAO
-abbrev DIFFICULTY  {τ : OperationType} : Operation τ := .Block .DIFFICULTY
 abbrev GASLIMIT    {τ : OperationType} : Operation τ := .Block .GASLIMIT
 abbrev CHAINID     {τ : OperationType} : Operation τ := .Block .CHAINID
 abbrev SELFBALANCE {τ : OperationType} : Operation τ := .Block .SELFBALANCE
