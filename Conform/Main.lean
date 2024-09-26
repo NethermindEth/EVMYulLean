@@ -171,7 +171,11 @@ GeneralStateTests:
     Succeeded: 254
     Success rate of: 82.467532
 
-  stRandom2                             3m24
+  stRandom2                             3m46
+    Total tests: 219
+    The post was NOT equal to the resulting state: 39
+    Succeeded: 180
+    Success rate of: 82.191781
 
   stRecursiveCreate                     0m15
 
@@ -205,7 +209,11 @@ GeneralStateTests:
     Succeeded: 359
     Success rate of: 75.578947
 
-  stStackTests                          3m32
+  stStackTests                          3m53
+    Total tests: 209
+    The post was NOT equal to the resulting state: 144
+    Succeeded: 65
+    Success rate of: 31.100478
 
   stStaticCall                          7m56
     Total tests: 469
@@ -223,7 +231,11 @@ GeneralStateTests:
     Succeeded: 5188
     Success rate of: 99.961464
 
-  stTransactionTest                     3m28
+  stTransactionTest                     3m44
+    Total tests: 259
+    The post was NOT equal to the resulting state: 34
+    Succeeded: 225
+    Success rate of: 86.872587
 
   stTransitionTest                      0m19
 

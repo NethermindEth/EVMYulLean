@@ -77,6 +77,8 @@ def VerySlowTests : Array String :=
   , "CREATE_ContractRETURNBigOffset_d1g0v0_Cancun"
   , "CREATE_ContractRETURNBigOffset_d2g0v0_Cancun"
   , "CREATE_ContractRETURNBigOffset_d3g0v0_Cancun"
+  , "randomStatetest601_d0g0v0_Cancun"
+  , "randomStatetest643_d0g0v0_Cancun"
   -- , "callcodecallcall_100_OOGMBefore_d0g0v0_Cancun"
   -- , "callcodecallcodecallcode_111_OOGMBefore_d0g0v0_Cancun"
   -- , "callcallcodecall_010_OOGE_d0g0v0_Cancun"
