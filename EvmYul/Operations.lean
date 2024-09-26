@@ -367,12 +367,14 @@ inductive SMSFOp : OperationType → Type where
   | protected JUMPDEST : SMSFOp .EVM
   /--
     EIP-1153
+    https://eips.ethereum.org/EIPS/eip-1153
     TLOAD: load word from transient memory
     δ: 1 ; α: 1
   -/
   | protected TLOAD : SMSFOp τ
   /--
     EIP-1153
+    https://eips.ethereum.org/EIPS/eip-1153
     TSTORE: Save word to transient memory
     δ: 2 ; α: 0
   -/
