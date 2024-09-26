@@ -263,6 +263,13 @@ GeneralStateTests:
     Succeeded: 465
     Success rate of: 81.436077
 -/
+/-
+InvalidBlocks 2m56
+  Total tests: 126
+  The post was NOT equal to the resulting state: 98
+  Succeeded: 28
+  Success rate of: 22.222222
+-/
 
 def directoryBlacklist : List System.FilePath :=
   [
