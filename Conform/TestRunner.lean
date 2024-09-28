@@ -79,6 +79,7 @@ def VerySlowTests : Array String :=
   , "CREATE_ContractRETURNBigOffset_d3g0v0_Cancun"
   , "randomStatetest601_d0g0v0_Cancun"
   , "randomStatetest643_d0g0v0_Cancun"
+  , "createInitFail_OOGduringInit2_d0g0v0_Cancun"
   -- , "callcodecallcall_100_OOGMBefore_d0g0v0_Cancun"
   -- , "callcodecallcodecallcode_111_OOGMBefore_d0g0v0_Cancun"
   -- , "callcallcodecall_010_OOGE_d0g0v0_Cancun"
@@ -359,7 +360,7 @@ def processTestsOfFile (file : System.FilePath)
   let tests := guardBlacklist ∘ guardWhitelist <| test.toTests
   -- dbg_trace s!"tests after guard: {tests.map Prod.fst}"
   tests.foldlM (init := ∅) λ acc (testname, test) ↦
-    dbg_trace s!"TESTING {testname} FROM {path}"
+    -- dbg_trace s!"TESTING {testname} FROM {path}"
     pure <| acc.insert testname (processTest test)
     -- try
     --   processTest test >>= pure ∘
