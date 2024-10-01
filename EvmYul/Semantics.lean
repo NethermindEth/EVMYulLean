@@ -224,10 +224,10 @@ def step {τ : OperationType} (debugMode : Bool) (op : Operation τ) : Transform
       dispatchUnary debugMode τ UInt256.lnot
     | τ, .BYTE =>
       dispatchBinary debugMode τ UInt256.byteAt
-    | τ, .SHL => -- TODO: different argument order for EVM and Yul?
-      dispatchBinary debugMode τ UInt256.shiftLeft
-    | τ, .SHR => -- TODO: different argument order for EVM and Yul?
-      dispatchBinary debugMode τ UInt256.shiftRight
+    | τ, .SHL =>
+      dispatchBinary debugMode τ (flip UInt256.shiftLeft)
+    | τ, .SHR =>
+      dispatchBinary debugMode τ (flip UInt256.shiftRight)
     | τ, .SAR =>
       dispatchBinary debugMode τ UInt256.sar
 
