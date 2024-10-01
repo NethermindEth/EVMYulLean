@@ -305,8 +305,7 @@ def step (debugMode : Bool) (fuel : ℕ) (instr : Option (Operation .EVM × Opti
             if debugMode then
               dbg_trace s!"called with μ₀: {μ₀} μ₁: {μ₁} μ₂: {μ₂} μ₃: {μ₃}"
             let (i, newMachineState) := evmState.toMachineState.readBytes μ₁ μ₂
-            let ζ := BE μ₃.val
-            let ζ := ByteArray.zeroes ⟨32 - ζ.size⟩ ++ ζ
+            let ζ := EvmYul.UInt256.toByteArray μ₃.val
             let I := evmState.executionEnv
             let Iₐ := evmState.executionEnv.codeOwner
             let Iₒ := evmState.executionEnv.sender

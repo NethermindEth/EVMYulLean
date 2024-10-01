@@ -46,9 +46,8 @@ def writeBytes (self : MachineState) (source : ByteArray) (addr : UInt256) (size
   }
 
 def writeWord (self : MachineState) (addr val : UInt256) : MachineState :=
-  -- dbg_trace "writeWord"
   let numOctets := 32
-  let source : ByteArray := ⟨⟨toBytesBigEndian val⟩⟩
+  let source : ByteArray := val.toByteArray
   self.writeBytes source addr numOctets
 
 -- /--
