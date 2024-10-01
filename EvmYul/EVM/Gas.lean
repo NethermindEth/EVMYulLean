@@ -109,7 +109,7 @@ def Whigh : List (Operation .EVM) := [
 ]
 
 def Wcopy : List (Operation .EVM) := [
-  .CALLDATACOPY, .CODECOPY, .RETURNDATACOPY
+  .CALLDATACOPY, .CODECOPY, .RETURNDATACOPY, .MCOPY
 ]
 
 def Wcall : List (Operation .EVM) := [
@@ -152,6 +152,11 @@ def Csstore (s : State) : Except EVM.Exception UInt256 := do
                         /- v ≠ v' ∧ v₀ = v ∧ v₀ ≠ 0 -/     Gsreset
   pure <| loadComponent + storeComponent
 
+def Ctstore : UInt256 :=
+  let loadComponent := 0
+  let storeComponent := Gwarmaccess
+  loadComponent + storeComponent
+
 /--
 (328)
 -/
@@ -179,6 +184,9 @@ def Csload (μₛ : Stack UInt256) (A : Substate) (I : ExecutionEnv) : UInt256 :
   if A.accessedStorageKeys.contains (I.codeOwner, μₛ[0]!)
   then Gwarmaccess
   else Gcoldsload
+
+def Ctload : UInt256 :=
+  Gwarmaccess
 
 /--
 (331)
@@ -227,6 +235,7 @@ private def C' (s : State) (instr : Operation .EVM) : Except EVM.Exception UInt2
   let { accountMap := σ, stack := μₛ, substate := A, toMachineState := μ, executionEnv := I, ..} := s
   match instr with
     | .SSTORE => Csstore s
+    | .TSTORE => return Ctstore
     | .EXP => let μ₁ := μₛ[1]!; return if μ₁ == 0 then Gexp else Gexp + Gexpbyte * (1 + Nat.log 256 μ₁) -- TODO(check) I think this floors by itself. cf. H.1. YP.
     | .EXTCODECOPY => return Caccess (Address.ofUInt256 μₛ[0]!) A
     | .LOG0 => return Glog + Glogdata * μₛ[1]!
@@ -240,6 +249,7 @@ private def C' (s : State) (instr : Operation .EVM) : Except EVM.Exception UInt2
     | .KECCAK256 => return Gkeccak256 + Gkeccak256word * (μₛ[1]! / 32 : ℚ).ceil
     | .JUMPDEST => return Gjumpdest
     | .SLOAD => return Csload μₛ A I
+    | .TLOAD => return Ctload
     | .BLOCKHASH => return Gblockhash
     | w => pure <|
       if w ∈ Wcopy then Gverylow + Gcopy * (μₛ[2]! / 32 : ℚ).ceil else
@@ -251,7 +261,6 @@ private def C' (s : State) (instr : Operation .EVM) : Except EVM.Exception UInt2
       if w ∈ Wlow then Glow else
       if w ∈ Wmid then Gmid else
       if w ∈ Whigh then Ghigh else
-      -- TODO: MCOPY, TLOAD, TSTORE, DIFFICULTY
       dbg_trace s!"TODO - C called with an unknown instruction: {w.pretty}"; 42
 
 /--

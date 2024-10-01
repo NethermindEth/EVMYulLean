@@ -161,6 +161,9 @@ def tload (self : State) (spos : UInt256) : State × UInt256 :=
   (self, v)
 
 def tstore (self : State) (spos sval : UInt256) : State :=
+  -- TODO: "If the `TSTORE` opcode is called within the context of a `STATICCALL`,
+  -- it will result in an exception instead of performing the modification."
+  -- Not any static call (i.e. perm = 0)?
   let Iₐ := self.executionEnv.codeOwner
   self.lookupAccount Iₐ |>.option self λ acc ↦
     self.updateAccount Iₐ (acc.updateTransientStorage spos sval)

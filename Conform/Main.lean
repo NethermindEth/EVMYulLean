@@ -83,21 +83,33 @@ GeneralStateTests:
 
   stCallCodes                           -
 
-  stCallCreateCallCodeTest              1m16
+  stCallCreateCallCodeTest              1m13
     Total tests: 55
     The post was NOT equal to the resulting state: 28
     Succeeded: 27
     Success rate of: 49.090909
 
-  stCallDelegateCodesCallCodeHomestead  1m9
+  stCallDelegateCodesCallCodeHomestead  -
 
   stCallDelegateCodesHomestead          -
 
   stChainId                             0m16
+    Total tests: 2
+    The post was NOT equal to the resulting state: 0
+    Succeeded: 2
+    Success rate of: 100.000000
 
-  stCodeCopyTest                        0m20
+  stCodeCopyTest                        0m16
+    Total tests: 2
+    The post was NOT equal to the resulting state: 1
+    Succeeded: 1
+    Success rate of: 50.000000
 
-  stCodeSizeLimit                       0m27
+  stCodeSizeLimit                       0m23
+    Total tests: 9
+    The post was NOT equal to the resulting state: 1
+    Succeeded: 8
+    Success rate of: 88.888889
 
   stCreate2                             3m28
     Total tests: 183
@@ -111,7 +123,11 @@ GeneralStateTests:
     Succeeded: 51
     Success rate of: 25.757576
 
-  stDelegatecallTestHomestead           1m
+  stDelegatecallTestHomestead           0m48
+    Total tests: 33
+    The post was NOT equal to the resulting state: 27
+    Succeeded: 6
+    Success rate of: 18.181818
 
   stEIP150singleCodeGasPrices           8m37
     Total tests: 450
@@ -120,6 +136,10 @@ GeneralStateTests:
     Success rate of: 0.000000
 
   stEIP150Specific                      0m38
+    Total tests: 23
+    The post was NOT equal to the resulting state: 19
+    Succeeded: 4
+    Success rate of: 17.391304
 
   stEIP1559                             16m53
     Total tests: 1845
@@ -128,22 +148,58 @@ GeneralStateTests:
     Success rate of: 48.563686
 
   stEIP158Specific                      0m22
+    Total tests: 8
+    The post was NOT equal to the resulting state: 7
+    Succeeded: 1
+    Success rate of: 12.500000
 
-  stEIP2930                             1m37
+  stEIP2930                             1m34
+    Total tests: 140
+    The post was NOT equal to the resulting state: 139
+    Succeeded: 1
+    Success rate of: 0.714286
 
   stEIP3607                             0m27
+    Total tests: 12
+    The post was NOT equal to the resulting state: 0
+    Succeeded: 12
+    Success rate of: 100.000000
 
-  stExample                             1m
+  stExample                             0m53
+    Total tests: 39
+    The post was NOT equal to the resulting state: 35
+    Succeeded: 4
+    Success rate of: 10.256410
 
-  stExtCodeHash                         1m32
+  stExtCodeHash                         1m20
+    Total tests: 69
+    The post was NOT equal to the resulting state: 66
+    Succeeded: 3
+    Success rate of: 4.347826
 
-  stHomesteadSpecific                   0m23
+  stHomesteadSpecific                   0m19
+    Total tests: 5
+    The post was NOT equal to the resulting state: 2
+    Succeeded: 3
+    Success rate of: 60.000000
 
-  stInitCodeTest                        0m42
+  stInitCodeTest                        0m37
+    Total tests: 22
+    The post was NOT equal to the resulting state: 16
+    Succeeded: 6
+    Success rate of: 27.272727
 
-  stLogTests                            1m6
+  stLogTests                            1m2
+    Total tests: 46
+    The post was NOT equal to the resulting state: 20
+    Succeeded: 26
+    Success rate of: 56.521739
 
-  stMemExpandingEIP150Calls             0m33
+  stMemExpandingEIP150Calls             0m26
+    Total tests: 14
+    The post was NOT equal to the resulting state: 13
+    Succeeded: 1
+    Success rate of: 7.142857
 
   stMemoryStressTest                    2m46
     Total tests: 82
@@ -157,13 +213,21 @@ GeneralStateTests:
     Succeeded: 121
     Success rate of: 55.504587
 
-  stNonZeroCallsTest                    0m34
+  stNonZeroCallsTest                    0m38
+    Total tests: 24
+    The post was NOT equal to the resulting state: 14
+    Succeeded: 10
+    Success rate of: 41.666667
 
   stPreCompiledContracts                -
 
   stPreCompiledContracts2               -
 
   stQuadraticComplexityTest             0m41
+    Total tests: 32
+    The post was NOT equal to the resulting state: 26
+    Succeeded: 6
+    Success rate of: 18.750000
 
   stRandom                              6m5
     Total tests: 308
@@ -171,11 +235,23 @@ GeneralStateTests:
     Succeeded: 254
     Success rate of: 82.467532
 
-  stRandom2                             3m24
+  stRandom2                             3m46
+    Total tests: 219
+    The post was NOT equal to the resulting state: 39
+    Succeeded: 180
+    Success rate of: 82.191781
 
   stRecursiveCreate                     0m15
+    Total tests: 1
+    The post was NOT equal to the resulting state: 1
+    Succeeded: 0
+    Success rate of: 0.000000
 
-  stRefundTest                          0m34
+  stRefundTest                          0m40
+    Total tests: 26
+    The post was NOT equal to the resulting state: 10
+    Succeeded: 16
+    Success rate of: 61.538462
 
   stReturnDataTest                      4m35
     Total tests: 273
@@ -189,15 +265,35 @@ GeneralStateTests:
     Succeeded: 201
     Success rate of: 76.717557
 
-  stSelfBalance                         0m50
+  stSelfBalance                         0m58
+    Total tests: 42
+    The post was NOT equal to the resulting state: 39
+    Succeeded: 3
+    Success rate of: 7.142857
 
-  stShift                               0m50
+  stShift                               0m59
+    Total tests: 42
+    The post was NOT equal to the resulting state: 10
+    Succeeded: 32
+    Success rate of: 76.190476
 
-  stSLoadTest                           0m14
+  stSLoadTest                           0m15
+    Total tests: 1
+    The post was NOT equal to the resulting state: 0
+    Succeeded: 1
+    Success rate of: 100.000000
 
-  stSolidityTest                        0m33
+  stSolidityTest                        0m38
+    Total tests: 23
+    The post was NOT equal to the resulting state: 16
+    Succeeded: 7
+    Success rate of: 30.434783
 
-  stSpecialTest                         0m30
+  stSpecialTest                         0m35
+    Total tests: 21
+    The post was NOT equal to the resulting state: 11
+    Succeeded: 10
+    Success rate of: 47.619048
 
   stSStoreTest                          9m10
     Total tests: 475
@@ -205,7 +301,11 @@ GeneralStateTests:
     Succeeded: 359
     Success rate of: 75.578947
 
-  stStackTests                          3m32
+  stStackTests                          3m53
+    Total tests: 209
+    The post was NOT equal to the resulting state: 144
+    Succeeded: 65
+    Success rate of: 31.100478
 
   stStaticCall                          7m56
     Total tests: 469
@@ -213,9 +313,17 @@ GeneralStateTests:
     Succeeded: 72
     Success rate of: 15.351812
 
-  stStaticFlagEnabled                   0m43
+  stStaticFlagEnabled                   0m46
+    Total tests: 34
+    The post was NOT equal to the resulting state: 34
+    Succeeded: 0
+    Success rate of: 0.000000
 
-  stSystemOperationsTest                1m26
+  stSystemOperationsTest                1m41
+    Total tests: 83
+    The post was NOT equal to the resulting state: 50
+    Succeeded: 33
+    Success rate of: 39.759036
 
   stTimeConsuming                       81m20
     Total tests: 5190
@@ -223,15 +331,35 @@ GeneralStateTests:
     Succeeded: 5188
     Success rate of: 99.961464
 
-  stTransactionTest                     3m28
+  stTransactionTest                     3m44
+    Total tests: 259
+    The post was NOT equal to the resulting state: 34
+    Succeeded: 225
+    Success rate of: 86.872587
 
-  stTransitionTest                      0m19
+  stTransitionTest                      0m20
+    Total tests: 6
+    The post was NOT equal to the resulting state: 3
+    Succeeded: 3
+    Success rate of: 50.000000
 
-  stWalletTest                          0m52
+  stWalletTest                          0m58
+    Total tests: 41
+    The post was NOT equal to the resulting state: 30
+    Succeeded: 11
+    Success rate of: 26.829268
 
-  stZeroCallsRevert                     0m28
+  stZeroCallsRevert                     0m29
+    Total tests: 16
+    The post was NOT equal to the resulting state: 3
+    Succeeded: 13
+    Success rate of: 81.250000
 
-  stZeroCallsTest                       0m35
+  stZeroCallsTest                       0m38
+    Total tests: 24
+    The post was NOT equal to the resulting state: 14
+    Succeeded: 10
+    Success rate of: 41.666667
 
   stZeroKnowledge                       13m15
     Total tests: 944
@@ -245,19 +373,39 @@ GeneralStateTests:
     Succeeded: 349
     Success rate of: 67.244701
 
-  VMTests                               10m26
+  VMTests                               9m40
     Total tests: 571
-    The post was NOT equal to the resulting state: 106
-    Succeeded: 465
-    Success rate of: 81.436077
+    The post was NOT equal to the resulting state: 96
+    Succeeded: 475
+    Success rate of: 83.187391
 -/
-
+/-
+InvalidBlocks 2m56
+  Total tests: 126
+  The post was NOT equal to the resulting state: 98
+  Succeeded: 28
+  Success rate of: 22.222222
+-/
+/-
+TransitionTests
+  Total tests: 17
+  The post was NOT equal to the resulting state: 17
+  Succeeded: 0
+  Success rate of: 0.000000
+-/
+/-
+ValidBlocks
+  Total tests: 437
+  The post was NOT equal to the resulting state: 215
+  Succeeded: 222
+  Success rate of: 50.800915
+-/
 def directoryBlacklist : List System.FilePath :=
-  [
-    "EthereumTests/BlockchainTests/GeneralStateTests/stCallCodes"
-  , "EthereumTests/BlockchainTests/GeneralStateTests/stPreCompiledContracts"
-  , "EthereumTests/BlockchainTests/GeneralStateTests/stPreCompiledContracts2"
-  , "EthereumTests/BlockchainTests/GeneralStateTests/stCallDelegateCodesHomestead"
+  [ "EthereumTests/BlockchainTests/GeneralStateTests/stCallCodes" -- 86 tests
+  , "EthereumTests/BlockchainTests/GeneralStateTests/stPreCompiledContracts" -- 960 tests
+  , "EthereumTests/BlockchainTests/GeneralStateTests/stPreCompiledContracts2" -- 248 tests
+  , "EthereumTests/BlockchainTests/GeneralStateTests/stCallDelegateCodesHomestead" -- 58 tests
+  , "EthereumTests/BlockchainTests/GeneralStateTests/stCallDelegateCodesCallCodeHomestead" -- 58 tests
   ]
 
 def fileBlacklist : List System.FilePath :=

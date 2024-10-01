@@ -284,11 +284,6 @@ inductive BOp : OperationType → Type where
   | protected NUMBER : BOp τ
   | protected PREVRANDAO : BOp τ
   /--
-    DIFFICULTY: get current block's difficulty
-    δ: 0 ; α: 1
-  -/
-  | protected DIFFICULTY : BOp τ
-  /--
     GASLIMIT: get the gas limit for the current block
     δ: 0 ; α: 1
   -/
@@ -372,12 +367,14 @@ inductive SMSFOp : OperationType → Type where
   | protected JUMPDEST : SMSFOp .EVM
   /--
     EIP-1153
+    https://eips.ethereum.org/EIPS/eip-1153
     TLOAD: load word from transient memory
     δ: 1 ; α: 1
   -/
   | protected TLOAD : SMSFOp τ
   /--
     EIP-1153
+    https://eips.ethereum.org/EIPS/eip-1153
     TSTORE: Save word to transient memory
     δ: 2 ; α: 0
   -/
@@ -631,7 +628,6 @@ abbrev COINBASE    {τ : OperationType} : Operation τ := .Block .COINBASE
 abbrev TIMESTAMP   {τ : OperationType} : Operation τ := .Block .TIMESTAMP
 abbrev NUMBER      {τ : OperationType} : Operation τ := .Block .NUMBER
 abbrev PREVRANDAO  {τ : OperationType} : Operation τ := .Block .PREVRANDAO
-abbrev DIFFICULTY  {τ : OperationType} : Operation τ := .Block .DIFFICULTY
 abbrev GASLIMIT    {τ : OperationType} : Operation τ := .Block .GASLIMIT
 abbrev CHAINID     {τ : OperationType} : Operation τ := .Block .CHAINID
 abbrev SELFBALANCE {τ : OperationType} : Operation τ := .Block .SELFBALANCE
