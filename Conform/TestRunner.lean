@@ -80,6 +80,8 @@ def VerySlowTests : Array String :=
   , "randomStatetest601_d0g0v0_Cancun"
   , "randomStatetest643_d0g0v0_Cancun"
   , "createInitFail_OOGduringInit2_d0g0v0_Cancun"
+  , "CreateResults_d8g0v0_Cancun"
+  , "CreateResults_d9g0v0_Cancun"
   -- , "callcodecallcall_100_OOGMBefore_d0g0v0_Cancun"
   -- , "callcodecallcodecallcode_111_OOGMBefore_d0g0v0_Cancun"
   -- , "callcallcodecall_010_OOGE_d0g0v0_Cancun"

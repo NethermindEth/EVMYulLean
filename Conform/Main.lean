@@ -118,10 +118,10 @@ GeneralStateTests:
     Success rate of: 37.704918
 
   stCreateTest                          3m31
-    Total tests: 198
-    The post was NOT equal to the resulting state: 147
-    Succeeded: 51
-    Success rate of: 25.757576
+    Total tests: 196
+    The post was NOT equal to the resulting state: 130
+    Succeeded: 66
+    Success rate of: 33.673469
 
   stDelegatecallTestHomestead           0m48
     Total tests: 33
@@ -373,11 +373,11 @@ GeneralStateTests:
     Succeeded: 349
     Success rate of: 67.244701
 
-  VMTests                               9m40
+  VMTests                               8m47
     Total tests: 571
-    The post was NOT equal to the resulting state: 96
-    Succeeded: 475
-    Success rate of: 83.187391
+    The post was NOT equal to the resulting state: 69
+    Succeeded: 502
+    Success rate of: 87.915937
 -/
 /-
 InvalidBlocks 2m56
