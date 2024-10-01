@@ -15,29 +15,29 @@ def UInt256.toByteArray (val : UInt256) : ByteArray :=
 abbrev Literal := UInt256
 
 -- 2^160 https://www.wolframalpha.com/input?i=2%5E160
-def Address.size : Nat := 1461501637330902918203684832716283019655932542976
+def AccountAddress.size : Nat := 1461501637330902918203684832716283019655932542976
 
-abbrev Address : Type := Fin Address.size
+abbrev AccountAddress : Type := Fin AccountAddress.size
 
-instance : Ord Address where
+instance : Ord AccountAddress where
   compare a₁ a₂ := compare a₁.val a₂.val
 
 -- abbrev Storage : Type := Finmap (λ _ : UInt256 ↦ UInt256)
 -- abbrev Storage : Type := Finmap (λ _ : UInt256 ↦ UInt256)
 
-instance : Inhabited Address := ⟨Fin.ofNat 0⟩
+instance : Inhabited AccountAddress := ⟨Fin.ofNat 0⟩
 
-namespace Address
+namespace AccountAddress
 
-def ofNat (n : ℕ) : Address := Fin.ofNat n
-def ofUInt256 (v : UInt256) : Address := Fin.ofNat (v.val % Address.size)
-instance {n : Nat} : OfNat Address n := ⟨Fin.ofNat n⟩
+def ofNat (n : ℕ) : AccountAddress := Fin.ofNat n
+def ofUInt256 (v : UInt256) : AccountAddress := Fin.ofNat (v.val % AccountAddress.size)
+instance {n : Nat} : OfNat AccountAddress n := ⟨Fin.ofNat n⟩
 
-def toByteArray (a : Address) : ByteArray :=
+def toByteArray (a : AccountAddress) : ByteArray :=
   let b := BE a
   ByteArray.zeroes ⟨20 - b.size⟩ ++ b
 
-end Address
+end AccountAddress
 
 def hexOfByte (byte : UInt8) : String :=
   hexDigitRepr (byte.toNat >>> 4 &&& 0b00001111) ++

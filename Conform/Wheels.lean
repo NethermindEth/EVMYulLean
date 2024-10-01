@@ -100,13 +100,13 @@ def fromBlob! (blob : Blob) : UInt256 := fromBlob? blob |>.toOption.get!
 
 end UInt256
 
-namespace Address
+namespace AccountAddress
 
-def fromBlob? (s : Blob) : Except String Address := (Fin.ofNat ·.toNat) <$> UInt256.fromBlob? s
+def fromBlob? (s : Blob) : Except String AccountAddress := (Fin.ofNat ·.toNat) <$> UInt256.fromBlob? s
 
-def fromBlob! (blob : Blob) : Address := fromBlob? blob |>.toOption.get!
+def fromBlob! (blob : Blob) : AccountAddress := fromBlob? blob |>.toOption.get!
 
-end Address
+end AccountAddress
 
 end WithConform
 
@@ -125,7 +125,7 @@ unsafe def report [Inhabited β] (s : String) (f : α → β) (a : α) : β :=
 def testJsonParser (α : Type) [Repr α] [Lean.FromJson α] (s : String) : String :=
   match Lean.FromJson.fromJson? (α := α) <| (Lean.Json.parse s).toOption.getD Lean.Json.null with
     | .error e  => s!"err: {e}"
-    | .ok    ok => s!"ok: {repr ok}" 
+    | .ok    ok => s!"ok: {repr ok}"
 
 end
 

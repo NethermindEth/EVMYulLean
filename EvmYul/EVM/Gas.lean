@@ -160,7 +160,7 @@ def Ctstore : UInt256 :=
 /--
 (328)
 -/
-def Caccess (a : Address) (A : Substate) : UInt256 :=
+def Caccess (a : AccountAddress) (A : Substate) : UInt256 :=
   if A.accessedAccounts.contains a
   then Gwarmaccess
   else Gcoldaccountaccess
@@ -173,7 +173,7 @@ CURRENT SOLUTION -
 We take `EVM.State`.
 -/
 def Cselfdestruct (s : EVM.State) : UInt256 :=
-  let r := Address.ofUInt256 s.stack[0]!
+  let r := AccountAddress.ofUInt256 s.stack[0]!
   let { substate.accessedAccounts := Aₐ, .. } := s
   if Aₐ.contains r then 0 else Gcoldaccountaccess
 
@@ -203,7 +203,7 @@ def Ccall (μₛ : Stack UInt256) (σ : AccountMap) (μ : MachineState) (A : Sub
     NB Slightly redundant as we could reference the `Ccall` parameters directly,
        but this is a bit closer to the YP for now.
     -/
-    t := Address.ofUInt256 μₛ[1]!
+    t := AccountAddress.ofUInt256 μₛ[1]!
 
     Cnew (σ : AccountMap) (μₛ : Stack UInt256) :=
       if EvmYul.State.dead σ t && μₛ[2]! != 0 then Gnewaccount else 0
@@ -237,7 +237,7 @@ private def C' (s : State) (instr : Operation .EVM) : Except EVM.Exception UInt2
     | .SSTORE => Csstore s
     | .TSTORE => return Ctstore
     | .EXP => let μ₁ := μₛ[1]!; return if μ₁ == 0 then Gexp else Gexp + Gexpbyte * (1 + Nat.log 256 μ₁) -- TODO(check) I think this floors by itself. cf. H.1. YP.
-    | .EXTCODECOPY => return Caccess (Address.ofUInt256 μₛ[0]!) A
+    | .EXTCODECOPY => return Caccess (AccountAddress.ofUInt256 μₛ[0]!) A
     | .LOG0 => return Glog + Glogdata * μₛ[1]!
     | .LOG1 => return Glog + Glogdata * μₛ[1]! + Glogtopic
     | .LOG2 => return Glog + Glogdata * μₛ[1]! + 2 * Glogtopic
@@ -253,7 +253,7 @@ private def C' (s : State) (instr : Operation .EVM) : Except EVM.Exception UInt2
     | .BLOCKHASH => return Gblockhash
     | w => pure <|
       if w ∈ Wcopy then Gverylow + Gcopy * (μₛ[2]! / 32 : ℚ).ceil else
-      if w ∈ Wextaccount then Caccess (Address.ofUInt256 μₛ[0]!) A else
+      if w ∈ Wextaccount then Caccess (AccountAddress.ofUInt256 μₛ[0]!) A else
       if w ∈ Wcall then Ccall μₛ σ μ A else
       if w ∈ Wzero then Gzero else
       if w ∈ Wbase then Gbase else

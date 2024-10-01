@@ -24,12 +24,12 @@ TODO: In case of recipient = none, it means contract creation and data should be
 structure Transaction.Base where
   nonce     : UInt256
   gasLimit  : UInt256
-  recipient : Option Address
+  recipient : Option AccountAddress
   value     : UInt256
   r         : ByteArray
   s         : ByteArray
   data      : ByteArray
-  dbgSender : Address
+  dbgSender : AccountAddress
 deriving BEq, Repr
 
 -- "EIP-2930 (type 1) and EIP-1559 (type 2) transactions also have:""
@@ -41,7 +41,7 @@ deriving BEq, Repr
 -/
 structure Transaction.WithAccessList where
   chainId : ChainID
-  accessList : RBMap Address (Array UInt256) compare
+  accessList : RBMap AccountAddress (Array UInt256) compare
   yParity : UInt256
 deriving BEq, Repr
 
@@ -119,7 +119,7 @@ def Transaction.base : Transaction → Transaction.Base
   | access t => t.toBase
   | dynamic t => t.toBase
 
-def Transaction.getAccessList : Transaction → Array (Address × Array UInt256)
+def Transaction.getAccessList : Transaction → Array (AccountAddress × Array UInt256)
   | legacy _ => #[]
   | access t => RBSet.toList t.accessList |>.toArray
   | dynamic t => RBSet.toList t.accessList |>.toArray

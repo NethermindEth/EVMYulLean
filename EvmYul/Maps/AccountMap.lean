@@ -11,7 +11,7 @@ Furthermore, replacing everything with either of the `RBMaps` would then reintro
 but with ordering lemmas needed for some `Decidable` instances.
 
 When time allows, I suggest we replace everything with `Batteries.RBMap` and prove the reasoning lemmas we need.
-This way, we get decent performance AND the ability to conveniently reason about the structure 
+This way, we get decent performance AND the ability to conveniently reason about the structure
 a'la `Finmap`.
 
 TODO - All of this is very ugly.
@@ -32,7 +32,7 @@ section RemoveLater
 
 open Batteries (RBMap)
 
-abbrev AccountMap := RBMap Address Account compare
+abbrev AccountMap := RBMap AccountAddress Account compare
 
 -- instance : LE ((_ : Address) × Account) where
 --   le lhs rhs := if lhs.1 = rhs.1 then lhs.2 ≤ rhs.2 else lhs.1 ≤ rhs.1
@@ -43,7 +43,7 @@ abbrev AccountMap := RBMap Address Account compare
 -- -/
 
 -- instance : IsTrans ((_ : Address) × Account) (· ≤ ·) := sorry
-    
+
 -- instance : IsAntisymm ((_ : Address) × Account) (· ≤ ·) := sorry
 
 -- instance : IsTotal ((_ : Address) × Account) (· ≤ ·) := sorry

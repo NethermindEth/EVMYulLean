@@ -29,7 +29,7 @@ namespace EvmYul
 structure BlockHeader where
   parentHash    : UInt256
   ommersHash    : UInt256
-  beneficiary   : Address
+  beneficiary   : AccountAddress
   stateRoot     : UInt256
   transRoot     : UInt256
   receiptRoot   : UInt256

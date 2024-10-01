@@ -18,9 +18,9 @@ The execution envorinment `I` `ExecutionEnv`. Section 9.3.
 - `perm`      `I_w`
 -/
 structure ExecutionEnv :=
-  codeOwner : Address
-  sender    : Address
-  source    : Address
+  codeOwner : AccountAddress
+  sender    : AccountAddress
+  source    : AccountAddress
   weiValue  : UInt256
   inputData : ByteArray
   code      : ByteArray
