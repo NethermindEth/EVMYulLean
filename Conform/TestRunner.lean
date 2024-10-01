@@ -97,7 +97,7 @@ def VerySlowTests : Array String :=
 def GlobalBlacklist : Array String := VerySlowTests
 
 def Pre.toEVMState (self : Pre) : EVM.State :=
-  self.fold addAccount default
+  self.foldl addAccount default
   where addAccount s addr acc :=
     let account : Account :=
       {
@@ -155,65 +155,22 @@ This section exists for debugging / testing mostly. It's somewhat ad-hoc.
 
 notation "TODO" => default
 
-private def almostBEqButNotQuiteEvmYulState (s₁ s₂ : EvmYul.State) : Except String Bool := do
+private def almostBEqButNotQuiteEvmYulState (s₁ s₂ : AddrMap AccountEntry) : Except String Bool := do
   let s₁ := bashState s₁
   let s₂ := bashState s₂
-  -- dbg_trace "expected:"
-  -- s₁.accountMap.forM (λ addr acc ↦ dbg_trace (repr addr ++ ": ", repr acc.balance); .ok ())
-  -- dbg_trace "got"
-  -- s₂.accountMap.forM (λ addr acc ↦ dbg_trace (repr addr ++ ": ", repr acc.balance); .ok ())
-  -- dbg_trace "\n"
-  -- dbg_trace "expected:"
-  -- dbg_trace repr s₁.accountMap
-  -- dbg_trace "got"
-  -- dbg_trace repr s₂.accountMap
-  -- if s₁ == s₂ then .ok true else throw "state mismatch"
-  if s₁.accountMap == s₂.accountMap then .ok true else throw "state mismatch: accountMap"
-  if s₁.remainingGas == s₂.remainingGas then .ok true else throw "state mismatch: remainingGas"
-  if s₁.substate == s₂.substate then .ok true else throw "state mismatch: substate"
-  if s₁.executionEnv == s₂.executionEnv then .ok true else throw "state mismatch: executionEnv"
-  if s₁.blocks == s₂.blocks then .ok true else throw "state mismatch: blocks"
-  if s₁.keccakMap == s₂.keccakMap then .ok true else throw "state mismatch: keccakMap"
-  if s₁.keccakRange == s₂.keccakRange then .ok true else throw "state mismatch: keccakRange"
-  if s₁.usedRange == s₂.usedRange then .ok true else throw "state mismatch: usedRange"
-  if s₁.hashCollision == s₂.hashCollision then .ok true else throw "state mismatch: hashCollision"
-  if s₁.createdAccounts == s₂.createdAccounts then .ok true else throw "state mismatch: createdAccounts"
-  where bashState (s : EvmYul.State) : EvmYul.State :=
-    { s with
-      accountMap :=
-        s.accountMap.map
-          λ (addr, acc) ↦
-            ( addr
-            , { acc with
-                  ostorage := TODO
-                  tstorage := TODO
-                  -- TODO: We do need to check for balance
-                  balance := TODO }
-            )
-      executionEnv.perm := TODO
-      substate.accessedAccounts := TODO
-      substate.accessedStorageKeys := TODO }
-
+  if s₁ == s₂ then .ok true else throw "state mismatch"
+ where
+  bashState (s : AddrMap AccountEntry) : AddrMap AccountEntry :=
+    s.map
+      λ (addr, acc) ↦ (addr, { acc with balance := TODO })
 /--
 NB it is ever so slightly more convenient to be in `Except String Bool` here rather than `Option String`.
 
 This is morally `s₁ == s₂` except we get a convenient way to both tune what is being compared
 as well as report fine grained errors.
 -/
-private def almostBEqButNotQuite (s₁ s₂ : EVM.State) : Except String Bool := do
-  let miscEq := s₁.pc == s₂.pc && s₁.stack == s₂.stack
-  if !miscEq then throw s!"pc / stack mismatch"
-
-  discard <| almostBEqButNotQuiteEvmYulState s₁.toState s₂.toState
-
-  let machineStEq :=
-    s₁.toMachineState.gasAvailable == s₂.toMachineState.gasAvailable &&
-    s₁.toMachineState.activeWords == s₂.toMachineState.activeWords &&
-    -- s₁.toMachineState.memory == s₂.toMachineState.memory &&
-    s₁.toMachineState.memory.toArray == s₂.toMachineState.memory.toArray &&
-    s₁.toMachineState.returnData == s₂.toMachineState.returnData
-  if !machineStEq then throw s!"machine state mismatch"
-
+private def almostBEqButNotQuite (s₁ s₂ : AddrMap AccountEntry) : Except String Bool := do
+  discard <| almostBEqButNotQuiteEvmYulState s₁ s₂
   pure true -- Yes, we never return false, because we throw along the way. Yes, this is `Option`.
 
 end
@@ -312,11 +269,14 @@ NB we can throw away the final state if it coincided with the expected one, henc
 -/
 def preImpliesPost (pre : Pre) (post : Post) (blocks : Blocks) : Except EVM.Exception (Option EVM.State) := do
   try
-    let result ← executeTransactions blocks pre.toEVMState
-    match almostBEqButNotQuite post.toEVMState result with
+    let resultState ← executeTransactions blocks pre.toEVMState
+    let result : AddrMap AccountEntry :=
+      resultState.toState.accountMap.foldl
+        (λ r addr ⟨nonce, balance, storage, _, _, code⟩ ↦ r.insert addr ⟨nonce, balance, storage, code⟩) default
+    match almostBEqButNotQuite post result with
       | .error e =>
         dbg_trace e
-        pure (.some result) -- Feel free to inspect this error from `almostBEqButNotQuite`.
+        pure (.some resultState) -- Feel free to inspect this error from `almostBEqButNotQuite`.
       | .ok _ => pure .none
   catch | .ExpectedException _ => pure .none -- An expected exception was thrown, which means the test is ok.
         | e                    => throw e

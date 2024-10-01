@@ -1,5 +1,4 @@
 import Mathlib.Data.List.AList
-import Batteries.Data.RBMap.Lemmas
 
 import EvmYul.UInt256
 import EvmYul.Wheels
@@ -41,7 +40,7 @@ deriving BEq, Repr
 -/
 structure Transaction.WithAccessList where
   chainId : ChainID
-  accessList : RBMap AccountAddress (Array UInt256) compare
+  accessList : Batteries.RBMap AccountAddress (Array UInt256) compare
   yParity : UInt256
 deriving BEq, Repr
 

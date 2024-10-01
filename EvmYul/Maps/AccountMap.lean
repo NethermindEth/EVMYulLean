@@ -30,9 +30,7 @@ namespace EvmYul
 
 section RemoveLater
 
-open Batteries (RBMap)
-
-abbrev AccountMap := RBMap AccountAddress Account compare
+abbrev AccountMap := Batteries.RBMap AccountAddress Account compare
 
 -- instance : LE ((_ : Address) × Account) where
 --   le lhs rhs := if lhs.1 = rhs.1 then lhs.2 ≤ rhs.2 else lhs.1 ≤ rhs.1

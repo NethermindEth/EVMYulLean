@@ -11,7 +11,7 @@ Furthermore, replacing everything with either of the `RBMaps` would then reintro
 but with ordering lemmas needed for some `Decidable` instances.
 
 When time allows, I suggest we replace everything with `Batteries.RBMap` and prove the reasoning lemmas we need.
-This way, we get decent performance AND the ability to conveniently reason about the structure 
+This way, we get decent performance AND the ability to conveniently reason about the structure
 a'la `Finmap`.
 
 TODO - All of this is very ugly.
@@ -26,9 +26,7 @@ namespace EvmYul
 
 section RemoveLater
 
-open Batteries (RBMap)
-
-abbrev Storage : Type := RBMap UInt256 UInt256 compare
+abbrev Storage : Type := Batteries.RBMap UInt256 UInt256 compare
 
 /--
 It does _not_ matter how this is implemented at all, this is used _exclusively_ for convenience.
@@ -60,7 +58,7 @@ instance : DecidableRel (λ (a : EvmYul.Storage) b ↦ a < b) :=
   λ lhs rhs ↦ by
     unfold LT.lt instLTStorage
     simp
-    exact inferInstance    
+    exact inferInstance
 
 end RemoveLater
 

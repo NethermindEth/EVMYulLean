@@ -29,11 +29,10 @@ def getObjValAsD (j : Json) (α : Type) [FromJson α] (k : String) (D : α) : Ex
 def getObjValAsD! (j : Json) (α : Type) [FromJson α] [Inhabited α] (k : String) : Except String α :=
   getObjValAsD j α k default
 
-open Batteries (RBMap) in
 def getObjVals?
-  (self : Json) (α β : Type) [Ord α] [FromJson α] [FromJson β] : Except String (RBMap α β compare) := do
+  (self : Json) (α β : Type) [Ord α] [FromJson α] [FromJson β] : Except String (Batteries.RBMap α β compare) := do
   let keys ← Array.map Sigma.fst <$> RBNode.toArray <$> self.getObj?
-  let mut result : RBMap α β compare := ∅
+  let mut result : Batteries.RBMap α β compare := ∅
   for k in keys do
     if let .ok key := FromJson.fromJson? k then
     result := result.insert key (← self.getObjValAs? β k)

@@ -28,10 +28,10 @@ For now, we assume no global map `GM` with which `GM[code_hash] ≡ code`.
 structure Account :=
   nonce    : UInt256
   balance  : UInt256
-  code     : ByteArray
-  ostorage : Storage
   storage  : Storage
+  ostorage : Storage
   tstorage : Storage
+  code     : ByteArray
 deriving BEq, Inhabited, Repr
 
 def Account.codeHash (self : Account) : UInt256 :=

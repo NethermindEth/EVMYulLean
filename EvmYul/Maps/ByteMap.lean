@@ -11,7 +11,7 @@ Furthermore, replacing everything with either of the `RBMaps` would then reintro
 but with ordering lemmas needed for some `Decidable` instances.
 
 When time allows, I suggest we replace everything with `Batteries.RBMap` and prove the reasoning lemmas we need.
-This way, we get decent performance AND the ability to conveniently reason about the structure 
+This way, we get decent performance AND the ability to conveniently reason about the structure
 a'la `Finmap`.
 
 TODO - All of this is very ugly.
@@ -25,9 +25,7 @@ namespace EvmYul
 
 section RemoveLater
 
-open Batteries (RBMap)
-
-abbrev ByteMap := RBMap UInt256 UInt8 compare
+abbrev ByteMap := Batteries.RBMap UInt256 UInt8 compare
 
 -- instance : LE ((_ : UInt256) × UInt8) where
 --   le lhs rhs := if lhs.1 = rhs.1 then lhs.2 ≤ rhs.2 else lhs.1 ≤ rhs.1
@@ -38,7 +36,7 @@ abbrev ByteMap := RBMap UInt256 UInt8 compare
 -- -/
 
 -- instance : IsTrans ((_ : UInt256) × UInt8) (· ≤ ·) := sorry
-    
+
 -- instance : IsAntisymm ((_ : UInt256) × UInt8) (· ≤ ·) := sorry
 
 -- instance : IsTotal ((_ : UInt256) × UInt8) (· ≤ ·) := sorry

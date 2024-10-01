@@ -1325,7 +1325,7 @@ def Υ (debugMode : Bool) (fuel : ℕ) (σ : YPState) (chainId H_f : ℕ) (H : B
     else σStar
   let σ' := A.selfDestructSet.1.foldl Batteries.RBMap.erase σStar' -- (87)
   let deadAccounts := A.touchedAccounts.filter (State.dead σStar' ·)
-  let σ' := deadAccounts.foldl RBMap.erase σ' -- (88)
+  let σ' := deadAccounts.foldl Batteries.RBMap.erase σ' -- (88)
   .ok (σ', A, z)
 end EVM
 

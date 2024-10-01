@@ -373,11 +373,11 @@ GeneralStateTests:
     Succeeded: 349
     Success rate of: 67.244701
 
-  VMTests                               8m47
+  VMTests                               8m53
     Total tests: 571
-    The post was NOT equal to the resulting state: 69
-    Succeeded: 502
-    Success rate of: 87.915937
+    The post was NOT equal to the resulting state: 33
+    Succeeded: 538
+    Success rate of: 94.220665
 -/
 /-
 InvalidBlocks 2m56
