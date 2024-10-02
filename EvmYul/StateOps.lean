@@ -70,7 +70,7 @@ def setSelfBalance! (self : State) : UInt256 → State :=
 def calldataload (self : State) (v : UInt256) : UInt256 :=
   -- dbg_trace s!"calldataload arr: {self.executionEnv.inputData.extract' v (v + 32)}"
   -- dbg_trace s!"calldataload yielding: {toHex <| self.executionEnv.inputData.extract' v (v + 32)}"
-  uInt256OfByteArray <| self.executionEnv.inputData.extract' v (v + 32)
+  uInt256OfByteArray <| self.executionEnv.inputData.readBytes v 32
 
 def setNonce! (self : State) (addr : AccountAddress) (nonce : UInt256) : State :=
   self.updateAccount! addr (λ acc ↦ { acc with nonce := nonce })

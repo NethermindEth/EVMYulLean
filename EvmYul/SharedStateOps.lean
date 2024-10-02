@@ -57,13 +57,13 @@ def codeCopy (self : SharedState) (mstart cstart size : UInt256) : SharedState :
 --   {sState' with toState.substate := .addAccessedAccount self.toState.substate addr}
 
 /--
-TODO - wrong
+TODO - wrong?
 -/
 def extCodeCopy' (self : SharedState) (acc mstart cstart size : UInt256) : SharedState :=
   if 2^16 < size then dbg_trace s!"TODO - extCodeCopy called on a state which does _not_ recognise the address {acc} and with too big size: {size}; currently, this fails silently"; self else
   let addr := AccountAddress.ofUInt256 acc
   let b : ByteArray := self.toState.lookupAccount addr |>.option .empty Account.code
-  let b : ByteArray := b.extract' cstart (cstart + size)
+  let b : ByteArray := b.readBytes cstart size
   let sState' := (self.writeBytes b mstart size)
   {sState' with toState.substate := .addAccessedAccount self.toState.substate addr}
 
