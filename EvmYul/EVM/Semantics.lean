@@ -928,10 +928,13 @@ def Lambda
       if debugMode then
         dbg_trace s!"Ξ failed in contract creation: {repr e}"
       .none
-    | .ok (_, _, _, _, none) =>
+    | .ok (createdAccounts', _, _, _, none) =>
       if debugMode then
         dbg_trace s!"Ξ returned no code in contract creation"
-      .none
+        -- TODO: I think if `o` is `none` at the end of `Ξ` than the `YPState` is necessarily `∅`
+        -- because it signifies an exceptional halting.
+        -- We could use some refactoring.
+      .some (a, createdAccounts', σ, 0, AStar, false, .empty)
     | .ok (createdAccounts', σStarStar, gStarStar, AStarStar, some returnedData) =>
       -- EIP-170 (required for EIP-386):
       -- https://eips.ethereum.org/EIPS/eip-170

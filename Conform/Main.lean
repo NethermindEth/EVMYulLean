@@ -39,17 +39,17 @@ def log (testFile : System.FilePath) (testName : String) (result : TestResult) :
 
 /-
 GeneralStateTests:
-  Cancun                                6m0
+  Cancun                                2m59
     Total tests: 189
-    The post was NOT equal to the resulting state: 82
-    Succeeded: 107
-    Success rate of: 56.613757
+    The post was NOT equal to the resulting state: 73
+    Succeeded: 116
+    Success rate of: 61.375661
 
-  Pyspecs                               16m57
+  Pyspecs                               15m58
     Total tests: 2150
-    The post was NOT equal to the resulting state: 1804
-    Succeeded: 346
-    Success rate of: 16.093023
+  The post was NOT equal to the resulting state: 1781
+  Succeeded: 369
+  Success rate of: 17.162791
 
   Shanghai                              0m42
     Total tests: 27
@@ -57,11 +57,11 @@ GeneralStateTests:
     Succeeded: 4
     Success rate of: 14.814815
 
-  stArgsZeroOneBalance                  1m59
+  stArgsZeroOneBalance                  1m47
     Total tests: 96
-    The post was NOT equal to the resulting state: 18
-    Succeeded: 78
-    Success rate of: 81.250000
+    The post was NOT equal to the resulting state: 6
+    Succeeded: 90
+    Success rate of: 93.750000
 
   stAttackTest                          0m16
     Total tests: 2
@@ -83,11 +83,11 @@ GeneralStateTests:
 
   stCallCodes                           -
 
-  stCallCreateCallCodeTest              1m13
+  stCallCreateCallCodeTest              1m5
     Total tests: 55
-    The post was NOT equal to the resulting state: 28
-    Succeeded: 27
-    Success rate of: 49.090909
+    The post was NOT equal to the resulting state: 22
+    Succeeded: 33
+    Success rate of: 60.000000
 
   stCallDelegateCodesCallCodeHomestead  -
 
@@ -111,17 +111,17 @@ GeneralStateTests:
     Succeeded: 8
     Success rate of: 88.888889
 
-  stCreate2                             3m28
+  stCreate2                             3m10
     Total tests: 183
-    The post was NOT equal to the resulting state: 114
-    Succeeded: 69
-    Success rate of: 37.704918
+    The post was NOT equal to the resulting state: 76
+    Succeeded: 107
+    Success rate of: 58.469945
 
-  stCreateTest                          3m31
+  stCreateTest                          3m10
     Total tests: 196
-    The post was NOT equal to the resulting state: 130
-    Succeeded: 66
-    Success rate of: 33.673469
+    The post was NOT equal to the resulting state: 107
+    Succeeded: 89
+    Success rate of: 45.408163
 
   stDelegatecallTestHomestead           0m48
     Total tests: 33
@@ -373,11 +373,11 @@ GeneralStateTests:
     Succeeded: 349
     Success rate of: 67.244701
 
-  VMTests                               8m53
+  VMTests                               9m16
     Total tests: 571
-    The post was NOT equal to the resulting state: 33
-    Succeeded: 538
-    Success rate of: 94.220665
+    The post was NOT equal to the resulting state: 31
+    Succeeded: 540
+    Success rate of: 94.570928
 -/
 /-
 InvalidBlocks 2m56
@@ -409,7 +409,7 @@ def directoryBlacklist : List System.FilePath :=
   ]
 
 def fileBlacklist : List System.FilePath :=
-  [ "EthereumTests/BlockchainTests/GeneralStateTests/stMemoryTest/buffer.json"
+  [ "EthereumTests/BlockchainTests/GeneralStateTests/stMemoryTest/buffer.json" -- 348 tests
   ]
 
 def main : IO Unit := do
