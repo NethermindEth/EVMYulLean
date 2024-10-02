@@ -162,7 +162,7 @@ def step (debugMode : Bool) (fuel : ℕ) (instr : Option (Operation .EVM × Opti
         (instr.isPush || instr.isJump || instr.isPC || instr.isJumpdest || instr.isDup || instr.isSwap || instr.isCreate || instr.isCall)
     then
         dbg_trace instr.pretty
-
+    let evmState := { evmState with execLength := evmState.execLength + 1 }
     match instr with
       | .Push .PUSH0 =>
         .ok <|
@@ -827,6 +827,8 @@ def Ξ -- Type `Ξ` using `\GX` or `\Xi`
             gasAvailable := g
         }
       let (evmState', o) ← X debugMode f freshEvmState
+      if debugMode then
+        dbg_trace s!"Ξ executed {evmState'.execLength} primops"
       let finalGas := evmState'.gasAvailable -- TODO(check): Do we need to compute `C` here one more time?
       return (evmState'.createdAccounts, evmState'.accountMap, finalGas, evmState'.substate, o)
 
