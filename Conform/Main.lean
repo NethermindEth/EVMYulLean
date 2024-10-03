@@ -47,9 +47,9 @@ GeneralStateTests:
 
   Pyspecs                               15m58
     Total tests: 2150
-  The post was NOT equal to the resulting state: 1781
-  Succeeded: 369
-  Success rate of: 17.162791
+    The post was NOT equal to the resulting state: 1781
+    Succeeded: 369
+    Success rate of: 17.162791
 
   Shanghai                              0m42
     Total tests: 27
@@ -235,11 +235,11 @@ GeneralStateTests:
     Succeeded: 254
     Success rate of: 82.467532
 
-  stRandom2                             3m46
+  stRandom2                             4m1
     Total tests: 219
-    The post was NOT equal to the resulting state: 39
-    Succeeded: 180
-    Success rate of: 82.191781
+    The post was NOT equal to the resulting state: 13
+    Succeeded: 206
+    Success rate of: 94.063927
 
   stRecursiveCreate                     0m15
     Total tests: 1
