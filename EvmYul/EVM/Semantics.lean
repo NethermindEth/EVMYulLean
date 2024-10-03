@@ -745,6 +745,7 @@ def X (debugMode : Bool) (fuel : ℕ) (evmState : State) : Except EVM.Exception 
 
       let H (μ : MachineState) (w : Operation .EVM) : Option ByteArray :=
         if w ∈ [.RETURN, .REVERT] then
+          -- dbg_trace s!"{w.pretty} gives {toHex μ.H_return}"
           some <| μ.H_return
         else
           if w ∈ [.STOP, .SELFDESTRUCT] then
@@ -754,10 +755,14 @@ def X (debugMode : Bool) (fuel : ℕ) (evmState : State) : Except EVM.Exception 
       if Z then
         -- dbg_trace "exceptional halting"
         .ok ({evmState with accountMap := ∅}, none)
-      else
+      -- else
         -- TODO - Probably an exceptional gas scenario, as we should have technically checked apriori.
-        if w = .REVERT then
-          .ok ({evmState with accountMap := ∅}, .some evmState.returnData)
+        -- if w = .REVERT then
+          -- The Yellow Paper says we don't call the "iterator function" "O" for `REVERT`,
+          -- but we actually have to call the semantics of `REVERT` to pass the test
+          -- EthereumTests/BlockchainTests/GeneralStateTests/stReturnDataTest/returndatacopy_after_revert_in_staticcall.json
+          -- And the EEL spec does so too.
+          -- .ok ({evmState with accountMap := ∅}, .some evmState.returnData)
         else
           -- NB we still need to check gas, because `Z` needs to call `C`, which needs `μ'ᵢ`.
           -- We first call `step` to obtain `μ'ᵢ`, which we then use to compute `C`.
@@ -792,7 +797,15 @@ def X (debugMode : Bool) (fuel : ℕ) (evmState : State) : Except EVM.Exception 
               -- Interestingly, the YP is defining `C` with parameters that are much 'broader'
               -- than what is strictly necessary, e.g. we are decoding an instruction, instead of getting one in input.
               | none => X debugMode f {evmState' with gasAvailable := evmState.gasAvailable - gasCost}
-              | some o => .ok <| (evmState', some o)
+              | some o =>
+                if w == .REVERT then
+                  -- The Yellow Paper says we don't call the "iterator function" "O" for `REVERT`,
+                  -- but we actually have to call the semantics of `REVERT` to pass the test
+                  -- EthereumTests/BlockchainTests/GeneralStateTests/stReturnDataTest/returndatacopy_after_revert_in_staticcall.json
+                  -- And the EEL spec does so too.
+                  .ok <| ({evmState' with accountMap := ∅}, some o)
+                else
+                  .ok <| (evmState', some o)
  where
   belongs (o : Option ℕ) (l : List ℕ) : Bool :=
     match o with
