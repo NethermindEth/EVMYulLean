@@ -32,10 +32,10 @@ private def fromBlobString {α} (f : Blob → Except String α) : FromJson α :=
 
 instance : FromJson UInt256 := fromBlobString UInt256.fromBlob?
 
-instance : FromJson Address := fromBlobString Address.fromBlob?
+instance : FromJson AccountAddress := fromBlobString AccountAddress.fromBlob?
 
 instance : FromJson Storage where
-  fromJson? json := json.getObjVals? Address UInt256
+  fromJson? json := json.getObjVals? UInt256 UInt256
 
 section _Code'
 -- The `_Code'` section is auxiliary and the functionality inside is currently unused.
@@ -82,10 +82,10 @@ instance : FromJson AccountEntry where
     }
 
 instance : FromJson Pre where
-  fromJson? json := json.getObjVals? Address AccountEntry
+  fromJson? json := json.getObjVals? AccountAddress AccountEntry
 
 instance : FromJson Post where
-  fromJson? json := json.getObjVals? Address PostEntry
+  fromJson? json := json.getObjVals? AccountAddress PostEntry
 
 /--
 TODO: We parse ℕ-valued scalars as though they were at most UInt256; could need changing.
@@ -96,7 +96,7 @@ instance : FromJson BlockHeader where
       pure {
         parentHash    := ← json.getObjValAsD! UInt256   "parentHash"
         ommersHash    := TODO -- TODO - Set to whatever the KEC(RLP()) evaluates to.
-        beneficiary   := ← json.getObjValAsD! Address   "coinbase"
+        beneficiary   := ← json.getObjValAsD! AccountAddress   "coinbase"
         stateRoot     := ← json.getObjValAsD! UInt256   "stateRoot"
         transRoot     := TODO -- TODO - Does not seem to be used in Υ?
         receiptRoot   := TODO -- TODO - Does not seem to be used in Υ?
@@ -128,7 +128,7 @@ instance : FromJson BlockHeader where
 instance : FromJson AccessListEntry where
   fromJson? json := do
     pure {
-      address     := ← json.getObjValAs? Address         "address"
+      address     := ← json.getObjValAs? AccountAddress         "address"
       storageKeys := ← json.getObjValAs? (Array UInt256) "storageKeys"
     }
 
@@ -137,7 +137,7 @@ instance : FromJson Withdrawal where
     pure {
       index     := ← json.getObjValAs? UInt64         "index"
       validatorIndex := ← json.getObjValAs? UInt64 "validatorIndex"
-      address := ← json.getObjValAs? Address "address"
+      address := ← json.getObjValAs? AccountAddress "address"
       amount := ← json.getObjValAs? UInt64 "amount"
     }
 
@@ -157,7 +157,7 @@ instance : FromJson Transaction where
       r         := ← json.getObjValAsD! ByteArray      "r"
       s         := ← json.getObjValAsD! ByteArray      "s"
       data      := ← json.getObjValAsD! ByteArray      "data"
-      dbgSender := ← json.getObjValAsD! Address        "sender"
+      dbgSender := ← json.getObjValAsD! AccountAddress        "sender"
     }
 
     match json.getObjVal? "v" with
@@ -185,7 +185,7 @@ instance : FromJson Transaction where
                      ← json.getObjValAsD! UInt256 "maxPriorityFeePerGas"
                    ⟩
 
-  where accessListToRBMap (this : AccessList) : Batteries.RBMap Address (Array UInt256) compare :=
+  where accessListToRBMap (this : AccessList) : Batteries.RBMap AccountAddress (Array UInt256) compare :=
     this.foldl (init := ∅) λ m ⟨addr, list⟩ ↦ m.insert addr list
 
 -- #eval DebuggingAndProfiling.testJsonParser Transaction r#"

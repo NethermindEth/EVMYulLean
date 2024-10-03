@@ -29,11 +29,10 @@ def getObjValAsD (j : Json) (α : Type) [FromJson α] (k : String) (D : α) : Ex
 def getObjValAsD! (j : Json) (α : Type) [FromJson α] [Inhabited α] (k : String) : Except String α :=
   getObjValAsD j α k default
 
-open Batteries (RBMap) in
 def getObjVals?
-  (self : Json) (α β : Type) [Ord α] [FromJson α] [FromJson β] : Except String (RBMap α β compare) := do
+  (self : Json) (α β : Type) [Ord α] [FromJson α] [FromJson β] : Except String (Batteries.RBMap α β compare) := do
   let keys ← Array.map Sigma.fst <$> RBNode.toArray <$> self.getObj?
-  let mut result : RBMap α β compare := ∅
+  let mut result : Batteries.RBMap α β compare := ∅
   for k in keys do
     if let .ok key := FromJson.fromJson? k then
     result := result.insert key (← self.getObjValAs? β k)
@@ -100,13 +99,13 @@ def fromBlob! (blob : Blob) : UInt256 := fromBlob? blob |>.toOption.get!
 
 end UInt256
 
-namespace Address
+namespace AccountAddress
 
-def fromBlob? (s : Blob) : Except String Address := (Fin.ofNat ·.toNat) <$> UInt256.fromBlob? s
+def fromBlob? (s : Blob) : Except String AccountAddress := (Fin.ofNat ·.toNat) <$> UInt256.fromBlob? s
 
-def fromBlob! (blob : Blob) : Address := fromBlob? blob |>.toOption.get!
+def fromBlob! (blob : Blob) : AccountAddress := fromBlob? blob |>.toOption.get!
 
-end Address
+end AccountAddress
 
 end WithConform
 
@@ -125,7 +124,7 @@ unsafe def report [Inhabited β] (s : String) (f : α → β) (a : α) : β :=
 def testJsonParser (α : Type) [Repr α] [Lean.FromJson α] (s : String) : String :=
   match Lean.FromJson.fromJson? (α := α) <| (Lean.Json.parse s).toOption.getD Lean.Json.null with
     | .error e  => s!"err: {e}"
-    | .ok    ok => s!"ok: {repr ok}" 
+    | .ok    ok => s!"ok: {repr ok}"
 
 end
 

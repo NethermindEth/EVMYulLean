@@ -18,7 +18,7 @@ EIP-4895: Beacon chain push withdrawals as operations.
 structure Withdrawal where
   index : UInt64
   validatorIndex : UInt64
-  address : Address
+  address : AccountAddress
   amount : UInt64
 deriving Repr
 

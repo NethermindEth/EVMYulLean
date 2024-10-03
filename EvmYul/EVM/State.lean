@@ -15,6 +15,8 @@ The EVM `State` (extends EvmYul.SharedState).
 structure State extends EvmYul.SharedState :=
   pc    : UInt256
   stack : Stack UInt256
+  -- TODO: temporary
+  execLength : ℕ
   deriving Inhabited
 
 end EVM

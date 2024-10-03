@@ -162,7 +162,7 @@ def step (debugMode : Bool) (fuel : ℕ) (instr : Option (Operation .EVM × Opti
         (instr.isPush || instr.isJump || instr.isPC || instr.isJumpdest || instr.isDup || instr.isSwap || instr.isCreate || instr.isCall)
     then
         dbg_trace instr.pretty
-
+    let evmState := { evmState with execLength := evmState.execLength + 1 }
     match instr with
       | .Push .PUSH0 =>
         .ok <|
@@ -262,7 +262,7 @@ def step (debugMode : Bool) (fuel : ℕ) (instr : Option (Operation .EVM × Opti
                 I.header
                 I.perm
             let (a, evmState', g', z, o)
-                  : (Address × EVM.State × UInt256 × Bool × ByteArray)
+                  : (AccountAddress × EVM.State × UInt256 × Bool × ByteArray)
               :=
               if μ₀ ≤ (σ.find? Iₐ |>.option 0 Account.balance) ∧ Iₑ < 1024 then
                 match Λ with
@@ -305,8 +305,7 @@ def step (debugMode : Bool) (fuel : ℕ) (instr : Option (Operation .EVM × Opti
             if debugMode then
               dbg_trace s!"called with μ₀: {μ₀} μ₁: {μ₁} μ₂: {μ₂} μ₃: {μ₃}"
             let (i, newMachineState) := evmState.toMachineState.readBytes μ₁ μ₂
-            let ζ := BE μ₃.val
-            let ζ := ByteArray.zeroes ⟨32 - ζ.size⟩ ++ ζ
+            let ζ := EvmYul.UInt256.toByteArray μ₃.val
             let I := evmState.executionEnv
             let Iₐ := evmState.executionEnv.codeOwner
             let Iₒ := evmState.executionEnv.sender
@@ -329,7 +328,7 @@ def step (debugMode : Bool) (fuel : ℕ) (instr : Option (Operation .EVM × Opti
                 ζ
                 I.header
                 I.perm
-            let (a, evmState', g', z, o) : (Address × EVM.State × UInt256 × Bool × ByteArray) :=
+            let (a, evmState', g', z, o) : (AccountAddress × EVM.State × UInt256 × Bool × ByteArray) :=
               if μ₀ ≤ (σ.find? Iₐ |>.option 0 Account.balance) ∧ Iₑ < 1024 then
                 match Λ with
                   | some (a, cA, σ', g', A', z, o) =>
@@ -368,7 +367,7 @@ def step (debugMode : Bool) (fuel : ℕ) (instr : Option (Operation .EVM × Opti
         -- μ₆ - outSize
         -- dbg_trace "POPPING"
         let (stack, μ₀, μ₁, μ₂, μ₃, μ₄, μ₅, μ₆) ← evmState.stack.pop7
-        let t : Address := Address.ofUInt256 μ₁ -- t ≡ μs[1] mod 2^160
+        let t : AccountAddress := AccountAddress.ofUInt256 μ₁ -- t ≡ μs[1] mod 2^160
         if debugMode then
           dbg_trace s!"called with μ₀: {μ₀} μ₁: {μ₁} ({toHex t.toByteArray |>.takeRight 5}) μ₂: {μ₂} μ₃: {μ₃} μ₄: {μ₄} μ₅: {μ₅} μ₆: {μ₆}"
         -- dbg_trace "POPPED OK; μ₁ : {μ₁}"
@@ -458,7 +457,7 @@ def step (debugMode : Bool) (fuel : ℕ) (instr : Option (Operation .EVM × Opti
         let ((cA, σ', g', A', z, o), newMachineState) ← do
           -- TODO - Refactor condition and possibly share with CREATE
           if μ₂ ≤ (evmState.accountMap.find? evmState.executionEnv.codeOwner |>.option 0 Account.balance) ∧ evmState.executionEnv.depth < 1024 then
-            let t : Address := Address.ofUInt256 μ₁ -- t ≡ μs[1] mod 2^160
+            let t : AccountAddress := AccountAddress.ofUInt256 μ₁ -- t ≡ μs[1] mod 2^160
             -- dbg_trace s!"DBG REMOVE; Calling address: {t}"
             let A' := evmState.addAccessedAccount t |>.substate -- A' ≡ A except A'ₐ ≡ Aₐ ∪ {t}
             let .some tDirect := evmState.accountMap.find? t | default
@@ -546,7 +545,7 @@ def step (debugMode : Bool) (fuel : ℕ) (instr : Option (Operation .EVM × Opti
         let ((cA, σ', g', A', z, o), newMachineState) ← do
           -- TODO - Refactor condition and possibly share with CREATE
           if evmState.executionEnv.depth < 1024 then
-            let t : Address := Address.ofUInt256 μ₁ -- t ≡ μs[1] mod 2^160
+            let t : AccountAddress := AccountAddress.ofUInt256 μ₁ -- t ≡ μs[1] mod 2^160
             -- dbg_trace s!"DBG REMOVE; Calling address: {t}"
             let A' := evmState.addAccessedAccount t |>.substate -- A' ≡ A except A'ₐ ≡ Aₐ ∪ {t}
             let .some tDirect := evmState.accountMap.find? t | default
@@ -634,7 +633,7 @@ def step (debugMode : Bool) (fuel : ℕ) (instr : Option (Operation .EVM × Opti
         let ((cA, σ', g', A', z, o), newMachineState) ← do
           -- TODO - Refactor condition and possibly share with CREATE
           if 0 ≤ (evmState.accountMap.find? evmState.executionEnv.codeOwner |>.option 0 Account.balance) ∧ evmState.executionEnv.depth < 1024 then
-            let t : Address := Address.ofUInt256 μ₁ -- t ≡ μs[1] mod 2^160
+            let t : AccountAddress := AccountAddress.ofUInt256 μ₁ -- t ≡ μs[1] mod 2^160
             -- dbg_trace s!"DBG REMOVE; Calling address: {t}"
             let A' := evmState.addAccessedAccount t |>.substate -- A' ≡ A except A'ₐ ≡ Aₐ ∪ {t}
             let .some tDirect := evmState.accountMap.find? t | default
@@ -807,13 +806,13 @@ def X (debugMode : Bool) (fuel : ℕ) (evmState : State) : Except EVM.Exception 
 def Ξ -- Type `Ξ` using `\GX` or `\Xi`
   (debugMode : Bool)
   (fuel : ℕ)
-  (createdAccounts : Batteries.RBSet Address compare)
+  (createdAccounts : Batteries.RBSet AccountAddress compare)
   (σ : YPState)
   (g : UInt256)
   (A : Substate)
   (I : ExecutionEnv)
     :
-  Except EVM.Exception (Batteries.RBSet Address compare × YPState × UInt256 × Substate × Option ByteArray)
+  Except EVM.Exception (Batteries.RBSet AccountAddress compare × YPState × UInt256 × Substate × Option ByteArray)
 := do
   match fuel with
     | 0 => .ok (createdAccounts, σ, g, A, some .empty) -- TODO - Gas model
@@ -828,17 +827,19 @@ def Ξ -- Type `Ξ` using `\GX` or `\Xi`
             gasAvailable := g
         }
       let (evmState', o) ← X debugMode f freshEvmState
+      if debugMode then
+        dbg_trace s!"Ξ executed {evmState'.execLength} primops"
       let finalGas := evmState'.gasAvailable -- TODO(check): Do we need to compute `C` here one more time?
       return (evmState'.createdAccounts, evmState'.accountMap, finalGas, evmState'.substate, o)
 
 def Lambda
   (debugMode : Bool)
   (fuel : ℕ)
-  (createdAccounts : Batteries.RBSet Address compare) -- needed for EIP-6780
+  (createdAccounts : Batteries.RBSet AccountAddress compare) -- needed for EIP-6780
   (σ : YPState)
   (A : Substate)
-  (s : Address)   -- sender
-  (o : Address)   -- original transactor
+  (s : AccountAddress)   -- sender
+  (o : AccountAddress)   -- original transactor
   (g  : UInt256)  -- available gas
   (p : UInt256)   -- gas price
   (v : UInt256)   -- endowment
@@ -849,8 +850,8 @@ def Lambda
   (w : Bool)      -- permission to make modifications to the state
   :
   Option
-    ( Address
-    × Batteries.RBSet Address compare
+    ( AccountAddress
+    × Batteries.RBSet AccountAddress compare
     × YPState
     × UInt256
     × Substate
@@ -876,7 +877,7 @@ def Lambda
   let n : UInt256 := (σ.find? s |>.option 0 Account.nonce) - 1
   -- dbg_trace s!"s: {toHex (BE s)}, n:{n}, ζ:{ζ},\n i:{toHex i}"
   let lₐ ← L_A s n ζ i
-  let a : Address := -- (94) (95)
+  let a : AccountAddress := -- (94) (95)
     (KEC lₐ).extract 12 32 /- 160 bits = 20 bytes -/
       |>.data.data |> fromBytesBigEndian |> Fin.ofNat
   -- dbg_trace s!"addr: {toHex a.toByteArray}"
@@ -927,10 +928,13 @@ def Lambda
       if debugMode then
         dbg_trace s!"Ξ failed in contract creation: {repr e}"
       .none
-    | .ok (_, _, _, _, none) =>
+    | .ok (createdAccounts', _, _, _, none) =>
       if debugMode then
         dbg_trace s!"Ξ returned no code in contract creation"
-      .none
+        -- TODO: I think if `o` is `none` at the end of `Ξ` than the `YPState` is necessarily `∅`
+        -- because it signifies an exceptional halting.
+        -- We could use some refactoring.
+      .some (a, createdAccounts', σ, 0, AStar, false, .empty)
     | .ok (createdAccounts', σStarStar, gStarStar, AStarStar, some returnedData) =>
       -- EIP-170 (required for EIP-386):
       -- https://eips.ethereum.org/EIPS/eip-170
@@ -984,7 +988,7 @@ def Lambda
       let z := not fail
       .some (a, createdAccounts', σ', g', A', z, returnedData) -- (93)
  where
-  L_A (s : Address) (n : UInt256) (ζ : Option ByteArray) (i : ByteArray) :
+  L_A (s : AccountAddress) (n : UInt256) (ζ : Option ByteArray) (i : ByteArray) :
     Option ByteArray
   := -- (96)
     let s := s.toByteArray
@@ -1017,12 +1021,12 @@ NB - This is implemented using the 'boolean' fragment with ==, <=, ||, etc.
 -/
 def Θ (debugMode : Bool)
       (fuel : Nat)
-      (createdAccounts : Batteries.RBSet Address compare)
+      (createdAccounts : Batteries.RBSet AccountAddress compare)
       (σ  : YPState)
       (A  : Substate)
-      (s  : Address)
-      (o  : Address)
-      (r  : Address)
+      (s  : AccountAddress)
+      (o  : AccountAddress)
+      (r  : AccountAddress)
       (c  : ByteArray)
       (g  : UInt256)
       (p  : UInt256)
@@ -1033,7 +1037,7 @@ def Θ (debugMode : Bool)
       (H : BlockHeader)
       (w  : Bool)
         :
-      Except EVM.Exception (Batteries.RBSet Address compare × YPState × UInt256 × Substate × Bool × Option ByteArray)
+      Except EVM.Exception (Batteries.RBSet AccountAddress compare × YPState × UInt256 × Substate × Bool × Option ByteArray)
 :=
   -- dbg_trace s!"Θ receiver: {repr r}"
   match fuel with
@@ -1100,8 +1104,8 @@ end
 
 open Batteries (RBMap RBSet)
 
-def checkTransactionGetSender (σ : YPState) (chainId H_f : ℕ) (T : Transaction) (dbgOverrideSender : Option Address := .none)
-  : Except EVM.Exception Address
+def checkTransactionGetSender (σ : YPState) (chainId H_f : ℕ) (T : Transaction) (dbgOverrideSender : Option AccountAddress := .none)
+  : Except EVM.Exception AccountAddress
 := do
   -- dbg_trace "Transaction: {repr T}"
   let some T_RLP := RLP (← (L_X T)) | .error <| .InvalidTransaction .IllFormedRLP
@@ -1129,7 +1133,7 @@ def checkTransactionGetSender (σ : YPState) (chainId H_f : ℕ) (T : Transactio
       | .legacy _ => KEC T_RLP
       | _ => KEC <| ByteArray.mk #[.ofNat T.type] ++ T_RLP
 
-  let (S_T : Address) ← -- (323)
+  let (S_T : AccountAddress) ← -- (323)
     match dbgOverrideSender with
       | .none =>
       match ECDSARECOVER h_T (ByteArray.mk #[.ofNat v]) T.base.r T.base.s with
@@ -1177,9 +1181,9 @@ def checkTransactionGetSender (σ : YPState) (chainId H_f : ℕ) (T : Transactio
 
  where
   L_X (T : Transaction) : Except EVM.Exception 𝕋 := -- (317)
-    let accessEntryRLP : Address × Array UInt256 → 𝕋
-      | ⟨a, s⟩ => .𝕃 [.𝔹 (Address.toByteArray a), .𝕃 (s.map (𝕋.𝔹 ∘ BE ∘ UInt256.toNat)).toList]
-    let accessEntriesRLP (aEs : Array (Address × Array UInt256)) : 𝕋 :=
+    let accessEntryRLP : AccountAddress × Array UInt256 → 𝕋
+      | ⟨a, s⟩ => .𝕃 [.𝔹 (AccountAddress.toByteArray a), .𝕃 (s.map (𝕋.𝔹 ∘ BE ∘ UInt256.toNat)).toList]
+    let accessEntriesRLP (aEs : Array (AccountAddress × Array UInt256)) : 𝕋 :=
       .𝕃 (aEs.map accessEntryRLP |>.toList)
     match T with
       | /- 0 -/ .legacy t =>
@@ -1189,7 +1193,7 @@ def checkTransactionGetSender (σ : YPState) (chainId H_f : ℕ) (T : Transactio
             , BE t.gasPrice -- Tₚ
             , BE t.gasLimit -- T_g
             , -- If Tₜ is ∅ it becomes the RLP empty byte sequence and thus the member of 𝔹₀
-              t.recipient.option .empty Address.toByteArray -- Tₜ
+              t.recipient.option .empty AccountAddress.toByteArray -- Tₜ
             , BE t.value -- Tᵥ
             , t.data
             ]
@@ -1200,7 +1204,7 @@ def checkTransactionGetSender (σ : YPState) (chainId H_f : ℕ) (T : Transactio
               , BE t.gasPrice -- Tₚ
               , BE t.gasLimit -- T_g
               , -- If Tₜ is ∅ it becomes the RLP empty byte sequence and thus the member of 𝔹₀
-                t.recipient.option .empty Address.toByteArray -- Tₜ
+                t.recipient.option .empty AccountAddress.toByteArray -- Tₜ
               , BE t.value -- Tᵥ
               , t.data -- p
               , BE chainId
@@ -1216,7 +1220,7 @@ def checkTransactionGetSender (σ : YPState) (chainId H_f : ℕ) (T : Transactio
           , .𝔹 (BE t.gasPrice) -- Tₚ
           , .𝔹 (BE t.gasLimit) -- T_g
           , -- If Tₜ is ∅ it becomes the RLP empty byte sequence and thus the member of 𝔹₀
-            .𝔹 (t.recipient.option .empty Address.toByteArray) -- Tₜ
+            .𝔹 (t.recipient.option .empty AccountAddress.toByteArray) -- Tₜ
           , .𝔹 (BE t.value) -- T_v
           , .𝔹 t.data  -- p
           , accessEntriesRLP <| RBSet.toList t.accessList |>.toArray -- T_A
@@ -1229,14 +1233,14 @@ def checkTransactionGetSender (σ : YPState) (chainId H_f : ℕ) (T : Transactio
           , .𝔹 (BE t.maxFeePerGas) -- Tₘ
           , .𝔹 (BE t.gasLimit) -- T_g
           , -- If Tₜ is ∅ it becomes the RLP empty byte sequence and thus the member of 𝔹₀
-            .𝔹 (t.recipient.option .empty Address.toByteArray) -- Tₜ
+            .𝔹 (t.recipient.option .empty AccountAddress.toByteArray) -- Tₜ
           , .𝔹 (BE t.value) -- Tᵥ
           , .𝔹 t.data -- p
           , accessEntriesRLP <| RBSet.toList t.accessList |>.toArray -- T_A
           ]
 
 -- Type Υ using \Upsilon or \GU
-def Υ (debugMode : Bool) (fuel : ℕ) (σ : YPState) (chainId H_f : ℕ) (H : BlockHeader) (T : Transaction) (dbgOverrideSender : Option Address := .none)
+def Υ (debugMode : Bool) (fuel : ℕ) (σ : YPState) (chainId H_f : ℕ) (H : BlockHeader) (T : Transaction) (dbgOverrideSender : Option AccountAddress := .none)
   : Except EVM.Exception (YPState × Substate × Bool)
 := do
   let S_T ← checkTransactionGetSender σ chainId H_f T dbgOverrideSender
@@ -1283,7 +1287,7 @@ def Υ (debugMode : Bool) (fuel : ℕ) (σ : YPState) (chainId H_f : ℕ) (H : B
   -- The checkpoint state (73)
   let σ₀ := σ.insert S_T senderAccount
   let accessList := T.getAccessList
-  let AStar_K : List (Address × UInt256) := do -- (78)
+  let AStar_K : List (AccountAddress × UInt256) := do -- (78)
     let ⟨Eₐ, Eₛ⟩ ← accessList.toList
     let eₛ ← Eₛ.toList
     pure (Eₐ, eₛ)
@@ -1297,7 +1301,7 @@ def Υ (debugMode : Bool) (fuel : ℕ) (σ : YPState) (chainId H_f : ℕ) (H : B
       | none => a
   let AStar := -- (77)
     { A0 with accessedAccounts := AStarₐ, accessedStorageKeys := Batteries.RBSet.ofList AStar_K Substate.storageKeysCmp}
-  let createdAccounts : Batteries.RBSet Address compare := .empty
+  let createdAccounts : Batteries.RBSet AccountAddress compare := .empty
   let (/- provisional state -/ σ_P, g', A, z) ← -- (76)
     match T.base.recipient with
       | none => do
@@ -1326,7 +1330,7 @@ def Υ (debugMode : Bool) (fuel : ℕ) (σ : YPState) (chainId H_f : ℕ) (H : B
     else σStar
   let σ' := A.selfDestructSet.1.foldl Batteries.RBMap.erase σStar' -- (87)
   let deadAccounts := A.touchedAccounts.filter (State.dead σStar' ·)
-  let σ' := deadAccounts.foldl RBMap.erase σ' -- (88)
+  let σ' := deadAccounts.foldl Batteries.RBMap.erase σ' -- (88)
   .ok (σ', A, z)
 end EVM
 

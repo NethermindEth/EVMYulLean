@@ -10,7 +10,7 @@ namespace EvmYul
 
 abbrev YPState := AccountMap
 
-def YPState.increaseBalance (σ : YPState) (addr : Address) (amount : UInt256)
+def YPState.increaseBalance (σ : YPState) (addr : AccountAddress) (amount : UInt256)
   : YPState
 :=
   match σ.find? addr with

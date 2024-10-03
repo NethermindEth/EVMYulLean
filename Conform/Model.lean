@@ -20,16 +20,16 @@ section Model
 
 open Lean
 
-abbrev AddrMap (α : Type) [Inhabited α] := Lean.RBMap Address α compare
-abbrev Storage := AddrMap UInt256
+abbrev AddrMap (α : Type) [Inhabited α] := Batteries.RBMap AccountAddress α compare
+abbrev Storage := Batteries.RBMap UInt256 UInt256 compare
 
 def Storage.toFinmap (self : Storage) : Finmap (λ _ : UInt256 ↦ UInt256) :=
-  self.fold (init := ∅) λ acc k v ↦ acc.insert (UInt256.ofNat k.1) v
+  self.foldl (init := ∅) λ acc k v ↦ acc.insert (UInt256.ofNat k.1) v
 
 def Storage.toEvmYulStorage (self : Storage) : EvmYul.Storage :=
-  self.fold (init := ∅) λ acc k v ↦ acc.insert (UInt256.ofNat k.1) v
+  self.foldl (init := ∅) λ acc k v ↦ acc.insert (UInt256.ofNat k.1) v
 
-def AddrMap.keys {α : Type} [Inhabited α] (self : AddrMap α) : Multiset Address :=
+def AddrMap.keys {α : Type} [Inhabited α] (self : AddrMap α) : Multiset AccountAddress :=
   .ofList <| self.toList.map Prod.fst
 
 instance : LE ((_ : UInt256) × UInt256) where
@@ -64,17 +64,17 @@ instance : DecidableRel (α := (_ : UInt256) × UInt256) (· ≤ ·) :=
     unfold LE.le instLESigmaUInt256_conform; simp
     aesop (config := {warnOnNonterminal := false}) <;> exact inferInstance
 
-def Storage.ofFinmap (m : EvmYul.Storage) : Storage :=
-  Lean.RBMap.ofList <| m.toList.map λ (k, v) ↦ (Address.ofUInt256 k, v)
+-- def Storage.ofFinmap (m : EvmYul.Storage) : Storage :=
+--   Lean.RBMap.ofList <| m.toList.map λ (k, v) ↦ (k, v)
 
 abbrev Code := ByteArray
 
 structure AccountEntry :=
-  balance : UInt256
-  code    : ByteArray
   nonce   : UInt256
+  balance : UInt256
   storage : Storage
-  deriving Inhabited, Repr
+  code    : ByteArray
+  deriving Inhabited, Repr, BEq
 
 abbrev Pre := AddrMap AccountEntry
 
@@ -122,10 +122,10 @@ structure TestEntry :=
   sealEngine         : Json := ""
   deriving Inhabited
 
-abbrev Test := Lean.RBMap String TestEntry compare
+abbrev Test := Batteries.RBMap String TestEntry compare
 
 structure AccessListEntry :=
-  address     : Address
+  address     : AccountAddress
   storageKeys : Array UInt256
   deriving Inhabited, Repr
 

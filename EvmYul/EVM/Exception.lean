@@ -30,21 +30,21 @@ instance : Repr InvalidTransactionException where
 
 -- TODO - fix / cleanup.
 inductive Exception where
-  | InvalidStackSizeException         : Exception
-  | InvalidPC                         : Exception
-  | OutOfBounds                       : Exception
-  | NotEncodableRLP                   : Exception
-  | InvalidInstruction                : Exception
-  | SenderMustExist                   : Exception
-  | ReceiverMustExistWithNonZeroValue : Exception
-  | Underflow                         : Exception
-  | Overflow                          : Exception
-  | StopInvoked (s : EVM.State)       : Exception
-  | OutOfFuel                         : Exception
-  | OutOfGass                         : Exception
+  | InvalidStackSizeException                   : Exception
+  | InvalidPC                                   : Exception
+  | OutOfBounds                                 : Exception
+  | NotEncodableRLP                             : Exception
+  | InvalidInstruction                          : Exception
+  | SenderMustExist                             : Exception
+  | ReceiverMustExistWithNonZeroValue           : Exception
+  | Underflow                                   : Exception
+  | Overflow                                    : Exception
+  | StopInvoked (s : EVM.State)                 : Exception
+  | OutOfFuel                                   : Exception
+  | OutOfGass                                   : Exception
   | InvalidTransaction :
-          InvalidTransactionException → Exception
-  | ReceiverNotInAccounts (a : Address) : Exception
+                    InvalidTransactionException → Exception
+  | ReceiverNotInAccounts (a : AccountAddress)  : Exception
   | InvalidWithdrawal (s : String) : Exception
   | BogusExceptionToBeReplaced (s : String) : Exception
   | ExpectedException (s : String)          : Exception
@@ -64,7 +64,8 @@ instance : Repr Exception where
                     | .OutOfFuel                         => "OutOfFuel"
                     | .OutOfGass                         => "OutOfGass"
                     | .InvalidTransaction e              => "InvalidTransaction: " ++ repr e
-                    | .ReceiverNotInAccounts (a : Address) => s!"ReceiverNotInAccounts: {a}"
+                    | .ReceiverNotInAccounts
+                        (a : AccountAddress)             => s!"ReceiverNotInAccounts: {a}"
                     | .InvalidWithdrawal s               => s!"InvalidWithdrawal: {s}"
                     | .BogusExceptionToBeReplaced s      => s!"BogusExceptionToBeReplaced: {s}"
                     | .ExpectedException s               => s!"Expected exception: {s}"

@@ -36,7 +36,7 @@ structure State where
   usedRange     : Batteries.RBSet UInt256 compare
   hashCollision : Bool
 
-  createdAccounts : Batteries.RBSet Address compare
+  createdAccounts : Batteries.RBSet AccountAddress compare
 deriving BEq, Inhabited, Repr
 
 end EvmYul

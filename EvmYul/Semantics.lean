@@ -224,10 +224,10 @@ def step {τ : OperationType} (debugMode : Bool) (op : Operation τ) : Transform
       dispatchUnary debugMode τ UInt256.lnot
     | τ, .BYTE =>
       dispatchBinary debugMode τ UInt256.byteAt
-    | τ, .SHL => -- TODO: different argument order for EVM and Yul?
-      dispatchBinary debugMode τ UInt256.shiftLeft
-    | τ, .SHR => -- TODO: different argument order for EVM and Yul?
-      dispatchBinary debugMode τ UInt256.shiftRight
+    | τ, .SHL =>
+      dispatchBinary debugMode τ (flip UInt256.shiftLeft)
+    | τ, .SHR =>
+      dispatchBinary debugMode τ (flip UInt256.shiftRight)
     | τ, .SAR =>
       dispatchBinary debugMode τ UInt256.sar
 
@@ -346,7 +346,7 @@ def step {τ : OperationType} (debugMode : Bool) (op : Operation τ) : Transform
             match L_A with
               | none => .error .NotEncodableRLP
               | some L_A =>
-                let addr : Address :=
+                let addr : AccountAddress :=
                   (KEC L_A).extract 12 32 /- 160 bits = 20 bytes -/
                     |>.data.data |> fromBytesBigEndian |> Fin.ofNat
                 let (code, _) := yulState.toMachineState.readBytes poz len
@@ -381,7 +381,7 @@ def step {τ : OperationType} (debugMode : Bool) (op : Operation τ) : Transform
         match evmState.stack.pop with
           | some ⟨ s , μ₁ ⟩ =>
             let Iₐ := evmState.executionEnv.codeOwner
-            let r : Address := Address.ofUInt256 μ₁
+            let r : AccountAddress := AccountAddress.ofUInt256 μ₁
             if evmState.createdAccounts.contains Iₐ then
               -- When `SELFDESTRUCT` is executed in the same transaction as the contract was created
               let A' : Substate :=
@@ -455,7 +455,7 @@ def step {τ : OperationType} (debugMode : Bool) (op : Operation τ) : Transform
       match lits with
         | [a] =>
             let Iₐ := yulState.executionEnv.codeOwner
-            let r : Address := Address.ofUInt256 a
+            let r : AccountAddress := AccountAddress.ofUInt256 a
               let A' : Substate :=
                 { yulState.toState.substate with
                     selfDestructSet :=
@@ -502,7 +502,7 @@ def step {τ : OperationType} (debugMode : Bool) (op : Operation τ) : Transform
             let s : List UInt8 := toBytesBigEndian ζ
             let a₀ : List UInt8 := [0xff]
             let addr₀ := KEC <| ⟨⟨a₀ ++ this ++ s⟩⟩ ++ KEC code
-            let addr : Address := Fin.ofNat <| fromBytesBigEndian addr₀.data.data
+            let addr : AccountAddress := Fin.ofNat <| fromBytesBigEndian addr₀.data.data
             match yulState.toState.accountMap.find? Iₐ with
               | none => .ok <| (yulState, some 0)
               | some ac_Iₐ =>
