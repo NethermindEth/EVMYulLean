@@ -207,11 +207,11 @@ GeneralStateTests:
     Succeeded: 79
     Success rate of: 96.341463
 
-  stMemoryTest                          4m12
-    Total tests: 218
-    The post was NOT equal to the resulting state: 97
-    Succeeded: 121
-    Success rate of: 55.504587
+  stMemoryTest                          10m29
+    Total tests: 561
+    The post was NOT equal to the resulting state: 79
+    Succeeded: 482
+    Success rate of: 85.918004
 
   stNonZeroCallsTest                    0m38
     Total tests: 24
@@ -408,9 +408,7 @@ def directoryBlacklist : List System.FilePath :=
   , "EthereumTests/BlockchainTests/GeneralStateTests/stCallDelegateCodesCallCodeHomestead" -- 58 tests
   ]
 
-def fileBlacklist : List System.FilePath :=
-  [ "EthereumTests/BlockchainTests/GeneralStateTests/stMemoryTest/buffer.json" -- 348 tests
-  ]
+def fileBlacklist : List System.FilePath := []
 
 def main : IO Unit := do
   let testFiles ←
