@@ -283,7 +283,7 @@ def step (debugMode : Bool) (fuel : ℕ) (instr : Option (Operation .EVM × Opti
             let x :=
               let balance := σ.find? a |>.option 0 Account.balance
                 if z = false ∨ Iₑ = 1024 ∨ μ₀ < balance then 0 else a
-            let newReturnData : ByteArray := if z = false then .empty else o
+            let newReturnData : ByteArray := if z = true then .empty else o
             if evmState'.gasAvailable + g' < L (evmState'.gasAvailable) then
               .error .OutOfGass
             let evmState' :=
@@ -339,7 +339,7 @@ def step (debugMode : Bool) (fuel : ℕ) (instr : Option (Operation .EVM × Opti
             let x :=
               let balance := σ.find? a |>.option 0 Account.balance
                 if z = false ∨ Iₑ = 1024 ∨ μ₀ < balance then 0 else a
-            let newReturnData : ByteArray := if z = false then .empty else o
+            let newReturnData : ByteArray := if z = true then .empty else o
             if evmState'.gasAvailable + g' < L (evmState'.gasAvailable) then
               .error .OutOfGass
             let evmState' :=
@@ -736,7 +736,7 @@ def X (debugMode : Bool) (fuel : ℕ) (evmState : State) : Except EVM.Exception 
         if Z₃ ∧ debugMode then
           dbg_trace s!"Exceptional halting: invalid JUMPI destination"
         if Z₄ ∧ debugMode then
-          dbg_trace s!"Exceptional halting: not enough output data for RETURNDATACOPY"
+          dbg_trace s!"Exceptional halting: not enough output data for RETURNDATACOPY: required {evmState.stack.getD 1 0 + evmState.stack.getD 2 0} bytes but got {evmState.returnData.size}"
         if Z₅ ∧ debugMode then
           dbg_trace s!"Exceptional halting: {w.pretty} would result in stack larger than 1024 elements"
         if Z₆ ∧ debugMode then
@@ -968,9 +968,7 @@ def Lambda
             | .none => false
         if debugMode ∧ F₀ then
           dbg_trace "Contract creation failed: account {toHex (BE a)} already existed."
-        let F₁ : Bool := σStarStar == ∅
-        if debugMode ∧ F₁ then
-          dbg_trace "Contract creation failed: the code execution failed."
+        -- let F₁ : Bool := σStarStar == ∅ ∧ some returnedData == .none
         let F₂ : Bool := gStarStar < c
         if debugMode ∧ F₂ then
           dbg_trace "Contract creation failed: g** < c"
@@ -980,7 +978,7 @@ def Lambda
         let F₄ : Bool := returnedData = ⟨⟨0xef :: returnedData.data.toList.tail⟩⟩
         if debugMode ∧ F₄ then
           dbg_trace "Contract creation failed: code conputed for the new account starts with 0xef"
-        pure (F₀ ∨ F₁ ∨ F₂ ∨ F₃ ∨ F₄)
+        pure (F₀ ∨ F₂ ∨ F₃ ∨ F₄)
       let fail := F || σStarStar == ∅
       -- (114)
       let g' := if F then 0 else gStarStar - c
