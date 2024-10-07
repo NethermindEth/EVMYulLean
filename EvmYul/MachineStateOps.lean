@@ -156,7 +156,7 @@ def returndatacopy (self : MachineState) (mstart rstart size : UInt256) : Option
   let pos := rstart.val + size.val
   -- TODO:
   -- "The additions in μₛ[1]+i are not subject to the 2^256 modulo"
-  if UInt256.size ≤ pos || self.returndatasize.val ≤ pos then .none
+  if UInt256.size ≤ pos || self.returndatasize.val < pos then .none
   else
     let rdata := self.returnData.readBytes rstart.val size.val
     self.writeBytes rdata mstart size
