@@ -4,6 +4,8 @@ import EvmYul.Wheels
 import EvmYul.PerformIO
 import Conform.Wheels
 
+def secp256k1n : ℕ := 115792089237316195423570985008687907852837564279074904382605163141518161494337
+
 def blobECDSARECOVER (e v r s : String) : String :=
   totallySafePerformIO ∘ IO.Process.run <|
     pythonCommandOfInput e v r s
