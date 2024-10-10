@@ -17,6 +17,7 @@ import EvmYul.EVM.State
 import EvmYul.EVM.StateOps
 import EvmYul.EVM.Exception
 import EvmYul.EVM.Instr
+import EvmYul.EVM.PrecompiledContracts
 
 import EvmYul.Operations
 import EvmYul.Pretty
@@ -354,9 +355,8 @@ def step (debugMode : Bool) (fuel : ℕ) (instr : Option (Operation .EVM × Opti
           | _ =>
           .error .InvalidStackSizeException
       -- TODO: Factor out the semantics for `CALL`, `CALLCODE`, `DELEGATECALL`, `STATICCALL`
-      | .CALL =>
+      | .CALL => do
         -- dbg_trace /- op -/ "CALL"
-        do
         -- Names are from the YP, these are:
         -- μ₀ - gas
         -- μ₁ - to
@@ -377,8 +377,6 @@ def step (debugMode : Bool) (fuel : ℕ) (instr : Option (Operation .EVM × Opti
           if μ₂ ≤ (evmState.accountMap.find? evmState.executionEnv.codeOwner |>.option 0 Account.balance) ∧ evmState.executionEnv.depth < 1024 then
             -- dbg_trace s!"DBG REMOVE; Calling address: {t}"
             let A' := evmState.addAccessedAccount t |>.substate -- A' ≡ A except A'ₐ ≡ Aₐ ∪ {t}
-            let .some tDirect := evmState.accountMap.find? t | default
-            let tDirect := tDirect.code -- We use the code directly without an indirection a'la `codeMap[t]`.
             -- dbg_trace s!"looking up memory range: {evmState.toMachineState.readBytes μ₃ μ₄}"
             let (i, newMachineState) := evmState.toMachineState.readBytes μ₃ μ₄ -- m[μs[3] . . . (μs[3] + μs[4] − 1)]
             let resultOfΘ ←
@@ -390,7 +388,7 @@ def step (debugMode : Bool) (fuel : ℕ) (instr : Option (Operation .EVM × Opti
                 (s  := evmState.executionEnv.codeOwner) -- Iₐ in Θ(.., Iₐ, ..)
                 (o  := evmState.executionEnv.sender)    -- Iₒ in Θ(.., Iₒ, ..)
                 (r  := t)                               -- t in Θ(.., t, ..)
-                (c  := tDirect)                         -- t in Θ(.., t, ..) except 'dereferenced'
+                (c  := toExecute evmState.accountMap t) -- t in Θ(.., t, ..) except 'dereferenced'
                 (g  := μ₀)                              -- TODO gas - CCALLGAS(σ, μ, A)
                 (p  := evmState.executionEnv.gasPrice)  -- Iₚ in Θ(.., Iₚ, ..)
                 (v  := μ₂)                              -- μₛ[2] in Θ(.., μₛ[2], ..)
@@ -461,7 +459,6 @@ def step (debugMode : Bool) (fuel : ℕ) (instr : Option (Operation .EVM × Opti
             -- dbg_trace s!"DBG REMOVE; Calling address: {t}"
             let A' := evmState.addAccessedAccount t |>.substate -- A' ≡ A except A'ₐ ≡ Aₐ ∪ {t}
             let .some tDirect := evmState.accountMap.find? t | default
-            let tDirect := tDirect.code -- We use the code directly without an indirection a'la `codeMap[t]`.
             -- dbg_trace s!"looking up memory range: {evmState.toMachineState.readBytes μ₃ μ₄}"
             let (i, newMachineState) := evmState.toMachineState.readBytes μ₃ μ₄ -- m[μs[3] . . . (μs[3] + μs[4] − 1)]
             let resultOfΘ ←
@@ -473,8 +470,8 @@ def step (debugMode : Bool) (fuel : ℕ) (instr : Option (Operation .EVM × Opti
                 (A  := A')                              -- A* in Θ(.., A*, ..)
                 (s  := evmState.executionEnv.codeOwner) -- Iₐ in Θ(.., Iₐ, ..)
                 (o  := evmState.executionEnv.sender)    -- Iₒ in Θ(.., Iₒ, ..)
-                (r  := evmState.executionEnv.codeOwner)                               -- t in Θ(.., t, ..)
-                (c  := tDirect)                         -- t in Θ(.., t, ..) except 'dereferenced'
+                (r  := evmState.executionEnv.codeOwner) -- t in Θ(.., t, ..)
+                (c  := toExecute evmState.accountMap t) -- t in Θ(.., t, ..) except 'dereferenced'
                 (g  := μ₀)                              -- TODO gas - CCALLGAS(σ, μ, A)
                 (p  := evmState.executionEnv.gasPrice)  -- Iₚ in Θ(.., Iₚ, ..)
                 (v  := μ₂)                              -- μₛ[2] in Θ(.., μₛ[2], ..)
@@ -559,14 +556,14 @@ def step (debugMode : Bool) (fuel : ℕ) (instr : Option (Operation .EVM × Opti
                 (createdAccounts := evmState.createdAccounts)
                 (σ  := evmState.accountMap)             -- σ in  Θ(σ, ..)
                 (A  := A')                              -- A* in Θ(.., A*, ..)
-                (s  := evmState.executionEnv.source) -- Iₛ in Θ(.., Iₐ, ..)
+                (s  := evmState.executionEnv.source)    -- Iₛ in Θ(.., Iₐ, ..)
                 (o  := evmState.executionEnv.sender)    -- Iₒ in Θ(.., Iₒ, ..)
-                (r  := evmState.executionEnv.codeOwner)                               -- t in Θ(.., t, ..)
-                (c  := tDirect)                         -- t in Θ(.., t, ..) except 'dereferenced'
+                (r  := evmState.executionEnv.codeOwner) -- t in Θ(.., t, ..)
+                (c  := toExecute evmState.accountMap t) -- t in Θ(.., t, ..) except 'dereferenced'
                 (g  := μ₀)                              -- TODO gas - CCALLGAS(σ, μ, A)
                 (p  := evmState.executionEnv.gasPrice)  -- Iₚ in Θ(.., Iₚ, ..)
-                (v  := 0)                              -- μₛ[2] in Θ(.., μₛ[2], ..)
-                (v' := evmState.executionEnv.weiValue)                              -- μₛ[2] in Θ(.., μₛ[2], ..)
+                (v  := 0)                               -- μₛ[2] in Θ(.., μₛ[2], ..)
+                (v' := evmState.executionEnv.weiValue)  -- μₛ[2] in Θ(.., μₛ[2], ..)
                 (d  := i)                               -- i in Θ(.., i, ..)
                 (e  := evmState.executionEnv.depth + 1) -- Iₑ + 1 in Θ(.., Iₑ + 1, ..)
                 (H := evmState.executionEnv.header)
@@ -649,11 +646,11 @@ def step (debugMode : Bool) (fuel : ℕ) (instr : Option (Operation .EVM × Opti
                 (s  := evmState.executionEnv.codeOwner) -- Iₐ in Θ(.., Iₐ, ..)
                 (o  := evmState.executionEnv.sender)    -- Iₒ in Θ(.., Iₒ, ..)
                 (r  := t)                               -- t in Θ(.., t, ..)
-                (c  := tDirect)                         -- t in Θ(.., t, ..) except 'dereferenced'
+                (c  := toExecute evmState.accountMap t) -- t in Θ(.., t, ..) except 'dereferenced'
                 (g  := μ₀)                              -- TODO gas - CCALLGAS(σ, μ, A)
                 (p  := evmState.executionEnv.gasPrice)  -- Iₚ in Θ(.., Iₚ, ..)
-                (v  := 0)                              -- μₛ[2] in Θ(.., μₛ[2], ..)
-                (v' := 0)                              -- μₛ[2] in Θ(.., μₛ[2], ..)
+                (v  := 0)                               -- μₛ[2] in Θ(.., μₛ[2], ..)
+                (v' := 0)                               -- μₛ[2] in Θ(.., μₛ[2], ..)
                 (d  := i)                               -- i in Θ(.., i, ..)
                 (e  := evmState.executionEnv.depth + 1) -- Iₑ + 1 in Θ(.., Iₑ + 1, ..)
                 (H := evmState.executionEnv.header)
@@ -1037,7 +1034,7 @@ def Θ (debugMode : Bool)
       (s  : AccountAddress)
       (o  : AccountAddress)
       (r  : AccountAddress)
-      (c  : ByteArray)
+      (c  : ToExecute)
       (g  : UInt256)
       (p  : UInt256)
       (v  : UInt256)
@@ -1086,14 +1083,49 @@ def Θ (debugMode : Bool)
       weiValue  := v' -- Equation (137)
       depth     := e  -- Equation (138)
       perm      := w  -- Equation (139)
-      code      := c  -- Note that we don't use an address, but the actual code. Equation (141)-ish.
+      -- Note that we don't use an address, but the actual code. Equation (141)-ish.
+      code      :=
+        match c with
+          | ToExecute.Precompiled _ => default
+          | ToExecute.Code code => code
       header    := H
     }
 
-
   -- Equation (131)
   -- Note that the `c` used here is the actual code, not the address. TODO - Handle precompiled contracts.
-  let (createdAccounts, σ'', g'', A'', out) ← Ξ debugMode fuel createdAccounts σ₁ g A I
+  let (createdAccounts, σ'', g'', A'', out) ←
+    match c with
+      | ToExecute.Precompiled p =>
+        match p with
+          | 1 =>
+            let (σ', g', A', o) := Ξ_ECREC σ₁ g A I
+            .ok (∅, σ', g', A', some o)
+          | 2 =>
+            let (σ', g', A', o) := Ξ_SHA256 σ₁ g A I
+            .ok (∅, σ', g', A', some o)
+          | 3 =>
+            let (σ', g', A', o) := Ξ_RIP160 σ₁ g A I
+            .ok (∅, σ', g', A', some o)
+          | 4 =>
+            let (σ', g', A', o) := Ξ_ID σ₁ g A I
+            .ok (∅, σ', g', A', some o)
+          | 5 =>
+            let (σ', g', A', o) := Ξ_EXPMOD σ₁ g A I
+            .ok (∅, σ', g', A', some o)
+          | 6 =>
+            let (σ', g', A', o) := Ξ_BN_ADD σ₁ g A I
+            .ok (∅, σ', g', A', some o)
+          | 7 =>
+            let (σ', g', A', o) := Ξ_BN_MUL σ₁ g A I
+            .ok (∅, σ', g', A', some o)
+          | 8 =>
+            let (σ', g', A', o) := Ξ_SNARKV σ₁ g A I
+            .ok (∅, σ', g', A', some o)
+          | 9 =>
+            let (σ', g', A', o) := Ξ_BLAKE2_F σ₁ g A I
+            .ok (∅, σ', g', A', some o)
+          | _ => default
+      | ToExecute.Code _ => Ξ debugMode fuel createdAccounts σ₁ g A I
   -- dbg_trace s!"σ'' after Ξ: {repr σ''}"
   -- Equation (127)
   let σ' := if σ'' == ∅ then σ else σ''
@@ -1120,7 +1152,6 @@ def checkTransactionGetSender (σ : YPState) (chainId H_f : ℕ) (T : Transactio
   -- dbg_trace "Transaction: {repr T}"
   let some T_RLP := RLP (← (L_X T)) | .error <| .InvalidTransaction .IllFormedRLP
 
-  let secp256k1n : ℕ := 115792089237316195423570985008687907852837564279074904382605163141518161494337
   let r : ℕ := fromBytesBigEndian T.base.r.data.data
   let s : ℕ := fromBytesBigEndian T.base.s.data.data
   if 0 ≥ r ∨ r ≥ secp256k1n then .error <| .InvalidTransaction .InvalidSignature
@@ -1150,7 +1181,7 @@ def checkTransactionGetSender (σ : YPState) (chainId H_f : ℕ) (T : Transactio
         | .ok s =>
           pure <| Fin.ofNat <| fromBytesBigEndian <|
             ((KEC s).extract 12 32 /- 160 bits = 20 bytes -/ ).data.data
-        | .error s => .error <| .InvalidTransaction (.SenderRecoverError s)
+        | .error s => .error <| .SenderRecoverError s
       | .some sender => pure sender
 
   -- dbg_trace s!"Looking for S_T: {S_T} in: σ: {repr σ}"
@@ -1321,13 +1352,11 @@ def Υ (debugMode : Bool) (fuel : ℕ) (σ : YPState) (chainId H_f : ℕ) (H : B
             | .some x => x
         pure (σ_P, g', A, z)
       | some t =>
-        match σ₀.find? t with
-          | .none => dbg_trace "σ₀.find failed; this should probably not be happening; test semantics will be off."; default
-          | .some v =>
-            let (_, σ_P, g',  A, z, _) ←
-              Θ debugMode fuel createdAccounts σ₀ AStar S_T S_T t v.code g p T.base.value T.base.value T.base.data 0 H true
+        -- Proposition (71) suggests the recipient can be inexistent
+        let (_, σ_P, g',  A, z, _) ←
+          Θ debugMode fuel createdAccounts σ₀ AStar S_T S_T t (toExecute σ₀ t) g p T.base.value T.base.value T.base.data 0 H true
               --  dbg_trace "Θ gave back σ_P: {repr σ_P}"
-            pure (σ_P, g', A, z)
+        pure (σ_P, g', A, z)
   -- The amount to be refunded (82)
   let gStar := g' + min ((T.base.gasLimit - g') / 5) A.refundBalance
   -- The pre-final state (83)

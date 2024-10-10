@@ -222,7 +222,7 @@ def executeTransactions (blocks : Blocks) (s₀ : EVM.State) : Except EVM.Except
               SYSTEM_ADDRESS
               SYSTEM_ADDRESS
               BEACON_ROOTS_ADDRESS
-              beaconRootsAddressCode
+              (.Code beaconRootsAddressCode)
               30000000
               0xe8d4a51000
               0
