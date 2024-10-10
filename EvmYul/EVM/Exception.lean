@@ -13,7 +13,6 @@ inductive InvalidTransactionException where
   | BaseFeeTooHigh : InvalidTransactionException
   | InconsistentFees : InvalidTransactionException
   | DataGreaterThan9152 : InvalidTransactionException
-  | SenderRecoverError : String → InvalidTransactionException
 
 instance : Repr InvalidTransactionException where
   reprPrec s _ :=
@@ -26,7 +25,6 @@ instance : Repr InvalidTransactionException where
       | .BaseFeeTooHigh       => "BaseFeeTooHigh"
       | .InconsistentFees     => "InconsistentFees"
       | .DataGreaterThan9152  => "DataGreaterThan9152"
-      | .SenderRecoverError s => "SenderRecoverError: " ++ s
 
 -- TODO - fix / cleanup.
 inductive Exception where
@@ -48,6 +46,7 @@ inductive Exception where
   | InvalidWithdrawal (s : String) : Exception
   | BogusExceptionToBeReplaced (s : String) : Exception
   | ExpectedException (s : String)          : Exception
+  | SenderRecoverError             : String → Exception
 
 instance : Repr Exception where
   reprPrec s _ := match s with
@@ -69,6 +68,7 @@ instance : Repr Exception where
                     | .InvalidWithdrawal s               => s!"InvalidWithdrawal: {s}"
                     | .BogusExceptionToBeReplaced s      => s!"BogusExceptionToBeReplaced: {s}"
                     | .ExpectedException s               => s!"Expected exception: {s}"
+                    | .SenderRecoverError s              => "SenderRecoverError: " ++ s
 
 end EVM
 

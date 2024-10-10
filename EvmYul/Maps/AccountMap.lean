@@ -32,6 +32,14 @@ section RemoveLater
 
 abbrev AccountMap := Batteries.RBMap AccountAddress Account compare
 
+def toExecute (σ : AccountMap) (t : AccountAddress) : ToExecute :=
+  if /- t is a precompiled account -/ 1 ≤ t && t ≤ 9 then
+    ToExecute.Precompiled t
+  else Id.run do
+    -- We use the code directly without an indirection a'la `codeMap[t]`.
+    let .some tDirect := σ.find? t | ToExecute.Code default
+    ToExecute.Code tDirect.code
+
 -- instance : LE ((_ : Address) × Account) where
 --   le lhs rhs := if lhs.1 = rhs.1 then lhs.2 ≤ rhs.2 else lhs.1 ≤ rhs.1
 

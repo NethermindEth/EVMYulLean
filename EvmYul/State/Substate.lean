@@ -54,11 +54,6 @@ structure Substate :=
   deriving BEq, Inhabited, Repr
 
 /--
-  (142) `π ≡ {1, 2, 3, 4, 5, 6, 7, 8, 9}`
--/
-def π : Batteries.RBSet AccountAddress compare := Batteries.RBSet.ofList ((List.range 10).tail.map Fin.ofNat) compare
-
-/--
   (63) `A0 ≡ (∅, (), ∅, 0, π, ∅)`
 -/
 def A0 : Substate := { (default : Substate) with accessedAccounts := π }
