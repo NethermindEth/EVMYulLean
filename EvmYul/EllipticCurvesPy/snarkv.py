@@ -52,4 +52,4 @@ if result == BNF12.from_int(1):
 else:
     output = U256(0).to_be_bytes32()
 
-print(bytes.hex(output))
+print(bytes.hex(output), end = '')

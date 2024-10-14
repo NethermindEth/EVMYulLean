@@ -30,4 +30,4 @@ except ValueError:
 p = p0.mul_by(n)
 
 output = p.x.to_be_bytes32() + p.y.to_be_bytes32()
-print(bytes.hex(output))
+print(bytes.hex(output), end = '')

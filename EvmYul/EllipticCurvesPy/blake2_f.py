@@ -25,4 +25,4 @@ if f not in [0, 1]:
     sys.exit()
 
 output = blake2b.compress(rounds, h, m, t_0, t_1, f)
-print(bytes.hex(output))
+print(bytes.hex(output), end = '')

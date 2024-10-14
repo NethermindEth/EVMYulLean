@@ -22,6 +22,6 @@ def left_pad_zero_bytes(value: Bytes, size: int) -> Bytes:
 
 data = bytes.fromhex(sys.argv[1])
 hash_bytes = hashlib.new("ripemd160", data).digest()
-padded_hash = left_pad_zero_bytes(hash_bytes, 32)
+padded_hash = left_pad_zero_bytes(hash_bytes, 20)
 output = padded_hash
 print(bytes.hex(output), end = '')
