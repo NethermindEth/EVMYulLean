@@ -40,10 +40,6 @@ def Ξ_ECREC
       if v' < 27 || 28 < v' || r' = 0 || r' >= secp256k1n || s' = 0 || s' >= secp256k1n then
         .empty
       else
-        -- dbg_trace h
-        -- dbg_trace v
-        -- dbg_trace r
-        -- dbg_trace s
         match ECDSARECOVER h (BE (v' - 27)) r s with
           | .ok s =>
               ByteArray.zeroes ⟨12⟩ ++ (KEC s).extract 12 32
@@ -330,14 +326,6 @@ private def bn_addOutput₁ :=
  where
   x : ByteArray := UInt256.toByteArray 1
   y : ByteArray := UInt256.toByteArray 2
-
--- #eval bn_addOutput == UInt256.toByteArray 1 ++ UInt256.toByteArray 2
-
--- private example :
---   expmodOutput
---     = UInt256.toByteArray 21888242871839275222246405745257275088696311157297823662689037894645226208580 ++ UInt256.toByteArray 2
--- :=
---   by native_decide
 
 def Ξ_BN_MUL
   (σ : AccountMap)
