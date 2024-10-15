@@ -283,7 +283,7 @@ def step (debugMode : Bool) (fuel : ℕ) (instr : Option (Operation .EVM × Opti
             let x :=
               let balance := σ.find? a |>.option 0 Account.balance
                 if z = false ∨ Iₑ = 1024 ∨ μ₀ < balance then 0 else a
-            let newReturnData : ByteArray := if z = true then .empty else o
+            let newReturnData : ByteArray := if z then .empty else o
             if evmState'.gasAvailable + g' < L (evmState'.gasAvailable) then
               .error .OutOfGass
             let evmState' :=
@@ -339,7 +339,7 @@ def step (debugMode : Bool) (fuel : ℕ) (instr : Option (Operation .EVM × Opti
             let x :=
               let balance := σ.find? a |>.option 0 Account.balance
                 if z = false ∨ Iₑ = 1024 ∨ μ₀ < balance then 0 else a
-            let newReturnData : ByteArray := if z = true then .empty else o
+            let newReturnData : ByteArray := if z then .empty else o
             if evmState'.gasAvailable + g' < L (evmState'.gasAvailable) then
               .error .OutOfGass
             let evmState' :=
@@ -968,7 +968,6 @@ def Lambda
             | .none => false
         if debugMode ∧ F₀ then
           dbg_trace "Contract creation failed: account {toHex (BE a)} already existed."
-        -- let F₁ : Bool := σStarStar == ∅ ∧ some returnedData == .none
         let F₂ : Bool := gStarStar < c
         if debugMode ∧ F₂ then
           dbg_trace "Contract creation failed: g** < c"
