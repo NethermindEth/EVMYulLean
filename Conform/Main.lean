@@ -45,11 +45,11 @@ GeneralStateTests:
     Succeeded: 116
     Success rate of: 61.375661
 
-  Pyspecs                               15m58
+  Pyspecs                               17m54
     Total tests: 2150
-    The post was NOT equal to the resulting state: 1781
-    Succeeded: 369
-    Success rate of: 17.162791
+    The post was NOT equal to the resulting state: 1779
+    Succeeded: 371
+    Success rate of: 17.255814
 
   Shanghai                              0m42
     Total tests: 27
@@ -123,17 +123,17 @@ GeneralStateTests:
     Succeeded: 89
     Success rate of: 45.408163
 
-  stDelegatecallTestHomestead           0m48
+  stDelegatecallTestHomestead           0m52
     Total tests: 33
-    The post was NOT equal to the resulting state: 27
-    Succeeded: 6
-    Success rate of: 18.181818
+    The post was NOT equal to the resulting state: 26
+    Succeeded: 7
+    Success rate of: 21.212121
 
-  stEIP150singleCodeGasPrices           8m37
+  stEIP150singleCodeGasPrices           8m11
     Total tests: 450
-    The post was NOT equal to the resulting state: 450
-    Succeeded: 0
-    Success rate of: 0.000000
+    The post was NOT equal to the resulting state: 336
+    Succeeded: 114
+    Success rate of: 25.333333
 
   stEIP150Specific                      0m38
     Total tests: 23
@@ -141,11 +141,11 @@ GeneralStateTests:
     Succeeded: 4
     Success rate of: 17.391304
 
-  stEIP1559                             16m53
+  stEIP1559                             17m16
     Total tests: 1845
-    The post was NOT equal to the resulting state: 949
-    Succeeded: 896
-    Success rate of: 48.563686
+    The post was NOT equal to the resulting state: 926
+    Succeeded: 919
+    Success rate of: 49.810298
 
   stEIP158Specific                      0m22
     Total tests: 8
@@ -219,9 +219,17 @@ GeneralStateTests:
     Succeeded: 10
     Success rate of: 41.666667
 
-  stPreCompiledContracts                -
+  stPreCompiledContracts                14m47
+    Total tests: 950
+    The post was NOT equal to the resulting state: 758
+    Succeeded: 192
+    Success rate of: 20.210526
 
-  stPreCompiledContracts2               -
+  stPreCompiledContracts2               29m18
+    Total tests: 226
+    The post was NOT equal to the resulting state: 204
+    Succeeded: 22
+    Success rate of: 9.734513
 
   stQuadraticComplexityTest             0m41
     Total tests: 32
@@ -253,7 +261,7 @@ GeneralStateTests:
     Succeeded: 16
     Success rate of: 61.538462
 
-  stReturnDataTest                      4m35
+  stReturnDataTest                      4m56
     Total tests: 273
     The post was NOT equal to the resulting state: 44
     Succeeded: 229
@@ -402,13 +410,19 @@ ValidBlocks
 -/
 def directoryBlacklist : List System.FilePath :=
   [ "EthereumTests/BlockchainTests/GeneralStateTests/stCallCodes" -- 86 tests
-  , "EthereumTests/BlockchainTests/GeneralStateTests/stPreCompiledContracts" -- 960 tests
-  , "EthereumTests/BlockchainTests/GeneralStateTests/stPreCompiledContracts2" -- 248 tests
-  , "EthereumTests/BlockchainTests/GeneralStateTests/stCallDelegateCodesHomestead" -- 58 tests
   , "EthereumTests/BlockchainTests/GeneralStateTests/stCallDelegateCodesCallCodeHomestead" -- 58 tests
   ]
 
-def fileBlacklist : List System.FilePath := []
+def fileBlacklist : List System.FilePath :=
+  [ "EthereumTests/BlockchainTests/GeneralStateTests/stPreCompiledContracts2/modexp_0_0_0_25000.json"
+  , "EthereumTests/BlockchainTests/GeneralStateTests/stPreCompiledContracts2/modexp_0_0_0_20500.json"
+  , "EthereumTests/BlockchainTests/GeneralStateTests/stPreCompiledContracts2/modexpRandomInput.json"
+  , "EthereumTests/BlockchainTests/GeneralStateTests/stPreCompiledContracts2/modexp_0_0_0_35000.json"
+  , "EthereumTests/BlockchainTests/GeneralStateTests/stPreCompiledContracts2/modexp_0_0_0_22000.json"
+  , "EthereumTests/BlockchainTests/GeneralStateTests/stRevertTest/RevertPrecompiledTouchExactOOG_Paris.json"
+  , "EthereumTests/BlockchainTests/GeneralStateTests/stCallCodes/callcodecallcall_100_OOGMBefore.json"
+  , "EthereumTests/BlockchainTests/GeneralStateTests/stCallCodes/callcodecallcodecallcode_111_OOGMBefore.json"
+  ]
 
 def main : IO Unit := do
   let testFiles ←

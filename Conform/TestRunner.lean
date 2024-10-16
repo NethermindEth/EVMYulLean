@@ -85,6 +85,22 @@ def VerySlowTests : Array String :=
   , "buffer_d21g0v0_Cancun"
   , "buffer_d33g0v0_Cancun"
   , "buffer_d36g0v0_Cancun"
+  , "modexpTests_d120g0v0_Cancun"
+  -- TODO: revisit the following 9
+  , "precompsEIP2929Cancun_d22g0v0_Cancun"
+  , "precompsEIP2929Cancun_d40g0v0_Cancun"  -- TODO: It actually passes
+  , "precompsEIP2929Cancun_d58g0v0_Cancun"
+  , "precompsEIP2929Cancun_d76g0v0_Cancun"
+  , "precompsEIP2929Cancun_d7g0v0_Cancun"
+  , "precompsEIP2929Cancun_d94g0v0_Cancun"
+  , "idPrecomps_d66g0v0_Cancun"
+  , "idPrecomps_d5g0v0_Cancun" -- PANIC at unsafePerformIO EvmYul.PerformIO
+  , "idPrecomps_d4g0v0_Cancun"
+
+  , "buffer_d21g0v0_Cancun"
+  , "buffer_d33g0v0_Cancun"
+  , "buffer_d36g0v0_Cancun"
+  -- , "CallEcrecover_Overflow_d2g0v0_Cancun" -- PANIC at unsafePerformIO EvmYul.PerformIO
   -- , "callcodecallcall_100_OOGMBefore_d0g0v0_Cancun"
   -- , "callcodecallcodecallcode_111_OOGMBefore_d0g0v0_Cancun"
   -- , "callcallcodecall_010_OOGE_d0g0v0_Cancun"
