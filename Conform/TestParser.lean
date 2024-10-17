@@ -160,16 +160,16 @@ instance : FromJson Transaction where
       dbgSender := ← json.getObjValAsD! AccountAddress        "sender"
     }
 
-    match json.getObjVal? "v" with
-      | .ok w => do
-        return .legacy ⟨baseTransaction, ⟨← json.getObjValAsD! UInt256 "gasPrice"⟩, ← FromJson.fromJson? w⟩
+    match json.getObjVal? "accessList" with
       | .error _ => do
+        return .legacy ⟨baseTransaction, ⟨← json.getObjValAsD! UInt256 "gasPrice"⟩, ← json.getObjValAsD! UInt256 "v"⟩
+      | .ok accessList => do
         -- Any other transaction now necessarily has an access list.
         let accessListTransaction : Transaction.WithAccessList :=
           {
             chainId    := let mainnet : Nat := 1; mainnet
-            accessList := ← json.getObjValAsD! _ "accessList" <&> accessListToRBMap
-            yParity    := TODO
+            accessList := ← FromJson.fromJson? accessList <&> accessListToRBMap
+            yParity    := ← json.getObjValAsD! UInt256 "v"
           }
 
         match json.getObjVal? "gasPrice" with
