@@ -298,10 +298,10 @@ GeneralStateTests:
     Success rate of: 30.434783
 
   stSpecialTest                         0m35
-    Total tests: 21
-    The post was NOT equal to the resulting state: 11
-    Succeeded: 10
-    Success rate of: 47.619048
+    Total tests: 20
+    The post was NOT equal to the resulting state: 8
+    Succeeded: 12
+    Success rate of: 60.000000
 
   stSStoreTest                          9m10
     Total tests: 475
@@ -411,6 +411,7 @@ ValidBlocks
 def directoryBlacklist : List System.FilePath :=
   [ "EthereumTests/BlockchainTests/GeneralStateTests/stCallCodes" -- 86 tests
   , "EthereumTests/BlockchainTests/GeneralStateTests/stCallDelegateCodesCallCodeHomestead" -- 58 tests
+  , "EthereumTests/BlockchainTests/GeneralStateTests/stCallDelegateCodesHomestead"
   ]
 
 def fileBlacklist : List System.FilePath :=

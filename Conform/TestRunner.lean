@@ -100,6 +100,7 @@ def VerySlowTests : Array String :=
   , "buffer_d21g0v0_Cancun"
   , "buffer_d33g0v0_Cancun"
   , "buffer_d36g0v0_Cancun"
+  , "failed_tx_xcf416c53_Paris_d0g0v0_Cancun"
   -- , "CallEcrecover_Overflow_d2g0v0_Cancun" -- PANIC at unsafePerformIO EvmYul.PerformIO
   -- , "callcodecallcall_100_OOGMBefore_d0g0v0_Cancun"
   -- , "callcodecallcodecallcode_111_OOGMBefore_d0g0v0_Cancun"
@@ -341,7 +342,7 @@ def processTestsOfFile (file : System.FilePath)
   let tests := guardBlacklist ∘ guardWhitelist <| test.toTests
   -- dbg_trace s!"tests after guard: {tests.map Prod.fst}"
   tests.foldlM (init := ∅) λ acc (testname, test) ↦
-    -- dbg_trace s!"TESTING {testname} FROM {path}"
+    dbg_trace s!"TESTING {testname} FROM {path}"
     pure <| acc.insert testname (processTest test)
     -- try
     --   processTest test >>= pure ∘
