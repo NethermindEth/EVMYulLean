@@ -207,11 +207,11 @@ GeneralStateTests:
     Succeeded: 79
     Success rate of: 96.341463
 
-  stMemoryTest                          4m12
-    Total tests: 218
-    The post was NOT equal to the resulting state: 97
-    Succeeded: 121
-    Success rate of: 55.504587
+  stMemoryTest                          10m29
+    Total tests: 561
+    The post was NOT equal to the resulting state: 79
+    Succeeded: 482
+    Success rate of: 85.918004
 
   stNonZeroCallsTest                    0m38
     Total tests: 24
@@ -255,15 +255,15 @@ GeneralStateTests:
 
   stReturnDataTest                      4m35
     Total tests: 273
-    The post was NOT equal to the resulting state: 229
-    Succeeded: 44
-    Success rate of: 16.117216
+    The post was NOT equal to the resulting state: 44
+    Succeeded: 229
+    Success rate of: 83.882784
 
-  stRevertTest                          4m54
+  stRevertTest                          4m44
     Total tests: 262
-    The post was NOT equal to the resulting state: 61
-    Succeeded: 201
-    Success rate of: 76.717557
+    The post was NOT equal to the resulting state: 57
+    Succeeded: 205
+    Success rate of: 78.244275
 
   stSelfBalance                         0m58
     Total tests: 42
@@ -408,9 +408,7 @@ def directoryBlacklist : List System.FilePath :=
   , "EthereumTests/BlockchainTests/GeneralStateTests/stCallDelegateCodesCallCodeHomestead" -- 58 tests
   ]
 
-def fileBlacklist : List System.FilePath :=
-  [ "EthereumTests/BlockchainTests/GeneralStateTests/stMemoryTest/buffer.json" -- 348 tests
-  ]
+def fileBlacklist : List System.FilePath := []
 
 def main : IO Unit := do
   let testFiles ←

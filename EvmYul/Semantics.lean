@@ -266,6 +266,8 @@ def step {τ : OperationType} (debugMode : Bool) (op : Operation τ) : Transform
             λ evmState ↦
         match evmState.stack.pop3 with
           | some ⟨stack', μ₀, μ₁, μ₂⟩ => do
+            if debugMode then
+              dbg_trace s!"called with μ₀: {μ₀} μ₁: {μ₁} μ₂: {μ₂}"
             let .some mState' := evmState.toMachineState.returndatacopy μ₀ μ₁ μ₂
               | .error EVM.Exception.OutOfBounds
             let evmState' := {evmState with toMachineState := mState'}

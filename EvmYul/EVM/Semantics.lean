@@ -283,7 +283,7 @@ def step (debugMode : Bool) (fuel : ℕ) (instr : Option (Operation .EVM × Opti
             let x :=
               let balance := σ.find? a |>.option 0 Account.balance
                 if z = false ∨ Iₑ = 1024 ∨ μ₀ < balance then 0 else a
-            let newReturnData : ByteArray := if z = false then .empty else o
+            let newReturnData : ByteArray := if z then .empty else o
             if evmState'.gasAvailable + g' < L (evmState'.gasAvailable) then
               .error .OutOfGass
             let evmState' :=
@@ -339,7 +339,7 @@ def step (debugMode : Bool) (fuel : ℕ) (instr : Option (Operation .EVM × Opti
             let x :=
               let balance := σ.find? a |>.option 0 Account.balance
                 if z = false ∨ Iₑ = 1024 ∨ μ₀ < balance then 0 else a
-            let newReturnData : ByteArray := if z = false then .empty else o
+            let newReturnData : ByteArray := if z then .empty else o
             if evmState'.gasAvailable + g' < L (evmState'.gasAvailable) then
               .error .OutOfGass
             let evmState' :=
@@ -736,7 +736,7 @@ def X (debugMode : Bool) (fuel : ℕ) (evmState : State) : Except EVM.Exception 
         if Z₃ ∧ debugMode then
           dbg_trace s!"Exceptional halting: invalid JUMPI destination"
         if Z₄ ∧ debugMode then
-          dbg_trace s!"Exceptional halting: not enough output data for RETURNDATACOPY"
+          dbg_trace s!"Exceptional halting: not enough output data for RETURNDATACOPY: required {evmState.stack.getD 1 0 + evmState.stack.getD 2 0} bytes but got {evmState.returnData.size}"
         if Z₅ ∧ debugMode then
           dbg_trace s!"Exceptional halting: {w.pretty} would result in stack larger than 1024 elements"
         if Z₆ ∧ debugMode then
@@ -745,6 +745,7 @@ def X (debugMode : Bool) (fuel : ℕ) (evmState : State) : Except EVM.Exception 
 
       let H (μ : MachineState) (w : Operation .EVM) : Option ByteArray :=
         if w ∈ [.RETURN, .REVERT] then
+          -- dbg_trace s!"{w.pretty} gives {toHex μ.H_return}"
           some <| μ.H_return
         else
           if w ∈ [.STOP, .SELFDESTRUCT] then
@@ -754,10 +755,14 @@ def X (debugMode : Bool) (fuel : ℕ) (evmState : State) : Except EVM.Exception 
       if Z then
         -- dbg_trace "exceptional halting"
         .ok ({evmState with accountMap := ∅}, none)
-      else
+      -- else
         -- TODO - Probably an exceptional gas scenario, as we should have technically checked apriori.
-        if w = .REVERT then
-          .ok ({evmState with accountMap := ∅}, .some evmState.returnData)
+        -- if w = .REVERT then
+          -- The Yellow Paper says we don't call the "iterator function" "O" for `REVERT`,
+          -- but we actually have to call the semantics of `REVERT` to pass the test
+          -- EthereumTests/BlockchainTests/GeneralStateTests/stReturnDataTest/returndatacopy_after_revert_in_staticcall.json
+          -- And the EEL spec does so too.
+          -- .ok ({evmState with accountMap := ∅}, .some evmState.returnData)
         else
           -- NB we still need to check gas, because `Z` needs to call `C`, which needs `μ'ᵢ`.
           -- We first call `step` to obtain `μ'ᵢ`, which we then use to compute `C`.
@@ -792,7 +797,15 @@ def X (debugMode : Bool) (fuel : ℕ) (evmState : State) : Except EVM.Exception 
               -- Interestingly, the YP is defining `C` with parameters that are much 'broader'
               -- than what is strictly necessary, e.g. we are decoding an instruction, instead of getting one in input.
               | none => X debugMode f {evmState' with gasAvailable := evmState.gasAvailable - gasCost}
-              | some o => .ok <| (evmState', some o)
+              | some o =>
+                if w == .REVERT then
+                  -- The Yellow Paper says we don't call the "iterator function" "O" for `REVERT`,
+                  -- but we actually have to call the semantics of `REVERT` to pass the test
+                  -- EthereumTests/BlockchainTests/GeneralStateTests/stReturnDataTest/returndatacopy_after_revert_in_staticcall.json
+                  -- And the EEL spec does so too.
+                  .ok <| ({evmState' with accountMap := ∅}, some o)
+                else
+                  .ok <| (evmState', some o)
  where
   belongs (o : Option ℕ) (l : List ℕ) : Bool :=
     match o with
@@ -955,9 +968,6 @@ def Lambda
             | .none => false
         if debugMode ∧ F₀ then
           dbg_trace "Contract creation failed: account {toHex (BE a)} already existed."
-        let F₁ : Bool := σStarStar == ∅
-        if debugMode ∧ F₁ then
-          dbg_trace "Contract creation failed: the code execution failed."
         let F₂ : Bool := gStarStar < c
         if debugMode ∧ F₂ then
           dbg_trace "Contract creation failed: g** < c"
@@ -967,7 +977,7 @@ def Lambda
         let F₄ : Bool := returnedData = ⟨⟨0xef :: returnedData.data.toList.tail⟩⟩
         if debugMode ∧ F₄ then
           dbg_trace "Contract creation failed: code conputed for the new account starts with 0xef"
-        pure (F₀ ∨ F₁ ∨ F₂ ∨ F₃ ∨ F₄)
+        pure (F₀ ∨ F₂ ∨ F₃ ∨ F₄)
       let fail := F || σStarStar == ∅
       -- (114)
       let g' := if F then 0 else gStarStar - c
