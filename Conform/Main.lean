@@ -383,9 +383,9 @@ GeneralStateTests:
 
   VMTests                               9m16
     Total tests: 571
-    The post was NOT equal to the resulting state: 31
-    Succeeded: 540
-    Success rate of: 94.570928
+    The post was NOT equal to the resulting state: 30
+    Succeeded: 541
+    Success rate of: 94.746060
 -/
 /-
 InvalidBlocks 2m56
