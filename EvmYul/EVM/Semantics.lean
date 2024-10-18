@@ -1091,42 +1091,28 @@ def Θ (debugMode : Bool)
       header    := H
     }
 
+  let
+    spoon (h : AccountMap × UInt256 × Substate × ByteArray) : Except _ _ :=
+      .ok ((∅ : Batteries.RBSet _ _), h.1, h.2.1, h.2.2.1, some h.2.2.2)
+
   -- Equation (131)
   -- Note that the `c` used here is the actual code, not the address. TODO - Handle precompiled contracts.
   let (createdAccounts, σ'', g'', A'', out) ←
     match c with
-      | ToExecute.Precompiled p =>
+      | ToExecute.Precompiled p => spoon <|
         match p with
-          | 1 =>
-            let (σ', g', A', o) := Ξ_ECREC σ₁ g A I
-            .ok (∅, σ', g', A', some o)
-          | 2 =>
-            let (σ', g', A', o) := Ξ_SHA256 σ₁ g A I
-            .ok (∅, σ', g', A', some o)
-          | 3 =>
-            let (σ', g', A', o) := Ξ_RIP160 σ₁ g A I
-            .ok (∅, σ', g', A', some o)
-          | 4 =>
-            let (σ', g', A', o) := Ξ_ID σ₁ g A I
-            .ok (∅, σ', g', A', some o)
-          | 5 =>
-            let (σ', g', A', o) := Ξ_EXPMOD σ₁ g A I
-            .ok (∅, σ', g', A', some o)
-          | 6 =>
-            let (σ', g', A', o) := Ξ_BN_ADD σ₁ g A I
-            .ok (∅, σ', g', A', some o)
-          | 7 =>
-            let (σ', g', A', o) := Ξ_BN_MUL σ₁ g A I
-            .ok (∅, σ', g', A', some o)
-          | 8 =>
-            let (σ', g', A', o) := Ξ_SNARKV σ₁ g A I
-            .ok (∅, σ', g', A', some o)
-          | 9 =>
-            let (σ', g', A', o) := Ξ_BLAKE2_F σ₁ g A I
-            .ok (∅, σ', g', A', some o)
+          | 1 => Ξ_ECREC σ₁ g A I
+          | 2 => Ξ_SHA256 σ₁ g A I
+          | 3 => Ξ_RIP160 σ₁ g A I
+          | 4 => Ξ_ID σ₁ g A I
+          | 5 => Ξ_EXPMOD σ₁ g A I
+          | 6 => Ξ_BN_ADD σ₁ g A I
+          | 7 => Ξ_BN_MUL σ₁ g A I
+          | 8 => Ξ_SNARKV σ₁ g A I
+          | 9 => Ξ_BLAKE2_F σ₁ g A I
           | _ => default
       | ToExecute.Code _ => Ξ debugMode fuel createdAccounts σ₁ g A I
-  -- dbg_trace s!"σ'' after Ξ: {repr σ''}"
+
   -- Equation (127)
   let σ' := if σ'' == ∅ then σ else σ''
 
