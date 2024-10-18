@@ -12,6 +12,13 @@ import EvmYul.Wheels
 import EvmYul.EllipticCurves
 import EvmYul.PerformIO
 
+import EvmYul.SHA256
+import EvmYul.RIP160
+import EvmYul.BN_ADD
+import EvmYul.BN_MUL
+import EvmYul.SNARKV
+import EvmYul.BLAKE2_F
+
 import EvmYul.Data.Stack
 
 import EvmYul.EVM.Exception
@@ -20,6 +27,7 @@ import EvmYul.EVM.PrimOps
 import EvmYul.EVM.Semantics
 import EvmYul.EVM.State
 import EvmYul.EVM.StateOps
+import EvmYul.EVM.PrecompiledContracts
 
 import EvmYul.Maps.AccountMap
 import EvmYul.Maps.ByteMap

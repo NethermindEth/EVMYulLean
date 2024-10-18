@@ -3,6 +3,9 @@
 import EvmYul.Wheels
 import EvmYul.PerformIO
 import Conform.Wheels
+import EvmYul.SpongeHash.Keccak256
+
+def secp256k1n : ℕ := 115792089237316195423570985008687907852837564279074904382605163141518161494337
 
 def blobECDSARECOVER (e v r s : String) : String :=
   totallySafePerformIO ∘ IO.Process.run <|
@@ -82,3 +85,7 @@ private example :
 private example :
   (ECDSARECOVER e v r s).toOption = (Except.ok pᵤ : Except String _).toOption
 := by native_decide
+
+open Batteries
+
+#eval ByteArray.zeroes ⟨12⟩ ++ (KEC pᵤ).extract 12 32
