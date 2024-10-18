@@ -103,6 +103,8 @@ def VerySlowTests : Array String :=
   , "failed_tx_xcf416c53_Paris_d0g0v0_Cancun"
   , "CALLBlake2f_MaxRounds_d0g0v0_Cancun"
   -- , "CallEcrecover_Overflow_d2g0v0_Cancun" -- PANIC at unsafePerformIO EvmYul.PerformIO
+  , "19_oogUndoesTransientStore_d0g0v0_Cancun"
+  , "20_oogUndoesTransientStoreInCall_d0g0v0_Cancun"
   -- , "callcodecallcall_100_OOGMBefore_d0g0v0_Cancun"
   -- , "callcodecallcodecallcode_111_OOGMBefore_d0g0v0_Cancun"
   -- , "callcallcodecall_010_OOGE_d0g0v0_Cancun"
