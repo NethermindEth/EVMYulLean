@@ -421,8 +421,6 @@ def fileBlacklist : List System.FilePath :=
   , "EthereumTests/BlockchainTests/GeneralStateTests/stPreCompiledContracts2/modexp_0_0_0_35000.json"
   , "EthereumTests/BlockchainTests/GeneralStateTests/stPreCompiledContracts2/modexp_0_0_0_22000.json"
   , "EthereumTests/BlockchainTests/GeneralStateTests/stRevertTest/RevertPrecompiledTouchExactOOG_Paris.json"
-  , "EthereumTests/BlockchainTests/GeneralStateTests/stCallCodes/callcodecallcall_100_OOGMBefore.json"
-  , "EthereumTests/BlockchainTests/GeneralStateTests/stCallCodes/callcodecallcodecallcode_111_OOGMBefore.json"
   ]
 
 def main : IO Unit := do
