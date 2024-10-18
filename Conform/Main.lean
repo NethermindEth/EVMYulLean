@@ -45,11 +45,11 @@ GeneralStateTests:
     Succeeded: 122
     Success rate of: 65.240642
 
-  Pyspecs                               17m54
+  Pyspecs                               22m35
     Total tests: 2150
-    The post was NOT equal to the resulting state: 1779
-    Succeeded: 371
-    Success rate of: 17.255814
+    The post was NOT equal to the resulting state: 1695
+    Succeeded: 455
+    Success rate of: 21.162791
 
   Shanghai                              0m42
     Total tests: 27
