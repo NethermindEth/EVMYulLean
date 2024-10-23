@@ -77,6 +77,22 @@ instance : HMod UInt256 ℕ UInt256 := ⟨UInt256.modn⟩
 
 def complement (a : UInt256) : UInt256 := 0-(a + 1)
 
+def fromSigned (a : UInt256) : ℤ :=
+  if a < 2^255 then a.val else - (Nat.xor (UInt256.size - 1) a.val) - 1
+
+def toSigned (i : ℤ) : UInt256 :=
+  match i with
+    | .ofNat n => Fin.ofNat n
+    | .negSucc n => Fin.ofNat (UInt256.size - 1 - n)
+
+example : fromSigned (toSigned 0) = 0 := by rfl
+example : fromSigned (toSigned (-7)) = -7 := by rfl
+example : fromSigned (toSigned 7) = 7 := by rfl
+-- Largest two’s complement signed 256-bit integer
+example : fromSigned (toSigned (2^255 - 1)) = 2^255 - 1 := by rfl
+-- Smallest two’s complement signed 256-bit integer
+example : fromSigned (toSigned (-2^255)) = -2^255 := by rfl
+
 instance : Complement UInt256 := ⟨EvmYul.UInt256.complement⟩
 
 private def powAux (a : UInt256) (c : UInt256) : ℕ → UInt256
@@ -178,9 +194,12 @@ def sgt (a b : UInt256) :=
   fromBool (sgtBool a b)
 
 def sar (a b : UInt256) : UInt256 :=
-  if sltBool a 0
-  then UInt256.complement (UInt256.complement a >>> b)
-  else a >>> b
+  if sltBool b 0
+  then UInt256.complement (UInt256.complement b >>> a)
+  else b >>> a
+
+example : sar 2 (toSigned 32) = toSigned 8 := by rfl
+example : sar 2 (toSigned (-32)) = toSigned (-8) := by rfl
 
 private partial def dbg_toHex (n : Nat) : String :=
   if n < 16

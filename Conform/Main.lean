@@ -279,11 +279,11 @@ GeneralStateTests:
     Succeeded: 3
     Success rate of: 7.142857
 
-  stShift                               0m59
+  stShift                               0m54
     Total tests: 42
-    The post was NOT equal to the resulting state: 10
-    Succeeded: 32
-    Success rate of: 76.190476
+    The post was NOT equal to the resulting state: 2
+    Succeeded: 40
+    Success rate of: 95.238095
 
   stSLoadTest                           0m15
     Total tests: 1
