@@ -52,4 +52,4 @@ result = Bytes(
     + U256(BLS_MODULUS).to_be_bytes32()
 )
 
-print(bytes.hex(output), end = '')
+print(bytes.hex(result), end = '')
