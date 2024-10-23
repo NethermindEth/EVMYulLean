@@ -160,16 +160,14 @@ instance : FromJson Transaction where
       dbgSender := ← json.getObjValAsD! AccountAddress        "sender"
     }
 
-    match json.getObjVal? "v" with
-      | .ok w => do
-        return .legacy ⟨baseTransaction, ⟨← json.getObjValAsD! UInt256 "gasPrice"⟩, ← FromJson.fromJson? w⟩
-      | .error _ => do
+    match json.getObjVal? "accessList" with
+      | .ok A => do
         -- Any other transaction now necessarily has an access list.
         let accessListTransaction : Transaction.WithAccessList :=
           {
             chainId    := let mainnet : Nat := 1; mainnet
-            accessList := ← json.getObjValAsD! _ "accessList" <&> accessListToRBMap
-            yParity    := TODO
+            accessList := ← FromJson.fromJson? A <&> accessListToRBMap
+            yParity    := ← json.getObjValAsD! UInt256 "v"
           }
 
         match json.getObjVal? "gasPrice" with
@@ -184,6 +182,8 @@ instance : FromJson Transaction where
                      ← json.getObjValAsD! UInt256 "maxFeePerGas",
                      ← json.getObjValAsD! UInt256 "maxPriorityFeePerGas"
                    ⟩
+      | .error _ => do
+        return .legacy ⟨baseTransaction, ⟨← json.getObjValAsD! UInt256 "gasPrice"⟩, (← json.getObjValAsD! UInt256 "v")⟩
 
   where accessListToRBMap (this : AccessList) : Batteries.RBMap AccountAddress (Array UInt256) compare :=
     this.foldl (init := ∅) λ m ⟨addr, list⟩ ↦ m.insert addr list
