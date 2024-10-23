@@ -11,4 +11,6 @@ def blobBN_MUL (x₀ y₀ n : String) : String :=
   }
 
 def BN_MUL (x₀ y₀ n : ByteArray) : Except String ByteArray :=
-  ByteArray.ofBlob <| blobBN_MUL (toHex x₀) (toHex y₀) (toHex n)
+  match blobBN_MUL (toHex x₀) (toHex y₀) (toHex n) with
+    | "error" => .error "BN_MUL failed"
+    | s => ByteArray.ofBlob s
