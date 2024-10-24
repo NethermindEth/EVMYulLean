@@ -112,14 +112,7 @@ instance : FromJson BlockHeader where
         nonce         := 0 -- [deprecated] 0.
         baseFeePerGas := ← json.getObjValAsD! _         "baseFeePerGas" <&> UInt256.toNat
         parentBeaconBlockRoot := ← json.getObjValAsD! ByteArray "parentBeaconBlockRoot"
-        /-
-          The tests do not provide `prevRandao` and we do not have a way to compute it.
-          We simply set it to look random.
-        -/
-        prevRandao    :=
-          UInt256.xor
-            (← json.getObjValAsD! UInt256 "parentHash")
-            (← json.getObjValAsD! UInt256 "stateRoot")
+        prevRandao    := ← json.getObjValAsD! UInt256 "mixHash"
         withdrawalsRoot := ← json.getObjValAsD! ByteArray "withdrawalsRoot"
       }
     catch exct => dbg_trace s!"OOOOPSIE: {exct}\n json: {json}"
@@ -160,16 +153,16 @@ instance : FromJson Transaction where
       dbgSender := ← json.getObjValAsD! AccountAddress        "sender"
     }
 
-    match json.getObjVal? "v" with
-      | .ok w => do
-        return .legacy ⟨baseTransaction, ⟨← json.getObjValAsD! UInt256 "gasPrice"⟩, ← FromJson.fromJson? w⟩
+    match json.getObjVal? "accessList" with
       | .error _ => do
+        return .legacy ⟨baseTransaction, ⟨← json.getObjValAsD! UInt256 "gasPrice"⟩, ← json.getObjValAsD! UInt256 "v"⟩
+      | .ok accessList => do
         -- Any other transaction now necessarily has an access list.
         let accessListTransaction : Transaction.WithAccessList :=
           {
             chainId    := let mainnet : Nat := 1; mainnet
-            accessList := ← json.getObjValAsD! _ "accessList" <&> accessListToRBMap
-            yParity    := TODO
+            accessList := ← FromJson.fromJson? accessList <&> accessListToRBMap
+            yParity    := ← json.getObjValAsD! UInt256 "v"
           }
 
         match json.getObjVal? "gasPrice" with

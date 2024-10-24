@@ -51,9 +51,5 @@ deriving DecidableEq, Inhabited, Repr
 
 attribute [deprecated] BlockHeader.difficulty
 attribute [deprecated] BlockHeader.nonce
-/-
-  We return a presudorandom value instead of fetching this field.
--/
-attribute [deprecated] BlockHeader.prevRandao
 
 end EvmYul
