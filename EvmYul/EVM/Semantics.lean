@@ -1110,6 +1110,7 @@ def Θ (debugMode : Bool)
           | 7 => Ξ_BN_MUL σ₁ g A I
           | 8 => Ξ_SNARKV σ₁ g A I
           | 9 => Ξ_BLAKE2_F σ₁ g A I
+          | 10 => Ξ_PointEval σ₁ g A I
           | _ => default
       | ToExecute.Code _ => Ξ debugMode fuel createdAccounts σ₁ g A I
 

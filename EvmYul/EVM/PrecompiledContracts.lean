@@ -12,6 +12,7 @@ import EvmYul.BN_ADD
 import EvmYul.BN_MUL
 import EvmYul.SNARKV
 import EvmYul.BLAKE2_F
+import EvmYul.PointEval
 
 open EvmYul
 
@@ -442,3 +443,21 @@ private example :
     =
   (ByteArray.ofBlob "08c9bcf367e6096a3ba7ca8485ae67bb2bf894fe72f36e3cf1361d5f3af54fa5d282e6ad7f520e511f6c3e2b8c68059b9442be0454267ce079217e1319cde05b").toOption
 := by native_decide
+
+def Ξ_PointEval
+  (σ : AccountMap)
+  (g : UInt256)
+  (A : Substate)
+  (I : ExecutionEnv)
+    :
+  (AccountMap × UInt256 × Substate × ByteArray)
+:=
+  let d := I.inputData
+  let gᵣ : UInt256 := 50000
+
+  let o := PointEval d
+  match o with
+    | .ok o => (σ, g - gᵣ, A, o)
+    | .error e =>
+      dbg_trace s!"Ξ_PointEval failed: {e}"
+      (∅, 0, A, .empty)

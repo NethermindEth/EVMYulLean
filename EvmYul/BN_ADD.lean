@@ -11,4 +11,6 @@ def blobBN_ADD (x₀ y₀ x₁ y₁ : String) : String :=
   }
 
 def BN_ADD (x₀ y₀ x₁ y₁ : ByteArray) : Except String ByteArray :=
-  ByteArray.ofBlob <| blobBN_ADD (toHex x₀) (toHex y₀) (toHex x₁) (toHex y₁)
+  match blobBN_ADD (toHex x₀) (toHex y₀) (toHex x₁) (toHex y₁) with
+    | "error" => .error "BN_ADD failed"
+    | s => ByteArray.ofBlob s
