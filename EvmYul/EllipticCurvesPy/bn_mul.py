@@ -20,12 +20,14 @@ n = U256.from_be_bytes(bytes.fromhex(sys.argv[2]))
 
 for i in (x0_value, y0_value):
     if i >= ALT_BN128_PRIME:
-        raise OutOfGasError
+        print('error', end = '')
+        sys.exit()
 
 try:
     p0 = BNP(BNF(x0_value), BNF(y0_value))
 except ValueError:
-    raise OutOfGasError
+    print('error', end = '')
+    sys.exit()
 
 p = p0.mul_by(n)
 

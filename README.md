@@ -4,7 +4,7 @@ Where applicable, the underlying EVM primops are used directly by the Yul model.
 Everything here is work in progress and is subject to change therefore.
 
 # Requirements
-- Python packages: coincurve, typing-extensions, pycryptodome
+- Python packages: coincurve, typing-extensions, pycryptodome, eth-typing, py-ecc
 
 # Project structure
 

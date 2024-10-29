@@ -798,6 +798,13 @@ class Bytes48(FixedBytes):
 
     LENGTH = 48
 
+class Bytes96(FixedBytes):
+    """
+    Byte array of exactly 96 elements.
+    """
+
+    LENGTH = 96
+
 
 class Bytes64(FixedBytes):
     """
