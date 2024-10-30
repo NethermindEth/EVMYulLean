@@ -147,7 +147,6 @@ def sload (self : State) (spos : UInt256) : State × UInt256 :=
   (state', v)
 
 def sstore (self : State) (spos sval : UInt256) : State :=
-  -- dbg_trace "sstore called with spos: {spos} sval: {sval}"
   let Iₐ := self.executionEnv.codeOwner
   self.lookupAccount Iₐ |>.option self λ acc ↦
     let self' := self.setAccount Iₐ (acc.updateStorage spos sval)

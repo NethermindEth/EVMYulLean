@@ -141,6 +141,7 @@ def unaryStateOp
             dbg_trace s!"called with μ₀: {μ₀}"
           let (state', b) := op evmState.toState μ₀
           let evmState' := {evmState with toState := state'}
+          if debugMode then dbg_trace s!"got result: {b}"
           .ok <| evmState'.replaceStackAndIncrPC (stack'.push b)
         | _ => .error EVM.Exception.InvalidStackSizeException
 

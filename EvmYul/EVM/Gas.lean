@@ -193,32 +193,33 @@ def Ctload : UInt256 :=
 -/
 def L (n : UInt256) := n.val - (n.val / 64)
 
+def Cnew (t : AccountAddress) (val : UInt256) (σ : AccountMap) :=
+  if EvmYul.State.dead σ t && val != 0 then Gnewaccount else 0
+
+def Cxfer (val : UInt256) : ℕ :=
+  if val != 0 then Gcallvalue else 0
+
+def Cextra (t : AccountAddress) (val : UInt256) (σ : AccountMap) (A : Substate) :=
+  Caccess t A + Cxfer val + Cnew t val σ
+
+def Cgascap (t : AccountAddress) (val g : UInt256) (σ : AccountMap) (μ : MachineState) (A : Substate) :=
+  if μ.gasAvailable >= Cextra t val σ A then
+    -- dbg_trace s!"gasAvailable {μ.gasAvailable} >= Cextra {Cextra σ μₛ A}"
+    min (L (μ.gasAvailable - Cextra t val σ A)) g
+  else
+    g
+
+def Ccallgas (t : AccountAddress) (val g : UInt256) (σ : AccountMap) (μ : MachineState) (A : Substate) : UInt256 :=
+  match val with
+    | 0 => Cgascap t val g σ μ A
+    | _ => Cgascap t val g σ μ A + GasConstants.Gcallstipend
+
 /--
 NB Assumes stack coherence.
 -/
-def Ccall (μₛ : Stack UInt256) (σ : AccountMap) (μ : MachineState) (A : Substate) : UInt256 :=
-  Cgascap σ μ μₛ A + Cextra σ μₛ A
-  where
-    /-
-    NB Slightly redundant as we could reference the `Ccall` parameters directly,
-       but this is a bit closer to the YP for now.
-    -/
-    t := AccountAddress.ofUInt256 μₛ[1]!
-
-    Cnew (σ : AccountMap) (μₛ : Stack UInt256) :=
-      if EvmYul.State.dead σ t && μₛ[2]! != 0 then Gnewaccount else 0
-
-    Cxfer (μₛ : Stack UInt256) :=
-      if μₛ[2]! != 0 then Gcallvalue else 0
-
-    Cextra (σ : AccountMap) (μₛ : Stack UInt256) (A : Substate) :=
-      Caccess t A + Cxfer μₛ + Cnew σ μₛ
-
-    Cgascap (σ : AccountMap) (μ : MachineState) (μₛ : Stack UInt256) (A : Substate) :=
-      if μ.gasAvailable >= Cextra σ μₛ A then min (L (μ.gasAvailable - Cextra σ μₛ A)) μₛ[0]! else μₛ[0]!
-
-    Ccallgas (σ : AccountMap) (μₛ : Stack UInt256) (A : Substate) :=
-      if μₛ[2]! != 0 then Cgascap σ μ μₛ A + Gcallstipend else Cgascap σ μ μₛ A
+def Ccall (t : AccountAddress) (val g : UInt256) (σ : AccountMap) (μ : MachineState) (A : Substate) : UInt256 :=
+  -- dbg_trace s!"Ccall: {Cgascap μₛ σ μ A} + {Cextra σ μₛ A}"
+  Ccallgas t val g σ μ A + Cextra t val σ A
 
 /--
 (65)
@@ -251,10 +252,19 @@ private def C' (s : State) (instr : Operation .EVM) : Except EVM.Exception UInt2
     | .SLOAD => return Csload μₛ A I
     | .TLOAD => return Ctload
     | .BLOCKHASH => return Gblockhash
+    /-
+      By `μₛ[2]` the YP means the value that is to be transferred,
+      not what happens to be on the stack at index 2. Therefore it is 0 for
+      `DELEGATECALL` and `STATICCALL`.
+    -/
+    | .CALL => return Ccall (AccountAddress.ofUInt256 μₛ[1]!) μₛ[2]! μₛ[0]! σ μ A
+    | .CALLCODE => return Ccall (AccountAddress.ofUInt256 μₛ[1]!) μₛ[2]! μₛ[0]! σ μ A
+    | .DELEGATECALL => return Ccall (AccountAddress.ofUInt256 μₛ[1]!) 0 μₛ[0]! σ μ A
+    | .STATICCALL => return Ccall (AccountAddress.ofUInt256 μₛ[1]!) 0 μₛ[0]! σ μ A
     | w => pure <|
       if w ∈ Wcopy then Gverylow + Gcopy * (μₛ[2]! / 32 : ℚ).ceil else
       if w ∈ Wextaccount then Caccess (AccountAddress.ofUInt256 μₛ[0]!) A else
-      if w ∈ Wcall then Ccall μₛ σ μ A else
+      -- if w ∈ Wcall then Ccall μₛ σ μ A else
       if w ∈ Wzero then Gzero else
       if w ∈ Wbase then Gbase else
       if w ∈ Wverylow then Gverylow else

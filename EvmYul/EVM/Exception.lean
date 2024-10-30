@@ -12,7 +12,7 @@ inductive InvalidTransactionException where
   | UpFrontPayment : InvalidTransactionException
   | BaseFeeTooHigh : InvalidTransactionException
   | InconsistentFees : InvalidTransactionException
-  | DataGreaterThan9152 : InvalidTransactionException
+  | InitCodeDataGreaterThan49152 : InvalidTransactionException
 
 instance : Repr InvalidTransactionException where
   reprPrec s _ :=
@@ -24,7 +24,7 @@ instance : Repr InvalidTransactionException where
       | .UpFrontPayment       => "UpFrontPayment"
       | .BaseFeeTooHigh       => "BaseFeeTooHigh"
       | .InconsistentFees     => "InconsistentFees"
-      | .DataGreaterThan9152  => "DataGreaterThan9152"
+      | .InitCodeDataGreaterThan49152  => "InitCodeDataGreaterThan49152"
 
 -- TODO - fix / cleanup.
 inductive Exception where

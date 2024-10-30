@@ -147,6 +147,80 @@ local instance : MonadLift Option (Except EVM.Exception) :=
   ⟨Option.option (.error .InvalidStackSizeException) .ok⟩
 
 mutual
+
+def call (debugMode : Bool) (fuel : Nat)
+  (gas source recipient t value value' inOffset inSize outOffset outSize : UInt256)
+  (permission : Bool)
+  (state : SharedState)
+    :
+  Except EVM.Exception (UInt256 × SharedState)
+:= do
+  match fuel with
+    | 0 => dbg_trace "nofuel"; .ok (1, state)
+    | .succ f =>
+      -- m[μs[3] . . . (μs[3] + μs[4] − 1)]
+      let (i, newMachineState) := state.toMachineState.readBytes inOffset inSize
+      -- t ≡ μs[1] mod 2^160
+      let t : AccountAddress := AccountAddress.ofUInt256 t
+      let recipient : AccountAddress := AccountAddress.ofUInt256 recipient
+      let source : AccountAddress := AccountAddress.ofUInt256 source
+      let Iₐ := state.executionEnv.codeOwner
+      let σ := state.accountMap
+      let Iₑ := state.executionEnv.depth
+      let callgas := Ccallgas t value gas σ state.toMachineState state.substate
+      let (cA, σ', g', A', z, o) ← do
+        -- TODO - Refactor condition and possibly share with CREATE
+        if value ≤ (σ.find? Iₐ |>.option 0 Account.balance) ∧ Iₑ < 1024 then
+          let A' := state.addAccessedAccount t |>.substate -- A' ≡ A except A'ₐ ≡ Aₐ ∪ {t}
+          let resultOfΘ ←
+            Θ (debugMode := debugMode)
+              (fuel := f)
+              (createdAccounts := state.createdAccounts)
+              (σ  := σ)                             -- σ in  Θ(σ, ..)
+              (A  := A')                            -- A* in Θ(.., A*, ..)
+              (s  := source)
+              (o  := state.executionEnv.sender)     -- Iₒ in Θ(.., Iₒ, ..)
+              (r  := recipient)                             -- t in Θ(.., t, ..)
+              (c  := toExecute σ t)
+              (g  := callgas)
+              (p  := state.executionEnv.gasPrice)   -- Iₚ in Θ(.., Iₚ, ..)
+              (v  := value)
+              (v' := value')
+              (d  := i)
+              (e  := Iₑ + 1)
+              (H := state.executionEnv.header)
+              (w  := permission)                    -- I_w in Θ(.., I_W)
+          pure resultOfΘ
+          else
+          -- otherwise (σ, CCALLGAS(σ, μ, A), A, 0, ())
+          .ok
+            (state.createdAccounts, state.toState.accountMap, callgas, state.toState.substate, false, .some .empty)
+      -- n ≡ min({μs[6], ‖o‖})
+      let n : UInt256 := min outSize (o.elim 0 (UInt256.ofNat ∘ ByteArray.size))
+
+      -- TODO - Check what happens when `o = .none`.
+      let μ'ₘ := newMachineState.writeBytes (o.getD .empty) outOffset n -- μ′_m[μs[5]  ... (μs[5] + n − 1)] = o[0 ... (n − 1)]
+      let μ'ₒ := o -- μ′o = o
+      let μ'_g := μ'ₘ.gasAvailable + g' -- Ccall is subtracted in X as part of C
+
+      let codeExecutionFailed   : Bool := !z
+      let notEnoughFunds        : Bool := value > (σ.find? state.executionEnv.codeOwner |>.elim 0 Account.balance) -- TODO - Unify condition with CREATE.
+      let callDepthLimitReached : Bool := state.executionEnv.depth == 1024
+      let x : UInt256 := if codeExecutionFailed || notEnoughFunds || callDepthLimitReached then 0 else 1 -- where x = 0 if the code execution for this operation failed, or if μs[2] > σ[Ia]b (not enough funds) or Ie = 1024 (call depth limit reached); x = 1 otherwise.
+
+      -- NB. `MachineState` here does not contain the `Stack` nor the `PC`, thus incomplete.
+      let μ'incomplete : MachineState :=
+        { μ'ₘ with
+            returnData   := μ'ₒ.getD .empty -- TODO - Check stuff wrt. .none
+            gasAvailable := μ'_g
+        }
+
+      let result : SharedState := { state with accountMap := σ', substate := A', createdAccounts := cA }
+      let result := {
+        result with toMachineState := μ'incomplete
+      }
+      .ok (x, result)
+
 def step (debugMode : Bool) (fuel : ℕ) (instr : Option (Operation .EVM × Option (UInt256 × Nat)) := .none) : EVM.Transformer :=
   match fuel with
     | 0 => .ok
@@ -356,7 +430,6 @@ def step (debugMode : Bool) (fuel : ℕ) (instr : Option (Operation .EVM × Opti
           .error .InvalidStackSizeException
       -- TODO: Factor out the semantics for `CALL`, `CALLCODE`, `DELEGATECALL`, `STATICCALL`
       | .CALL => do
-        -- dbg_trace /- op -/ "CALL"
         -- Names are from the YP, these are:
         -- μ₀ - gas
         -- μ₁ - to
@@ -365,78 +438,16 @@ def step (debugMode : Bool) (fuel : ℕ) (instr : Option (Operation .EVM × Opti
         -- μ₄ - inSize
         -- μ₅ - outOffsize
         -- μ₆ - outSize
-        -- dbg_trace "POPPING"
         let (stack, μ₀, μ₁, μ₂, μ₃, μ₄, μ₅, μ₆) ← evmState.stack.pop7
-        let t : AccountAddress := AccountAddress.ofUInt256 μ₁ -- t ≡ μs[1] mod 2^160
         if debugMode then
-          dbg_trace s!"called with μ₀: {μ₀} μ₁: {μ₁} ({toHex t.toByteArray |>.takeRight 5}) μ₂: {μ₂} μ₃: {μ₃} μ₄: {μ₄} μ₅: {μ₅} μ₆: {μ₆}"
-        -- dbg_trace "POPPED OK; μ₁ : {μ₁}"
-        -- dbg_trace s!"Pre call, we have: {Finmap.pretty evmState.accountMap}"
-        let ((cA, σ', g', A', z, o), newMachineState) ← do
-          -- TODO - Refactor condition and possibly share with CREATE
-          if μ₂ ≤ (evmState.accountMap.find? evmState.executionEnv.codeOwner |>.option 0 Account.balance) ∧ evmState.executionEnv.depth < 1024 then
-            -- dbg_trace s!"DBG REMOVE; Calling address: {t}"
-            let A' := evmState.addAccessedAccount t |>.substate -- A' ≡ A except A'ₐ ≡ Aₐ ∪ {t}
-            -- dbg_trace s!"looking up memory range: {evmState.toMachineState.readBytes μ₃ μ₄}"
-            let (i, newMachineState) := evmState.toMachineState.readBytes μ₃ μ₄ -- m[μs[3] . . . (μs[3] + μs[4] − 1)]
-            let resultOfΘ ←
-              Θ (debugMode := debugMode)
-                (fuel := f)                             -- TODO meh
-                (createdAccounts := evmState.createdAccounts)
-                (σ  := evmState.accountMap)             -- σ in  Θ(σ, ..)
-                (A  := A')                              -- A* in Θ(.., A*, ..)
-                (s  := evmState.executionEnv.codeOwner) -- Iₐ in Θ(.., Iₐ, ..)
-                (o  := evmState.executionEnv.sender)    -- Iₒ in Θ(.., Iₒ, ..)
-                (r  := t)                               -- t in Θ(.., t, ..)
-                (c  := toExecute evmState.accountMap t) -- t in Θ(.., t, ..) except 'dereferenced'
-                (g  := μ₀)                              -- TODO gas - CCALLGAS(σ, μ, A)
-                (p  := evmState.executionEnv.gasPrice)  -- Iₚ in Θ(.., Iₚ, ..)
-                (v  := μ₂)                              -- μₛ[2] in Θ(.., μₛ[2], ..)
-                (v' := μ₂)                              -- μₛ[2] in Θ(.., μₛ[2], ..)
-                (d  := i)                               -- i in Θ(.., i, ..)
-                (e  := evmState.executionEnv.depth + 1) -- Iₑ + 1 in Θ(.., Iₑ + 1, ..)
-                (H := evmState.executionEnv.header)
-                (w  := evmState.executionEnv.perm)      -- I_W in Θ(.., I_W)
-            pure (resultOfΘ, newMachineState)
-          -- TODO gas - CCALLGAS(σ, μ, A)
-          else
-            -- otherwise (σ, CCALLGAS(σ, μ, A), A, 0, ())
-            .ok
-              ( (evmState.createdAccounts, evmState.toState.accountMap, μ₀, evmState.toState.substate, false, .some .empty)
-              , evmState.toMachineState
-              )
-        -- dbg_trace s!"THETA OK with accounts: {repr σ'}"
-        let n : UInt256 := min μ₆ (o.elim 0 (UInt256.ofNat ∘ ByteArray.size)) -- n ≡ min({μs[6], ‖o‖}) -- TODO - Why is this using... set??? { } brackets ???
-        -- TODO I am assuming here that μ' is μ with the updates mentioned in the CALL section. Check.
-
-        -- TODO - Note to self. Check how writeWord/writeBytes is implemented. By a cursory look, we play loose with UInt8 -> UInt256 (c.f. e.g. `calldatacopy`) and then the interplay with the WordSize parameter.
-        -- TODO - Check what happens when `o = .none`.
-        let μ'ₘ := newMachineState.writeBytes (o.getD .empty) μ₅ n -- μ′_m[μs[5]  ... (μs[5] + n − 1)] = o[0 ... (n − 1)]
-        let μ'ₒ := o -- μ′o = o
-        let μ'_g := g' -- TODO gas - μ′g ≡ μg − CCALLGAS(σ, μ, A) + g
-
-        let codeExecutionFailed   : Bool := z -- TODO - This is likely wrong.
-        let notEnoughFunds        : Bool := μ₂ > (evmState.accountMap.find? evmState.executionEnv.codeOwner |>.elim 0 Account.balance) -- TODO - Unify condition with CREATE.
-        let callDepthLimitReached : Bool := evmState.executionEnv.depth == 1024
-        let x : UInt256 := if codeExecutionFailed || notEnoughFunds || callDepthLimitReached then 0 else 1 -- where x = 0 if the code execution for this operation failed, or if μs[2] > σ[Ia]b (not enough funds) or Ie = 1024 (call depth limit reached); x = 1 otherwise.
-
+          dbg_trace s!"called with μ₀: {μ₀} μ₁: {μ₁} ({toHex μ₁.toByteArray |>.takeRight 5}) μ₂: {μ₂} μ₃: {μ₃} μ₄: {μ₄} μ₅: {μ₅} μ₆: {μ₆}"
+        let (x, state') ←
+          call debugMode f μ₀ evmState.executionEnv.codeOwner μ₁ μ₁ μ₂ μ₂ μ₃ μ₄ μ₅ μ₆ evmState.executionEnv.perm evmState.toSharedState
         let μ'ₛ := stack.push x -- μ′s[0] ≡ x
-
-        -- NB. `MachineState` here does not contain the `Stack` nor the `PC`, thus incomplete.
-        let μ'incomplete : MachineState :=
-          { μ'ₘ with
-              returnData   := μ'ₒ.getD .empty -- TODO - Check stuff wrt. .none
-              gasAvailable := μ'_g
-          }
-
-        let σ' : EVM.State := { evmState with accountMap := σ', substate := A', createdAccounts := cA }
-        let σ' := {
-          σ' with toMachineState := μ'incomplete
-        }.replaceStackAndIncrPC μ'ₛ
-
-        .ok σ'
+        let evmState' :=
+          { evmState with toSharedState := state'}.replaceStackAndIncrPC μ'ₛ
+        .ok evmState'
       | .CALLCODE =>
-        -- dbg_trace /- op -/ "CALL"
         do
         -- Names are from the YP, these are:
         -- μ₀ - gas
@@ -446,84 +457,16 @@ def step (debugMode : Bool) (fuel : ℕ) (instr : Option (Operation .EVM × Opti
         -- μ₄ - inSize
         -- μ₅ - outOffsize
         -- μ₆ - outSize
-        -- dbg_trace "POPPING"
         let (stack, μ₀, μ₁, μ₂, μ₃, μ₄, μ₅, μ₆) ← evmState.stack.pop7
         if debugMode then
-          dbg_trace s!"called with μ₀: {μ₀} μ₁: {μ₁} μ₂: {μ₂} μ₃: {μ₃} μ₄: {μ₄} μ₅: {μ₅} μ₆: {μ₆}"
-        -- dbg_trace "POPPED OK; μ₁ : {μ₁}"
-        -- dbg_trace s!"Pre call, we have: {Finmap.pretty evmState.accountMap}"
-        let ((cA, σ', g', A', z, o), newMachineState) ← do
-          -- TODO - Refactor condition and possibly share with CREATE
-          if μ₂ ≤ (evmState.accountMap.find? evmState.executionEnv.codeOwner |>.option 0 Account.balance) ∧ evmState.executionEnv.depth < 1024 then
-            let t : AccountAddress := AccountAddress.ofUInt256 μ₁ -- t ≡ μs[1] mod 2^160
-            -- dbg_trace s!"DBG REMOVE; Calling address: {t}"
-            let A' := evmState.addAccessedAccount t |>.substate -- A' ≡ A except A'ₐ ≡ Aₐ ∪ {t}
-            let .some tDirect := evmState.accountMap.find? t | default
-            -- dbg_trace s!"looking up memory range: {evmState.toMachineState.readBytes μ₃ μ₄}"
-            let (i, newMachineState) := evmState.toMachineState.readBytes μ₃ μ₄ -- m[μs[3] . . . (μs[3] + μs[4] − 1)]
-            let resultOfΘ ←
-              Θ
-                (debugMode := debugMode)
-                (fuel := f)                             -- TODO meh
-                (createdAccounts := evmState.createdAccounts)
-                (σ  := evmState.accountMap)             -- σ in  Θ(σ, ..)
-                (A  := A')                              -- A* in Θ(.., A*, ..)
-                (s  := evmState.executionEnv.codeOwner) -- Iₐ in Θ(.., Iₐ, ..)
-                (o  := evmState.executionEnv.sender)    -- Iₒ in Θ(.., Iₒ, ..)
-                (r  := evmState.executionEnv.codeOwner) -- t in Θ(.., t, ..)
-                (c  := toExecute evmState.accountMap t) -- t in Θ(.., t, ..) except 'dereferenced'
-                (g  := μ₀)                              -- TODO gas - CCALLGAS(σ, μ, A)
-                (p  := evmState.executionEnv.gasPrice)  -- Iₚ in Θ(.., Iₚ, ..)
-                (v  := μ₂)                              -- μₛ[2] in Θ(.., μₛ[2], ..)
-                (v' := μ₂)                              -- μₛ[2] in Θ(.., μₛ[2], ..)
-                (d  := i)                               -- i in Θ(.., i, ..)
-                (e  := evmState.executionEnv.depth + 1) -- Iₑ + 1 in Θ(.., Iₑ + 1, ..)
-                (H := evmState.executionEnv.header)
-                (w  := evmState.executionEnv.perm)      -- I_W in Θ(.., I_W)
-            pure (resultOfΘ, newMachineState)
-          -- TODO gas - CCALLGAS(σ, μ, A)
-          else
-            -- otherwise (σ, CCALLGAS(σ, μ, A), A, 0, ())
-            .ok
-              ( (evmState.createdAccounts, evmState.toState.accountMap, μ₀, evmState.toState.substate, false, .some .empty)
-              , evmState.toMachineState
-              )
-        -- dbg_trace s!"THETA OK with accounts: {repr σ'}"
-        let n : UInt256 := min μ₆ (o.elim 0 (UInt256.ofNat ∘ ByteArray.size)) -- n ≡ min({μs[6], ‖o‖}) -- TODO - Why is this using... set??? { } brackets ???
-        -- TODO I am assuming here that μ' is μ with the updates mentioned in the CALL section. Check.
-
-        -- TODO - Note to self. Check how writeWord/writeBytes is implemented. By a cursory look, we play loose with UInt8 -> UInt256 (c.f. e.g. `calldatacopy`) and then the interplay with the WordSize parameter.
-        -- TODO - Check what happens when `o = .none`.
-        -- dbg_trace s!"REPORT - μ₅: {μ₅} n: {n} o: {o}"
-        -- dbg_trace "Θ will copy memory now"
-        let μ'ₘ := newMachineState.writeBytes (o.getD .empty) μ₅ n -- μ′_m[μs[5]  ... (μs[5] + n − 1)] = o[0 ... (n − 1)]
-        -- dbg_trace s!"μ'ₘ: {μ'ₘ.memory}"
-        -- dbg_trace s!"REPORT - μ'ₘ: {Finmap.pretty μ'ₘ.memory}"
-        let μ'ₒ := o -- μ′o = o
-        let μ'_g := g' -- TODO gas - μ′g ≡ μg − CCALLGAS(σ, μ, A) + g
-
-        let codeExecutionFailed   : Bool := z -- TODO - This is likely wrong.
-        let notEnoughFunds        : Bool := μ₂ > (evmState.accountMap.find? evmState.executionEnv.codeOwner |>.elim 0 Account.balance) -- TODO - Unify condition with CREATE.
-        let callDepthLimitReached : Bool := evmState.executionEnv.depth == 1024
-        let x : UInt256 := if codeExecutionFailed || notEnoughFunds || callDepthLimitReached then 0 else 1 -- where x = 0 if the code execution for this operation failed, or if μs[2] > σ[Ia]b (not enough funds) or Ie = 1024 (call depth limit reached); x = 1 otherwise.
-
+          dbg_trace s!"called with μ₀: {μ₀} μ₁: {μ₁} ({toHex μ₁.toByteArray |>.takeRight 5}) μ₂: {μ₂} μ₃: {μ₃} μ₄: {μ₄} μ₅: {μ₅} μ₆: {μ₆}"
+        let (x, state') ←
+          call debugMode f μ₀ evmState.executionEnv.codeOwner evmState.executionEnv.codeOwner μ₁ μ₂ μ₂ μ₃ μ₄ μ₅ μ₆ evmState.executionEnv.perm evmState.toSharedState
         let μ'ₛ := stack.push x -- μ′s[0] ≡ x
-
-        -- NB. `MachineState` here does not contain the `Stack` nor the `PC`, thus incomplete.
-        let μ'incomplete : MachineState :=
-          { μ'ₘ with
-              returnData   := μ'ₒ.getD .empty -- TODO - Check stuff wrt. .none
-              gasAvailable := μ'_g
-          }
-
-        let σ' : EVM.State := { evmState with accountMap := σ', substate := A', createdAccounts := cA }
-        let σ' := {
-          σ' with toMachineState := μ'incomplete
-        }.replaceStackAndIncrPC μ'ₛ
-
-        .ok σ'
+        let evmState' :=
+          { evmState with toSharedState := state'}.replaceStackAndIncrPC μ'ₛ
+        .ok evmState'
       | .DELEGATECALL =>
-        -- dbg_trace /- op -/ "DELEGATECALL"
         do
         -- Names are from the YP, these are:
         -- μ₀ - gas
@@ -532,86 +475,17 @@ def step (debugMode : Bool) (fuel : ℕ) (instr : Option (Operation .EVM × Opti
         -- μ₄ - inSize
         -- μ₅ - outOffsize
         -- μ₆ - outSize
-        -- dbg_trace "POPPING"
         -- TODO: Use indices correctly
         let (stack, μ₀, μ₁, /-μ₂,-/ μ₃, μ₄, μ₅, μ₆) ← evmState.stack.pop6
         if debugMode then
-          dbg_trace s!"called with μ₀: {μ₀} μ₁: {μ₁} μ₂: {μ₃} μ₃: {μ₄} μ₄: {μ₅} μ₅: {μ₆}"
-        -- dbg_trace "POPPED OK; μ₁ : {μ₁}"
-        -- dbg_trace s!"Pre call, we have: {Finmap.pretty evmState.accountMap}"
-        let ((cA, σ', g', A', z, o), newMachineState) ← do
-          -- TODO - Refactor condition and possibly share with CREATE
-          if evmState.executionEnv.depth < 1024 then
-            let t : AccountAddress := AccountAddress.ofUInt256 μ₁ -- t ≡ μs[1] mod 2^160
-            -- dbg_trace s!"DBG REMOVE; Calling address: {t}"
-            let A' := evmState.addAccessedAccount t |>.substate -- A' ≡ A except A'ₐ ≡ Aₐ ∪ {t}
-            let .some tDirect := evmState.accountMap.find? t | default
-            let tDirect := tDirect.code -- We use the code directly without an indirection a'la `codeMap[t]`.
-            -- dbg_trace s!"looking up memory range: {evmState.toMachineState.readBytes μ₃ μ₄}"
-            let (i, newMachineState) := evmState.toMachineState.readBytes μ₃ μ₄ -- m[μs[3] . . . (μs[3] + μs[4] − 1)]
-            -- dbg_trace s!"code: {toHex tDirect}"
-            let resultOfΘ ←
-              Θ (debugMode := debugMode)
-                (fuel := f)                             -- TODO meh
-                (createdAccounts := evmState.createdAccounts)
-                (σ  := evmState.accountMap)             -- σ in  Θ(σ, ..)
-                (A  := A')                              -- A* in Θ(.., A*, ..)
-                (s  := evmState.executionEnv.source)    -- Iₛ in Θ(.., Iₐ, ..)
-                (o  := evmState.executionEnv.sender)    -- Iₒ in Θ(.., Iₒ, ..)
-                (r  := evmState.executionEnv.codeOwner) -- t in Θ(.., t, ..)
-                (c  := toExecute evmState.accountMap t) -- t in Θ(.., t, ..) except 'dereferenced'
-                (g  := μ₀)                              -- TODO gas - CCALLGAS(σ, μ, A)
-                (p  := evmState.executionEnv.gasPrice)  -- Iₚ in Θ(.., Iₚ, ..)
-                (v  := 0)                               -- μₛ[2] in Θ(.., μₛ[2], ..)
-                (v' := evmState.executionEnv.weiValue)  -- μₛ[2] in Θ(.., μₛ[2], ..)
-                (d  := i)                               -- i in Θ(.., i, ..)
-                (e  := evmState.executionEnv.depth + 1) -- Iₑ + 1 in Θ(.., Iₑ + 1, ..)
-                (H := evmState.executionEnv.header)
-                (w  := evmState.executionEnv.perm)      -- I_W in Θ(.., I_W)
-            pure (resultOfΘ, newMachineState)
-          -- TODO gas - CCALLGAS(σ, μ, A)
-          else
-            -- otherwise (σ, CCALLGAS(σ, μ, A), A, 0, ())
-            .ok
-              ( (evmState.createdAccounts, evmState.toState.accountMap, μ₀, evmState.toState.substate, false, .some .empty)
-              , evmState.toMachineState
-              )
-        -- dbg_trace s!"THETA OK with accounts: {repr σ'}"
-        let n : UInt256 := min μ₆ (o.elim 0 (UInt256.ofNat ∘ ByteArray.size)) -- n ≡ min({μs[6], ‖o‖}) -- TODO - Why is this using... set??? { } brackets ???
-        -- TODO I am assuming here that μ' is μ with the updates mentioned in the CALL section. Check.
-
-        -- TODO - Note to self. Check how writeWord/writeBytes is implemented. By a cursory look, we play loose with UInt8 -> UInt256 (c.f. e.g. `calldatacopy`) and then the interplay with the WordSize parameter.
-        -- TODO - Check what happens when `o = .none`.
-        -- dbg_trace s!"REPORT - μ₅: {μ₅} n: {n} o: {o}"
-        -- dbg_trace "Θ will copy memory now"
-        let μ'ₘ := newMachineState.writeBytes (o.getD .empty) μ₅ n -- μ′_m[μs[5]  ... (μs[5] + n − 1)] = o[0 ... (n − 1)]
-        -- dbg_trace s!"μ'ₘ: {μ'ₘ.memory}"
-        -- dbg_trace s!"REPORT - μ'ₘ: {Finmap.pretty μ'ₘ.memory}"
-        let μ'ₒ := o -- μ′o = o
-        let μ'_g := g' -- TODO gas - μ′g ≡ μg − CCALLGAS(σ, μ, A) + g
-
-        let codeExecutionFailed   : Bool := z -- TODO - This is likely wrong.
-        -- let notEnoughFunds        : Bool := μ₂ > (evmState.accountMap.find? evmState.executionEnv.codeOwner |>.elim 0 Account.balance) -- TODO - Unify condition with CREATE.
-        let callDepthLimitReached : Bool := evmState.executionEnv.depth == 1024
-        let x : UInt256 := if codeExecutionFailed || callDepthLimitReached then 0 else 1 -- where x = 0 if the code execution for this operation failed, or if μs[2] > σ[Ia]b (not enough funds) or Ie = 1024 (call depth limit reached); x = 1 otherwise.
-
+          dbg_trace s!"called with μ₀: {μ₀} μ₁: {μ₁} ({toHex μ₁.toByteArray |>.takeRight 5}) μ₂: {μ₃} μ₃: {μ₄} μ₄: {μ₅} μ₅: {μ₆}"
+        let (x, state') ←
+          call debugMode f μ₀ evmState.executionEnv.source evmState.executionEnv.codeOwner μ₁ 0 evmState.executionEnv.weiValue μ₃ μ₄ μ₅ μ₆ evmState.executionEnv.perm evmState.toSharedState
         let μ'ₛ := stack.push x -- μ′s[0] ≡ x
-
-        -- NB. `MachineState` here does not contain the `Stack` nor the `PC`, thus incomplete.
-        let μ'incomplete : MachineState :=
-          { μ'ₘ with
-              returnData   := μ'ₒ.getD .empty -- TODO - Check stuff wrt. .none
-              gasAvailable := μ'_g
-          }
-
-        let σ' : EVM.State := { evmState with accountMap := σ', substate := A', createdAccounts := cA }
-        let σ' := {
-          σ' with toMachineState := μ'incomplete
-        }.replaceStackAndIncrPC μ'ₛ
-
-        .ok σ'
+        let evmState' :=
+          { evmState with toSharedState := state'}.replaceStackAndIncrPC μ'ₛ
+        .ok evmState'
       | .STATICCALL =>
-        -- dbg_trace /- op -/ "CALL"
         do
         -- Names are from the YP, these are:
         -- μ₀ - gas
@@ -621,83 +495,15 @@ def step (debugMode : Bool) (fuel : ℕ) (instr : Option (Operation .EVM × Opti
         -- μ₄ - inSize
         -- μ₅ - outOffsize
         -- μ₆ - outSize
-        -- dbg_trace "POPPING"
         let (stack, μ₀, μ₁, /- μ₂, -/ μ₃, μ₄, μ₅, μ₆) ← evmState.stack.pop6
         if debugMode then
-          dbg_trace s!"called with μ₀: {μ₀} μ₁: {μ₁} μ₂: {μ₃} μ₃: {μ₄} μ₄: {μ₅} μ₅: {μ₆}"
-        -- dbg_trace "POPPED OK; μ₁ : {μ₁}"
-        -- dbg_trace s!"Pre call, we have: {Finmap.pretty evmState.accountMap}"
-        let ((cA, σ', g', A', z, o), newMachineState) ← do
-          -- TODO - Refactor condition and possibly share with CREATE
-          if 0 ≤ (evmState.accountMap.find? evmState.executionEnv.codeOwner |>.option 0 Account.balance) ∧ evmState.executionEnv.depth < 1024 then
-            let t : AccountAddress := AccountAddress.ofUInt256 μ₁ -- t ≡ μs[1] mod 2^160
-            -- dbg_trace s!"DBG REMOVE; Calling address: {t}"
-            let A' := evmState.addAccessedAccount t |>.substate -- A' ≡ A except A'ₐ ≡ Aₐ ∪ {t}
-            let .some tDirect := evmState.accountMap.find? t | default
-            let tDirect := tDirect.code -- We use the code directly without an indirection a'la `codeMap[t]`.
-            -- dbg_trace s!"looking up memory range: {evmState.toMachineState.readBytes μ₃ μ₄}"
-            let (i, newMachineState) := evmState.toMachineState.readBytes μ₃ μ₄ -- m[μs[3] . . . (μs[3] + μs[4] − 1)]
-            let resultOfΘ ←
-              Θ (debugMode := debugMode)
-                (fuel := f)                             -- TODO meh
-                (createdAccounts := evmState.createdAccounts)
-                (σ  := evmState.accountMap)             -- σ in  Θ(σ, ..)
-                (A  := A')                              -- A* in Θ(.., A*, ..)
-                (s  := evmState.executionEnv.codeOwner) -- Iₐ in Θ(.., Iₐ, ..)
-                (o  := evmState.executionEnv.sender)    -- Iₒ in Θ(.., Iₒ, ..)
-                (r  := t)                               -- t in Θ(.., t, ..)
-                (c  := toExecute evmState.accountMap t) -- t in Θ(.., t, ..) except 'dereferenced'
-                (g  := μ₀)                              -- TODO gas - CCALLGAS(σ, μ, A)
-                (p  := evmState.executionEnv.gasPrice)  -- Iₚ in Θ(.., Iₚ, ..)
-                (v  := 0)                               -- μₛ[2] in Θ(.., μₛ[2], ..)
-                (v' := 0)                               -- μₛ[2] in Θ(.., μₛ[2], ..)
-                (d  := i)                               -- i in Θ(.., i, ..)
-                (e  := evmState.executionEnv.depth + 1) -- Iₑ + 1 in Θ(.., Iₑ + 1, ..)
-                (H := evmState.executionEnv.header)
-                (w  := false)      -- I_W in Θ(.., I_W)
-            pure (resultOfΘ, newMachineState)
-          -- TODO gas - CCALLGAS(σ, μ, A)
-          else
-            -- otherwise (σ, CCALLGAS(σ, μ, A), A, 0, ())
-            .ok
-              ( (evmState.createdAccounts, evmState.toState.accountMap, μ₀, evmState.toState.substate, false, .some .empty)
-              , evmState.toMachineState
-              )
-        -- dbg_trace s!"THETA OK with accounts: {repr σ'}"
-        let n : UInt256 := min μ₆ (o.elim 0 (UInt256.ofNat ∘ ByteArray.size)) -- n ≡ min({μs[6], ‖o‖}) -- TODO - Why is this using... set??? { } brackets ???
-        -- TODO I am assuming here that μ' is μ with the updates mentioned in the CALL section. Check.
-
-        -- TODO - Note to self. Check how writeWord/writeBytes is implemented. By a cursory look, we play loose with UInt8 -> UInt256 (c.f. e.g. `calldatacopy`) and then the interplay with the WordSize parameter.
-        -- TODO - Check what happens when `o = .none`.
-        -- dbg_trace s!"REPORT - μ₅: {μ₅} n: {n} o: {o}"
-        -- dbg_trace "Θ will copy memory now"
-        let μ'ₘ := newMachineState.writeBytes (o.getD .empty) μ₅ n -- μ′_m[μs[5]  ... (μs[5] + n − 1)] = o[0 ... (n − 1)]
-        -- dbg_trace s!"μ'ₘ: {μ'ₘ.memory}"
-        -- dbg_trace s!"REPORT - μ'ₘ: {Finmap.pretty μ'ₘ.memory}"
-        let μ'ₒ := o -- μ′o = o
-        let μ'_g := g' -- TODO gas - μ′g ≡ μg − CCALLGAS(σ, μ, A) + g
-
-        let codeExecutionFailed   : Bool := z -- TODO - This is likely wrong.
-        let notEnoughFunds        : Bool := 0 > (evmState.accountMap.find? evmState.executionEnv.codeOwner |>.elim 0 Account.balance) -- TODO - Unify condition with CREATE.
-        let callDepthLimitReached : Bool := evmState.executionEnv.depth == 1024
-        let x : UInt256 := if codeExecutionFailed || notEnoughFunds || callDepthLimitReached then 0 else 1 -- where x = 0 if the code execution for this operation failed, or if μs[2] > σ[Ia]b (not enough funds) or Ie = 1024 (call depth limit reached); x = 1 otherwise.
-
+          dbg_trace s!"called with μ₀: {μ₀} μ₁: {μ₁} ({toHex μ₁.toByteArray |>.takeRight 5}) μ₂: {μ₃} μ₃: {μ₄} μ₄: {μ₅} μ₅: {μ₆}"
+        let (x, state') ←
+          call debugMode f μ₀ evmState.executionEnv.codeOwner μ₁ μ₁ 0 0 μ₃ μ₄ μ₅ μ₆ false evmState.toSharedState
         let μ'ₛ := stack.push x -- μ′s[0] ≡ x
-
-        -- NB. `MachineState` here does not contain the `Stack` nor the `PC`, thus incomplete.
-        let μ'incomplete : MachineState :=
-          { μ'ₘ with
-              returnData   := μ'ₒ.getD .empty -- TODO - Check stuff wrt. .none
-              gasAvailable := μ'_g
-          }
-
-        let σ' : EVM.State := { evmState with accountMap := σ', substate := A', createdAccounts := cA }
-        let σ' := {
-          σ' with toMachineState := μ'incomplete
-        }.replaceStackAndIncrPC μ'ₛ
-
-        .ok σ'
-
+        let evmState' :=
+          { evmState with toSharedState := state'}.replaceStackAndIncrPC μ'ₛ
+        .ok evmState'
       | instr => EvmYul.step debugMode instr evmState
 
 /--
@@ -709,6 +515,7 @@ def X (debugMode : Bool) (fuel : ℕ) (evmState : State) : Except EVM.Exception 
     | .succ f =>
       let I_b := evmState.toState.executionEnv.code
       let instr@(w, _) := decode I_b evmState.pc |>.getD (.STOP, .none)
+      -- dbg_trace s!"gas available in X {evmState.gasAvailable} for {w.pretty}"
 
       -- (159)
       let W (w : Operation .EVM) (s : Stack UInt256) : Bool :=
@@ -764,6 +571,8 @@ def X (debugMode : Bool) (fuel : ℕ) (evmState : State) : Except EVM.Exception 
           -- NB we still need to check gas, because `Z` needs to call `C`, which needs `μ'ᵢ`.
           -- We first call `step` to obtain `μ'ᵢ`, which we then use to compute `C`.
           let evmState' ← step debugMode f instr evmState
+          -- if w == .DELEGATECALL then
+          --   dbg_trace s!"gas available after step DELEGATECALL {evmState'.gasAvailable}"
           -- NB: (327)
           -- w := if pc < I.code.size
           --      then match EVM.decode I.code pc with
@@ -778,13 +587,18 @@ def X (debugMode : Bool) (fuel : ℕ) (evmState : State) : Except EVM.Exception 
           -- Similarly, we cannot reach a situation in which the stack elements are not available
           -- on the stack because this is guarded above. As such, `C` can be pure here.
           let gasCost ← C evmState evmState'.activeWords w
-          -- dbg_trace s!"gasCost: {gasCost}, gasAvailable: {evmState.gasAvailable}"
-          if evmState.gasAvailable < gasCost then
+          -- dbg_trace s!"gasAvailable: {evmState.gasAvailable}; gasCost: {gasCost} for instruction {w.pretty}"
+          if debugMode && evmState.gasAvailable < gasCost then
+            dbg_trace s!"gasAvailable: {evmState.gasAvailable} < gasCost: {gasCost} for instruction {w.pretty}"
+          if evmState.gasAvailable < gasCost then do
             -- Out of gas. This is a part of `Z`, as such, we have the same return value.
             -- dbg_trace "Out of gass!"
             -- dbg_trace s!"gas available: {evmState.gasAvailable}; gas cost: {gasCost}"
             .ok ({evmState with accountMap := ∅}, none)
-          else
+          else do
+            let evmState' := {evmState' with gasAvailable := evmState'.gasAvailable - gasCost}
+            -- dbg_trace s!"new gas available after {w.pretty}: {evmState.gasAvailable - gasCost}"
+            -- dbg_trace s!"gas cost after {w.pretty}: {gasCost}"
             match H evmState'.toMachineState w with -- The YP does this in a weird way.
               -- NB in our model, we need the max memory touched of the executed instruction
               -- before we can check whether there is enough gas to execute the instruction.
@@ -793,7 +607,7 @@ def X (debugMode : Bool) (fuel : ℕ) (evmState : State) : Except EVM.Exception 
               -- the gas cost and only then execute, I am unsure as of right now.
               -- Interestingly, the YP is defining `C` with parameters that are much 'broader'
               -- than what is strictly necessary, e.g. we are decoding an instruction, instead of getting one in input.
-              | none => X debugMode f {evmState' with gasAvailable := evmState.gasAvailable - gasCost}
+              | none => X debugMode f evmState'
               | some o =>
                 if w == .REVERT then
                   -- The Yellow Paper says we don't call the "iterator function" "O" for `REVERT`,
@@ -1199,7 +1013,7 @@ def checkTransactionGetSender (σ : YPState) (chainId H_f : ℕ) (T : Transactio
     match T.base.recipient with
       | some _ => T.base.data.size
       | none => 0
-  if n > 49152 then .error <| .InvalidTransaction .DataGreaterThan9152
+  if n > 49152 then .error <| .InvalidTransaction .InitCodeDataGreaterThan49152
 
   match T with
     | .dynamic t =>
