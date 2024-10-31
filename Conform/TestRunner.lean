@@ -212,6 +212,7 @@ def VerySlowTests : Array String :=
   , "src/GeneralStateTestsFiller/Pyspecs/shanghai/eip4895_withdrawals/test_withdrawals.py::test_withdrawing_to_precompiles[fork_Shanghai-precompile_2-blockchain_test-amount_0]"
   , "src/GeneralStateTestsFiller/Pyspecs/shanghai/eip4895_withdrawals/test_withdrawals.py::test_withdrawing_to_precompiles[fork_Cancun-precompile_5-blockchain_test-amount_0]"
   , "src/GeneralStateTestsFiller/Pyspecs/shanghai/eip4895_withdrawals/test_withdrawals.py::test_withdrawing_to_precompiles[fork_Shanghai-precompile_8-blockchain_test-amount_0]"
+  , "src/GeneralStateTestsFiller/Pyspecs/shanghai/eip4895_withdrawals/test_withdrawals.py::test_withdrawing_to_precompiles[fork_Shanghai-precompile_5-blockchain_test-amount_1]"
   -- , "Call50000_rip160_d0g1v0_Cancun"
   -- , "callcodecallcall_100_OOGMBefore_d0g0v0_Cancun"
   -- , "callcodecallcodecallcode_111_OOGMBefore_d0g0v0_Cancun"
