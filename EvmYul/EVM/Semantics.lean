@@ -945,9 +945,10 @@ def Θ (debugMode : Bool)
 
 end
 
+#check 0x25
 open Batteries (RBMap RBSet)
 
-def checkTransactionGetSender (σ : YPState) (chainId H_f : ℕ) (T : Transaction) (dbgOverrideSender : Option AccountAddress := .none)
+def checkTransactionGetSender (σ : YPState) (chainId H_f : ℕ) (T : Transaction) (expectedSender : AccountAddress)
   : Except EVM.Exception AccountAddress
 := do
   -- dbg_trace "Transaction: {repr T}"
@@ -963,8 +964,8 @@ def checkTransactionGetSender (σ : YPState) (chainId H_f : ℕ) (T : Transactio
         if t.w ∈ [27, 28] then
           t.w - 27
         else
-          if t.w ≠ 35 + chainId * 2 ∧ t.w ≠ 36 + chainId * 2 then
-            (t.w - 35 - chainId) % 2 -- `chainId` not subtracted in the Yellow paper but in the EEL spec
+          if t.w = 35 + chainId * 2 ∨ t.w = 36 + chainId * 2 then
+            (t.w - 35) % 2 -- `chainId` not subtracted in the Yellow paper but in the EEL spec
           else
             t.w
       | .access t | .dynamic t => t.yParity
@@ -976,22 +977,22 @@ def checkTransactionGetSender (σ : YPState) (chainId H_f : ℕ) (T : Transactio
       | _ => KEC <| ByteArray.mk #[.ofNat T.type] ++ T_RLP
 
   let (S_T : AccountAddress) ← -- (323)
-    match dbgOverrideSender with
-      | .none =>
-      match ECDSARECOVER h_T (ByteArray.mk #[.ofNat v]) T.base.r T.base.s with
-        | .ok s =>
-          pure <| Fin.ofNat <| fromBytesBigEndian <|
-            ((KEC s).extract 12 32 /- 160 bits = 20 bytes -/ ).data.data
-        | .error s => .error <| .SenderRecoverError s
-      | .some sender => pure sender
-
+    match ECDSARECOVER h_T (ByteArray.mk #[.ofNat v]) T.base.r T.base.s with
+      | .ok s =>
+        pure <| Fin.ofNat <| fromBytesBigEndian <|
+          ((KEC s).extract 12 32 /- 160 bits = 20 bytes -/ ).data.data
+      | .error s => .error <| .SenderRecoverError s
+  if S_T != expectedSender then
+    .error <| .SenderRecoverError s!"Recovered sender ({toHex S_T.toByteArray}) ≠ expected sender ({toHex expectedSender.toByteArray})"
   -- dbg_trace s!"Looking for S_T: {S_T} in: σ: {repr σ}"
 
   -- "Also, with a slight abuse of notation ... "
   let (senderCode, senderNonce, senderBalance) :=
     match σ.find? S_T with
       | some sender => (sender.code, sender.nonce, sender.balance)
-      | none => (.empty, 0, 0)
+      | none =>
+        dbg_trace s!"could not find sender {toHex S_T.toByteArray}"
+        (.empty, 0, 0)
 
 
   if senderCode ≠ .empty then .error <| .InvalidTransaction .SenderCodeNotEmpty
@@ -1000,7 +1001,6 @@ def checkTransactionGetSender (σ : YPState) (chainId H_f : ℕ) (T : Transactio
     match T with
       | .legacy t | .access t => t.gasLimit * t.gasPrice + t.value
       | .dynamic t => t.gasLimit * t.maxFeePerGas + t.value
-  -- dbg_trace "sender balance: {senderBalance}"
   if v₀ > senderBalance then .error <| .InvalidTransaction .UpFrontPayment
 
   if H_f >
@@ -1040,7 +1040,7 @@ def checkTransactionGetSender (σ : YPState) (chainId H_f : ℕ) (T : Transactio
             , t.data
             ]
         else
-          if t.w ≠ 35 + chainId * 2 ∧ t.w ≠ 36 + chainId * 2 then
+          if t.w = 35 + chainId * 2 ∨ t.w = 36 + chainId * 2 then
             .ok ∘ .𝕃 ∘ List.map .𝔹 <|
               [ BE t.nonce -- Tₙ
               , BE t.gasPrice -- Tₚ
@@ -1053,7 +1053,9 @@ def checkTransactionGetSender (σ : YPState) (chainId H_f : ℕ) (T : Transactio
               , .empty
               , .empty
               ]
-          else .error <| .InvalidTransaction .IllFormedRLP
+          else
+            dbg_trace "IllFormedRLP legacy transacion: Tw = {t.w}; chainId = {chainId}"
+            .error <| .InvalidTransaction .IllFormedRLP
 
       | /- 1 -/ .access t =>
         .ok ∘ .𝕃 <|
@@ -1082,10 +1084,10 @@ def checkTransactionGetSender (σ : YPState) (chainId H_f : ℕ) (T : Transactio
           ]
 
 -- Type Υ using \Upsilon or \GU
-def Υ (debugMode : Bool) (fuel : ℕ) (σ : YPState) (chainId H_f : ℕ) (H : BlockHeader) (T : Transaction) (dbgOverrideSender : Option AccountAddress := .none)
+def Υ (debugMode : Bool) (fuel : ℕ) (σ : YPState) (chainId H_f : ℕ) (H : BlockHeader) (T : Transaction) (expectedSender : AccountAddress)
   : Except EVM.Exception (YPState × Substate × Bool)
 := do
-  let S_T ← checkTransactionGetSender σ chainId H_f T dbgOverrideSender
+  let S_T ← checkTransactionGetSender σ chainId H_f T expectedSender
   -- "here can be no invalid transactions from this point"
   let g₀ := -- (64)
     let g₀_data :=

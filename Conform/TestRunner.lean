@@ -185,6 +185,34 @@ def VerySlowTests : Array String :=
   , "precompsEIP2929Cancun_d292g0v0_Cancun"
   , "precompsEIP2929Cancun_d310g0v0_Cancun"
   , "randomStatetest650_d0g0v0_Cancun"
+  , "src/GeneralStateTestsFiller/Pyspecs/byzantium/eip198_modexp_precompile/test_modexp.py::test_modexp[fork_Berlin-blockchain_test-EIP-198-case3-raw-input-out-of-gas]"
+  , "src/GeneralStateTestsFiller/Pyspecs/byzantium/eip198_modexp_precompile/test_modexp.py::test_modexp[fork_Berlin-blockchain_test-ModExpInput_base_-exponent_-modulus_-ExpectedOutput_call_return_code_0x01-returned_data_0x]"
+  , "src/GeneralStateTestsFiller/Pyspecs/byzantium/eip198_modexp_precompile/test_modexp.py::test_modexp[fork_Byzantium-blockchain_test-EIP-198-case3-raw-input-out-of-gas]"
+  , "src/GeneralStateTestsFiller/Pyspecs/byzantium/eip198_modexp_precompile/test_modexp.py::test_modexp[fork_Cancun-blockchain_test-EIP-198-case3-raw-input-out-of-gas]"
+  , "src/GeneralStateTestsFiller/Pyspecs/byzantium/eip198_modexp_precompile/test_modexp.py::test_modexp[fork_Constantinople-blockchain_test-EIP-198-case3-raw-input-out-of-gas]"
+  , "src/GeneralStateTestsFiller/Pyspecs/byzantium/eip198_modexp_precompile/test_modexp.py::test_modexp[fork_Cancun-blockchain_test-ModExpInput_base_-exponent_-modulus_-ExpectedOutput_call_return_code_0x01-returned_data_0x]"
+  , "src/GeneralStateTestsFiller/Pyspecs/byzantium/eip198_modexp_precompile/test_modexp.py::test_modexp[fork_Byzantium-blockchain_test-ModExpInput_base_-exponent_-modulus_-ExpectedOutput_call_return_code_0x01-returned_data_0x]"
+  , "src/GeneralStateTestsFiller/Pyspecs/byzantium/eip198_modexp_precompile/test_modexp.py::test_modexp[fork_Constantinople-blockchain_test-ModExpInput_base_-exponent_-modulus_00-ExpectedOutput_call_return_code_0x01-returned_data_0x00]"
+  , "src/GeneralStateTestsFiller/Pyspecs/byzantium/eip198_modexp_precompile/test_modexp.py::test_modexp[fork_Constantinople-blockchain_test-ModExpInput_base_-exponent_-modulus_-ExpectedOutput_call_return_code_0x01-returned_data_0x]"
+  , "src/GeneralStateTestsFiller/Pyspecs/byzantium/eip198_modexp_precompile/test_modexp.py::test_modexp[fork_ConstantinopleFix-blockchain_test-EIP-198-case3-raw-input-out-of-gas]"
+  , "src/GeneralStateTestsFiller/Pyspecs/byzantium/eip198_modexp_precompile/test_modexp.py::test_modexp[fork_Istanbul-blockchain_test-EIP-198-case3-raw-input-out-of-gas]"
+  , "src/GeneralStateTestsFiller/Pyspecs/byzantium/eip198_modexp_precompile/test_modexp.py::test_modexp[fork_ConstantinopleFix-blockchain_test-ModExpInput_base_-exponent_-modulus_-ExpectedOutput_call_return_code_0x01-returned_data_0x]"
+  , "src/GeneralStateTestsFiller/Pyspecs/byzantium/eip198_modexp_precompile/test_modexp.py::test_modexp[fork_London-blockchain_test-EIP-198-case3-raw-input-out-of-gas]"
+  , "src/GeneralStateTestsFiller/Pyspecs/byzantium/eip198_modexp_precompile/test_modexp.py::test_modexp[fork_Paris-blockchain_test-EIP-198-case3-raw-input-out-of-gas]"
+  , "src/GeneralStateTestsFiller/Pyspecs/byzantium/eip198_modexp_precompile/test_modexp.py::test_modexp[fork_Shanghai-blockchain_test-EIP-198-case3-raw-input-out-of-gas]"
+  , "src/GeneralStateTestsFiller/Pyspecs/byzantium/eip198_modexp_precompile/test_modexp.py::test_modexp[fork_Istanbul-blockchain_test-ModExpInput_base_-exponent_-modulus_0001-ExpectedOutput_call_return_code_0x01-returned_data_0x0000]"
+  , "src/GeneralStateTestsFiller/Pyspecs/byzantium/eip198_modexp_precompile/test_modexp.py::test_modexp[fork_Istanbul-blockchain_test-ModExpInput_base_-exponent_-modulus_-ExpectedOutput_call_return_code_0x01-returned_data_0x]"
+  , "src/GeneralStateTestsFiller/Pyspecs/byzantium/eip198_modexp_precompile/test_modexp.py::test_modexp[fork_London-blockchain_test-ModExpInput_base_-exponent_-modulus_-ExpectedOutput_call_return_code_0x01-returned_data_0x]"
+  , "src/GeneralStateTestsFiller/Pyspecs/byzantium/eip198_modexp_precompile/test_modexp.py::test_modexp[fork_Shanghai-blockchain_test-ModExpInput_base_-exponent_-modulus_0001-ExpectedOutput_call_return_code_0x01-returned_data_0x0000]"
+  , "src/GeneralStateTestsFiller/Pyspecs/byzantium/eip198_modexp_precompile/test_modexp.py::test_modexp[fork_Paris-blockchain_test-ModExpInput_base_-exponent_-modulus_-ExpectedOutput_call_return_code_0x01-returned_data_0x]"
+  , "src/GeneralStateTestsFiller/Pyspecs/byzantium/eip198_modexp_precompile/test_modexp.py::test_modexp[fork_Shanghai-blockchain_test-ModExpInput_base_02-exponent_02-modulus_05-ExpectedOutput_call_return_code_0x01-returned_data_0x04]"
+  , "src/GeneralStateTestsFiller/Pyspecs/byzantium/eip198_modexp_precompile/test_modexp.py::test_modexp[fork_Shanghai-blockchain_test-ModExpInput_base_-exponent_-modulus_-ExpectedOutput_call_return_code_0x01-returned_data_0x]"
+  , "src/GeneralStateTestsFiller/Pyspecs/shanghai/eip4895_withdrawals/test_withdrawals.py::test_withdrawing_to_precompiles[fork_Cancun-precompile_5-blockchain_test-amount_1]"
+  , "src/GeneralStateTestsFiller/Pyspecs/shanghai/eip4895_withdrawals/test_withdrawals.py::test_withdrawing_to_precompiles[fork_Shanghai-precompile_5-blockchain_test-amount_0]"
+  , "src/GeneralStateTestsFiller/Pyspecs/shanghai/eip4895_withdrawals/test_withdrawals.py::test_withdrawing_to_precompiles[fork_Shanghai-precompile_2-blockchain_test-amount_0]"
+  , "src/GeneralStateTestsFiller/Pyspecs/shanghai/eip4895_withdrawals/test_withdrawals.py::test_withdrawing_to_precompiles[fork_Cancun-precompile_5-blockchain_test-amount_0]"
+  , "src/GeneralStateTestsFiller/Pyspecs/shanghai/eip4895_withdrawals/test_withdrawals.py::test_withdrawing_to_precompiles[fork_Shanghai-precompile_8-blockchain_test-amount_0]"
+  -- , "Call50000_rip160_d0g1v0_Cancun"
   -- , "callcodecallcall_100_OOGMBefore_d0g0v0_Cancun"
   -- , "callcodecallcodecallcode_111_OOGMBefore_d0g0v0_Cancun"
   -- , "callcallcodecall_010_OOGE_d0g0v0_Cancun"
@@ -281,7 +309,7 @@ end
 def executeTransaction (transaction : Transaction) (s : EVM.State) (header : BlockHeader) : Except EVM.Exception EVM.State := do
   let _TODOfuel := 2^13
 
-  let (ypState, substate, z) ← EVM.Υ (debugMode := false) _TODOfuel s.accountMap header.chainId header.baseFeePerGas header transaction -- (dbgOverrideSender := transaction.base.dbgSender)
+  let (ypState, substate, z) ← EVM.Υ (debugMode := false) _TODOfuel s.accountMap header.chainId header.baseFeePerGas header transaction transaction.base.expectedSender
 
   -- as EIP 4788 (https://eips.ethereum.org/EIPS/eip-4788).
 
@@ -350,17 +378,20 @@ def executeTransactions (blocks : Blocks) (s₀ : EVM.State) : Except EVM.Except
       )
       s
     let σ ←
-      ( try
-         applyWithdrawals
-          s.accountMap
-          block.blockHeader.withdrawalsRoot
-          block.withdrawals
-        catch e =>
-          if !block.exception.isEmpty then
-            dbg_trace s!"Expected exception: {block.exception}; got exception: {repr e} - we need to reconcile these as we debug tests. Currently, we mark the test as 'passed' as I assume this is the right kind of exception, but it doesn't need to be the case necessarily."
-            throw <| EVM.Exception.ExpectedException block.exception
-          else throw e
-      )
+      match block.blockHeader.withdrawalsRoot with
+        | some wR =>
+          ( try
+            applyWithdrawals
+              s.accountMap
+              wR
+              block.withdrawals
+            catch e =>
+              if !block.exception.isEmpty then
+                dbg_trace s!"Expected exception: {block.exception}; got exception: {repr e} - we need to reconcile these as we debug tests. Currently, we mark the test as 'passed' as I assume this is the right kind of exception, but it doesn't need to be the case necessarily."
+                throw <| EVM.Exception.ExpectedException block.exception
+              else throw e
+          )
+        | none => pure s.accountMap
     pure <| { s with accountMap := σ }
     -- pure s
 

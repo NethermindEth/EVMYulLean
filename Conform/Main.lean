@@ -45,22 +45,22 @@ GeneralStateTests:
     Success rate of: 93.582888
 
   Pyspecs                               22m35
-    Total tests: 2150
-    The post was NOT equal to the resulting state: 1608
-    Succeeded: 542
-    Success rate of: 25.209302
+    Total tests: 2123
+    The post was NOT equal to the resulting state: 1040
+    Succeeded: 1083
+    Success rate of: 51.012718
 
   Shanghai                              0m42
     Total tests: 27
-    The post was NOT equal to the resulting state: 7
-    Succeeded: 20
-    Success rate of: 74.074074
+    The post was NOT equal to the resulting state: 6
+    Succeeded: 21
+    Success rate of: 77.777778
 
   stArgsZeroOneBalance                  1m47
     Total tests: 96
-    The post was NOT equal to the resulting state: 2
-    Succeeded: 94
-    Success rate of: 97.916667
+    The post was NOT equal to the resulting state: 0
+    Succeeded: 96
+    Success rate of: 100.000000
 
   stAttackTest                          0m16
     Total tests: 2
@@ -100,9 +100,9 @@ GeneralStateTests:
 
   stCodeCopyTest                        0m16
     Total tests: 2
-    The post was NOT equal to the resulting state: 1
-    Succeeded: 1
-    Success rate of: 50.000000
+    The post was NOT equal to the resulting state: 0
+    Succeeded: 2
+    Success rate of: 100.000000
 
   stCodeSizeLimit                       0m23
     Total tests: 9
@@ -118,9 +118,9 @@ GeneralStateTests:
 
   stCreateTest                          3m10
     Total tests: 196
-    The post was NOT equal to the resulting state: 82
-    Succeeded: 114
-    Success rate of: 58.163265
+    The post was NOT equal to the resulting state: 80
+    Succeeded: 116
+    Success rate of: 59.183673
 
   stDelegatecallTestHomestead           0m52
     Total tests: 33
@@ -135,22 +135,22 @@ GeneralStateTests:
     Success rate of: 89.111111
 
   stEIP150Specific                      0m38
-    Total tests: 23
-    The post was NOT equal to the resulting state: 6
-    Succeeded: 17
-    Success rate of: 73.913043
+    Total tests: 450
+    The post was NOT equal to the resulting state: 49
+    Succeeded: 401
+    Success rate of: 89.111111
 
   stEIP1559                             26m52
     Total tests: 1845
-    The post was NOT equal to the resulting state: 620
-    Succeeded: 1225
-    Success rate of: 66.395664
+    The post was NOT equal to the resulting state: 238
+    Succeeded: 1607
+    Success rate of: 87.100271
 
   stEIP158Specific                      0m22
     Total tests: 8
-    The post was NOT equal to the resulting state: 7
-    Succeeded: 1
-    Success rate of: 12.500000
+    The post was NOT equal to the resulting state: 5
+    Succeeded: 3
+    Success rate of: 37.500000
 
   stEIP2930                             1m50
     Total tests: 140
@@ -166,15 +166,15 @@ GeneralStateTests:
 
   stExample                             0m53
     Total tests: 39
-    The post was NOT equal to the resulting state: 7
-    Succeeded: 32
-    Success rate of: 82.051282
+    The post was NOT equal to the resulting state: 6
+    Succeeded: 33
+    Success rate of: 84.615385
 
   stExtCodeHash                         1m20
     Total tests: 69
-    The post was NOT equal to the resulting state: 66
-    Succeeded: 3
-    Success rate of: 4.347826
+    The post was NOT equal to the resulting state: 52
+    Succeeded: 17
+    Success rate of: 24.637681
 
   stHomesteadSpecific                   0m19
     Total tests: 5
@@ -190,9 +190,9 @@ GeneralStateTests:
 
   stLogTests                            1m2
     Total tests: 46
-    The post was NOT equal to the resulting state: 20
-    Succeeded: 26
-    Success rate of: 56.521739
+    The post was NOT equal to the resulting state: 5
+    Succeeded: 41
+    Success rate of: 89.130435
 
   stMemExpandingEIP150Calls             0m26
     Total tests: 14
@@ -230,11 +230,11 @@ GeneralStateTests:
     Succeeded: 190
     Success rate of: 84.070796
 
-  stQuadraticComplexityTest             0m41
+  stQuadraticComplexityTest             6m32
     Total tests: 32
-    The post was NOT equal to the resulting state: 26
-    Succeeded: 6
-    Success rate of: 18.750000
+    The post was NOT equal to the resulting state: 10
+    Succeeded: 22
+    Success rate of: 68.750000
 
   stRandom                              6m5
     Total tests: 308
@@ -256,9 +256,9 @@ GeneralStateTests:
 
   stRefundTest                          0m40
     Total tests: 26
-    The post was NOT equal to the resulting state: 10
-    Succeeded: 16
-    Success rate of: 61.538462
+    The post was NOT equal to the resulting state: 5
+    Succeeded: 21
+    Success rate of: 80.769231
 
   stReturnDataTest                      4m56
     Total tests: 269
@@ -274,9 +274,9 @@ GeneralStateTests:
 
   stSelfBalance                         0m58
     Total tests: 42
-    The post was NOT equal to the resulting state: 39
-    Succeeded: 3
-    Success rate of: 7.142857
+    The post was NOT equal to the resulting state: 1
+    Succeeded: 41
+    Success rate of: 97.619048
 
   stShift                               0m54
     Total tests: 42
@@ -292,15 +292,15 @@ GeneralStateTests:
 
   stSolidityTest                        0m38
     Total tests: 23
-    The post was NOT equal to the resulting state: 16
-    Succeeded: 7
-    Success rate of: 30.434783
+    The post was NOT equal to the resulting state: 9
+    Succeeded: 14
+    Success rate of: 60.869565
 
   stSpecialTest                         0m35
     Total tests: 20
-    The post was NOT equal to the resulting state: 8
-    Succeeded: 12
-    Success rate of: 60.000000
+    The post was NOT equal to the resulting state: 6
+    Succeeded: 14
+    Success rate of: 70.000000
 
   stSStoreTest                          9m10
     Total tests: 475
@@ -310,9 +310,9 @@ GeneralStateTests:
 
   stStackTests                          3m53
     Total tests: 209
-    The post was NOT equal to the resulting state: 144
-    Succeeded: 65
-    Success rate of: 31.100478
+    The post was NOT equal to the resulting state: 1
+    Succeeded: 208
+    Success rate of: 99.521531
 
   stStaticCall                          15m39
     Total tests: 468
@@ -346,9 +346,9 @@ GeneralStateTests:
 
   stTransitionTest                      0m20
     Total tests: 6
-    The post was NOT equal to the resulting state: 3
-    Succeeded: 3
-    Success rate of: 50.000000
+    The post was NOT equal to the resulting state: 0
+    Succeeded: 6
+    Success rate of: 100.000000
 
   stWalletTest                          0m58
     Total tests: 41
@@ -389,16 +389,16 @@ GeneralStateTests:
 /-
 InvalidBlocks                           2m56
   Total tests: 126
-  The post was NOT equal to the resulting state: 98
-  Succeeded: 28
-  Success rate of: 22.222222
+  The post was NOT equal to the resulting state: 4
+  Succeeded: 122
+  Success rate of: 96.825397
 -/
 /-
-TransitionTests
+TransitionTests                         1m3
   Total tests: 17
-  The post was NOT equal to the resulting state: 17
-  Succeeded: 0
-  Success rate of: 0.000000
+  The post was NOT equal to the resulting state: 11
+  Succeeded: 6
+  Success rate of: 35.294118
 -/
 /-
 ValidBlocks                             15m40
@@ -429,7 +429,7 @@ def main : IO Unit := do
     Array.filter isTestFile <$>
       System.FilePath.walkDir
         (enter := λ path ↦ pure <| path ∉ directoryBlacklist)
-        ("EthereumTests/BlockchainTests")
+        ("EthereumTests/BlockchainTests/TransitionTests")
 
   -- let testFiles := #[SimpleFile]
   -- let testFiles := #[BuggyFile]
@@ -448,7 +448,6 @@ def main : IO Unit := do
     let res ←
       ExceptT.run <|
         EvmYul.Conform.processTestsOfFile
-          -- (whitelist := #["opc2FDiffPlaces_d24g0v0_Cancun"])
           -- (whitelist := #["add_d1g0v0_Cancun"])
           -- (whitelist := #["add_d3g0v0_Cancun"])
           -- (whitelist := #["add_d4g0v0_Cancun"])

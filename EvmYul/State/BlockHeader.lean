@@ -46,7 +46,7 @@ structure BlockHeader where
   prevRandao    : UInt256
   baseFeePerGas : ℕ
   parentBeaconBlockRoot : ByteArray
-  withdrawalsRoot : ByteArray
+  withdrawalsRoot : Option ByteArray
 deriving DecidableEq, Inhabited, Repr
 
 attribute [deprecated] BlockHeader.difficulty

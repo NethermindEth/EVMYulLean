@@ -21,14 +21,14 @@ open Batteries (RBMap RBSet)
 TODO: In case of recipient = none, it means contract creation and data should be treated as init?
 -/
 structure Transaction.Base where
-  nonce     : UInt256
-  gasLimit  : UInt256
-  recipient : Option AccountAddress
-  value     : UInt256
-  r         : ByteArray
-  s         : ByteArray
-  data      : ByteArray
-  dbgSender : AccountAddress
+  nonce           : UInt256
+  gasLimit        : UInt256
+  recipient       : Option AccountAddress
+  value           : UInt256
+  r               : ByteArray
+  s               : ByteArray
+  data            : ByteArray
+  expectedSender  : AccountAddress
 deriving BEq, Repr
 
 -- "EIP-2930 (type 1) and EIP-1559 (type 2) transactions also have:""

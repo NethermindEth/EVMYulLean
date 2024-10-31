@@ -113,7 +113,7 @@ instance : FromJson BlockHeader where
         baseFeePerGas := ← json.getObjValAsD! _         "baseFeePerGas" <&> UInt256.toNat
         parentBeaconBlockRoot := ← json.getObjValAsD! ByteArray "parentBeaconBlockRoot"
         prevRandao    := ← json.getObjValAsD! UInt256 "mixHash"
-        withdrawalsRoot := ← json.getObjValAsD! ByteArray "withdrawalsRoot"
+        withdrawalsRoot := ← json.getObjValAsD! (Option ByteArray) "withdrawalsRoot"
       }
     catch exct => dbg_trace s!"OOOOPSIE: {exct}\n json: {json}"
                   default
@@ -140,17 +140,17 @@ TODO - Currently we return `AccessListTransaction`. No idea if this is what we w
 instance : FromJson Transaction where
   fromJson? json := do
     let baseTransaction : Transaction.Base := {
-      nonce     := ← json.getObjValAsD! UInt256        "nonce"
-      gasLimit  := ← json.getObjValAsD! UInt256        "gasLimit"
-      recipient := ← match json.getObjVal? "to" with
-                     | .error _ => .ok .none
-                     | .ok ok => do let str ← ok.getStr?
-                                    if str.isEmpty then .ok .none else FromJson.fromJson? str
-      value     := ← json.getObjValAsD! UInt256        "value"
-      r         := ← json.getObjValAsD! ByteArray      "r"
-      s         := ← json.getObjValAsD! ByteArray      "s"
-      data      := ← json.getObjValAsD! ByteArray      "data"
-      dbgSender := ← json.getObjValAsD! AccountAddress        "sender"
+      nonce          := ← json.getObjValAsD! UInt256        "nonce"
+      gasLimit       := ← json.getObjValAsD! UInt256        "gasLimit"
+      recipient      := ← match json.getObjVal? "to" with
+                          | .error _ => .ok .none
+                          | .ok ok => do let str ← ok.getStr?
+                                         if str.isEmpty then .ok .none else FromJson.fromJson? str
+      value          := ← json.getObjValAsD! UInt256        "value"
+      r              := ← json.getObjValAsD! ByteArray      "r"
+      s              := ← json.getObjValAsD! ByteArray      "s"
+      data           := ← json.getObjValAsD! ByteArray      "data"
+      expectedSender := ← json.getObjValAsD! AccountAddress "sender"
     }
 
     match json.getObjVal? "accessList" with
