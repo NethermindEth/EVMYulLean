@@ -170,13 +170,25 @@ instance : FromJson Transaction where
             -- dbg_trace "Constructing an access transaction."
             return .access ⟨baseTransaction, accessListTransaction, ⟨← FromJson.fromJson? gasPrice⟩⟩
           | .error _ =>
-            -- dbg_trace "Constructing an dynamic transaction."
-            return .dynamic ⟨
-                     baseTransaction,
-                     accessListTransaction,
-                     ← json.getObjValAsD! UInt256 "maxFeePerGas",
-                     ← json.getObjValAsD! UInt256 "maxPriorityFeePerGas"
-                   ⟩
+            let dynamic : DynamicFeeTransaction :=
+              ⟨ baseTransaction
+              , accessListTransaction
+              , ← json.getObjValAsD! UInt256 "maxFeePerGas"
+              , ← json.getObjValAsD! UInt256 "maxPriorityFeePerGas"
+              ⟩
+            match json.getObjVal? "maxFeePerBlobGas" with
+            | .error _ =>
+              -- dbg_trace "Constructing a dynamic transaction."
+              pure <| .dynamic dynamic
+            | .ok maxFeePerBlobGas =>
+              dbg_trace "Constructing a blob transaction."
+              pure <|
+                .blob
+                  ⟨ dynamic
+                  , ← FromJson.fromJson? maxFeePerBlobGas
+                  , ← json.getObjValAsD! (List ByteArray) "blobVersionedHashes"
+                  ⟩
+
 
   where accessListToRBMap (this : AccessList) : Batteries.RBMap AccountAddress (Array UInt256) compare :=
     this.foldl (init := ∅) λ m ⟨addr, list⟩ ↦ m.insert addr list

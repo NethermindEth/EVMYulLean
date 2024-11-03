@@ -945,7 +945,6 @@ def Θ (debugMode : Bool)
 
 end
 
-#check 0x25
 open Batteries (RBMap RBSet)
 
 def checkTransactionGetSender (σ : YPState) (chainId H_f : ℕ) (T : Transaction) (expectedSender : AccountAddress)
@@ -968,7 +967,7 @@ def checkTransactionGetSender (σ : YPState) (chainId H_f : ℕ) (T : Transactio
             (t.w - 35) % 2 -- `chainId` not subtracted in the Yellow paper but in the EEL spec
           else
             t.w
-      | .access t | .dynamic t => t.yParity
+      | .access t | .dynamic t | .blob t => t.yParity
   if v ∉ [0, 1] then .error <| .InvalidTransaction .InvalidSignature
 
   let h_T := -- (318)
@@ -1000,12 +999,12 @@ def checkTransactionGetSender (σ : YPState) (chainId H_f : ℕ) (T : Transactio
   let v₀ :=
     match T with
       | .legacy t | .access t => t.gasLimit * t.gasPrice + t.value
-      | .dynamic t => t.gasLimit * t.maxFeePerGas + t.value
+      | .dynamic t | .blob t => t.gasLimit * t.maxFeePerGas + t.value
   if v₀ > senderBalance then .error <| .InvalidTransaction .UpFrontPayment
 
   if H_f >
     match T with
-      | .dynamic t => t.maxFeePerGas
+      | .dynamic t | .blob t => t.maxFeePerGas
       | .legacy t | .access t => t.gasPrice
     then .error <| .InvalidTransaction .BaseFeeTooHigh
 
@@ -1024,9 +1023,9 @@ def checkTransactionGetSender (σ : YPState) (chainId H_f : ℕ) (T : Transactio
  where
   L_X (T : Transaction) : Except EVM.Exception 𝕋 := -- (317)
     let accessEntryRLP : AccountAddress × Array UInt256 → 𝕋
-      | ⟨a, s⟩ => .𝕃 [.𝔹 (AccountAddress.toByteArray a), .𝕃 (s.map (𝕋.𝔹 ∘ BE ∘ UInt256.toNat)).toList]
-    let accessEntriesRLP (aEs : Array (AccountAddress × Array UInt256)) : 𝕋 :=
-      .𝕃 (aEs.map accessEntryRLP |>.toList)
+      | ⟨a, s⟩ => .𝕃 [.𝔹 (AccountAddress.toByteArray a), .𝕃 (s.map (𝕋.𝔹 ∘ UInt256.toByteArray)).toList]
+    let accessEntriesRLP (aEs : List (AccountAddress × Array UInt256)) : 𝕋 :=
+      .𝕃 (aEs.map accessEntryRLP)
     match T with
       | /- 0 -/ .legacy t =>
         if t.w ∈ [27, 28] then
@@ -1067,7 +1066,7 @@ def checkTransactionGetSender (σ : YPState) (chainId H_f : ℕ) (T : Transactio
             .𝔹 (t.recipient.option .empty AccountAddress.toByteArray) -- Tₜ
           , .𝔹 (BE t.value) -- T_v
           , .𝔹 t.data  -- p
-          , accessEntriesRLP <| RBSet.toList t.accessList |>.toArray -- T_A
+          , accessEntriesRLP <| RBSet.toList t.accessList -- T_A
           ]
       | /- 2 -/ .dynamic t =>
         .ok ∘ .𝕃 <|
@@ -1080,8 +1079,24 @@ def checkTransactionGetSender (σ : YPState) (chainId H_f : ℕ) (T : Transactio
             .𝔹 (t.recipient.option .empty AccountAddress.toByteArray) -- Tₜ
           , .𝔹 (BE t.value) -- Tᵥ
           , .𝔹 t.data -- p
-          , accessEntriesRLP <| RBSet.toList t.accessList |>.toArray -- T_A
+          , accessEntriesRLP <| RBSet.toList t.accessList -- T_A
           ]
+      | /- 3 -/ .blob t =>
+        .ok ∘ .𝕃 <|
+          [ .𝔹 (BE t.chainId) -- T_c
+          , .𝔹 (BE t.nonce) -- Tₙ
+          , .𝔹 (BE t.maxPriorityFeePerGas) -- T_f
+          , .𝔹 (BE t.maxFeePerGas) -- Tₘ
+          , .𝔹 (BE t.gasLimit) -- T_g
+          , -- If Tₜ is ∅ it becomes the RLP empty byte sequence and thus the member of 𝔹₀
+            .𝔹 (t.recipient.option .empty AccountAddress.toByteArray) -- Tₜ
+          , .𝔹 (BE t.value) -- Tᵥ
+          , .𝔹 t.data -- p
+          , accessEntriesRLP <| RBSet.toList t.accessList -- T_A
+          , .𝔹 (BE t.maxFeePerBlobGas)
+          , .𝕃 (t.blobVersionedHashes.map .𝔹)
+          ]
+
 
 -- Type Υ using \Upsilon or \GU
 def Υ (debugMode : Bool) (fuel : ℕ) (σ : YPState) (chainId H_f : ℕ) (H : BlockHeader) (T : Transaction) (expectedSender : AccountAddress)
@@ -1116,12 +1131,12 @@ def Υ (debugMode : Bool) (fuel : ℕ) (σ : YPState) (chainId H_f : ℕ) (H : B
   let f :=
     match T with
       | .legacy t | .access t => t.gasPrice - H_f
-      | .dynamic t => min t.maxPriorityFeePerGas (t.maxFeePerGas - H_f)
+      | .dynamic t | .blob t => min t.maxPriorityFeePerGas (t.maxFeePerGas - H_f)
   -- The effective gas price
   let p := -- (66)
     match T with
       | .legacy t | .access t => t.gasPrice
-      | .dynamic _ => f + H_f
+      | .dynamic _ | .blob _ => f + H_f
   let senderAccount :=
     { senderAccount with
         balance := senderAccount.balance - T.base.gasLimit * p -- (74)

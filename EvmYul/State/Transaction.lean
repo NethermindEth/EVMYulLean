@@ -107,25 +107,34 @@ structure DynamicFeeTransaction extends Transaction.Base, Transaction.WithAccess
   maxPriorityFeePerGas : UInt256
 deriving BEq, Repr
 
+structure BlobTransaction extends DynamicFeeTransaction where
+  maxFeePerBlobGas  : UInt256
+  blobVersionedHashes : List ByteArray
+deriving BEq, Repr
+
 inductive Transaction where
   | legacy  : LegacyTransaction → Transaction
   | access  : AccessListTransaction → Transaction
   | dynamic : DynamicFeeTransaction → Transaction
+  | blob    : BlobTransaction → Transaction
 deriving BEq, Repr
 
 def Transaction.base : Transaction → Transaction.Base
   | legacy t => t.toBase
   | access t => t.toBase
   | dynamic t => t.toBase
+  | blob t => t.toBase
 
 def Transaction.getAccessList : Transaction → Array (AccountAddress × Array UInt256)
   | legacy _ => #[]
   | access t => RBSet.toList t.accessList |>.toArray
   | dynamic t => RBSet.toList t.accessList |>.toArray
+  | blob t => RBSet.toList t.accessList |>.toArray
 
-def Transaction.type : Transaction → Nat
+def Transaction.type : Transaction → ℕ -- UInt8
   | .legacy  _ => 0
   | .access  _ => 1
   | .dynamic _ => 2
+  | .blob _ => 3
 
 end EvmYul
