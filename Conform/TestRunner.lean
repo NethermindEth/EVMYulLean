@@ -328,7 +328,7 @@ This assumes that the `transactions` are ordered, as they should be in the test 
 -/
 def executeTransactions (blocks : Blocks) (s₀ : EVM.State) : Except EVM.Exception EVM.State := do
   blocks.foldlM processBlock s₀
-  where processBlock (s : EVM.State) (block : BlockEntry) : Except EVM.Exception EVM.State := do
+  where processBlock (s : EVM.State) (block : Block) : Except EVM.Exception EVM.State := do
     -- We should not check the timestamp. Some tests have timestamp less than 1710338135 but still need EIP-4788
     -- let FORK_TIMESTAMP := 1710338135
     let _TODOfuel := 2^13

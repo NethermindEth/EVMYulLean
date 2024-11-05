@@ -50,7 +50,7 @@ structure BlockHeader where
   withdrawalsRoot : Option ByteArray
   blobGasUsed     : UInt256
   excessBlobGas   : UInt256
-deriving DecidableEq, Inhabited, Repr
+deriving DecidableEq, Inhabited, Repr, BEq
 
 attribute [deprecated] BlockHeader.difficulty
 attribute [deprecated] BlockHeader.nonce

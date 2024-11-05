@@ -6,7 +6,7 @@ inductive Exception where
   | InvalidArguments   : Exception
   | NotEncodableRLP    : Exception
   | InvalidInstruction : Exception
-  | StopInvoked        : Exception
+  -- | StopInvoked        : Exception
 
 end Yul
 

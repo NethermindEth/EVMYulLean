@@ -382,9 +382,9 @@ GeneralStateTests:
 
   VMTests                               9m16
     Total tests: 571
-    The post was NOT equal to the resulting state: 30
-    Succeeded: 541
-    Success rate of: 94.746060
+    The post was NOT equal to the resulting state: 25
+    Succeeded: 546
+    Success rate of: 95.621716
 -/
 /-
 InvalidBlocks                           2m56
@@ -429,7 +429,7 @@ def main : IO Unit := do
     Array.filter isTestFile <$>
       System.FilePath.walkDir
         (enter := λ path ↦ pure <| path ∉ directoryBlacklist)
-        ("EthereumTests/BlockchainTests")
+        ("EthereumTests/BlockchainTests/GeneralStateTests/VMTests")
 
   -- let testFiles := #[SimpleFile]
   -- let testFiles := #[BuggyFile]

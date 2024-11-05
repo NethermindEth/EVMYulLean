@@ -5,6 +5,7 @@ import Lean.Data.Json
 import EvmYul.Operations
 import EvmYul.Wheels
 import EvmYul.State.Withdrawal
+import EvmYul.State.Block
 
 import EvmYul.EVM.State
 
@@ -91,17 +92,17 @@ TODO - Temporary.
 -/
 private local instance : Repr Json := ⟨λ s _ ↦ Json.pretty s⟩
 
-structure BlockEntry :=
-  blockHeader  : BlockHeader
-  rlp          : Json
-  transactions : Transactions
-  uncleHeaders : Json
-  withdrawals  : Withdrawals
-  exception    : String -- TODO - I am guessing there is a closed set of these to turn into a sum.
-  blocknumber  : Nat
-  deriving Inhabited, Repr
+-- structure BlockEntry :=
+--   blockHeader  : BlockHeader
+--   rlp          : ByteArray
+--   transactions : Transactions
+--   ommers       : Array BlockHeader
+--   withdrawals  : Withdrawals
+--   exception    : String -- TODO - I am guessing there is a closed set of these to turn into a sum.
+--   -- blocknumber  : Nat
+--   deriving Inhabited, Repr
 
-abbrev Blocks := Array BlockEntry
+-- abbrev Blocks := Array BlockEntry
 
 /--
 In theory, parts of the TestEntry could deserialise immediately into the underlying `EVM.State`.

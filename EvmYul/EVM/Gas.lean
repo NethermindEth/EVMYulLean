@@ -1,8 +1,4 @@
-import EvmYul.Maps.YPState
-import EvmYul.MachineState
-import EvmYul.State.Substate
-import EvmYul.State.ExecutionEnv
-import EvmYul.EVM.Exception
+import EvmYul.EVM.State
 import EvmYul.StateOps
 
 namespace EvmYul
@@ -139,7 +135,7 @@ with the definition of `C_<>` functions that are described inline along with the
 
 It would be worth restructing everything to obtain cleaner separation of concerns.
 -/
-def Csstore (s : State) : Except EVM.Exception UInt256 := do
+def Csstore (s : EVM.State) : Except EVM.Exception UInt256 := do
   let { stack := μₛ, accountMap := σ, executionEnv.codeOwner := Iₐ, .. } := s
   let .some { storage := σ, ostorage := σ₀, .. } := σ.find? Iₐ | throw .SenderMustExist
   let storeAddr := μₛ[0]!

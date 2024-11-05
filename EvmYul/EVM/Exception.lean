@@ -1,4 +1,4 @@
-import EvmYul.EVM.State
+import EvmYul.Wheels
 
 namespace EvmYul
 
@@ -37,7 +37,7 @@ inductive Exception where
   | ReceiverMustExistWithNonZeroValue           : Exception
   | Underflow                                   : Exception
   | Overflow                                    : Exception
-  | StopInvoked (s : EVM.State)                 : Exception
+  -- | StopInvoked (s : EVM.State)                 : Exception
   | OutOfFuel                                   : Exception
   | OutOfGass                                   : Exception
   | InvalidTransaction :
@@ -59,7 +59,7 @@ instance : Repr Exception where
                     | .ReceiverMustExistWithNonZeroValue => "ReceiverMustExistWithNonZeroValue"
                     | .Underflow                         => "Underflow"
                     | .Overflow                          => "Overflow"
-                    | .StopInvoked _                     => "Execution halted by STOP."
+                    -- | .StopInvoked _                     => "Execution halted by STOP."
                     | .OutOfFuel                         => "OutOfFuel"
                     | .OutOfGass                         => "OutOfGass"
                     | .InvalidTransaction e              => "InvalidTransaction: " ++ repr e

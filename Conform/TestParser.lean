@@ -216,25 +216,26 @@ instance : FromJson Transaction where
 TODO -
 - `EthereumTests/BlockchainTests/GeneralStateTests/Pyspecs/cancun/eip4844_blobs/invalid_blob_tx_contract_creation.json` - ?????
 -/
-private def blockEntryOfJson (json : Json) : Except String BlockEntry := do
+private def blockOfJson (json : Json) : Except String Block := do
   -- The exception, if exists, is always in the outermost object regardless of the `<Format>` (see this function's docs).
   let exception ← json.getObjValAsD! String "expectException"
   -- Descend to `rlp_decoded` - Format₁ if exists, Format₀ otherwise.
   let json ← json.getObjValAsD Json "rlp_decoded" json
   pure {
-    blockHeader  := ← json.getObjValAsD! BlockHeader  "blockHeader"
-    rlp          := ← json.getObjValAsD! Json         "rlp"
+    blockHeader  := ← json.getObjValAsD! BlockHeader "blockHeader"
+    rlp          := ← json.getObjValAsD! ByteArray "rlp"
     transactions := ← json.getObjValAsD! Transactions "transactions"
-    uncleHeaders := ← json.getObjValAsD! Json         "uncleHeaders"
-    withdrawals  := ← json.getObjValAsD! Withdrawals  "withdrawals"
-    blocknumber  := ← json.getObjValAsD  _            "blocknumber" "1" >>= tryParseBlocknumber
+    ommers       := ← json.getObjValAsD! (Array BlockHeader) "uncleHeaders"
+    withdrawals  := ← json.getObjValAsD! Withdrawals "withdrawals"
+    -- The block's number should be in the header.
+    -- blocknumber  := ← json.getObjValAsD  _ "blocknumber" "1" >>= tryParseBlocknumber
     exception    := exception
   }
   where
     tryParseBlocknumber (s : String) : Except String Nat :=
       s.toNat?.elim (.error "Cannot parse `blocknumber`.") .ok
 
-instance : FromJson BlockEntry := ⟨blockEntryOfJson⟩
+instance : FromJson Block := ⟨blockOfJson⟩
 
 deriving instance FromJson for TestEntry
 

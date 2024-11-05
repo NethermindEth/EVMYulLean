@@ -20,7 +20,7 @@ structure Withdrawal where
   validatorIndex : UInt64
   address : AccountAddress
   amount : UInt64
-deriving Repr
+deriving Repr, BEq
 
 namespace Withdrawal
 
