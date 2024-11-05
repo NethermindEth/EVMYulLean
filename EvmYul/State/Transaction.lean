@@ -131,7 +131,7 @@ def Transaction.getAccessList : Transaction → Array (AccountAddress × Array U
   | dynamic t => RBSet.toList t.accessList |>.toArray
   | blob t => RBSet.toList t.accessList |>.toArray
 
-def Transaction.type : Transaction → ℕ -- UInt8
+def Transaction.type : Transaction → UInt8
   | .legacy  _ => 0
   | .access  _ => 1
   | .dynamic _ => 2

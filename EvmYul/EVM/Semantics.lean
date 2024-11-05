@@ -973,7 +973,7 @@ def checkTransactionGetSender (σ : YPState) (chainId H_f : ℕ) (T : Transactio
   let h_T := -- (318)
     match T with
       | .legacy _ => KEC T_RLP
-      | _ => KEC <| ByteArray.mk #[.ofNat T.type] ++ T_RLP
+      | _ => KEC <| ByteArray.mk #[T.type] ++ T_RLP
 
   let (S_T : AccountAddress) ← -- (323)
     match ECDSARECOVER h_T (ByteArray.mk #[.ofNat v]) T.base.r T.base.s with
