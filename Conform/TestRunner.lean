@@ -326,7 +326,8 @@ def executeTransaction (transaction : Transaction) (s : EVM.State) (header : Blo
 /--
 This assumes that the `transactions` are ordered, as they should be in the test suit.
 -/
-def executeTransactions (blocks : Blocks) (s₀ : EVM.State) : Except EVM.Exception EVM.State := do
+def executeTransactions (s₀ : EVM.State) : Except EVM.Exception EVM.State := do
+  let blocks := s₀.blocks
   blocks.foldlM processBlock s₀
   where processBlock (s : EVM.State) (block : Block) : Except EVM.Exception EVM.State := do
     -- We should not check the timestamp. Some tests have timestamp less than 1710338135 but still need EIP-4788
@@ -402,9 +403,9 @@ def executeTransactions (blocks : Blocks) (s₀ : EVM.State) : Except EVM.Except
 
 NB we can throw away the final state if it coincided with the expected one, hence `.none`.
 -/
-def preImpliesPost (pre : Pre) (post : Post) (blocks : Blocks) : Except EVM.Exception (Option EVM.State) := do
+def preImpliesPost (pre : Pre) (post : Post) (blocks : Blocks) (genesisBlockHeader : BlockHeader) : Except EVM.Exception (Option EVM.State) := do
   try
-    let resultState ← executeTransactions blocks pre.toEVMState
+    let resultState ← executeTransactions {pre.toEVMState with blocks := blocks, genesisBlockHeader := genesisBlockHeader}
     let result : AddrMap AccountEntry :=
       resultState.toState.accountMap.foldl
         (λ r addr ⟨nonce, balance, storage, _, _, code⟩ ↦ r.insert addr ⟨nonce, balance, storage, code⟩) default
@@ -432,7 +433,7 @@ instance (priority := high) : Repr AccountMap := ⟨λ m _ ↦
     return result⟩
 
 def processTest (entry : TestEntry) (verbose : Bool := true) : TestResult :=
-  let result := preImpliesPost entry.pre entry.postState entry.blocks
+  let result := preImpliesPost entry.pre entry.postState entry.blocks entry.genesisBlockHeader
   match result with
     | .error err => .mkFailed s!"{repr err}"
     | .ok result => errorF <$> result

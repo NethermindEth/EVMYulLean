@@ -114,7 +114,7 @@ an EVM model and write translations between them where convenient.
 structure TestEntry :=
   info               : Json := ""
   blocks             : Blocks
-  genesisBlockHeader : Json := ""
+  genesisBlockHeader : BlockHeader
   genesisRLP         : Json := ""
   lastblockhash      : Json := ""
   network            : Json := ""
