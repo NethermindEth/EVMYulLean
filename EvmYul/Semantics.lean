@@ -294,6 +294,8 @@ def step {τ : OperationType} (debugMode : Bool) (op : Operation τ) : Transform
     | τ, .GASLIMIT => dispatchStateOp τ EvmYul.State.gasLimit
     | τ, .CHAINID => dispatchStateOp τ EvmYul.State.chainId
     | τ, .SELFBALANCE => dispatchStateOp τ EvmYul.State.selfbalance
+    | τ, .BASEFEE => dispatchExecutionEnvOp debugMode τ EvmYul.basefee
+    | τ, .BLOBBASEFEE => dispatchExecutionEnvOp debugMode τ EvmYul.getBlobGasprice
 
     | .EVM, .POP =>
       λ evmState ↦

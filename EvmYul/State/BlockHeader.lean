@@ -27,6 +27,7 @@ namespace EvmYul
 `parentBeaconBlockRoot` (EIP-4877)
 -/
 structure BlockHeader where
+  hash          : UInt256
   parentHash    : UInt256
   ommersHash    : UInt256
   beneficiary   : AccountAddress
@@ -47,6 +48,8 @@ structure BlockHeader where
   baseFeePerGas : ℕ
   parentBeaconBlockRoot : ByteArray
   withdrawalsRoot : Option ByteArray
+  blobGasUsed     : UInt256
+  excessBlobGas   : UInt256
 deriving DecidableEq, Inhabited, Repr
 
 attribute [deprecated] BlockHeader.difficulty

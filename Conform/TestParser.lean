@@ -94,6 +94,7 @@ instance : FromJson BlockHeader where
   fromJson? json := do
     try
       pure {
+        hash          := ← json.getObjValAsD! UInt256   "hash"
         parentHash    := ← json.getObjValAsD! UInt256   "parentHash"
         ommersHash    := TODO -- TODO - Set to whatever the KEC(RLP()) evaluates to.
         beneficiary   := ← json.getObjValAsD! AccountAddress   "coinbase"
@@ -108,12 +109,14 @@ instance : FromJson BlockHeader where
         timestamp     := ← json.getObjValAsD! _         "timestamp"     <&> UInt256.toNat
         extraData     := ← json.getObjValAsD! ByteArray "extraData"
         minHash       := TODO -- TODO - Does not seem to be used in Υ?
-        chainId       := 1 -- (5)
+        chainId       := ← json.getObjValAsD UInt256 "chainId" 1 -- (5)
         nonce         := 0 -- [deprecated] 0.
         baseFeePerGas := ← json.getObjValAsD! _         "baseFeePerGas" <&> UInt256.toNat
         parentBeaconBlockRoot := ← json.getObjValAsD! ByteArray "parentBeaconBlockRoot"
         prevRandao    := ← json.getObjValAsD! UInt256 "mixHash"
         withdrawalsRoot := ← json.getObjValAsD! (Option ByteArray) "withdrawalsRoot"
+        blobGasUsed    := ← json.getObjValAsD! UInt256 "blobGasUsed"
+        excessBlobGas    := ← json.getObjValAsD! UInt256 "excessBlobGas"
       }
     catch exct => dbg_trace s!"OOOOPSIE: {exct}\n json: {json}"
                   default
@@ -181,7 +184,6 @@ instance : FromJson Transaction where
               -- dbg_trace "Constructing a dynamic transaction."
               pure <| .dynamic dynamic
             | .ok maxFeePerBlobGas =>
-              dbg_trace "Constructing a blob transaction."
               pure <|
                 .blob
                   ⟨ dynamic

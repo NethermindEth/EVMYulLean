@@ -65,7 +65,7 @@ def Wzero : List (Operation .EVM) := [.STOP, .RETURN, .REVERT]
 def Wbase : List (Operation .EVM) := [
   .ADDRESS, .ORIGIN, .CALLER, .CALLVALUE, .CALLDATASIZE, .CODESIZE, .GASPRICE, .COINBASE,
   .TIMESTAMP, .NUMBER, .PREVRANDAO, .GASLIMIT, .CHAINID, .RETURNDATASIZE, .POP, .PC, .MSIZE, .GAS,
-  .BASEFEE, .PUSH0]
+  .BASEFEE, .BLOBBASEFEE, .PUSH0]
 
 def Wverylow : List (Operation .EVM) := [
   .ADD, .SUB, .NOT, .LT, .GT, .SLT, .SGT, .EQ, .ISZERO, .AND, .OR, .XOR, .BYTE, .SHL, .SHR, .SAR,

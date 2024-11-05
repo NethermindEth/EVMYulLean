@@ -67,6 +67,7 @@ def serializeBlockInstr : BOp .EVM → UInt8
   | .CHAINID     => 0x46
   | .SELFBALANCE => 0x47
   | .BASEFEE     => 0x48
+  | .BLOBBASEFEE => 0x48
 
 def serializeStackMemFlowInstr : SMSFOp .EVM → UInt8
   | .POP      => 0x50
@@ -241,6 +242,7 @@ def serializeInstr : Operation .EVM → UInt8
     | .CHAINID        => some 0
     | .SELFBALANCE    => some 0
     | .BASEFEE        => some 0
+    | .BLOBBASEFEE    => some 0
     | .POP            => some 1
     | .MLOAD          => some 1
     | .MSTORE         => some 2
@@ -358,6 +360,7 @@ def serializeInstr : Operation .EVM → UInt8
     | .CHAINID => some 1
     | .SELFBALANCE => some 1
     | .BASEFEE => some 1
+    | .BLOBBASEFEE => some 1
     | .POP => some 0
     | .MLOAD => some 1
     | .MSTORE => some 0
@@ -475,6 +478,7 @@ def parseInstr : UInt8 → Option (Operation .EVM)
   | 0x46 => some .CHAINID
   | 0x47 => some .SELFBALANCE
   | 0x48 => some .BASEFEE
+  | 0x4a => some .BLOBBASEFEE
 
   | 0x50 => some .POP
   | 0x51 => some .MLOAD
