@@ -449,8 +449,12 @@ def main : IO Unit := do
     let res ←
       ExceptT.run <|
         EvmYul.Conform.processTestsOfFile
-          -- (whitelist := #["add_d1g0v0_Cancun"])
-          -- (whitelist := #["add_d3g0v0_Cancun"])
+          (whitelist := #[
+            "modexp_d29g0v0_Cancun"
+          , "modexp_d29g1v0_Cancun"
+          , "modexp_d29g2v0_Cancun"
+          , "modexp_d29g3v0_Cancun"
+          ])
           -- (whitelist := #["add_d4g0v0_Cancun"])
           testFile
     match res with
