@@ -7,7 +7,7 @@ def SimpleFile := "EthereumTests/BlockchainTests/GeneralStateTests/VMTests/vmAri
 -- def BuggyFile := "EthereumTests/BlockchainTests/GeneralStateTests/VMTests/vmArithmeticTest/exp.json"
 def BuggyFile := "Conform/testfile.json"
 -- def BuggyFile := "EthereumTests/BlockchainTests/GeneralStateTests/VMTests/vmTests/calldatacopy.json"
-def SpecificFile := "EthereumTests/BlockchainTests/GeneralStateTests/Pyspecs/cancun/eip4844_blobs/invalid_pre_fork_block_with_blob_fields.json"
+def SpecificFile := "EthereumTests/BlockchainTests/GeneralStateTests/stPreCompiledContracts/modexp.json"
 
 def TestsSubdir := "BlockchainTests"
 def isTestFile (file : System.FilePath) : Bool := file.extension.option false (· == "json")
@@ -46,9 +46,9 @@ GeneralStateTests:
 
   Pyspecs                               38m19
     Total tests: 2122
-    The post was NOT equal to the resulting state: 960
-    Succeeded: 1162
-    Success rate of: 54.759661
+    The post was NOT equal to the resulting state: 434
+    Succeeded: 1688
+    Success rate of: 79.547597
 
   Shanghai                              0m42
     Total tests: 27
@@ -412,7 +412,7 @@ def directoryBlacklist : List System.FilePath :=
   , "EthereumTests/BlockchainTests/GeneralStateTests/stCallDelegateCodesCallCodeHomestead" -- 58 tests
   , "EthereumTests/BlockchainTests/GeneralStateTests/stCallDelegateCodesHomestead" -- 58 tests
   ]
-
+#check 0x03e8
 def fileBlacklist : List System.FilePath :=
   [ "EthereumTests/BlockchainTests/GeneralStateTests/stPreCompiledContracts2/modexp_0_0_0_25000.json" -- 4
   , "EthereumTests/BlockchainTests/GeneralStateTests/stPreCompiledContracts2/modexp_0_0_0_20500.json" -- 4
@@ -436,11 +436,11 @@ def main : IO Unit := do
       System.FilePath.walkDir
         (enter := λ path ↦ pure <| path ∉ directoryBlacklist)
         -- ("EthereumTests/BlockchainTests")
-        ("EthereumTests/BlockchainTests/GeneralStateTests/Pyspecs")
+        ("EthereumTests/BlockchainTests")
 
   -- let testFiles := #[SimpleFile]
   -- let testFiles := #[BuggyFile]
-  -- let testFiles := #[SpecificFile]
+  let testFiles := #[SpecificFile]
 
   let mut discardedFiles := #[]
 
@@ -455,8 +455,7 @@ def main : IO Unit := do
     let res ←
       ExceptT.run <|
         EvmYul.Conform.processTestsOfFile
-          -- (whitelist := #["src/GeneralStateTestsFiller/Pyspecs/cancun/eip4844_blobs/test_excess_blob_gas_fork_transition.py::test_invalid_pre_fork_block_with_blob_fields[fork_ShanghaiToCancunAtTime15k-blockchain_test-excess_blob_gas_present_False-blob_gas_used_present_True]"])
-          -- (whitelist := #["add_d3g0v0_Cancun"])
+          (whitelist := #["modexp_d29g1v0_Cancun"])
           -- (whitelist := #["add_d4g0v0_Cancun"])
           testFile
     match res with

@@ -142,7 +142,7 @@ def VerySlowTests : Array String :=
   , "modexp_d28g2v0_Cancun"
   , "modexp_d28g3v0_Cancun"
   , "modexp_d29g0v0_Cancun"
-  , "modexp_d29g1v0_Cancun"
+  -- , "modexp_d29g1v0_Cancun"
   , "modexp_d29g2v0_Cancun"
   , "modexp_d29g3v0_Cancun"
   , "modexp_d2g0v0_Cancun"
@@ -316,7 +316,7 @@ def executeTransaction (transaction : Transaction) (s : EVM.State) (header : Blo
             .error (.InvalidTransaction .TYPE_3_TX_ZERO_BLOBS)
     | _ => pure ()
 
-  let (ypState, substate, z) ← EVM.Υ (debugMode := false) _TODOfuel s.accountMap header.chainId header.baseFeePerGas header transaction transaction.base.expectedSender
+  let (ypState, substate, z) ← EVM.Υ (debugMode := true) _TODOfuel s.accountMap header.chainId header.baseFeePerGas header transaction transaction.base.expectedSender
 
   -- as EIP 4788 (https://eips.ethereum.org/EIPS/eip-4788).
 
@@ -357,7 +357,6 @@ def processBlocks (s₀ : EVM.State) : Except EVM.Exception EVM.State := do
     let BEACON_ROOTS_ADDRESS : AccountAddress := 0x000F3df6D732807Ef1319fB7B8bB8522d0Beac02
     let MAX_BLOB_GAS_PER_BLOCK := 786432
 
-    -- dbg_trace s!"blobGasUsed: {block.blockHeader.blobGasUsed}, excessBlobGas: {block.blockHeader.excessBlobGas}"
     match block.blockHeader.blobGasUsed, block.blockHeader.excessBlobGas with
       | some _, none | none, some _ =>
         if !block.exception.isEmpty then

@@ -226,7 +226,7 @@ def Ξ_EXPMOD
   let B := d.readBytes 96 l_B |>.data.data |> fromBytesBigEndian
   let E := d.readBytes (96 + l_B) l_E |>.data.data |> fromBytesBigEndian
   let M := d.readBytes (96 + l_B + l_E) l_M |>.data.data |> fromBytesBigEndian
-
+  dbg_trace s!""
   let l_E' :=
     let E_firstWord := d.readBytes (96 + l_B) 32 |>.data.data |> fromBytesBigEndian
     if l_E ≤ 32 && E == 0 then
