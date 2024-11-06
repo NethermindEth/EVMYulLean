@@ -201,6 +201,17 @@ private example :
   idOutput = longInput.toUTF8
 := by native_decide
 
+def nat_of_slice
+  (B: ByteArray)
+  (start: ℕ)
+  (width: ℕ) : ℕ
+:=
+  if (B.size ≤ start) then
+    dbg_trace s!"nat_of_slice: {B.size} ≤ {start}"
+    0
+  else
+    B.readBytes start width |>.data.data |> fromBytesBigEndian
+
 def expModAux (m : ℕ) (a : ℕ) (c : ℕ) : ℕ → ℕ
   | 0 => a % m
   | n@(k + 1) =>
@@ -219,26 +230,30 @@ def Ξ_EXPMOD
     :
   (AccountMap × UInt256 × Substate × ByteArray)
 :=
-  let d := I.inputData
-  let l_B := d.readBytes 0 32 |>.data.data |> fromBytesBigEndian
-  let l_E := d.readBytes 32 32 |>.data.data |> fromBytesBigEndian
-  let l_M := d.readBytes 64 32 |>.data.data |> fromBytesBigEndian
-  let B := d.readBytes 96 l_B |>.data.data |> fromBytesBigEndian
-  let E := d.readBytes (96 + l_B) l_E |>.data.data |> fromBytesBigEndian
-  let M := d.readBytes (96 + l_B + l_E) l_M |>.data.data |> fromBytesBigEndian
+  let data := I.inputData
+  let base_length := nat_of_slice data 0 32
+  let exp_length := nat_of_slice data 32 32
+  let modulus_length := nat_of_slice data 64 32
+  let base := nat_of_slice data 96 base_length
+  let exp := nat_of_slice data (96 + base_length) exp_length
+  let modulus := nat_of_slice data (96 + base_length + exp_length) modulus_length
 
-  let l_E' :=
-    let E_firstWord := d.readBytes (96 + l_B) 32 |>.data.data |> fromBytesBigEndian
-    if l_E ≤ 32 && E == 0 then
+  let exp_head := nat_of_slice data (96 + base_length) (min 32 exp_length)
+
+  let iterations :=
+    if exp_length ≤ 32 && exp_head == 0 then
       0
     else
-      if l_E ≤ 32 && E != 0 then
-        Nat.log 2 E
+      if exp_length ≤ 32 then
+        Nat.log 2 exp_head
       else
-        if 32 < l_E && E_firstWord != 0 then
-          8 * (l_E - 32) + (Nat.log 2 E_firstWord)
-        else
-          8 * (l_E - 32)
+        let length_part := 8 * (exp_length - 32)
+        let bits_part :=
+          if exp_head != 0 then
+            0
+          else
+            Nat.log 2 exp_head
+        length_part + bits_part
 
   let gᵣ :=
     let G_quaddivisor := 3
@@ -248,10 +263,21 @@ def Ξ_EXPMOD
       let ceil := if rem == 0 then divided else divided + 1
       ceil ^ 2
 
-    max 200 (f (max l_M l_B) * max l_E' 1 / G_quaddivisor)
+    max 200 (f (max base_length modulus_length) * (max iterations 1) / G_quaddivisor)
 
-  let o : ByteArray := BE (expMod M B E)
-  let o : ByteArray := ByteArray.zeroes ⟨l_M - o.size⟩ ++ o
+  let o : ByteArray :=
+    if base_length == 0 && modulus_length == 0 then
+      ByteArray.empty
+    else if modulus == 0 then
+      ByteArray.zeroes ⟨modulus_length⟩
+    else
+      let expmod_base := BE (expMod modulus base exp)
+      let expmod_zeroes :=
+        if modulus_length ≥ expmod_base.size then
+          ByteArray.zeroes ⟨modulus_length - expmod_base.size⟩
+        else
+          ByteArray.empty
+      expmod_zeroes ++ expmod_base
 
   (σ, g - gᵣ, A, o)
 
