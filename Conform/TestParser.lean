@@ -115,8 +115,8 @@ instance : FromJson BlockHeader where
         parentBeaconBlockRoot := ← json.getObjValAsD! ByteArray "parentBeaconBlockRoot"
         prevRandao    := ← json.getObjValAsD! UInt256 "mixHash"
         withdrawalsRoot := ← json.getObjValAsD! (Option ByteArray) "withdrawalsRoot"
-        blobGasUsed    := ← json.getObjValAsD! UInt256 "blobGasUsed"
-        excessBlobGas    := ← json.getObjValAsD! UInt256 "excessBlobGas"
+        blobGasUsed    := ← json.getObjValAsD! (Option UInt256) "blobGasUsed"
+        excessBlobGas    := ← json.getObjValAsD! (Option UInt256) "excessBlobGas"
       }
     catch exct => dbg_trace s!"OOOOPSIE: {exct}\n json: {json}"
                   default
@@ -181,9 +181,9 @@ instance : FromJson Transaction where
               ⟩
             match json.getObjVal? "maxFeePerBlobGas" with
             | .error _ =>
-              -- dbg_trace "Constructing a dynamic transaction."
               pure <| .dynamic dynamic
             | .ok maxFeePerBlobGas =>
+              -- dbg_trace "Constructing a blob transaction."
               pure <|
                 .blob
                   ⟨ dynamic

@@ -7,7 +7,7 @@ def SimpleFile := "EthereumTests/BlockchainTests/GeneralStateTests/VMTests/vmAri
 -- def BuggyFile := "EthereumTests/BlockchainTests/GeneralStateTests/VMTests/vmArithmeticTest/exp.json"
 def BuggyFile := "Conform/testfile.json"
 -- def BuggyFile := "EthereumTests/BlockchainTests/GeneralStateTests/VMTests/vmTests/calldatacopy.json"
-def SpecificFile := "EthereumTests/BlockchainTests/GeneralStateTests/stCreateTest/CREATE_ContractRETURNBigOffset.json"
+def SpecificFile := "EthereumTests/BlockchainTests/GeneralStateTests/Pyspecs/cancun/eip4844_blobs/invalid_pre_fork_block_with_blob_fields.json"
 
 def TestsSubdir := "BlockchainTests"
 def isTestFile (file : System.FilePath) : Bool := file.extension.option false (· == "json")
@@ -423,13 +423,20 @@ def fileBlacklist : List System.FilePath :=
   , "EthereumTests/BlockchainTests/GeneralStateTests/stRevertTest/RevertPrecompiledTouch_noncestorage.json" -- 4
   , "EthereumTests/BlockchainTests/GeneralStateTests/stRevertTest/RevertPrecompiledTouch_storage_Paris.json" -- 4
   ]
+#eval 19098.0 / (22265 + 425)
+#eval 475.0 / 60
+-- Total tests: 1071
+-- The post was NOT equal to the resulting state: 179
+-- Succeeded: 892
+-- Success rate of: 83.286648
 
 def main : IO Unit := do
   let testFiles ←
     Array.filter isTestFile <$>
       System.FilePath.walkDir
         (enter := λ path ↦ pure <| path ∉ directoryBlacklist)
-        ("EthereumTests/BlockchainTests/GeneralStateTests/VMTests")
+        -- ("EthereumTests/BlockchainTests")
+        ("EthereumTests/BlockchainTests/GeneralStateTests/Pyspecs")
 
   -- let testFiles := #[SimpleFile]
   -- let testFiles := #[BuggyFile]
@@ -448,7 +455,7 @@ def main : IO Unit := do
     let res ←
       ExceptT.run <|
         EvmYul.Conform.processTestsOfFile
-          -- (whitelist := #["add_d1g0v0_Cancun"])
+          -- (whitelist := #["src/GeneralStateTestsFiller/Pyspecs/cancun/eip4844_blobs/test_excess_blob_gas_fork_transition.py::test_invalid_pre_fork_block_with_blob_fields[fork_ShanghaiToCancunAtTime15k-blockchain_test-excess_blob_gas_present_False-blob_gas_used_present_True]"])
           -- (whitelist := #["add_d3g0v0_Cancun"])
           -- (whitelist := #["add_d4g0v0_Cancun"])
           testFile
