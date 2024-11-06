@@ -207,7 +207,6 @@ def nat_of_slice
   (width: ℕ) : ℕ
 :=
   if (B.size ≤ start) then
-    dbg_trace s!"nat_of_slice: {B.size} ≤ {start}"
     0
   else
     B.readBytes start width |>.data.data |> fromBytesBigEndian
@@ -240,30 +239,26 @@ def Ξ_EXPMOD
 
   let exp_head := nat_of_slice data (96 + base_length) (min 32 exp_length)
 
-  let iterations :=
-    if exp_length ≤ 32 && exp_head == 0 then
-      0
-    else
-      if exp_length ≤ 32 then
-        Nat.log 2 exp_head
-      else
-        let length_part := 8 * (exp_length - 32)
-        let bits_part :=
-          if exp_head != 0 then
-            0
-          else
-            Nat.log 2 exp_head
-        length_part + bits_part
-
   let gᵣ :=
+    let multiplication_complexity x y := ((max x y + 7) / 8) ^ 2
+    let adjusted_exp_length :=
+      if exp_length ≤ 32 && exp_head == 0 then
+        0
+      else
+        if exp_length ≤ 32 then
+          Nat.log 2 exp_head
+        else
+          let length_part := 8 * (exp_length - 32)
+          let bits_part :=
+            if exp_head != 0 then
+              0
+            else
+              Nat.log 2 exp_head
+          length_part + bits_part
+    let iterations := max adjusted_exp_length 1
     let G_quaddivisor := 3
-    let f x :=
-      let rem := x % 8
-      let divided := x / 8
-      let ceil := if rem == 0 then divided else divided + 1
-      ceil ^ 2
 
-    max 200 (f (max base_length modulus_length) * (max iterations 1) / G_quaddivisor)
+    max 200 (multiplication_complexity base_length modulus_length * iterations / G_quaddivisor)
 
   let o : ByteArray :=
     if base_length == 0 && modulus_length == 0 then
