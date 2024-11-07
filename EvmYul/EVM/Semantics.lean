@@ -10,6 +10,7 @@ import EvmYul.Maps.YPState
 import EvmYul.State.AccountOps
 import EvmYul.State.ExecutionEnv
 import EvmYul.State.Substate
+import EvmYul.State.TransactionOps
 
 import EvmYul.EVM.Exception
 import EvmYul.EVM.Gas
@@ -149,6 +150,7 @@ local instance : MonadLift Option (Except EVM.Exception) :=
 mutual
 
 def call (debugMode : Bool) (fuel : Nat)
+  (blobVersionedHashes : List ByteArray)
   (gas source recipient t value value' inOffset inSize outOffset outSize : UInt256)
   (permission : Bool)
   (state : SharedState)
@@ -175,6 +177,7 @@ def call (debugMode : Bool) (fuel : Nat)
           let resultOfΘ ←
             Θ (debugMode := debugMode)
               (fuel := f)
+              blobVersionedHashes
               (createdAccounts := state.createdAccounts)
               (σ  := σ)                             -- σ in  Θ(σ, ..)
               (A  := A')                            -- A* in Θ(.., A*, ..)
@@ -323,6 +326,7 @@ def step (debugMode : Bool) (fuel : ℕ) (instr : Option (Operation .EVM × Opti
 
             let Λ :=
               Lambda debugMode f
+                evmState.executionEnv.blobVersionedHashes
                 evmState.createdAccounts
                 σStar
                 evmState.toState.substate
@@ -390,6 +394,7 @@ def step (debugMode : Bool) (fuel : ℕ) (instr : Option (Operation .EVM × Opti
             let σStar := σ.insert Iₐ {σ_Iₐ with nonce := σ_Iₐ.nonce + 1}
             let Λ :=
               Lambda debugMode f
+                evmState.executionEnv.blobVersionedHashes
                 evmState.createdAccounts
                 σStar
                 evmState.toState.substate
@@ -442,7 +447,7 @@ def step (debugMode : Bool) (fuel : ℕ) (instr : Option (Operation .EVM × Opti
         if debugMode then
           dbg_trace s!"called with μ₀: {μ₀} μ₁: {μ₁} ({toHex μ₁.toByteArray |>.takeRight 5}) μ₂: {μ₂} μ₃: {μ₃} μ₄: {μ₄} μ₅: {μ₅} μ₆: {μ₆}"
         let (x, state') ←
-          call debugMode f μ₀ evmState.executionEnv.codeOwner μ₁ μ₁ μ₂ μ₂ μ₃ μ₄ μ₅ μ₆ evmState.executionEnv.perm evmState.toSharedState
+          call debugMode f evmState.executionEnv.blobVersionedHashes μ₀ evmState.executionEnv.codeOwner μ₁ μ₁ μ₂ μ₂ μ₃ μ₄ μ₅ μ₆ evmState.executionEnv.perm evmState.toSharedState
         let μ'ₛ := stack.push x -- μ′s[0] ≡ x
         let evmState' :=
           { evmState with toSharedState := state'}.replaceStackAndIncrPC μ'ₛ
@@ -461,7 +466,7 @@ def step (debugMode : Bool) (fuel : ℕ) (instr : Option (Operation .EVM × Opti
         if debugMode then
           dbg_trace s!"called with μ₀: {μ₀} μ₁: {μ₁} ({toHex μ₁.toByteArray |>.takeRight 5}) μ₂: {μ₂} μ₃: {μ₃} μ₄: {μ₄} μ₅: {μ₅} μ₆: {μ₆}"
         let (x, state') ←
-          call debugMode f μ₀ evmState.executionEnv.codeOwner evmState.executionEnv.codeOwner μ₁ μ₂ μ₂ μ₃ μ₄ μ₅ μ₆ evmState.executionEnv.perm evmState.toSharedState
+          call debugMode f evmState.executionEnv.blobVersionedHashes μ₀ evmState.executionEnv.codeOwner evmState.executionEnv.codeOwner μ₁ μ₂ μ₂ μ₃ μ₄ μ₅ μ₆ evmState.executionEnv.perm evmState.toSharedState
         let μ'ₛ := stack.push x -- μ′s[0] ≡ x
         let evmState' :=
           { evmState with toSharedState := state'}.replaceStackAndIncrPC μ'ₛ
@@ -480,7 +485,7 @@ def step (debugMode : Bool) (fuel : ℕ) (instr : Option (Operation .EVM × Opti
         if debugMode then
           dbg_trace s!"called with μ₀: {μ₀} μ₁: {μ₁} ({toHex μ₁.toByteArray |>.takeRight 5}) μ₂: {μ₃} μ₃: {μ₄} μ₄: {μ₅} μ₅: {μ₆}"
         let (x, state') ←
-          call debugMode f μ₀ evmState.executionEnv.source evmState.executionEnv.codeOwner μ₁ 0 evmState.executionEnv.weiValue μ₃ μ₄ μ₅ μ₆ evmState.executionEnv.perm evmState.toSharedState
+          call debugMode f evmState.executionEnv.blobVersionedHashes μ₀ evmState.executionEnv.source evmState.executionEnv.codeOwner μ₁ 0 evmState.executionEnv.weiValue μ₃ μ₄ μ₅ μ₆ evmState.executionEnv.perm evmState.toSharedState
         let μ'ₛ := stack.push x -- μ′s[0] ≡ x
         let evmState' :=
           { evmState with toSharedState := state'}.replaceStackAndIncrPC μ'ₛ
@@ -499,7 +504,7 @@ def step (debugMode : Bool) (fuel : ℕ) (instr : Option (Operation .EVM × Opti
         if debugMode then
           dbg_trace s!"called with μ₀: {μ₀} μ₁: {μ₁} ({toHex μ₁.toByteArray |>.takeRight 5}) μ₂: {μ₃} μ₃: {μ₄} μ₄: {μ₅} μ₅: {μ₆}"
         let (x, state') ←
-          call debugMode f μ₀ evmState.executionEnv.codeOwner μ₁ μ₁ 0 0 μ₃ μ₄ μ₅ μ₆ false evmState.toSharedState
+          call debugMode f evmState.executionEnv.blobVersionedHashes μ₀ evmState.executionEnv.codeOwner μ₁ μ₁ 0 0 μ₃ μ₄ μ₅ μ₆ false evmState.toSharedState
         let μ'ₛ := stack.push x -- μ′s[0] ≡ x
         let evmState' :=
           { evmState with toSharedState := state'}.replaceStackAndIncrPC μ'ₛ
@@ -651,20 +656,21 @@ def Ξ -- Type `Ξ` using `\GX` or `\Xi`
             gasAvailable := g
         }
       let (evmState', o) ← X debugMode f freshEvmState
-      if debugMode then
-        dbg_trace s!"Ξ executed {evmState'.execLength} primops"
+      -- if debugMode then
+      -- dbg_trace s!"Ξ executed {evmState'.execLength} primops"
       let finalGas := evmState'.gasAvailable -- TODO(check): Do we need to compute `C` here one more time?
       return (evmState'.createdAccounts, evmState'.accountMap, finalGas, evmState'.substate, o)
 
 def Lambda
   (debugMode : Bool)
   (fuel : ℕ)
+  (blobVersionedHashes : List ByteArray)
   (createdAccounts : Batteries.RBSet AccountAddress compare) -- needed for EIP-6780
   (σ : YPState)
   (A : Substate)
   (s : AccountAddress)   -- sender
   (o : AccountAddress)   -- original transactor
-  (g  : UInt256)  -- available gas
+  (g : UInt256)  -- available gas
   (p : UInt256)   -- gas price
   (v : UInt256)   -- endowment
   (i : ByteArray) -- the initialisation EVM code
@@ -746,6 +752,7 @@ def Lambda
     , header    := H
     , depth     := e + 1
     , perm      := w
+    , blobVersionedHashes := blobVersionedHashes
     }
   match Ξ debugMode f createdAccounts σStar g AStar exEnv with -- TODO - Gas model.
     | .error e =>
@@ -842,6 +849,7 @@ NB - This is implemented using the 'boolean' fragment with ==, <=, ||, etc.
 -/
 def Θ (debugMode : Bool)
       (fuel : Nat)
+      (blobVersionedHashes : List ByteArray)
       (createdAccounts : Batteries.RBSet AccountAddress compare)
       (σ  : YPState)
       (A  : Substate)
@@ -903,6 +911,7 @@ def Θ (debugMode : Bool)
           | ToExecute.Precompiled _ => default
           | ToExecute.Code code => code
       header    := H
+      blobVersionedHashes := blobVersionedHashes
     }
 
   let
@@ -999,7 +1008,9 @@ def checkTransactionGetSender (σ : YPState) (chainId H_f : ℕ) (T : Transactio
   let v₀ :=
     match T with
       | .legacy t | .access t => t.gasLimit * t.gasPrice + t.value
-      | .dynamic t | .blob t => t.gasLimit * t.maxFeePerGas + t.value
+      | .dynamic t => t.gasLimit * t.maxFeePerGas + t.value
+      | .blob t    => t.gasLimit * t.maxFeePerGas + t.value + (getTotalBlobGas T).getD 0 * t.maxFeePerBlobGas
+  -- dbg_trace s!"v₀: {v₀}, senderBalance: {senderBalance}"
   if v₀ > senderBalance then .error <| .InvalidTransaction .UpFrontPayment
 
   if H_f >
@@ -1139,7 +1150,13 @@ def Υ (debugMode : Bool) (fuel : ℕ) (σ : YPState) (chainId H_f : ℕ) (H : B
       | .dynamic _ | .blob _ => f + H_f
   let senderAccount :=
     { senderAccount with
-        balance := senderAccount.balance - T.base.gasLimit * p -- (74)
+        /-
+          https://eips.ethereum.org/EIPS/eip-4844
+          "The actual blob_fee as calculated via calc_blob_fee is deducted from
+          the sender balance before transaction execution and burned, and is not
+          refunded in case of transaction failure."
+        -/
+        balance := senderAccount.balance - T.base.gasLimit * p - calcBlobFee H T  -- (74)
         nonce := senderAccount.nonce + 1 -- (75)
         ostorage := senderAccount.storage -- Needed for `Csstore`.
     }
@@ -1165,14 +1182,14 @@ def Υ (debugMode : Bool) (fuel : ℕ) (σ : YPState) (chainId H_f : ℕ) (H : B
     match T.base.recipient with
       | none => do
         let (_, _, σ_P, g', A, z, _) :=
-          match Lambda debugMode fuel createdAccounts σ₀ AStar S_T S_T g p T.base.value T.base.data 0 none H true with
+          match Lambda debugMode fuel T.blobVersionedHashes createdAccounts σ₀ AStar S_T S_T g p T.base.value T.base.data 0 none H true with
             | .none => dbg_trace "Lambda returned none; this should probably not be happening; test semantics will be off."; default
             | .some x => x
         pure (σ_P, g', A, z)
       | some t =>
         -- Proposition (71) suggests the recipient can be inexistent
         let (_, σ_P, g',  A, z, _) ←
-          Θ debugMode fuel createdAccounts σ₀ AStar S_T S_T t (toExecute σ₀ t) g p T.base.value T.base.value T.base.data 0 H true
+          Θ debugMode fuel T.blobVersionedHashes createdAccounts σ₀ AStar S_T S_T t (toExecute σ₀ t) g p T.base.value T.base.value T.base.data 0 H true
               --  dbg_trace "Θ gave back σ_P: {repr σ_P}"
         pure (σ_P, g', A, z)
   -- The amount to be refunded (82)

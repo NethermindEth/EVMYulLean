@@ -13,6 +13,8 @@ inductive InvalidTransactionException where
   | BaseFeeTooHigh : InvalidTransactionException
   | InconsistentFees : InvalidTransactionException
   | InitCodeDataGreaterThan49152 : InvalidTransactionException
+  | TYPE_3_TX_ZERO_BLOBS : InvalidTransactionException
+  | TYPE_3_TX_PRE_FORK : InvalidTransactionException
 
 instance : Repr InvalidTransactionException where
   reprPrec s _ :=
@@ -25,6 +27,8 @@ instance : Repr InvalidTransactionException where
       | .BaseFeeTooHigh       => "BaseFeeTooHigh"
       | .InconsistentFees     => "InconsistentFees"
       | .InitCodeDataGreaterThan49152  => "InitCodeDataGreaterThan49152"
+      | .TYPE_3_TX_ZERO_BLOBS => "TYPE_3_TX_ZERO_BLOBS"
+      | .TYPE_3_TX_PRE_FORK => "TYPE_3_TX_PRE_FORK"
 
 -- TODO - fix / cleanup.
 inductive Exception where
@@ -47,6 +51,9 @@ inductive Exception where
   | BogusExceptionToBeReplaced (s : String) : Exception
   | ExpectedException (s : String)          : Exception
   | SenderRecoverError             : String → Exception
+  | BlockException_INCORRECT_EXCESS_BLOB_GAS : Exception
+  | BlockException_INCORRECT_BLOB_GAS_USED : Exception
+  | BlockException_INCORRECT_BLOCK_FORMAT
 
 instance : Repr Exception where
   reprPrec s _ := match s with
@@ -69,6 +76,9 @@ instance : Repr Exception where
                     | .BogusExceptionToBeReplaced s      => s!"BogusExceptionToBeReplaced: {s}"
                     | .ExpectedException s               => s!"Expected exception: {s}"
                     | .SenderRecoverError s              => "SenderRecoverError: " ++ s
+                    | .BlockException_INCORRECT_EXCESS_BLOB_GAS => "BlockException_INCORRECT_EXCESS_BLOB_GAS"
+                    | .BlockException_INCORRECT_BLOB_GAS_USED => "BlockException_INCORRECT_BLOB_GAS_USED"
+                    | .BlockException_INCORRECT_BLOCK_FORMAT => "BlockException_INCORRECT_BLOCK_FORMAT"
 
 end EVM
 

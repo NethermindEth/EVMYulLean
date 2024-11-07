@@ -66,6 +66,11 @@ private def dispatchExecutionEnvOp (debugMode : Bool) (τ : OperationType) (op :
     | .EVM => EVM.executionEnvOp debugMode op
     | .Yul => Yul.executionEnvOp op
 
+private def dispatchUnaryExecutionEnvOp (debugMode : Bool) (τ : OperationType) (op : ExecutionEnv → UInt256 → UInt256) : Transformer τ :=
+  match τ with
+    | .EVM => EVM.unaryExecutionEnvOp debugMode op
+    | .Yul => Yul.unaryExecutionEnvOp op
+
 private def dispatchMachineStateOp (τ : OperationType) (op : MachineState → UInt256) : Transformer τ :=
   match τ with
     | .EVM => EVM.machineStateOp op
@@ -295,7 +300,8 @@ def step {τ : OperationType} (debugMode : Bool) (op : Operation τ) : Transform
     | τ, .CHAINID => dispatchStateOp τ EvmYul.State.chainId
     | τ, .SELFBALANCE => dispatchStateOp τ EvmYul.State.selfbalance
     | τ, .BASEFEE => dispatchExecutionEnvOp debugMode τ EvmYul.basefee
-    | τ, .BLOBBASEFEE => dispatchExecutionEnvOp debugMode τ EvmYul.getBlobGasprice
+    | τ, .BLOBHASH => dispatchUnaryExecutionEnvOp debugMode τ blobhash
+    | τ, .BLOBBASEFEE => dispatchExecutionEnvOp debugMode τ EvmYul.ExecutionEnv.getBlobGasprice
 
     | .EVM, .POP =>
       λ evmState ↦

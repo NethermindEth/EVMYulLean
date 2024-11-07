@@ -59,6 +59,17 @@ def executionEnvOp (debugMode : Bool) (op : ExecutionEnv → UInt256) : Transfor
     .ok <|
       evmState.replaceStackAndIncrPC (evmState.stack.push result)
 
+def unaryExecutionEnvOp (debugMode : Bool) (op : ExecutionEnv → UInt256 → UInt256) : Transformer :=
+  λ evmState ↦
+    match evmState.stack.pop with
+    | some ⟨ s , μ₀⟩ => Id.run do
+      let result := op evmState.executionEnv μ₀
+      if debugMode then
+        dbg_trace s!"result: {result}"
+      .ok <|
+        evmState.replaceStackAndIncrPC (s.push result)
+    | _ => .error EVM.Exception.InvalidStackSizeException
+
 def machineStateOp (op : MachineState → UInt256) : Transformer :=
   λ evmState ↦
     .ok <|

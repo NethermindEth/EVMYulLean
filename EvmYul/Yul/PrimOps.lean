@@ -36,6 +36,12 @@ def execQuadOp (f : Primop.Quaternary) : Transformer
 def executionEnvOp (op : ExecutionEnv → UInt256) : Transformer :=
   λ yulState _ ↦ .ok (yulState, .some <| op yulState.executionEnv)
 
+def unaryExecutionEnvOp (op : ExecutionEnv → UInt256 → UInt256) : Transformer :=
+  λ yulState lits ↦
+    match lits with
+    | [a] => .ok (yulState, .some <| op yulState.executionEnv a)
+    | _ => .error .InvalidArguments
+
 def machineStateOp (op : MachineState → UInt256) : Transformer :=
   λ yulState _ ↦ .ok (yulState, .some <| op yulState.toMachineState)
 

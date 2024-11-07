@@ -49,6 +49,7 @@ def Gkeccak256 : ℕ         := 30
 def Gkeccak256word : ℕ     := 6
 def Gcopy : ℕ              := 3
 def Gblockhash : ℕ         := 20
+def HASH_OPCODE_GAS : ℕ    := 3
 
 end FeeSchedule
 
@@ -257,6 +258,7 @@ private def C' (s : State) (instr : Operation .EVM) : Except EVM.Exception UInt2
     | .CALLCODE => return Ccall (AccountAddress.ofUInt256 μₛ[1]!) μₛ[2]! μₛ[0]! σ μ A
     | .DELEGATECALL => return Ccall (AccountAddress.ofUInt256 μₛ[1]!) 0 μₛ[0]! σ μ A
     | .STATICCALL => return Ccall (AccountAddress.ofUInt256 μₛ[1]!) 0 μₛ[0]! σ μ A
+    | .BLOBHASH => return HASH_OPCODE_GAS
     | w => pure <|
       if w ∈ Wcopy then Gverylow + Gcopy * (μₛ[2]! / 32 : ℚ).ceil else
       if w ∈ Wextaccount then Caccess (AccountAddress.ofUInt256 μₛ[0]!) A else
