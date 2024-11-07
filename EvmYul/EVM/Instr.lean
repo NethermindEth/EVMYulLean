@@ -229,7 +229,7 @@ def δ : Operation .EVM → Option ℕ
   | .CODESIZE       => some 0
   | .CODECOPY       => some 3
   | .GASPRICE       => some 0
-  | .EXTCODESIZE    => some 4
+  | .EXTCODESIZE    => some 1
   | .EXTCODECOPY    => some 4
   | .RETURNDATASIZE => some 0
   | .RETURNDATACOPY => some 3
