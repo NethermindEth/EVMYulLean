@@ -26,7 +26,7 @@ def Ξ_ECREC
 :=
   let gᵣ : UInt256 := 3000
 
-  if g < gᵣ then
+  if g.val < gᵣ then
     (∅, 0, A, .empty)
   else
     let d := I.inputData
@@ -91,12 +91,10 @@ def Ξ_SHA256
 :=
   let gᵣ : UInt256 :=
     let l := I.inputData.size
-    let rem := l % 32
-    let divided := l / 32
-    let ceil := if rem == 0 then divided else divided + 1
+    let ceil := ( l + 31 ) / 32
     60 + 12 * ceil
 
-  if g < gᵣ then
+  if g.val < gᵣ then
     (∅, 0, A, .empty)
   else
     let o :=
@@ -133,12 +131,10 @@ def Ξ_RIP160
 :=
   let gᵣ : UInt256 :=
     let l := I.inputData.size
-    let rem := l % 32
-    let divided := l / 32
-    let ceil := if rem == 0 then divided else divided + 1
+    let ceil := ( l + 31 ) / 32
     60 + 12 * ceil
 
-  if g < gᵣ then
+  if g.val < gᵣ then
     (∅, 0, A, .empty)
   else
     let o :=
@@ -175,12 +171,10 @@ def Ξ_ID
 :=
   let gᵣ : UInt256 :=
     let l := I.inputData.size
-    let rem := l % 32
-    let divided := l / 32
-    let ceil := if rem == 0 then divided else divided + 1
+    let ceil := ( l + 31 ) / 32
     15 + 3 * ceil
 
-  if g < gᵣ then
+  if g.val < gᵣ then
     (∅, 0, A, .empty)
   else
     let o := I.inputData
@@ -209,6 +203,14 @@ def nat_of_slice
   if (B.size ≤ start) then
     0
   else
+  if (B.size < start + width) then
+    let aux_slice := B.readBytes start (B.size - start) |>.data.data |> fromBytesBigEndian
+    if aux_slice = 0 then
+      0
+    else
+      let byte_shift := 2 ^ ( 8 * ( start + width - B.size ) )
+      aux_slice * byte_shift
+  else
     B.readBytes start width |>.data.data |> fromBytesBigEndian
 
 def expModAux (m : ℕ) (a : ℕ) (c : ℕ) : ℕ → ℕ
@@ -233,9 +235,6 @@ def Ξ_EXPMOD
   let base_length := nat_of_slice data 0 32
   let exp_length := nat_of_slice data 32 32
   let modulus_length := nat_of_slice data 64 32
-  let base := nat_of_slice data 96 base_length
-  let exp := nat_of_slice data (96 + base_length) exp_length
-  let modulus := nat_of_slice data (96 + base_length + exp_length) modulus_length
 
   let exp_head := nat_of_slice data (96 + base_length) (min 32 exp_length)
 
@@ -260,21 +259,26 @@ def Ξ_EXPMOD
 
     max 200 (multiplication_complexity base_length modulus_length * iterations / G_quaddivisor)
 
-  let o : ByteArray :=
-    if base_length == 0 && modulus_length == 0 then
-      ByteArray.empty
-    else if modulus == 0 then
-      ByteArray.zeroes ⟨modulus_length⟩
-    else
-      let expmod_base := BE (expMod modulus base exp)
-      let expmod_zeroes :=
-        if modulus_length ≥ expmod_base.size then
-          ByteArray.zeroes ⟨modulus_length - expmod_base.size⟩
-        else
-          ByteArray.empty
-      expmod_zeroes ++ expmod_base
+  if g.val < gᵣ then
+    (∅, 0, A, .empty)
+  else
+    let base := nat_of_slice data 96 base_length
+    let exp := nat_of_slice data (96 + base_length) exp_length
+    let modulus := nat_of_slice data (96 + base_length + exp_length) modulus_length
 
-  (σ, g - gᵣ, A, o)
+    let o : ByteArray :=
+      if modulus_length == 0 || modulus == 0 then
+        ByteArray.zeroes ⟨modulus_length⟩
+      else
+        let expmod_base := BE (expMod modulus base exp)
+        let expmod_zeroes :=
+          if modulus_length ≥ expmod_base.size then
+            ByteArray.zeroes ⟨modulus_length - expmod_base.size⟩
+          else
+            ByteArray.empty
+        expmod_zeroes ++ expmod_base
+
+    (σ, g - gᵣ, A, o)
 
 private def expmodOutput :=
   let (_, _, _, o) :=
@@ -309,15 +313,19 @@ def Ξ_BN_ADD
   (AccountMap × UInt256 × Substate × ByteArray)
 :=
   let gᵣ : UInt256 := 150
-  let d := I.inputData
-  let x := (d.readBytes 0 32, d.readBytes 32 32)
-  let y := (d.readBytes 64 32, d.readBytes 96 32)
-  let o := BN_ADD x.1 x.2 y.1 y.2
-  match o with
-    | .ok o => (σ, g - gᵣ, A, o)
-    | .error e =>
-      dbg_trace s!"Ξ_BN_ADD failed: {e}"
-      (σ, g - gᵣ, A, .empty)
+
+  if g.val < gᵣ then
+    (∅, 0, A, .empty)
+  else
+    let d := I.inputData
+    let x := (d.readBytes 0 32, d.readBytes 32 32)
+    let y := (d.readBytes 64 32, d.readBytes 96 32)
+    let o := BN_ADD x.1 x.2 y.1 y.2
+    match o with
+      | .ok o => (σ, g - gᵣ, A, o)
+      | .error e =>
+        dbg_trace s!"Ξ_BN_ADD failed: {e}"
+        (σ, g - gᵣ, A, .empty)
 
 private def bn_addOutput₀ :=
   let (_, _, _, o) :=
@@ -358,21 +366,25 @@ def Ξ_BN_MUL
   (AccountMap × UInt256 × Substate × ByteArray)
 :=
   let gᵣ : UInt256 := 6000
-  let d := I.inputData
-  let x := (d.readBytes 0 32, d.readBytes 32 32)
-  let n := d.readBytes 64 32
-  let o := BN_MUL x.1 x.2 n
-  match o with
-    | .ok o => (σ, g - gᵣ, A, o)
-    | .error e =>
-      dbg_trace s!"Ξ_BN_MUL failed: {e}"
-      (σ, g - gᵣ, A, .empty)
+
+  if g.val < gᵣ then
+    (∅, 0, A, .empty)
+  else
+    let d := I.inputData
+    let x := (d.readBytes 0 32, d.readBytes 32 32)
+    let n := d.readBytes 64 32
+    let o := BN_MUL x.1 x.2 n
+    match o with
+      | .ok o => (σ, g - gᵣ, A, o)
+      | .error e =>
+        dbg_trace s!"Ξ_BN_MUL failed: {e}"
+        (σ, g - gᵣ, A, .empty)
 
 private def bn_mulOutput :=
   let (_, _, _, o) :=
     Ξ_BN_MUL
       default
-      3000
+      100000
       default
       { (default : ExecutionEnv) with
         inputData := x₁ ++ y₁ ++ n
@@ -398,18 +410,21 @@ def Ξ_SNARKV
   let k := d.size / 192
   let gᵣ : UInt256 := 34000 * k + 45000
 
-  let o := SNARKV d
-  match o with
-    | .ok o => (σ, g - gᵣ, A, o)
-    | .error e =>
-      dbg_trace s!"Ξ_SNARKV failed: {e}"
-      (∅, 0, A, .empty)
+  if g.val < gᵣ then
+    (∅, 0, A, .empty)
+  else
+    let o := SNARKV d
+    match o with
+      | .ok o => (σ, g - gᵣ, A, o)
+      | .error e =>
+        dbg_trace s!"Ξ_SNARKV failed: {e}"
+        (∅, 0, A, .empty)
 
 private def snarkvOutput :=
   let (_, _, _, o) :=
     Ξ_SNARKV
       default
-      3000
+      100000
       default
       { (default : ExecutionEnv) with
         inputData := x ++ y ++ ByteArray.zeroes ⟨32 * 4⟩
@@ -435,12 +450,15 @@ def Ξ_BLAKE2_F
   let k := d.size / 192
   let gᵣ : UInt256 := 34000 * k + 45000
 
-  let o := BLAKE2_F d
-  match o with
-    | .ok o => (σ, g - gᵣ, A, o)
-    | .error e =>
-      dbg_trace s!"Ξ_BLAKE2_F failed: {e}"
-      (∅, 0, A, .empty)
+  if g.val < gᵣ then
+    (∅, 0, A, .empty)
+  else
+    let o := BLAKE2_F d
+    match o with
+      | .ok o => (σ, g - gᵣ, A, o)
+      | .error e =>
+        dbg_trace s!"Ξ_BLAKE2_F failed: {e}"
+        (∅, 0, A, .empty)
 
 def blake2_fInput :=
   ByteArray.ofBlob "0000000048c9bdf267e6096a3ba7ca8485ae67bb2bf894fe72f36e3cf1361d5f3af54fa5d182e6ad7f520e511f6c3e2b8c68059b6bbd41fbabd9831f79217e1319cde05b61626300000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000300000000000000000000000000000001"
@@ -450,7 +468,7 @@ private def blake2_fOutput :=
   let (_, _, _, o) :=
     Ξ_BLAKE2_F
       default
-      3000
+      100000
       default
       { (default : ExecutionEnv) with
         inputData := blake2_fInput
@@ -476,9 +494,12 @@ def Ξ_PointEval
   let d := I.inputData
   let gᵣ : UInt256 := 50000
 
-  let o := PointEval d
-  match o with
-    | .ok o => (σ, g - gᵣ, A, o)
-    | .error e =>
-      dbg_trace s!"Ξ_PointEval failed: {e}"
-      (∅, 0, A, .empty)
+  if g.val < gᵣ then
+    (∅, 0, A, .empty)
+  else
+    let o := PointEval d
+    match o with
+      | .ok o => (σ, g - gᵣ, A, o)
+      | .error e =>
+        dbg_trace s!"Ξ_PointEval failed: {e}"
+        (∅, 0, A, .empty)
