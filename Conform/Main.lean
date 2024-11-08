@@ -38,23 +38,23 @@ def log (testFile : System.FilePath) (testName : String) (result : TestResult) :
 
 /-
 GeneralStateTests:
-  Cancun                                3m37
-    Total tests: 187
-    The post was NOT equal to the resulting state: 12
-    Succeeded: 175
-    Success rate of: 93.582888
+  Cancun
+    Total tests: 173
+    The post was NOT equal to the resulting state: 5
+    Succeeded: 168
+    Success rate of: 97.109827
 
-  Pyspecs                               38m19
-    Total tests: 2122
-    The post was NOT equal to the resulting state: 960
-    Succeeded: 1162
-    Success rate of: 54.759661
+  Pyspecs                               24m14
+    Total tests: 1549
+    The post was NOT equal to the resulting state: 255
+    Succeeded: 1294
+    Success rate of: 83.537766
 
   Shanghai                              0m42
     Total tests: 27
-    The post was NOT equal to the resulting state: 6
-    Succeeded: 21
-    Success rate of: 77.777778
+    The post was NOT equal to the resulting state: 5
+    Succeeded: 22
+    Success rate of: 81.481481
 
   stArgsZeroOneBalance                  1m47
     Total tests: 96
@@ -135,10 +135,10 @@ GeneralStateTests:
     Success rate of: 89.111111
 
   stEIP150Specific                      0m38
-    Total tests: 450
-    The post was NOT equal to the resulting state: 49
-    Succeeded: 401
-    Success rate of: 89.111111
+    Total tests: 23
+    The post was NOT equal to the resulting state: 6
+    Succeeded: 17
+    Success rate of: 73.913043
 
   stEIP1559                             26m52
     Total tests: 1845
@@ -395,10 +395,11 @@ InvalidBlocks                           2m56
 -/
 /-
 TransitionTests                         1m3
-  Total tests: 17
-  The post was NOT equal to the resulting state: 11
-  Succeeded: 6
-  Success rate of: 35.294118
+  Total tests: 0
+  The post was NOT equal to the resulting state: 0
+  Succeeded: 0
+  Success rate of: NaN
+^^^ No Cancun tests here
 -/
 /-
 ValidBlocks                             15m40

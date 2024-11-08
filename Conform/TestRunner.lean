@@ -180,34 +180,34 @@ def VerySlowTests : Array String :=
   , "precompsEIP2929Cancun_d292g0v0_Cancun"
   , "precompsEIP2929Cancun_d310g0v0_Cancun"
   , "randomStatetest650_d0g0v0_Cancun"
-  , "src/GeneralStateTestsFiller/Pyspecs/byzantium/eip198_modexp_precompile/test_modexp.py::test_modexp[fork_Berlin-blockchain_test-EIP-198-case3-raw-input-out-of-gas]"
-  , "src/GeneralStateTestsFiller/Pyspecs/byzantium/eip198_modexp_precompile/test_modexp.py::test_modexp[fork_Berlin-blockchain_test-ModExpInput_base_-exponent_-modulus_-ExpectedOutput_call_return_code_0x01-returned_data_0x]"
-  , "src/GeneralStateTestsFiller/Pyspecs/byzantium/eip198_modexp_precompile/test_modexp.py::test_modexp[fork_Byzantium-blockchain_test-EIP-198-case3-raw-input-out-of-gas]"
+  -- , "src/GeneralStateTestsFiller/Pyspecs/byzantium/eip198_modexp_precompile/test_modexp.py::test_modexp[fork_Berlin-blockchain_test-EIP-198-case3-raw-input-out-of-gas]"
+  -- , "src/GeneralStateTestsFiller/Pyspecs/byzantium/eip198_modexp_precompile/test_modexp.py::test_modexp[fork_Berlin-blockchain_test-ModExpInput_base_-exponent_-modulus_-ExpectedOutput_call_return_code_0x01-returned_data_0x]"
+  -- , "src/GeneralStateTestsFiller/Pyspecs/byzantium/eip198_modexp_precompile/test_modexp.py::test_modexp[fork_Byzantium-blockchain_test-EIP-198-case3-raw-input-out-of-gas]"
   , "src/GeneralStateTestsFiller/Pyspecs/byzantium/eip198_modexp_precompile/test_modexp.py::test_modexp[fork_Cancun-blockchain_test-EIP-198-case3-raw-input-out-of-gas]"
-  , "src/GeneralStateTestsFiller/Pyspecs/byzantium/eip198_modexp_precompile/test_modexp.py::test_modexp[fork_Constantinople-blockchain_test-EIP-198-case3-raw-input-out-of-gas]"
+  -- , "src/GeneralStateTestsFiller/Pyspecs/byzantium/eip198_modexp_precompile/test_modexp.py::test_modexp[fork_Constantinople-blockchain_test-EIP-198-case3-raw-input-out-of-gas]"
   , "src/GeneralStateTestsFiller/Pyspecs/byzantium/eip198_modexp_precompile/test_modexp.py::test_modexp[fork_Cancun-blockchain_test-ModExpInput_base_-exponent_-modulus_-ExpectedOutput_call_return_code_0x01-returned_data_0x]"
-  , "src/GeneralStateTestsFiller/Pyspecs/byzantium/eip198_modexp_precompile/test_modexp.py::test_modexp[fork_Byzantium-blockchain_test-ModExpInput_base_-exponent_-modulus_-ExpectedOutput_call_return_code_0x01-returned_data_0x]"
-  , "src/GeneralStateTestsFiller/Pyspecs/byzantium/eip198_modexp_precompile/test_modexp.py::test_modexp[fork_Constantinople-blockchain_test-ModExpInput_base_-exponent_-modulus_00-ExpectedOutput_call_return_code_0x01-returned_data_0x00]"
-  , "src/GeneralStateTestsFiller/Pyspecs/byzantium/eip198_modexp_precompile/test_modexp.py::test_modexp[fork_Constantinople-blockchain_test-ModExpInput_base_-exponent_-modulus_-ExpectedOutput_call_return_code_0x01-returned_data_0x]"
-  , "src/GeneralStateTestsFiller/Pyspecs/byzantium/eip198_modexp_precompile/test_modexp.py::test_modexp[fork_ConstantinopleFix-blockchain_test-EIP-198-case3-raw-input-out-of-gas]"
-  , "src/GeneralStateTestsFiller/Pyspecs/byzantium/eip198_modexp_precompile/test_modexp.py::test_modexp[fork_Istanbul-blockchain_test-EIP-198-case3-raw-input-out-of-gas]"
-  , "src/GeneralStateTestsFiller/Pyspecs/byzantium/eip198_modexp_precompile/test_modexp.py::test_modexp[fork_ConstantinopleFix-blockchain_test-ModExpInput_base_-exponent_-modulus_-ExpectedOutput_call_return_code_0x01-returned_data_0x]"
-  , "src/GeneralStateTestsFiller/Pyspecs/byzantium/eip198_modexp_precompile/test_modexp.py::test_modexp[fork_London-blockchain_test-EIP-198-case3-raw-input-out-of-gas]"
-  , "src/GeneralStateTestsFiller/Pyspecs/byzantium/eip198_modexp_precompile/test_modexp.py::test_modexp[fork_Paris-blockchain_test-EIP-198-case3-raw-input-out-of-gas]"
-  , "src/GeneralStateTestsFiller/Pyspecs/byzantium/eip198_modexp_precompile/test_modexp.py::test_modexp[fork_Shanghai-blockchain_test-EIP-198-case3-raw-input-out-of-gas]"
-  , "src/GeneralStateTestsFiller/Pyspecs/byzantium/eip198_modexp_precompile/test_modexp.py::test_modexp[fork_Istanbul-blockchain_test-ModExpInput_base_-exponent_-modulus_0001-ExpectedOutput_call_return_code_0x01-returned_data_0x0000]"
-  , "src/GeneralStateTestsFiller/Pyspecs/byzantium/eip198_modexp_precompile/test_modexp.py::test_modexp[fork_Istanbul-blockchain_test-ModExpInput_base_-exponent_-modulus_-ExpectedOutput_call_return_code_0x01-returned_data_0x]"
-  , "src/GeneralStateTestsFiller/Pyspecs/byzantium/eip198_modexp_precompile/test_modexp.py::test_modexp[fork_London-blockchain_test-ModExpInput_base_-exponent_-modulus_-ExpectedOutput_call_return_code_0x01-returned_data_0x]"
-  , "src/GeneralStateTestsFiller/Pyspecs/byzantium/eip198_modexp_precompile/test_modexp.py::test_modexp[fork_Shanghai-blockchain_test-ModExpInput_base_-exponent_-modulus_0001-ExpectedOutput_call_return_code_0x01-returned_data_0x0000]"
-  , "src/GeneralStateTestsFiller/Pyspecs/byzantium/eip198_modexp_precompile/test_modexp.py::test_modexp[fork_Paris-blockchain_test-ModExpInput_base_-exponent_-modulus_-ExpectedOutput_call_return_code_0x01-returned_data_0x]"
-  , "src/GeneralStateTestsFiller/Pyspecs/byzantium/eip198_modexp_precompile/test_modexp.py::test_modexp[fork_Shanghai-blockchain_test-ModExpInput_base_02-exponent_02-modulus_05-ExpectedOutput_call_return_code_0x01-returned_data_0x04]"
-  , "src/GeneralStateTestsFiller/Pyspecs/byzantium/eip198_modexp_precompile/test_modexp.py::test_modexp[fork_Shanghai-blockchain_test-ModExpInput_base_-exponent_-modulus_-ExpectedOutput_call_return_code_0x01-returned_data_0x]"
+  -- , "src/GeneralStateTestsFiller/Pyspecs/byzantium/eip198_modexp_precompile/test_modexp.py::test_modexp[fork_Byzantium-blockchain_test-ModExpInput_base_-exponent_-modulus_-ExpectedOutput_call_return_code_0x01-returned_data_0x]"
+  -- , "src/GeneralStateTestsFiller/Pyspecs/byzantium/eip198_modexp_precompile/test_modexp.py::test_modexp[fork_Constantinople-blockchain_test-ModExpInput_base_-exponent_-modulus_00-ExpectedOutput_call_return_code_0x01-returned_data_0x00]"
+  -- , "src/GeneralStateTestsFiller/Pyspecs/byzantium/eip198_modexp_precompile/test_modexp.py::test_modexp[fork_Constantinople-blockchain_test-ModExpInput_base_-exponent_-modulus_-ExpectedOutput_call_return_code_0x01-returned_data_0x]"
+  -- , "src/GeneralStateTestsFiller/Pyspecs/byzantium/eip198_modexp_precompile/test_modexp.py::test_modexp[fork_ConstantinopleFix-blockchain_test-EIP-198-case3-raw-input-out-of-gas]"
+  -- , "src/GeneralStateTestsFiller/Pyspecs/byzantium/eip198_modexp_precompile/test_modexp.py::test_modexp[fork_Istanbul-blockchain_test-EIP-198-case3-raw-input-out-of-gas]"
+  -- , "src/GeneralStateTestsFiller/Pyspecs/byzantium/eip198_modexp_precompile/test_modexp.py::test_modexp[fork_ConstantinopleFix-blockchain_test-ModExpInput_base_-exponent_-modulus_-ExpectedOutput_call_return_code_0x01-returned_data_0x]"
+  -- , "src/GeneralStateTestsFiller/Pyspecs/byzantium/eip198_modexp_precompile/test_modexp.py::test_modexp[fork_London-blockchain_test-EIP-198-case3-raw-input-out-of-gas]"
+  -- , "src/GeneralStateTestsFiller/Pyspecs/byzantium/eip198_modexp_precompile/test_modexp.py::test_modexp[fork_Paris-blockchain_test-EIP-198-case3-raw-input-out-of-gas]"
+  -- , "src/GeneralStateTestsFiller/Pyspecs/byzantium/eip198_modexp_precompile/test_modexp.py::test_modexp[fork_Shanghai-blockchain_test-EIP-198-case3-raw-input-out-of-gas]"
+  -- , "src/GeneralStateTestsFiller/Pyspecs/byzantium/eip198_modexp_precompile/test_modexp.py::test_modexp[fork_Istanbul-blockchain_test-ModExpInput_base_-exponent_-modulus_0001-ExpectedOutput_call_return_code_0x01-returned_data_0x0000]"
+  -- , "src/GeneralStateTestsFiller/Pyspecs/byzantium/eip198_modexp_precompile/test_modexp.py::test_modexp[fork_Istanbul-blockchain_test-ModExpInput_base_-exponent_-modulus_-ExpectedOutput_call_return_code_0x01-returned_data_0x]"
+  -- , "src/GeneralStateTestsFiller/Pyspecs/byzantium/eip198_modexp_precompile/test_modexp.py::test_modexp[fork_London-blockchain_test-ModExpInput_base_-exponent_-modulus_-ExpectedOutput_call_return_code_0x01-returned_data_0x]"
+  -- , "src/GeneralStateTestsFiller/Pyspecs/byzantium/eip198_modexp_precompile/test_modexp.py::test_modexp[fork_Shanghai-blockchain_test-ModExpInput_base_-exponent_-modulus_0001-ExpectedOutput_call_return_code_0x01-returned_data_0x0000]"
+  -- , "src/GeneralStateTestsFiller/Pyspecs/byzantium/eip198_modexp_precompile/test_modexp.py::test_modexp[fork_Paris-blockchain_test-ModExpInput_base_-exponent_-modulus_-ExpectedOutput_call_return_code_0x01-returned_data_0x]"
+  -- , "src/GeneralStateTestsFiller/Pyspecs/byzantium/eip198_modexp_precompile/test_modexp.py::test_modexp[fork_Shanghai-blockchain_test-ModExpInput_base_02-exponent_02-modulus_05-ExpectedOutput_call_return_code_0x01-returned_data_0x04]"
+  -- , "src/GeneralStateTestsFiller/Pyspecs/byzantium/eip198_modexp_precompile/test_modexp.py::test_modexp[fork_Shanghai-blockchain_test-ModExpInput_base_-exponent_-modulus_-ExpectedOutput_call_return_code_0x01-returned_data_0x]"
   , "src/GeneralStateTestsFiller/Pyspecs/shanghai/eip4895_withdrawals/test_withdrawals.py::test_withdrawing_to_precompiles[fork_Cancun-precompile_5-blockchain_test-amount_1]"
-  , "src/GeneralStateTestsFiller/Pyspecs/shanghai/eip4895_withdrawals/test_withdrawals.py::test_withdrawing_to_precompiles[fork_Shanghai-precompile_5-blockchain_test-amount_0]"
-  , "src/GeneralStateTestsFiller/Pyspecs/shanghai/eip4895_withdrawals/test_withdrawals.py::test_withdrawing_to_precompiles[fork_Shanghai-precompile_2-blockchain_test-amount_0]"
+  -- , "src/GeneralStateTestsFiller/Pyspecs/shanghai/eip4895_withdrawals/test_withdrawals.py::test_withdrawing_to_precompiles[fork_Shanghai-precompile_5-blockchain_test-amount_0]"
+  -- , "src/GeneralStateTestsFiller/Pyspecs/shanghai/eip4895_withdrawals/test_withdrawals.py::test_withdrawing_to_precompiles[fork_Shanghai-precompile_2-blockchain_test-amount_0]"
   , "src/GeneralStateTestsFiller/Pyspecs/shanghai/eip4895_withdrawals/test_withdrawals.py::test_withdrawing_to_precompiles[fork_Cancun-precompile_5-blockchain_test-amount_0]"
-  , "src/GeneralStateTestsFiller/Pyspecs/shanghai/eip4895_withdrawals/test_withdrawals.py::test_withdrawing_to_precompiles[fork_Shanghai-precompile_8-blockchain_test-amount_0]"
-  , "src/GeneralStateTestsFiller/Pyspecs/shanghai/eip4895_withdrawals/test_withdrawals.py::test_withdrawing_to_precompiles[fork_Shanghai-precompile_5-blockchain_test-amount_1]"
+  -- , "src/GeneralStateTestsFiller/Pyspecs/shanghai/eip4895_withdrawals/test_withdrawals.py::test_withdrawing_to_precompiles[fork_Shanghai-precompile_8-blockchain_test-amount_0]"
+  -- , "src/GeneralStateTestsFiller/Pyspecs/shanghai/eip4895_withdrawals/test_withdrawals.py::test_withdrawing_to_precompiles[fork_Shanghai-precompile_5-blockchain_test-amount_1]"
   -- , "Call50000_rip160_d0g1v0_Cancun"
   -- , "callcodecallcall_100_OOGMBefore_d0g0v0_Cancun"
   -- , "callcodecallcodecallcode_111_OOGMBefore_d0g0v0_Cancun"
@@ -500,11 +500,14 @@ def processTestsOfFile (file : System.FilePath)
   let path := file
   let file ← Lean.Json.fromFile file
   let test ← Lean.FromJson.fromJson? (α := Test) file
-  -- dbg_trace s!"tests before guard: {test.toTests.map Prod.fst}"
-  let tests := guardBlacklist ∘ guardWhitelist <| test.toTests
+  let tests := test.toTests
+  let cancunTests := guardCancum tests
+  -- dbg_trace s!"Non Cancun tests ignored: {tests.length - cancunTests.length}"
+  let tests := guardBlacklist ∘ guardWhitelist <| cancunTests
   -- dbg_trace s!"tests after guard: {tests.map Prod.fst}"
   tests.foldlM (init := ∅) λ acc (testname, test) ↦
     -- dbg_trace s!"TESTING {testname} FROM {path}"
+    -- dbg_trace s!"network : {test.network}"
     pure <| acc.insert testname (processTest test)
     -- try
     --   processTest test >>= pure ∘
@@ -519,6 +522,8 @@ def processTestsOfFile (file : System.FilePath)
       if whitelist.isEmpty then tests else tests.filter (λ (name, _) ↦ name ∈ whitelist)
     guardBlacklist (tests : List (String × TestEntry)) :=
       tests.filter (λ (name, _) ↦ name ∉ GlobalBlacklist ++ blacklist)
+    guardCancum (tests : List (String × TestEntry)) :=
+      tests.filter (λ (_, test) ↦ test.network.take 6 == "Cancun")
 
 end Conform
 

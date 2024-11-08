@@ -117,7 +117,7 @@ structure TestEntry :=
   genesisBlockHeader : BlockHeader
   genesisRLP         : Json := ""
   lastblockhash      : Json := ""
-  network            : Json := ""
+  network            : String
   postState          : Post
   pre                : Pre
   sealEngine         : Json := ""
