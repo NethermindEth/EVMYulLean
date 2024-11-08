@@ -7,7 +7,8 @@ def SimpleFile := "EthereumTests/BlockchainTests/GeneralStateTests/VMTests/vmAri
 -- def BuggyFile := "EthereumTests/BlockchainTests/GeneralStateTests/VMTests/vmArithmeticTest/exp.json"
 def BuggyFile := "Conform/testfile.json"
 -- def BuggyFile := "EthereumTests/BlockchainTests/GeneralStateTests/VMTests/vmTests/calldatacopy.json"
-def SpecificFile := "EthereumTests/BlockchainTests/GeneralStateTests/stPreCompiledContracts/modexpTests.json"
+def SpecificFile := "EthereumTests/BlockchainTests/GeneralStateTests/stPreCompiledContracts2/modexpRandomInput.json"
+
 
 def TestsSubdir := "BlockchainTests"
 def isTestFile (file : System.FilePath) : Bool := file.extension.option false (· == "json")
@@ -414,12 +415,7 @@ def directoryBlacklist : List System.FilePath :=
   ]
 #check 0x03e8
 def fileBlacklist : List System.FilePath :=
-  [ "EthereumTests/BlockchainTests/GeneralStateTests/stPreCompiledContracts2/modexp_0_0_0_25000.json" -- 4
-  , "EthereumTests/BlockchainTests/GeneralStateTests/stPreCompiledContracts2/modexp_0_0_0_20500.json" -- 4
-  , "EthereumTests/BlockchainTests/GeneralStateTests/stPreCompiledContracts2/modexpRandomInput.json" -- 6
-  , "EthereumTests/BlockchainTests/GeneralStateTests/stPreCompiledContracts2/modexp_0_0_0_35000.json" -- 4
-  , "EthereumTests/BlockchainTests/GeneralStateTests/stPreCompiledContracts2/modexp_0_0_0_22000.json" -- 4
-  , "EthereumTests/BlockchainTests/GeneralStateTests/stRevertTest/RevertPrecompiledTouch_nonce.json" -- 4
+  [ "EthereumTests/BlockchainTests/GeneralStateTests/stRevertTest/RevertPrecompiledTouch_nonce.json" -- 4
   , "EthereumTests/BlockchainTests/GeneralStateTests/stRevertTest/RevertPrecompiledTouch_noncestorage.json" -- 4
   , "EthereumTests/BlockchainTests/GeneralStateTests/stRevertTest/RevertPrecompiledTouch_storage_Paris.json" -- 4
   ]
@@ -456,7 +452,12 @@ def main : IO Unit := do
       ExceptT.run <|
         EvmYul.Conform.processTestsOfFile
           (whitelist := #[
-            "modexpTests_d120g0v0_Cancun"
+            "modexpRandomInput_d0g0v0_Cancun",
+            "modexpRandomInput_d0g1v0_Cancun",
+            "modexpRandomInput_d1g0v0_Cancun",
+            "modexpRandomInput_d1g1v0_Cancun",
+            "modexpRandomInput_d2g0v0_Cancun",
+            "modexpRandomInput_d2g1v0_Cancun"
           ])
           -- (whitelist := #["add_d4g0v0_Cancun"])
           testFile
