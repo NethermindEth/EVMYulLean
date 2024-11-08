@@ -68,11 +68,11 @@ GeneralStateTests:
     Succeeded: 0
     Success rate of: 0.000000
 
-  stBadOpcode                           75m51
+  stBadOpcode                           ??m
     Total tests: 4249
-    The post was NOT equal to the resulting state: 574
-    Succeeded: 3675
-    Success rate of: 86.490939
+    The post was NOT equal to the resulting state: 1333
+    Succeeded: 2916
+    Success rate of: 68.627912
 
   stBugs                                0m23
     Total tests: 9
@@ -430,7 +430,7 @@ def main : IO Unit := do
     Array.filter isTestFile <$>
       System.FilePath.walkDir
         (enter := λ path ↦ pure <| path ∉ directoryBlacklist)
-        ("EthereumTests/BlockchainTests")
+        ("EthereumTests/BlockchainTests/GeneralStateTests/stBadOpcode")
 
   -- let testFiles := #[SimpleFile]
   -- let testFiles := #[BuggyFile]
