@@ -84,7 +84,6 @@ def VerySlowTests : Array String :=
   , "buffer_d21g0v0_Cancun"
   , "buffer_d33g0v0_Cancun"
   , "buffer_d36g0v0_Cancun"
-  , "modexpTests_d120g0v0_Cancun"
   , "precompsEIP2929Cancun_d22g0v0_Cancun"
   , "precompsEIP2929Cancun_d40g0v0_Cancun"  -- TODO: It actually passes
   , "precompsEIP2929Cancun_d58g0v0_Cancun"
@@ -101,9 +100,6 @@ def VerySlowTests : Array String :=
   , "CALLBlake2f_MaxRounds_d0g0v0_Cancun"
   , "19_oogUndoesTransientStore_d0g0v0_Cancun"
   , "20_oogUndoesTransientStoreInCall_d0g0v0_Cancun"
-  , "modexp_modsize0_returndatasize_d2g0v0_Cancun"
-  , "modexp_modsize0_returndatasize_d3g0v0_Cancun"
-  , "modexp_modsize0_returndatasize_d4g0v0_Cancun"
   , "static_CallEcrecover0_0input_d5g0v0_Cancun"
   , "RevertPrecompiledTouch_Paris_d0g0v0_Cancun"
   , "RevertPrecompiledTouch_Paris_d1g0v0_Cancun"

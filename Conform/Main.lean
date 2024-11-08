@@ -7,7 +7,7 @@ def SimpleFile := "EthereumTests/BlockchainTests/GeneralStateTests/VMTests/vmAri
 -- def BuggyFile := "EthereumTests/BlockchainTests/GeneralStateTests/VMTests/vmArithmeticTest/exp.json"
 def BuggyFile := "Conform/testfile.json"
 -- def BuggyFile := "EthereumTests/BlockchainTests/GeneralStateTests/VMTests/vmTests/calldatacopy.json"
-def SpecificFile := "EthereumTests/BlockchainTests/GeneralStateTests/stCreateTest/CREATE_ContractRETURNBigOffset.json"
+def SpecificFile := "EthereumTests/BlockchainTests/GeneralStateTests/stPreCompiledContracts/modexpTests.json"
 
 def TestsSubdir := "BlockchainTests"
 def isTestFile (file : System.FilePath) : Bool := file.extension.option false (· == "json")
@@ -450,10 +450,7 @@ def main : IO Unit := do
       ExceptT.run <|
         EvmYul.Conform.processTestsOfFile
           (whitelist := #[
-            "modexp_d2g0v0_Cancun"
-          , "modexp_d2g1v0_Cancun"
-          , "modexp_d2g2v0_Cancun"
-          , "modexp_d2g3v0_Cancun"
+            "modexpTests_d120g0v0_Cancun"
           ])
           -- (whitelist := #["add_d4g0v0_Cancun"])
           testFile
