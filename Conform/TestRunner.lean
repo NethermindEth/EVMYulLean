@@ -94,10 +94,15 @@ def VerySlowTests : Array String :=
   , "static_CallEcrecover0_0input_d5g0v0_Cancun"
   , "RevertRemoteSubCallStorageOOG_d1g0v0_Cancun"
   , "randomStatetest650_d0g0v0_Cancun"
-  , "src/GeneralStateTestsFiller/Pyspecs/byzantium/eip198_modexp_precompile/test_modexp.py::test_modexp[fork_Cancun-blockchain_test-EIP-198-case3-raw-input-out-of-gas]"
-  , "src/GeneralStateTestsFiller/Pyspecs/byzantium/eip198_modexp_precompile/test_modexp.py::test_modexp[fork_Cancun-blockchain_test-ModExpInput_base_-exponent_-modulus_-ExpectedOutput_call_return_code_0x01-returned_data_0x]"
-  , "src/GeneralStateTestsFiller/Pyspecs/shanghai/eip4895_withdrawals/test_withdrawals.py::test_withdrawing_to_precompiles[fork_Cancun-precompile_5-blockchain_test-amount_1]"
-  , "src/GeneralStateTestsFiller/Pyspecs/shanghai/eip4895_withdrawals/test_withdrawals.py::test_withdrawing_to_precompiles[fork_Cancun-precompile_5-blockchain_test-amount_0]"
+  -- , "Call50000_rip160_d0g1v0_Cancun"
+  -- , "callcodecallcall_100_OOGMBefore_d0g0v0_Cancun"
+  -- , "callcodecallcodecallcode_111_OOGMBefore_d0g0v0_Cancun"
+  -- , "callcallcodecall_010_OOGE_d0g0v0_Cancun"
+  -- , "callcodecallcall_100_OOGMAfter_d0g0v0_Cancun"
+  -- , "callcodecall_10_OOGE_d0g0v0_Cancun"
+  -- , "callcodecallcode_11_OOGE_d0g0v0_Cancun"
+  -- , "callcallcodecallcode_011_OOGE_d0g0v0_Cancun"
+  -- , "callcallcode_01_OOGE_d0g0v0_Cancun"
     -- "sha3_d5g0v0_Cancun", -- best guess: `lookupMemoryRange'{'}{''}` are slow; I guess we will need an faster structure than Finmap
     -- "sha3_d6g0v0_Cancun" -- same problem as `sha3_d5g0v0_Cancun` I'm guessing
   ]
