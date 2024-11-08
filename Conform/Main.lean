@@ -7,7 +7,7 @@ def SimpleFile := "EthereumTests/BlockchainTests/GeneralStateTests/VMTests/vmAri
 -- def BuggyFile := "EthereumTests/BlockchainTests/GeneralStateTests/VMTests/vmArithmeticTest/exp.json"
 def BuggyFile := "Conform/testfile.json"
 -- def BuggyFile := "EthereumTests/BlockchainTests/GeneralStateTests/VMTests/vmTests/calldatacopy.json"
-def SpecificFile := "EthereumTests/BlockchainTests/GeneralStateTests/stPreCompiledContracts2/modexpRandomInput.json"
+def SpecificFile := "EthereumTests/BlockchainTests/GeneralStateTests/stPreCompiledContracts/idPrecomps.json"
 
 
 def TestsSubdir := "BlockchainTests"
@@ -446,12 +446,9 @@ def main : IO Unit := do
       ExceptT.run <|
         EvmYul.Conform.processTestsOfFile
           (whitelist := #[
-            "modexpRandomInput_d0g0v0_Cancun",
-            "modexpRandomInput_d0g1v0_Cancun",
-            "modexpRandomInput_d1g0v0_Cancun",
-            "modexpRandomInput_d1g1v0_Cancun",
-            "modexpRandomInput_d2g0v0_Cancun",
-            "modexpRandomInput_d2g1v0_Cancun"
+            "idPrecomps_d66g0v0_Cancun"
+          , "idPrecomps_d5g0v0_Cancun" -- PANIC at unsafePerformIO EvmYul.PerformIO
+          , "idPrecomps_d4g0v0_Cancun"
           ])
           -- (whitelist := #["add_d4g0v0_Cancun"])
           testFile
