@@ -430,7 +430,7 @@ def main : IO Unit := do
     Array.filter isTestFile <$>
       System.FilePath.walkDir
         (enter := λ path ↦ pure <| path ∉ directoryBlacklist)
-        ("EthereumTests/BlockchainTests/GeneralStateTests/stBadOpcode")
+        ("EthereumTests/BlockchainTests")
 
   -- let testFiles := #[SimpleFile]
   -- let testFiles := #[BuggyFile]

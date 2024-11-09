@@ -101,7 +101,7 @@ def VerySlowTests : Array String :=
   , "CALLBlake2f_MaxRounds_d0g0v0_Cancun"
   , "19_oogUndoesTransientStore_d0g0v0_Cancun"
   , "20_oogUndoesTransientStoreInCall_d0g0v0_Cancun"
-  , "modexp_modsize0_returndatasize_d0g0v0_Cancun"
+  -- , "modexp_modsize0_returndatasize_d0g0v0_Cancun"
   , "modexp_modsize0_returndatasize_d2g0v0_Cancun"
   , "modexp_modsize0_returndatasize_d3g0v0_Cancun"
   , "modexp_modsize0_returndatasize_d4g0v0_Cancun"
