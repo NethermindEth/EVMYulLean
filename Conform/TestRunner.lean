@@ -202,7 +202,7 @@ def executeTransaction (transaction : Transaction) (s : EVM.State) (header : Blo
             .error (.InvalidTransaction .TYPE_3_TX_ZERO_BLOBS)
     | _ => pure ()
 
-  let (ypState, substate, z) ← EVM.Υ (debugMode := true) _TODOfuel s.accountMap header.chainId header.baseFeePerGas header transaction transaction.base.expectedSender
+  let (ypState, substate, z) ← EVM.Υ (debugMode := false) _TODOfuel s.accountMap header.chainId header.baseFeePerGas header transaction transaction.base.expectedSender
 
   -- as EIP 4788 (https://eips.ethereum.org/EIPS/eip-4788).
 

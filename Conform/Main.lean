@@ -415,10 +415,7 @@ def directoryBlacklist : List System.FilePath :=
   ]
 #check 0x03e8
 def fileBlacklist : List System.FilePath :=
-  [ "EthereumTests/BlockchainTests/GeneralStateTests/stRevertTest/RevertPrecompiledTouch_nonce.json" -- 4
-  , "EthereumTests/BlockchainTests/GeneralStateTests/stRevertTest/RevertPrecompiledTouch_noncestorage.json" -- 4
-  , "EthereumTests/BlockchainTests/GeneralStateTests/stRevertTest/RevertPrecompiledTouch_storage_Paris.json" -- 4
-  ]
+  [ ]
 #eval 19098.0 / (22265 + 425)
 #eval 475.0 / 60
 -- Total tests: 1071
@@ -436,7 +433,7 @@ def main : IO Unit := do
 
   -- let testFiles := #[SimpleFile]
   -- let testFiles := #[BuggyFile]
-  let testFiles := #[SpecificFile]
+  -- let testFiles := #[SpecificFile]
 
   let mut discardedFiles := #[]
 
@@ -451,14 +448,6 @@ def main : IO Unit := do
     let res ←
       ExceptT.run <|
         EvmYul.Conform.processTestsOfFile
-          (whitelist := #[
-              "src/GeneralStateTestsFiller/Pyspecs/shanghai/eip4895_withdrawals/test_withdrawals.py::test_withdrawing_to_precompiles[fork_Cancun-precompile_5-blockchain_test-amount_1]"
-            , "src/GeneralStateTestsFiller/Pyspecs/shanghai/eip4895_withdrawals/test_withdrawals.py::test_withdrawing_to_precompiles[fork_Shanghai-precompile_5-blockchain_test-amount_0]"
-            , "src/GeneralStateTestsFiller/Pyspecs/shanghai/eip4895_withdrawals/test_withdrawals.py::test_withdrawing_to_precompiles[fork_Shanghai-precompile_2-blockchain_test-amount_0]"
-            , "src/GeneralStateTestsFiller/Pyspecs/shanghai/eip4895_withdrawals/test_withdrawals.py::test_withdrawing_to_precompiles[fork_Cancun-precompile_5-blockchain_test-amount_0]"
-            , "src/GeneralStateTestsFiller/Pyspecs/shanghai/eip4895_withdrawals/test_withdrawals.py::test_withdrawing_to_precompiles[fork_Shanghai-precompile_8-blockchain_test-amount_0]"
-            , "src/GeneralStateTestsFiller/Pyspecs/shanghai/eip4895_withdrawals/test_withdrawals.py::test_withdrawing_to_precompiles[fork_Shanghai-precompile_5-blockchain_test-amount_1]"
-          ])
           -- (whitelist := #["add_d4g0v0_Cancun"])
           testFile
     match res with
