@@ -325,7 +325,8 @@ def Ξ_BN_ADD
       | .ok o => (σ, g - gᵣ, A, o)
       | .error e =>
         dbg_trace s!"Ξ_BN_ADD failed: {e}"
-        (σ, g - gᵣ, A, .empty)
+        -- (σ, g - gᵣ, A, .empty)
+        (∅, 0, A, .empty)
 
 private def bn_addOutput₀ :=
   let (_, _, _, o) :=
@@ -378,7 +379,8 @@ def Ξ_BN_MUL
       | .ok o => (σ, g - gᵣ, A, o)
       | .error e =>
         dbg_trace s!"Ξ_BN_MUL failed: {e}"
-        (σ, g - gᵣ, A, .empty)
+        -- (σ, g - gᵣ, A, .empty)
+        (∅, 0, A, .empty)
 
 private def bn_mulOutput :=
   let (_, _, _, o) :=

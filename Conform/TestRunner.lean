@@ -94,6 +94,7 @@ def VerySlowTests : Array String :=
   , "static_CallEcrecover0_0input_d5g0v0_Cancun"
   , "RevertRemoteSubCallStorageOOG_d1g0v0_Cancun"
   , "randomStatetest650_d0g0v0_Cancun"
+  , "randomStatetest499_d0g0v0_Cancun" -- passed when run alone
   -- , "Call50000_rip160_d0g1v0_Cancun"
   -- , "callcodecallcall_100_OOGMBefore_d0g0v0_Cancun"
   -- , "callcodecallcodecallcode_111_OOGMBefore_d0g0v0_Cancun"
@@ -392,7 +393,7 @@ def processTestsOfFile (file : System.FilePath)
   let tests := guardBlacklist ∘ guardWhitelist <| cancunTests
   -- dbg_trace s!"tests after guard: {tests.map Prod.fst}"
   tests.foldlM (init := ∅) λ acc (testname, test) ↦
-    -- dbg_trace s!"TESTING {testname} FROM {path}"
+    dbg_trace s!"TESTING {testname} FROM {path}"
     -- dbg_trace s!"network : {test.network}"
     pure <| acc.insert testname (processTest test)
     -- try

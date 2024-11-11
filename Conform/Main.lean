@@ -45,11 +45,11 @@ GeneralStateTests:
     Succeeded: 168
     Success rate of: 97.109827
 
-  Pyspecs                               24m14
-    Total tests: 1549
-    The post was NOT equal to the resulting state: 255
-    Succeeded: 1294
-    Success rate of: 83.537766
+  Pyspecs                               28m7
+    Total tests: 1553
+    The post was NOT equal to the resulting state: 254
+    Succeeded: 1299
+    Success rate of: 83.644559
 
   Shanghai                              0m42
     Total tests: 27
@@ -69,11 +69,11 @@ GeneralStateTests:
     Succeeded: 0
     Success rate of: 0.000000
 
-  stBadOpcode                           ??m
-    Total tests: 4249
-    The post was NOT equal to the resulting state: 1333
-    Succeeded: 2916
-    Success rate of: 68.627912
+  stBadOpcode                           73m38
+    Total tests: 4132
+    The post was NOT equal to the resulting state: 1227
+    Succeeded: 2905
+    Success rate of: 70.304937
 
   stBugs                                0m23
     Total tests: 9
@@ -107,21 +107,21 @@ GeneralStateTests:
 
   stCodeSizeLimit                       0m23
     Total tests: 9
-    The post was NOT equal to the resulting state: 1
-    Succeeded: 8
-    Success rate of: 88.888889
+    The post was NOT equal to the resulting state: 0
+    Succeeded: 9
+    Success rate of: 100.000000
 
   stCreate2                             3m10
     Total tests: 183
-    The post was NOT equal to the resulting state: 47
-    Succeeded: 136
-    Success rate of: 74.316940
+    The post was NOT equal to the resulting state: 46
+    Succeeded: 137
+    Success rate of: 74.863388
 
   stCreateTest                          3m10
     Total tests: 196
-    The post was NOT equal to the resulting state: 80
-    Succeeded: 116
-    Success rate of: 59.183673
+    The post was NOT equal to the resulting state: 78
+    Succeeded: 118
+    Success rate of: 60.204082
 
   stDelegatecallTestHomestead           0m52
     Total tests: 33
@@ -131,9 +131,9 @@ GeneralStateTests:
 
   stEIP150singleCodeGasPrices           7m15
     Total tests: 450
-    The post was NOT equal to the resulting state: 49
-    Succeeded: 401
-    Success rate of: 89.111111
+    The post was NOT equal to the resulting state: 40
+    Succeeded: 410
+    Success rate of: 91.111111
 
   stEIP150Specific                      0m38
     Total tests: 23
@@ -149,15 +149,15 @@ GeneralStateTests:
 
   stEIP158Specific                      0m22
     Total tests: 8
-    The post was NOT equal to the resulting state: 5
-    Succeeded: 3
-    Success rate of: 37.500000
+    The post was NOT equal to the resulting state: 3
+    Succeeded: 5
+    Success rate of: 62.500000
 
   stEIP2930                             1m50
     Total tests: 140
-    The post was NOT equal to the resulting state: 120
-    Succeeded: 20
-    Success rate of: 14.285714
+    The post was NOT equal to the resulting state: 26
+    Succeeded: 114
+    Success rate of: 81.428571
 
   stEIP3607                             0m27
     Total tests: 12
@@ -167,15 +167,15 @@ GeneralStateTests:
 
   stExample                             0m53
     Total tests: 39
-    The post was NOT equal to the resulting state: 6
-    Succeeded: 33
-    Success rate of: 84.615385
+    The post was NOT equal to the resulting state: 1
+    Succeeded: 38
+    Success rate of: 97.435897
 
   stExtCodeHash                         1m20
     Total tests: 69
-    The post was NOT equal to the resulting state: 52
-    Succeeded: 17
-    Success rate of: 24.637681
+    The post was NOT equal to the resulting state: 1
+    Succeeded: 68
+    Success rate of: 98.550725
 
   stHomesteadSpecific                   0m19
     Total tests: 5
@@ -203,9 +203,9 @@ GeneralStateTests:
 
   stMemoryStressTest                    2m46
     Total tests: 82
-    The post was NOT equal to the resulting state: 3
-    Succeeded: 79
-    Success rate of: 96.341463
+    The post was NOT equal to the resulting state: 6
+    Succeeded: 76
+    Success rate of: 92.682927
 
   stMemoryTest                          10m29
     Total tests: 561
@@ -244,10 +244,10 @@ GeneralStateTests:
     Success rate of: 98.051948
 
   stRandom2                             3m50
-    Total tests: 218
-    The post was NOT equal to the resulting state: 6
+    Total tests: 217
+    The post was NOT equal to the resulting state: 5
     Succeeded: 212
-    Success rate of: 97.247706
+    Success rate of: 97.695853
 
   stRecursiveCreate                     0m15
     Total tests: 1
@@ -371,15 +371,15 @@ GeneralStateTests:
 
   stZeroKnowledge                       13m15
     Total tests: 944
-    The post was NOT equal to the resulting state: 411
-    Succeeded: 533
-    Success rate of: 56.461864
+    The post was NOT equal to the resulting state: 248
+    Succeeded: 696
+    Success rate of: 73.728814
 
   stZeroKnowledge2                      9m40
     Total tests: 519
-    The post was NOT equal to the resulting state: 170
-    Succeeded: 349
-    Success rate of: 67.244701
+    The post was NOT equal to the resulting state: 41
+    Succeeded: 478
+    Success rate of: 92.100193
 
   VMTests                               9m16
     Total tests: 571
