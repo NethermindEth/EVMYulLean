@@ -9,7 +9,7 @@ namespace EvmYul
 namespace Account
 
 def lookupStorage (self : Account) (k : UInt256) : UInt256 :=
-  self.storage.findD k 0
+  self.storage.findD k ⟨0⟩
 
 def updateStorage (self : Account) (k v : UInt256) : Account :=
   if v == default then
@@ -18,7 +18,7 @@ def updateStorage (self : Account) (k v : UInt256) : Account :=
     { self with storage := self.storage.insert k v }
 
 def lookupTransientStorage (self : Account) (k : UInt256) : UInt256 :=
-  self.tstorage.findD k 0
+  self.tstorage.findD k ⟨0⟩
 
 def updateTransientStorage (self : Account) (k v : UInt256) : Account :=
   if v == default then
@@ -30,7 +30,7 @@ def updateTransientStorage (self : Account) (k v : UInt256) : Account :=
 EMPTY(σ, a). Section 4.1., equation 14.
 -/
 def emptyAccount (self : Account) : Bool :=
-  self.code.isEmpty ∧ self.nonce = 0 ∧ self.balance = 0
+  self.code.isEmpty ∧ self.nonce = ⟨0⟩ ∧ self.balance = ⟨0⟩
 
 def transferBalanceTo (self : Account) (balance : UInt256) (recipient : Account) : Option (Account × Account) :=
   let underflow : Bool := self.balance < balance

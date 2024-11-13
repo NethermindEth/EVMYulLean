@@ -34,7 +34,7 @@ def writeBytes (self : MachineState) (source : ByteArray) (addr : UInt256) (size
   -- dbg_trace s!"current mem: {self.memory} source: {source} s: {s} n: {n}"
   let maxPracticalAddress := self.activeWordsWritten * 32
   let practicalSize₁ := min source.size size
-  let practicalSize₂ : ℕ := maxPracticalAddress.val - (addr + practicalSize₁).val
+  let practicalSize₂ : ℕ := maxPracticalAddress - (addr.toNat + practicalSize₁)
   { self with
       memory :=
         self.memory.writeMemory
@@ -66,15 +66,15 @@ def writeWord (self : MachineState) (addr val : UInt256) : MachineState :=
 --       | .none => dbg_trace "lookup failed; addr: {addr} - returning 0"; 0
 --       | .some val => val
 
-def readBytes (self : MachineState) (addr size : UInt256) : ByteArray × MachineState := -- dbg_trace s!"readBytes addr: {addr} size: {size}"
+def readBytes (self : MachineState) (addr : UInt256) (size : ℕ) : ByteArray × MachineState := -- dbg_trace s!"readBytes addr: {addr} size: {size}"
   let size :=
     if size > 2^35 then
       panic! s!"Can not handle reding byte arrays larger than 2^35 ({2^35})"
     else size
   let maxPracticalAddress := self.activeWordsWritten * 32
-  let practicalLastAddr := min maxPracticalAddress (addr + size)
-  let practicalSize : ℕ := practicalLastAddr.val - addr.val
-  let bytes := self.memory.readMemory addr practicalSize ++ ByteArray.zeroes ⟨size.val - practicalSize⟩
+  let practicalLastAddr := min maxPracticalAddress (addr.toNat + size)
+  let practicalSize : ℕ := practicalLastAddr - addr.val
+  let bytes := self.memory.readMemory addr.toNat practicalSize ++ ByteArray.zeroes ⟨size - practicalSize⟩
   let newMachineState := { self with activeWords := self.newMax addr size}
   (bytes, newMachineState)
 
@@ -87,7 +87,7 @@ TODO - Currently a debug version.
 def lookupMemory (self : MachineState) (addr : UInt256) : UInt256 × MachineState :=
   let (bytes, newMachineState) := self.readBytes addr 32
   let val := fromBytesBigEndian bytes.data.data
-  (val, newMachineState)
+  (.ofNat val, newMachineState)
 
 -- /--
 -- TODO - Currently a debug version.
@@ -118,7 +118,7 @@ def lookupMemory (self : MachineState) (addr : UInt256) : UInt256 × MachineStat
 --   readBytes''_aux self addr .empty size
 
 def msize (self : MachineState) : UInt256 :=
-  self.activeWords * 32
+  .ofNat (self.activeWords * 32)
 
 def mload (self : MachineState) (spos : UInt256) : UInt256 × MachineState :=
   self.lookupMemory spos
@@ -127,11 +127,11 @@ def mstore (self : MachineState) (spos sval : UInt256) : MachineState :=
   self.writeWord spos sval
 
 def mstore8 (self : MachineState) (spos sval : UInt256) : MachineState :=
-  self.writeBytes ⟨#[UInt8.ofNat sval]⟩ spos 1
+  self.writeBytes ⟨#[UInt8.ofNat sval.toNat]⟩ spos 1
 
 def mcopy (self : MachineState) (mstart datastart s : UInt256) : MachineState :=
-  let (arr, newMachineState) := self.readBytes datastart.val s.val
-  newMachineState.writeBytes arr mstart s
+  let (arr, newMachineState) := self.readBytes datastart s.toNat
+  newMachineState.writeBytes arr mstart s.toNat
 
 def gas (self : MachineState) : UInt256 :=
   self.gasAvailable
@@ -147,7 +147,7 @@ def setHReturn (self : MachineState) (r : ByteArray) : MachineState :=
   { self with H_return := r }
 
 def returndatasize (self : MachineState) : UInt256 :=
-  self.returnData.size
+  .ofNat self.returnData.size
 
 def returndataat (self : MachineState) (pos : UInt256) : UInt8 :=
   self.returnData.data.getD pos.val 0
@@ -159,10 +159,10 @@ def returndatacopy (self : MachineState) (mstart rstart size : UInt256) : Option
   if UInt256.size ≤ pos || self.returndatasize.val < pos then .none
   else
     let rdata := self.returnData.readBytes rstart.val size.val
-    self.writeBytes rdata mstart size
+    self.writeBytes rdata mstart size.toNat
 
 def evmReturn (self : MachineState) (mstart s : UInt256) : MachineState := Id.run do
-  let (bytes, newMachineState) := self.readBytes mstart.val s.val
+  let (bytes, newMachineState) := self.readBytes mstart s.val
   newMachineState.setHReturn bytes
 
 def evmRevert (self : MachineState) (mstart s : UInt256) : MachineState :=
@@ -172,17 +172,17 @@ end ReturnData
 
 def keccak256 (self : MachineState) (mstart s : UInt256) : UInt256 × MachineState :=
   -- dbg_trace s!"called keccak256; going to be looking up a lot of vals; s: {s}"
-  let (bytes, newMachineState) := self.readBytes mstart.val s.val
+  let (bytes, newMachineState) := self.readBytes mstart s.val
   -- dbg_trace s!"got vals {vals}"
   let kec := KEC bytes
   -- dbg_trace s!"got kec {kec}"
-  (fromBytesBigEndian kec.data.data, newMachineState)
+  (.ofNat (fromBytesBigEndian kec.data.data), newMachineState)
 
 section Gas
 
 def mkNewWithGas (gas : ℕ) : MachineState :=
   let init : MachineState := default
-  { init with gasAvailable := gas }
+  { init with gasAvailable := .ofNat gas }
 
 end Gas
 

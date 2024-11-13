@@ -24,19 +24,19 @@ def Ξ_ECREC
     :
   (AccountMap × UInt256 × Substate × ByteArray)
 :=
-  let gᵣ : UInt256 := 3000
+  let gᵣ : ℕ := 3000
 
   if g.val < gᵣ then
-    (∅, 0, A, .empty)
+    (∅, ⟨0⟩, A, .empty)
   else
     let d := I.inputData
     let h := d.readBytes 0 32
     let v := d.readBytes 32 32
     let r := d.readBytes 64 32
     let s := d.readBytes 96 32
-    let v' : UInt256 := fromBytesBigEndian v.data.data
-    let r' : UInt256 := fromBytesBigEndian r.data.data
-    let s' : UInt256 := fromBytesBigEndian s.data.data
+    let v' : ℕ := fromBytesBigEndian v.data.data
+    let r' : ℕ := fromBytesBigEndian r.data.data
+    let s' : ℕ := fromBytesBigEndian s.data.data
     let o :=
       if v' < 27 || 28 < v' || r' = 0 || r' >= secp256k1n || s' = 0 || s' >= secp256k1n then
         .empty
@@ -47,7 +47,7 @@ def Ξ_ECREC
           | .error e =>
             dbg_trace s!"Ξ_ECREC failed: {e}"
         .empty
-    (σ, g - gᵣ, A, o)
+    (σ, g - .ofNat gᵣ, A, o)
 
 def longInput := "Lean 4 is a reimplementation of the Lean theorem prover in Lean itself. The new compiler produces C code, and users can now implement efficient proof automation in Lean, compile it into efficient C code, and load it as a plugin. In Lean 4, users can access all internal data structures used to implement Lean by merely importing the Lean package."
 
@@ -56,7 +56,7 @@ private def ecrecOutput :=
   let (_, _, _, o) :=
     Ξ_ECREC
       default
-      3000
+      ⟨3000⟩
       default
       { (default : ExecutionEnv) with
         inputData := h ++ v ++ r ++ s
@@ -64,13 +64,13 @@ private def ecrecOutput :=
   o
  where
   h :=
-    UInt256.toByteArray 0x9a59efbc471b53491c8038fd5d5fe3be0a229873302bafba90c19fbe7d7c7f35
+    UInt256.toByteArray ⟨0x9a59efbc471b53491c8038fd5d5fe3be0a229873302bafba90c19fbe7d7c7f35⟩
   v :=
-    UInt256.toByteArray 0x1b
+    UInt256.toByteArray ⟨0x1b⟩
   r :=
-    UInt256.toByteArray 0xd40b91381e1eeca34f4858a79ff4f3165066f93a76ba0f067848a962312f18ef
+    UInt256.toByteArray ⟨0xd40b91381e1eeca34f4858a79ff4f3165066f93a76ba0f067848a962312f18ef⟩
   s :=
-    UInt256.toByteArray 0x0e86fce48de10c6b4e07b0a175877bc824bbf6d2089a50f3b11e24ad0d5c8173
+    UInt256.toByteArray ⟨0x0e86fce48de10c6b4e07b0a175877bc824bbf6d2089a50f3b11e24ad0d5c8173⟩
 
 private example :
   ecrecOutput
@@ -89,13 +89,13 @@ def Ξ_SHA256
     :
   (AccountMap × UInt256 × Substate × ByteArray)
 :=
-  let gᵣ : UInt256 :=
+  let gᵣ : ℕ :=
     let l := I.inputData.size
     let ceil := ( l + 31 ) / 32
     60 + 12 * ceil
 
   if g.val < gᵣ then
-    (∅, 0, A, .empty)
+    (∅, ⟨0⟩, A, .empty)
   else
     let o :=
       match SHA256 I.inputData with
@@ -103,13 +103,13 @@ def Ξ_SHA256
         | .error e =>
           dbg_trace s!"Ξ_SHA56 failed: {e}"
           .empty
-    (σ, g - gᵣ, A, o)
+    (σ, g - .ofNat gᵣ, A, o)
 
 private def shaOutput :=
   let (_, _, _, o) :=
     Ξ_SHA256
       default
-      3000
+      ⟨3000⟩
       default
       { (default : ExecutionEnv) with
         inputData := longInput.toUTF8
@@ -129,13 +129,13 @@ def Ξ_RIP160
     :
   (AccountMap × UInt256 × Substate × ByteArray)
 :=
-  let gᵣ : UInt256 :=
+  let gᵣ : ℕ :=
     let l := I.inputData.size
     let ceil := ( l + 31 ) / 32
     60 + 12 * ceil
 
   if g.val < gᵣ then
-    (∅, 0, A, .empty)
+    (∅, ⟨0⟩, A, .empty)
   else
     let o :=
       match RIP160 I.inputData with
@@ -143,13 +143,13 @@ def Ξ_RIP160
         | .error e =>
           dbg_trace s!"Ξ_RIP160 failed: {e}"
           .empty
-    (σ, g - gᵣ, A, o)
+    (σ, g - .ofNat gᵣ, A, o)
 
 private def ripOutput :=
   let (_, _, _, o) :=
     Ξ_RIP160
       default
-      3000
+      ⟨3000⟩
       default
       { (default : ExecutionEnv) with
         inputData := longInput.toUTF8
@@ -169,22 +169,22 @@ def Ξ_ID
     :
   (AccountMap × UInt256 × Substate × ByteArray)
 :=
-  let gᵣ : UInt256 :=
+  let gᵣ : ℕ :=
     let l := I.inputData.size
     let ceil := ( l + 31 ) / 32
     15 + 3 * ceil
 
   if g.val < gᵣ then
-    (∅, 0, A, .empty)
+    (∅, ⟨0⟩, A, .empty)
   else
     let o := I.inputData
-    (σ, g - gᵣ, A, o)
+    (σ, g - .ofNat gᵣ, A, o)
 
 private def idOutput :=
   let (_, _, _, o) :=
     Ξ_ID
       default
-      3000
+      ⟨3000⟩
       default
       { (default : ExecutionEnv) with
         inputData := longInput.toUTF8
@@ -221,7 +221,7 @@ def expModAux (m : ℕ) (a : ℕ) (c : ℕ) : ℕ → ℕ
     else
       expModAux m (a % m)     (c * c % m) (n / 2)
 
-def expMod (m : ℕ) (b : UInt256) (n : ℕ) : ℕ := expModAux m 1 b n
+def expMod (m : ℕ) (b : UInt256) (n : ℕ) : ℕ := expModAux m 1 b.toNat n
 
 def Ξ_EXPMOD
   (σ : AccountMap)
@@ -260,7 +260,7 @@ def Ξ_EXPMOD
     max 200 (multiplication_complexity base_length modulus_length * iterations / G_quaddivisor)
 
   if g.val < gᵣ then
-    (∅, 0, A, .empty)
+    (∅, ⟨0⟩, A, .empty)
   else
     let base := nat_of_slice data 96 base_length
     let exp := nat_of_slice data (96 + base_length) exp_length
@@ -270,7 +270,7 @@ def Ξ_EXPMOD
       if modulus_length == 0 || modulus == 0 then
         ByteArray.zeroes ⟨modulus_length⟩
       else
-        let expmod_base := BE (expMod modulus base exp)
+        let expmod_base := BE (expMod modulus (.ofNat base) exp)
         let expmod_zeroes :=
           if modulus_length ≥ expmod_base.size then
             ByteArray.zeroes ⟨modulus_length - expmod_base.size⟩
@@ -278,22 +278,22 @@ def Ξ_EXPMOD
             ByteArray.empty
         expmod_zeroes ++ expmod_base
 
-    (σ, g - gᵣ, A, o)
+    (σ, g - .ofNat gᵣ, A, o)
 
 private def expmodOutput :=
   let (_, _, _, o) :=
     Ξ_EXPMOD
       default
-      3000
+      ⟨3000⟩
       default
       { (default : ExecutionEnv) with
         inputData := l_B ++ l_E ++ l_M ++ B ++ E ++ M
       }
   o
  where
-  l_B : ByteArray := UInt256.toByteArray 2
-  l_E : ByteArray := UInt256.toByteArray 1
-  l_M : ByteArray := UInt256.toByteArray 1
+  l_B : ByteArray := UInt256.toByteArray ⟨2⟩
+  l_E : ByteArray := UInt256.toByteArray ⟨1⟩
+  l_M : ByteArray := UInt256.toByteArray ⟨1⟩
   B : ByteArray := ⟨#[1, 0]⟩ -- 2^8
   E : ByteArray := ⟨#[2]⟩
   M : ByteArray := ⟨#[100]⟩
@@ -312,51 +312,51 @@ def Ξ_BN_ADD
     :
   (AccountMap × UInt256 × Substate × ByteArray)
 :=
-  let gᵣ : UInt256 := 150
+  let gᵣ : ℕ := 150
 
   if g.val < gᵣ then
-    (∅, 0, A, .empty)
+    (∅, ⟨0⟩, A, .empty)
   else
     let d := I.inputData
     let x := (d.readBytes 0 32, d.readBytes 32 32)
     let y := (d.readBytes 64 32, d.readBytes 96 32)
     let o := BN_ADD x.1 x.2 y.1 y.2
     match o with
-      | .ok o => (σ, g - gᵣ, A, o)
+      | .ok o => (σ, g - .ofNat gᵣ, A, o)
       | .error e =>
         dbg_trace s!"Ξ_BN_ADD failed: {e}"
         -- (σ, g - gᵣ, A, .empty)
-        (∅, 0, A, .empty)
+        (∅, ⟨0⟩, A, .empty)
 
 private def bn_addOutput₀ :=
   let (_, _, _, o) :=
     Ξ_BN_ADD
       default
-      3000
+      ⟨3000⟩
       default
       { (default : ExecutionEnv) with
         inputData := x₁ ++ y₁ ++ x₂ ++ y₂
       }
   o
  where
-  x₁ : ByteArray := UInt256.toByteArray 0
-  y₁ : ByteArray := UInt256.toByteArray 0
-  x₂ : ByteArray := UInt256.toByteArray 1
-  y₂ : ByteArray := UInt256.toByteArray 2
+  x₁ : ByteArray := UInt256.toByteArray ⟨0⟩
+  y₁ : ByteArray := UInt256.toByteArray ⟨0⟩
+  x₂ : ByteArray := UInt256.toByteArray ⟨1⟩
+  y₂ : ByteArray := UInt256.toByteArray ⟨2⟩
 
 private def bn_addOutput₁ :=
   let (_, _, _, o) :=
     Ξ_BN_ADD
       default
-      3000
+      ⟨3000⟩
       default
       { (default : ExecutionEnv) with
         inputData := bn_addOutput₀ ++ x ++ y
       }
   o
  where
-  x : ByteArray := UInt256.toByteArray 1
-  y : ByteArray := UInt256.toByteArray 2
+  x : ByteArray := UInt256.toByteArray ⟨1⟩
+  y : ByteArray := UInt256.toByteArray ⟨2⟩
 
 def Ξ_BN_MUL
   (σ : AccountMap)
@@ -366,36 +366,36 @@ def Ξ_BN_MUL
     :
   (AccountMap × UInt256 × Substate × ByteArray)
 :=
-  let gᵣ : UInt256 := 6000
+  let gᵣ : ℕ := 6000
 
   if g.val < gᵣ then
-    (∅, 0, A, .empty)
+    (∅, ⟨0⟩, A, .empty)
   else
     let d := I.inputData
     let x := (d.readBytes 0 32, d.readBytes 32 32)
     let n := d.readBytes 64 32
     let o := BN_MUL x.1 x.2 n
     match o with
-      | .ok o => (σ, g - gᵣ, A, o)
+      | .ok o => (σ, g - .ofNat gᵣ, A, o)
       | .error e =>
         dbg_trace s!"Ξ_BN_MUL failed: {e}"
         -- (σ, g - gᵣ, A, .empty)
-        (∅, 0, A, .empty)
+        (∅, ⟨0⟩, A, .empty)
 
 private def bn_mulOutput :=
   let (_, _, _, o) :=
     Ξ_BN_MUL
       default
-      100000
+      ⟨100000⟩
       default
       { (default : ExecutionEnv) with
         inputData := x₁ ++ y₁ ++ n
       }
   o
  where
-  x₁ : ByteArray := UInt256.toByteArray 1
-  y₁ : ByteArray := UInt256.toByteArray 2
-  n : ByteArray := UInt256.toByteArray 2
+  x₁ : ByteArray := UInt256.toByteArray ⟨1⟩
+  y₁ : ByteArray := UInt256.toByteArray ⟨2⟩
+  n  : ByteArray := UInt256.toByteArray ⟨2⟩
 
 -- (0, 0) + (1, 2) + (1, 2) = 2 * (1, 2)
 private example : bn_addOutput₁ = bn_mulOutput := by native_decide
@@ -410,31 +410,31 @@ def Ξ_SNARKV
 :=
   let d := I.inputData
   let k := d.size / 192
-  let gᵣ : UInt256 := 34000 * k + 45000
+  let gᵣ : ℕ := 34000 * k + 45000
 
   if g.val < gᵣ then
-    (∅, 0, A, .empty)
+    (∅, ⟨0⟩, A, .empty)
   else
     let o := SNARKV d
     match o with
-      | .ok o => (σ, g - gᵣ, A, o)
+      | .ok o => (σ, g - .ofNat gᵣ, A, o)
       | .error e =>
         dbg_trace s!"Ξ_SNARKV failed: {e}"
-        (∅, 0, A, .empty)
+        (∅, ⟨0⟩, A, .empty)
 
 private def snarkvOutput :=
   let (_, _, _, o) :=
     Ξ_SNARKV
       default
-      100000
+      ⟨100000⟩
       default
       { (default : ExecutionEnv) with
         inputData := x ++ y ++ ByteArray.zeroes ⟨32 * 4⟩
       }
   o
  where
-  x : ByteArray := UInt256.toByteArray 1
-  y : ByteArray := UInt256.toByteArray 2
+  x : ByteArray := UInt256.toByteArray ⟨1⟩
+  y : ByteArray := UInt256.toByteArray ⟨2⟩
 
 private example :
   snarkvOutput.size = 32 ∧ (fromBytesBigEndian snarkvOutput.data.data) ∈ [0, 1]
@@ -450,17 +450,17 @@ def Ξ_BLAKE2_F
 :=
   let d := I.inputData
   let k := d.size / 192
-  let gᵣ : UInt256 := 34000 * k + 45000
+  let gᵣ : ℕ := 34000 * k + 45000
 
   if g.val < gᵣ then
-    (∅, 0, A, .empty)
+    (∅, ⟨0⟩, A, .empty)
   else
     let o := BLAKE2_F d
     match o with
-      | .ok o => (σ, g - gᵣ, A, o)
+      | .ok o => (σ, g - .ofNat gᵣ, A, o)
       | .error e =>
         dbg_trace s!"Ξ_BLAKE2_F failed: {e}"
-        (∅, 0, A, .empty)
+        (∅, ⟨0⟩, A, .empty)
 
 def blake2_fInput :=
   ByteArray.ofBlob "0000000048c9bdf267e6096a3ba7ca8485ae67bb2bf894fe72f36e3cf1361d5f3af54fa5d182e6ad7f520e511f6c3e2b8c68059b6bbd41fbabd9831f79217e1319cde05b61626300000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000300000000000000000000000000000001"
@@ -470,7 +470,7 @@ private def blake2_fOutput :=
   let (_, _, _, o) :=
     Ξ_BLAKE2_F
       default
-      100000
+      ⟨100000⟩
       default
       { (default : ExecutionEnv) with
         inputData := blake2_fInput
@@ -494,14 +494,14 @@ def Ξ_PointEval
   (AccountMap × UInt256 × Substate × ByteArray)
 :=
   let d := I.inputData
-  let gᵣ : UInt256 := 50000
+  let gᵣ : ℕ := 50000
 
   if g.val < gᵣ then
-    (∅, 0, A, .empty)
+    (∅, ⟨0⟩, A, .empty)
   else
     let o := PointEval d
     match o with
-      | .ok o => (σ, g - gᵣ, A, o)
+      | .ok o => (σ, g - .ofNat gᵣ, A, o)
       | .error e =>
         dbg_trace s!"Ξ_PointEval failed: {e}"
-        (∅, 0, A, .empty)
+        (∅, ⟨0⟩, A, .empty)

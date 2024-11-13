@@ -20,7 +20,8 @@ abbrev Memory := HashMap ℕ ByteArray
 
 def indexInterval (i : ℕ) : ℕ := i / SIZE
 
-def Memory.writeMemory (self : Memory) (source : ByteArray) (addr len : ℕ) : Memory := Id.run do
+def Memory.writeMemory (self : Memory) (source : ByteArray) (addr : UInt256) (len : ℕ) : Memory := Id.run do
+  let addr := addr.toNat
   if len == 0 then self else
     -- dbg_trace s!"writeMemory {len} bytes at addr {addr} from source of {source.size} bytes"
     -- let len := min (2^256 - 1 - addr) len
@@ -120,7 +121,7 @@ private example :
   ( writeMemory
       .empty
       (source := ⟨#[0x01]⟩)
-      (addr := 2^255)
+      (addr := .ofNat (2^255))
       (len := 1)
   ).readMemory (addr := 2^255) (len := 1) == ByteArray.mk #[0x01]
 := by native_decide
@@ -149,7 +150,7 @@ private def longByteArray :=
 private def written :=
   writeMemory .empty
     (source := longByteArray)
-    (addr := 2^29)
+    (addr := .ofNat (2^29))
     (len := longByteArray.size)
 
 private def read :=

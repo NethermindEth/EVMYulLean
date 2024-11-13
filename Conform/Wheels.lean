@@ -92,7 +92,7 @@ open Conform
 namespace UInt256
 
 def fromBlob? (blob : Blob) : Except String UInt256 :=
-  Fin.ofNat <$> ((·.1) <| blob.foldr (init := (.ok 0, 0)) λ digit (acc, exp) ↦
+  .ofNat <$> ((·.1) <| blob.foldr (init := (.ok 0, 0)) λ digit (acc, exp) ↦
     (do pure <| (←acc) + (16 ^ exp) * (←Conform.toHex digit), exp + 1))
 
 def fromBlob! (blob : Blob) : UInt256 := fromBlob? blob |>.toOption.get!

@@ -55,11 +55,11 @@ Why is there no handy `unfold` - because of termination issues?
 -/
 def decodeMany (code : ByteArray) : Except String Code' := do
   let mut result : Code' := #[]
-  let mut pc := 0
-  while pc < code.size do
-    let (instr, arg) ← (EVM.decode code pc |>.toExceptWith s!"Cannot decode the instruction: {code.data.get! pc}")
+  let mut pc : UInt256 := ⟨0⟩
+  while pc.toNat < code.size do
+    let (instr, arg) ← (EVM.decode code pc |>.toExceptWith s!"Cannot decode the instruction: {code.data.get! pc.toNat}")
     result := result.push (instr, Prod.fst <$> arg)
-    pc := pc + 1 + arg.option 0 Prod.snd
+    pc := pc + .ofNat (1 + arg.option 0 Prod.snd)
   pure result
 
 end _Code'
@@ -109,7 +109,7 @@ instance : FromJson BlockHeader where
         timestamp     := ← json.getObjValAsD! _         "timestamp"     <&> UInt256.toNat
         extraData     := ← json.getObjValAsD! ByteArray "extraData"
         minHash       := TODO -- TODO - Does not seem to be used in Υ?
-        chainId       := ← json.getObjValAsD UInt256 "chainId" 1 -- (5)
+        chainId       := ← json.getObjValAsD UInt256 "chainId" ⟨1⟩ -- (5)
         nonce         := 0 -- [deprecated] 0.
         baseFeePerGas := ← json.getObjValAsD! _         "baseFeePerGas" <&> UInt256.toNat
         parentBeaconBlockRoot := ← json.getObjValAsD! ByteArray "parentBeaconBlockRoot"

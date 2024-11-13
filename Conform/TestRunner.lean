@@ -134,7 +134,7 @@ local instance : Inhabited EVM.Transformer where
 private def compareWithEVMdefaults (s₁ s₂ : EvmYul.Storage) : Bool :=
   withDefault s₁ == withDefault s₂
   where
-    withDefault (s : EvmYul.Storage) : EvmYul.Storage := if s.contains 0 then s else s.insert 0 0
+    withDefault (s : EvmYul.Storage) : EvmYul.Storage := if s.contains ⟨0⟩ then s else s.insert ⟨0⟩ ⟨0⟩
 
 /--
 TODO - This should be a generic map complement, but we are not trying to write a library here.
@@ -203,7 +203,7 @@ def executeTransaction (transaction : Transaction) (s : EVM.State) (header : Blo
             .error (.InvalidTransaction .TYPE_3_TX_ZERO_BLOBS)
     | _ => pure ()
 
-  let (ypState, substate, z) ← EVM.Υ (debugMode := false) _TODOfuel s.accountMap header.chainId header.baseFeePerGas header transaction transaction.base.expectedSender
+  let (ypState, substate, z) ← EVM.Υ (debugMode := false) _TODOfuel s.accountMap header.chainId.toNat header.baseFeePerGas header transaction transaction.base.expectedSender
 
   -- as EIP 4788 (https://eips.ethereum.org/EIPS/eip-4788).
 
@@ -260,7 +260,7 @@ def processBlocks (s₀ : EVM.State) : Except EVM.Exception EVM.State := do
     match block.blockHeader.blobGasUsed with
       | none => pure ()
       | some bGU =>
-        if blobGasUsed != bGU || blobGasUsed > MAX_BLOB_GAS_PER_BLOCK then
+        if blobGasUsed != bGU.toNat || blobGasUsed > MAX_BLOB_GAS_PER_BLOCK then
           if !block.exception.isEmpty then
             let e : EVM.Exception := .BlockException_INCORRECT_BLOB_GAS_USED
             dbg_trace s!"Expected exception: {block.exception}; got exception: {repr e} - we need to reconcile these as we debug tests. Currently, we mark the test as 'passed' as I assume this is the right kind of exception, but it doesn't need to be the case necessarily."
@@ -287,10 +287,10 @@ def processBlocks (s₀ : EVM.State) : Except EVM.Exception EVM.State := do
               SYSTEM_ADDRESS
               BEACON_ROOTS_ADDRESS
               (.Code beaconRootsAddressCode)
-              30000000
-              0xe8d4a51000
-              0
-              0
+              ⟨30000000⟩
+              ⟨0xe8d4a51000⟩
+              ⟨0⟩
+              ⟨0⟩
               block.blockHeader.parentBeaconBlockRoot
               0
               block.blockHeader
@@ -353,7 +353,7 @@ def preImpliesPost (pre : Pre) (post : Post) (genesisBlockHeader : BlockHeader) 
 
 -- local instance : MonadLift (Except EVM.Exception) (Except Conform.Exception) := ⟨Except.mapError .EVMError⟩
 -- vvvvvvvvvvvvvv DO NOT DELETE PLEASE vvvvvvvvvvvvvvvvvv
-def DONOTDELETEMEFORNOW : AccountMap := Batteries.RBMap.ofList [(1, { dflt with storage := Batteries.RBMap.ofList [(44, 45), (46, 47)] compare }), (3, default)] compare
+def DONOTDELETEMEFORNOW : AccountMap := Batteries.RBMap.ofList [(1, { dflt with storage := Batteries.RBMap.ofList [(⟨44⟩, ⟨45⟩), (⟨46⟩, ⟨47⟩)] compare }), (3, default)] compare
   where dflt : Account := default
 
 instance (priority := high) : Repr AccountMap := ⟨λ m _ ↦

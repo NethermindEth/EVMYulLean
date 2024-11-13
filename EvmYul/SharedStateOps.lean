@@ -32,17 +32,17 @@ def writeWord (self : SharedState) (addr v : UInt256) : SharedState :=
   { self with toMachineState := self.toMachineState.writeWord addr v }
 
 def writeBytes (self : SharedState) (source : ByteArray) (s n : Nat) : SharedState :=
-  { self with toMachineState := self.toMachineState.writeBytes source s n }
+  { self with toMachineState := self.toMachineState.writeBytes source (.ofNat s) n }
 
 def calldatacopy (self : SharedState) (mstart datastart size : UInt256) : SharedState :=
   let arr := self.toState.executionEnv.inputData.readBytes datastart.val size.val
   -- dbg_trace s!"{arr}"
-  self.writeBytes arr mstart size
+  self.writeBytes arr mstart.toNat size.toNat
 
 def codeCopy (self : SharedState) (mstart cstart size : UInt256) : SharedState :=
   let Ib := self.toState.executionEnv.code.readBytes cstart.val size.val -- TODO(double check, changed in a fast-and-loose manner)
   -- dbg_trace s!"code: {toHex Ib}"
-  self.writeBytes Ib mstart size
+  self.writeBytes Ib mstart.toNat size.toNat
 
 -- def extCodeCopy (self : SharedState) (acc mstart cstart s : UInt256) : SharedState :=
 --   dbg_trace s!"mstart: {mstart} cstart: {cstart} s: {s}"
@@ -60,7 +60,10 @@ def codeCopy (self : SharedState) (mstart cstart size : UInt256) : SharedState :
 TODO - wrong?
 -/
 def extCodeCopy' (self : SharedState) (acc mstart cstart size : UInt256) : SharedState :=
-  if 2^16 < size then dbg_trace s!"TODO - extCodeCopy called on a state which does _not_ recognise the address {acc} and with too big size: {size}; currently, this fails silently"; self else
+  let mstart := mstart.toNat
+  let cstart := cstart.toNat
+  let size := size.toNat
+  if 2^16 < size then dbg_trace s!"TODO - extCodeCopy called on a state which does _not_ recognise the address {acc.toNat} and with too big size: {size}; currently, this fails silently"; self else
   let addr := AccountAddress.ofUInt256 acc
   let b : ByteArray := self.toState.lookupAccount addr |>.option .empty Account.code
   let b : ByteArray := b.readBytes cstart size
@@ -72,7 +75,7 @@ end Memory
 def logOp (μ₀ μ₁ : UInt256) (t : List UInt256) (sState : SharedState) : SharedState :=
     let Iₐ := sState.executionEnv.codeOwner
     let ⟨evmState, mState⟩ := sState
-    let (mem, newMState) := mState.readBytes μ₀ μ₁
+    let (mem, newMState) := mState.readBytes μ₀ μ₁.toNat
     let logSeries' := evmState.substate.logSeries.push (Iₐ, t, mem)
     {sState with substate.logSeries := logSeries', toMachineState := newMState}
 

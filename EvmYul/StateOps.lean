@@ -47,7 +47,7 @@ def updateSelfAccount! (self : State) : (Account → Account) → State :=
 
 def balance (self : State) (k : UInt256) : State × UInt256 :=
   let addr := AccountAddress.ofUInt256 k
-  (self.addAccessedAccount addr, self.accountMap.find? addr |>.elim 0 Account.balance)
+  (self.addAccessedAccount addr, self.accountMap.find? addr |>.elim ⟨0⟩ Account.balance)
 
 def transferBalance (sender : AccountAddress) (recipient : AccountAddress) (balance : UInt256) (self : State) : Option State :=
   if sender == recipient then .some self -- NB this check renders `balance` validity irrelevant
@@ -70,7 +70,7 @@ def setSelfBalance! (self : State) : UInt256 → State :=
 def calldataload (self : State) (v : UInt256) : UInt256 :=
   -- dbg_trace s!"calldataload arr: {self.executionEnv.inputData.extract' v (v + 32)}"
   -- dbg_trace s!"calldataload yielding: {toHex <| self.executionEnv.inputData.extract' v (v + 32)}"
-  uInt256OfByteArray <| self.executionEnv.inputData.readBytes v 32
+  uInt256OfByteArray <| self.executionEnv.inputData.readBytes v.toNat 32
 
 def setNonce! (self : State) (addr : AccountAddress) (nonce : UInt256) : State :=
   self.updateAccount! addr (λ acc ↦ { acc with nonce := nonce })
@@ -85,11 +85,11 @@ section CodeCopy
 
 def extCodeSize (self : State) (a : UInt256) : State × UInt256 :=
   let addr := AccountAddress.ofUInt256 a
-  let s := self.lookupAccount addr |>.option 0 (Fin.ofNat ∘ ByteArray.size ∘ Account.code)
+  let s := self.lookupAccount addr |>.option ⟨0⟩ (.ofNat ∘ ByteArray.size ∘ Account.code)
   (self.addAccessedAccount addr, s)
 
 def extCodeHash (self : State) (v : UInt256) : UInt256 :=
-  self.lookupAccount (AccountAddress.ofUInt256 v) |>.option 0 Account.codeHash
+  self.lookupAccount (AccountAddress.ofUInt256 v) |>.option ⟨0⟩ Account.codeHash
 
 end CodeCopy
 
@@ -97,32 +97,32 @@ section Blocks
 
 def blockHash (self : State) (blockNumber : UInt256) : UInt256 :=
   let v := self.executionEnv.header.number
-  if v ≤ blockNumber || blockNumber + 256 < v then 0
+  if v ≤ blockNumber.toNat || blockNumber.toNat + 256 < v then ⟨0⟩
   else
     let bs := self.blocks.map λ b ↦ b.blockHeader.parentHash
-    bs.getD (v - blockNumber) 0
+    bs.getD (v - blockNumber.toNat) ⟨0⟩
 
 def coinBase (self : State) : AccountAddress :=
   self.executionEnv.header.beneficiary
 
 def timeStamp (self : State) : UInt256 :=
   -- dbg_trace self.executionEnv.header.timestamp
-  self.executionEnv.header.timestamp
+  .ofNat self.executionEnv.header.timestamp
 
 def number (self : State) : UInt256 :=
-  self.executionEnv.header.number
+  .ofNat self.executionEnv.header.number
 
 def difficulty (self : State) : UInt256 :=
-  self.executionEnv.header.difficulty
+  .ofNat self.executionEnv.header.difficulty
 
 def gasLimit (self : State) : UInt256 :=
-  self.executionEnv.header.gasLimit
+  .ofNat self.executionEnv.header.gasLimit
 
 def chainId (self : State) : UInt256 :=
   self.executionEnv.header.chainId
 
 def selfbalance (self : State) : UInt256 :=
-  Batteries.RBMap.find? self.accountMap self.executionEnv.codeOwner |>.elim 0 Account.balance
+  Batteries.RBMap.find? self.accountMap self.executionEnv.codeOwner |>.elim ⟨0⟩ Account.balance
 
 /--
 TODO: `Account` also has `code`. Recheck.
@@ -142,7 +142,7 @@ def setSelfStorage! (self : State) : Storage → State :=
 
 def sload (self : State) (spos : UInt256) : State × UInt256 :=
   let Iₐ := self.executionEnv.codeOwner
-  let v := self.lookupAccount Iₐ |>.option 0 (Account.lookupStorage (k := spos))
+  let v := self.lookupAccount Iₐ |>.option ⟨0⟩ (Account.lookupStorage (k := spos))
   let state' := self.addAccessedStorageKey (Iₐ, spos)
   (state', v)
 
@@ -156,7 +156,7 @@ def sstore (self : State) (spos sval : UInt256) : State :=
 
 def tload (self : State) (spos : UInt256) : State × UInt256 :=
   let Iₐ := self.executionEnv.codeOwner
-  let v := self.lookupAccount Iₐ |>.option 0 (Account.lookupTransientStorage (k := spos))
+  let v := self.lookupAccount Iₐ |>.option ⟨0⟩ (Account.lookupTransientStorage (k := spos))
   (self, v)
 
 def tstore (self : State) (spos sval : UInt256) : State :=

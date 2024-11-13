@@ -75,9 +75,9 @@ def applyWithdrawals
     if w.amount <= 0 then σ else
       match σ.find? w.address with
         | none =>
-          σ.insert w.address {(default : Account) with balance := w.amount.val.val * 10^9}
+          σ.insert w.address {(default : Account) with balance := .ofNat <| w.amount.val.val * 10^9}
         | some ac =>
-          σ.insert w.address {ac with balance := ac.balance + w.amount.val.val * 10^9}
+          σ.insert w.address {ac with balance := .ofNat <| ac.balance.toNat + w.amount.val.val * 10^9}
 
 -- Tests
 

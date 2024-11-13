@@ -32,7 +32,7 @@ structure State where
   genesisBlockHeader : BlockHeader
 
   -- TODO(Keccak Stuff + I guess this will be gone so no need to nuke the `Finmap` just now
-  keccakMap     : Batteries.RBMap (List UInt256) UInt256 compare
+  -- keccakMap     : Batteries.RBMap (List UInt256) UInt256 compare
   keccakRange   : List UInt256
   usedRange     : Batteries.RBSet UInt256 compare
   hashCollision : Bool

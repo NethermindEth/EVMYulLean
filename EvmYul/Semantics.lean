@@ -240,15 +240,15 @@ def step {τ : OperationType} (debugMode : Bool) (op : Operation τ) : Transform
       dispatchBinaryMachineStateOp' debugMode τ MachineState.keccak256
 
     | τ, .ADDRESS =>
-      dispatchExecutionEnvOp debugMode τ (Fin.ofNat ∘ Fin.val ∘ ExecutionEnv.codeOwner)
+      dispatchExecutionEnvOp debugMode τ (.ofNat ∘ Fin.val ∘ ExecutionEnv.codeOwner)
     | τ, .BALANCE =>
       dispatchUnaryStateOp debugMode τ EvmYul.State.balance
     | τ, .ORIGIN =>
-      dispatchExecutionEnvOp debugMode τ (Fin.ofNat ∘ Fin.val ∘ ExecutionEnv.sender)
+      dispatchExecutionEnvOp debugMode τ (.ofNat ∘ Fin.val ∘ ExecutionEnv.sender)
     | τ, .CALLER =>
-      dispatchExecutionEnvOp debugMode τ (Fin.ofNat ∘ Fin.val ∘ ExecutionEnv.source)
+      dispatchExecutionEnvOp debugMode τ (.ofNat ∘ Fin.val ∘ ExecutionEnv.source)
     | τ, .CALLVALUE =>
-      dispatchExecutionEnvOp debugMode τ (Fin.ofNat ∘ Fin.val ∘ ExecutionEnv.weiValue)
+      dispatchExecutionEnvOp debugMode τ ExecutionEnv.weiValue
     | τ, .CALLDATALOAD =>
       dispatchUnaryStateOp debugMode τ (λ s v ↦ (s, EvmYul.State.calldataload s v))
     | τ, .CALLDATASIZE =>
@@ -289,7 +289,7 @@ def step {τ : OperationType} (debugMode : Bool) (op : Operation τ) : Transform
     | τ, .EXTCODEHASH => dispatchUnaryStateOp debugMode τ (λ s v ↦ (s, EvmYul.State.extCodeHash s v))
 
     | τ, .BLOCKHASH => dispatchUnaryStateOp debugMode τ (λ s v ↦ (s, EvmYul.State.blockHash s v))
-    | τ, .COINBASE => dispatchStateOp τ (Fin.ofNat ∘ Fin.val ∘ EvmYul.State.coinBase)
+    | τ, .COINBASE => dispatchStateOp τ (.ofNat ∘ Fin.val ∘ EvmYul.State.coinBase)
     | τ, .TIMESTAMP =>
       dispatchStateOp τ EvmYul.State.timeStamp
     | τ, .NUMBER => dispatchStateOp τ EvmYul.State.number
@@ -349,9 +349,9 @@ def step {τ : OperationType} (debugMode : Bool) (op : Operation τ) : Transform
         match lits with
           | [v, poz, len] =>
             let Iₐ := yulState.executionEnv.codeOwner
-            let nonce' : UInt256 := yulState.toState.accountMap.find? Iₐ |>.option 0 Account.nonce
+            let nonce' : UInt256 := yulState.toState.accountMap.find? Iₐ |>.option ⟨0⟩ Account.nonce
             let s : 𝕋 := .𝔹 (toBytesBigEndian Iₐ.val).toByteArray
-            let n : 𝕋 := .𝔹 (toBytesBigEndian nonce').toByteArray
+            let n : 𝕋 := .𝔹 (toBytesBigEndian nonce'.toNat).toByteArray
             let L_A := RLP <| .𝕃 [s, n]
             match L_A with
               | none => .error .NotEncodableRLP
@@ -359,18 +359,18 @@ def step {τ : OperationType} (debugMode : Bool) (op : Operation τ) : Transform
                 let addr : AccountAddress :=
                   (KEC L_A).extract 12 32 /- 160 bits = 20 bytes -/
                     |>.data.data |> fromBytesBigEndian |> Fin.ofNat
-                let (code, _) := yulState.toMachineState.readBytes poz len
+                let (code, _) := yulState.toMachineState.readBytes poz len.toNat
                 match yulState.toState.accountMap.find? Iₐ with
-                  | none => .ok <| (yulState, some 0)
+                  | none => .ok <| (yulState, some ⟨0⟩)
                   | some ac_Iₐ =>
-                    if v < ac_Iₐ.balance then .ok <| (yulState, some 0) else
-                    let ac_Iₐ := {ac_Iₐ with balance := ac_Iₐ.balance - v, nonce := ac_Iₐ.nonce + 1}
+                    if v < ac_Iₐ.balance then .ok <| (yulState, some ⟨0⟩) else
+                    let ac_Iₐ := {ac_Iₐ with balance := ac_Iₐ.balance - v, nonce := ac_Iₐ.nonce + ⟨1⟩}
                     let v' :=
                       match yulState.toState.accountMap.find? addr with
-                        | none => 0
+                        | none => ⟨0⟩
                         | some ac_addr => ac_addr.balance
                     let newAccount : Account :=
-                      { nonce := 1
+                      { nonce := ⟨1⟩
                       , balance := v + v'
                       , code := code
                       , storage := default
@@ -382,7 +382,7 @@ def step {τ : OperationType} (debugMode : Bool) (op : Operation τ) : Transform
                         yulState.toState.updateAccount addr newAccount
                         |>.updateAccount Iₐ ac_Iₐ
 
-                    .ok <| (yulState', some addr)
+                    .ok <| (yulState', some (.ofNat addr))
           | _ => .error .InvalidArguments
     | τ, .RETURN => dispatchBinaryMachineStateOp debugMode τ MachineState.evmReturn
     | τ, .REVERT => dispatchBinaryMachineStateOp debugMode τ MachineState.evmRevert
@@ -408,21 +408,21 @@ def step {τ : OperationType} (debugMode : Bool) (op : Operation τ) : Transform
                   | some σ_Iₐ  =>
                     match evmState.lookupAccount r with
                       | none =>
-                        if σ_Iₐ.balance == 0 then
+                        if σ_Iₐ.balance == ⟨0⟩ then
                           evmState.accountMap
                         else
                           evmState.accountMap.insert r
                             {(default : Account) with balance := σ_Iₐ.balance}
-                              |>.insert Iₐ {σ_Iₐ with balance := 0}
+                              |>.insert Iₐ {σ_Iₐ with balance := ⟨0⟩}
                       | some σ_r =>
                         if r ≠ Iₐ then
                           evmState.accountMap.insert r
                             {σ_r with balance := σ_r.balance + σ_Iₐ.balance}
-                              |>.insert Iₐ {σ_Iₐ with balance := 0}
+                              |>.insert Iₐ {σ_Iₐ with balance := ⟨0⟩}
                         else
                           -- if the target is the same as the contract calling `SELFDESTRUCT` that Ether will be burnt.
-                          evmState.accountMap.insert r {σ_r with balance := 0}
-                            |>.insert Iₐ {σ_Iₐ with balance := 0}
+                          evmState.accountMap.insert r {σ_r with balance := ⟨0⟩}
+                            |>.insert Iₐ {σ_Iₐ with balance := ⟨0⟩}
               let evmState' :=
                 {evmState with
                   accountMap := accountMap'
@@ -444,16 +444,16 @@ def step {τ : OperationType} (debugMode : Bool) (op : Operation τ) : Transform
                   | some σ_Iₐ  =>
                     match evmState.lookupAccount r with
                       | none =>
-                        if σ_Iₐ.balance == 0 then
+                        if σ_Iₐ.balance == ⟨0⟩ then
                           evmState.accountMap
                         else
                           evmState.accountMap.insert r
                             {(default : Account) with balance := σ_Iₐ.balance}
-                              |>.insert Iₐ {σ_Iₐ with balance := 0}
+                              |>.insert Iₐ {σ_Iₐ with balance := ⟨0⟩}
                       | some σ_r =>
                           evmState.accountMap.insert r
                             {σ_r with balance := σ_r.balance + σ_Iₐ.balance}
-                              |>.insert Iₐ {σ_Iₐ with balance := 0}
+                              |>.insert Iₐ {σ_Iₐ with balance := ⟨0⟩}
               let evmState' :=
                 {evmState with
                   accountMap := accountMap'
@@ -480,21 +480,21 @@ def step {τ : OperationType} (debugMode : Bool) (op : Operation τ) : Transform
                   | some σ_Iₐ  =>
                     match yulState.toState.lookupAccount r with
                       | none =>
-                        if σ_Iₐ.balance == 0 then
+                        if σ_Iₐ.balance == ⟨0⟩ then
                           yulState.toState.accountMap
                         else
                           yulState.toState.accountMap.insert r
                             {(default : Account) with balance := σ_Iₐ.balance}
-                              |>.insert Iₐ {σ_Iₐ with balance := 0}
+                              |>.insert Iₐ {σ_Iₐ with balance := ⟨0⟩}
                       | some σ_r =>
                         if r ≠ Iₐ then
                           yulState.toState.accountMap.insert r
                             {σ_r with balance := σ_r.balance + σ_Iₐ.balance}
-                              |>.insert Iₐ {σ_Iₐ with balance := 0}
+                              |>.insert Iₐ {σ_Iₐ with balance := ⟨0⟩}
                         else
                           -- if the target is the same as the contract calling `SELFDESTRUCT` that Ether will be burnt.
-                          yulState.toState.accountMap.insert r {σ_r with balance := 0}
-                            |>.insert Iₐ {σ_Iₐ with balance := 0}
+                          yulState.toState.accountMap.insert r {σ_r with balance := ⟨0⟩}
+                            |>.insert Iₐ {σ_Iₐ with balance := ⟨0⟩}
               let yulState' :=
                 yulState.setState
                   { yulState.toState with accountMap := accountMap', substate := A'}
@@ -508,22 +508,22 @@ def step {τ : OperationType} (debugMode : Bool) (op : Operation τ) : Transform
             let Iₐ := yulState.executionEnv.codeOwner
             let this₀ := toBytesBigEndian Iₐ.val
             let this : List UInt8 := List.replicate (20 - this₀.length) 0 ++ this₀
-            let (code, _) := yulState.toMachineState.readBytes poz len
-            let s : List UInt8 := toBytesBigEndian ζ
+            let (code, _) := yulState.toMachineState.readBytes poz len.toNat
+            let s : List UInt8 := toBytesBigEndian ζ.toNat
             let a₀ : List UInt8 := [0xff]
             let addr₀ := KEC <| ⟨⟨a₀ ++ this ++ s⟩⟩ ++ KEC code
             let addr : AccountAddress := Fin.ofNat <| fromBytesBigEndian addr₀.data.data
             match yulState.toState.accountMap.find? Iₐ with
-              | none => .ok <| (yulState, some 0)
+              | none => .ok <| (yulState, some ⟨0⟩)
               | some ac_Iₐ =>
-                if v < ac_Iₐ.balance then .ok <| (yulState, some 0) else
-                let ac_Iₐ' := {ac_Iₐ with balance := ac_Iₐ.balance - v, nonce := ac_Iₐ.nonce + 1}
+                if v < ac_Iₐ.balance then .ok <| (yulState, some ⟨0⟩) else
+                let ac_Iₐ' := {ac_Iₐ with balance := ac_Iₐ.balance - v, nonce := ac_Iₐ.nonce + ⟨1⟩}
                 let v' :=
                   match yulState.toState.accountMap.find? addr with
-                    | none => 0
+                    | none => ⟨0⟩
                     | some ac_addr => ac_addr.balance
                 let newAccount : Account :=
-                  { nonce := 1
+                  { nonce := ⟨1⟩
                   , balance := v + v'
                   , code := code
                   , storage := default
@@ -535,7 +535,7 @@ def step {τ : OperationType} (debugMode : Bool) (op : Operation τ) : Transform
                     yulState.toState.updateAccount addr newAccount
                       |>.updateAccount Iₐ ac_Iₐ'
 
-                .ok <| (yulState', some addr)
+                .ok <| (yulState', some (.ofNat addr))
           | _ => .error .InvalidArguments
 
     | .Yul, _ => λ _ _ ↦ default

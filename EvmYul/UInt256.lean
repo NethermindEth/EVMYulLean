@@ -11,19 +11,30 @@ import Mathlib.Tactic.Ring
 
 namespace EvmYul
 
-def UInt256.size : ℕ := 115792089237316195423570985008687907853269984665640564039457584007913129639936
+/-- The size of type `UInt256`, that is, `2^256`. -/
+def UInt256.size : ℕ :=
+  115792089237316195423570985008687907853269984665640564039457584007913129639936
 
-instance : NeZero UInt256.size := ⟨by decide⟩
+structure UInt256 where
+  val : Fin UInt256.size
+  deriving BEq, Ord
 
-abbrev UInt256 := Fin UInt256.size
+instance : ToString UInt256 where
+  toString a := toString a.val
+-- instance : NeZero UInt256.size := ⟨by decide⟩
 
-instance : SizeOf UInt256 where sizeOf := 1
+-- instance : SizeOf UInt256 where sizeOf := 1
 
 namespace UInt256
 
-def ofNat (n : ℕ) : UInt256 := Fin.ofNat n
-instance {n : ℕ} : OfNat UInt256 n := ⟨UInt256.ofNat n⟩
-instance : Inhabited UInt256 := ⟨0⟩
+def ofNat (n : ℕ) : UInt256 := ⟨Fin.ofNat n⟩
+def toNat (u : UInt256) : ℕ := u.val.val
+
+instance : Repr UInt256 where
+  reprPrec n _ := repr n.toNat
+
+instance {n : ℕ} : OfNat (Fin UInt256.size) n := ⟨Fin.ofNat n⟩
+instance : Inhabited UInt256 := ⟨ofNat 0⟩
 
 end UInt256
 
@@ -34,14 +45,16 @@ section CastUtils
 open EvmYul UInt256
 
 abbrev Nat.toUInt256 : ℕ → UInt256 := ofNat
-abbrev UInt8.toUInt256 (a : UInt8) : UInt256 := ⟨a.1, Nat.lt_trans a.1.2 (by decide)⟩
-def Bool.toUInt256 (b : Bool) : UInt256 := if b then 1 else 0
+abbrev UInt8.toUInt256 (a : UInt8) : UInt256 :=
+  ⟨a.1, Nat.lt_trans a.1.2 (by decide)⟩
+def Bool.toUInt256 (b : Bool) : UInt256 :=
+  if b then UInt256.ofNat 1 else UInt256.ofNat 0
 
 @[simp]
-lemma Bool.toUInt256_true : true.toUInt256 = 1 := rfl
+lemma Bool.toUInt256_true : true.toUInt256 = UInt256.ofNat 1 := rfl
 
 @[simp]
-lemma Bool.toUInt256_false : false.toUInt256 = 0 := rfl
+lemma Bool.toUInt256_false : false.toUInt256 = UInt256.ofNat 0 := rfl
 
 end CastUtils
 
@@ -49,22 +62,22 @@ namespace EvmYul
 
 namespace UInt256
 
-
-def add (a b : UInt256) : UInt256 := a.1 + b.1
-def sub (a b : UInt256) : UInt256 := a.1 - b.1
-def mul (a b : UInt256) : UInt256 := a.1 * b.1
-def div (a b : UInt256) : UInt256 := a.1 / b.1
-def mod (a b : UInt256) : UInt256 := if b == 0 then 0 else a.1 % b.1
-def modn (a : UInt256) (n : ℕ) : UInt256 := Fin.modn a.1 n
-def land (a b : UInt256) : UInt256 := Fin.land a.1 b.1
-def lor (a b : UInt256) : UInt256 := Fin.lor a.1 b.1
-def xor (a b : UInt256) : UInt256 := Fin.xor a.1 b.1
-def shiftLeft (a b : UInt256) : UInt256 := if b >= 256 then 0 else a <<< b
-def shiftRight (a b : UInt256) : UInt256 := if b >= 256 then 0 else a >>> b
+def add (a b : UInt256) : UInt256 := ⟨a.val + b.val⟩
+def sub (a b : UInt256) : UInt256 := ⟨a.val - b.val⟩
+def mul (a b : UInt256) : UInt256 := ⟨a.val * b.val⟩
+def div (a b : UInt256) : UInt256 := ⟨a.val / b.val⟩
+def mod (a b : UInt256) : UInt256 := if b.val == 0 then ⟨0⟩ else ⟨a.val % b.val⟩
+def modn (a : UInt256) (n : ℕ) : UInt256 := ⟨Fin.modn a.val n⟩
+def land (a b : UInt256) : UInt256  := ⟨Fin.land a.val b.val⟩
+def lor (a b : UInt256) : UInt256   := ⟨Fin.lor a.val b.val⟩
+def xor (a b : UInt256) : UInt256   := ⟨Fin.xor a.val b.val⟩
+def shiftLeft (a b : UInt256) : UInt256  :=
+  if b.val >= 256 then ⟨0⟩ else ⟨a.val <<< b.val⟩
+def shiftRight (a b : UInt256) : UInt256 :=
+  if b.val >= 256 then ⟨0⟩ else ⟨a.val >>> b.val⟩
 -- def lt (a b : UInt256) : Prop := a.1 < b.1
 -- def le (a b : UInt256) : Prop := a.1 ≤ b.1
-def log2 (a : UInt256) : UInt256 := Fin.log2 a.1
-def floor (a : UInt256) : UInt256 := Fin.ofNat (Nat.floor a.1)
+def log2 (a : UInt256) : UInt256 := ⟨Fin.log2 a.val⟩
 
 instance : Add UInt256 := ⟨UInt256.add⟩
 instance : Sub UInt256 := ⟨UInt256.sub⟩
@@ -72,26 +85,46 @@ instance : Mul UInt256 := ⟨UInt256.mul⟩
 instance : Div UInt256 := ⟨UInt256.div⟩
 instance : Mod UInt256 := ⟨UInt256.mod⟩
 instance : HMod UInt256 ℕ UInt256 := ⟨UInt256.modn⟩
--- instance : LT UInt256 := ⟨UInt256.lt⟩
--- instance : LE UInt256 := ⟨UInt256.le⟩
 
-def complement (a : UInt256) : UInt256 := 0-(a + 1)
+instance : LT UInt256 where
+  lt a b := LT.lt a.val b.val
+
+instance : LE UInt256 where
+  le a b := LE.le a.val b.val
+
+instance : Preorder UInt256 where
+  le_refl := by intro; apply Nat.le_refl
+  le_trans := by intro _ _ _ h₁ h₂ ; apply Nat.le_trans h₁ h₂
+  lt := fun a b => a ≤ b ∧ ¬b ≤ a
+  lt_iff_le_not_le := by intros; rfl
+
+def complement (a : UInt256) : UInt256 := ⟨0 - (a.val + 1)⟩
+
+def lnot (a : UInt256) : UInt256 := ofNat (UInt256.size - 1) - a
+
+def abs (a : UInt256) : UInt256 :=
+  if 2 ^ 255 <= a.toNat
+  then ⟨a.val * (-1)⟩
+  else a
 
 def fromSigned (a : UInt256) : ℤ :=
-  if a < 2^255 then a.val else - (Nat.xor (UInt256.size - 1) a.val) - 1
+  if a.toNat < 2^255 then a.val else - (Nat.xor (UInt256.size - 1) a.val) - 1
 
 def toSigned (i : ℤ) : UInt256 :=
   match i with
-    | .ofNat n => Fin.ofNat n
-    | .negSucc n => Fin.ofNat (UInt256.size - 1 - n)
+    | .ofNat n => ofNat n
+    | .negSucc n => ofNat (UInt256.size - 1 - n)
+
 
 example : fromSigned (toSigned 0) = 0 := by rfl
 example : fromSigned (toSigned (-7)) = -7 := by rfl
 example : fromSigned (toSigned 7) = 7 := by rfl
 -- Largest two’s complement signed 256-bit integer
 example : fromSigned (toSigned (2^255 - 1)) = 2^255 - 1 := by rfl
+example : abs (toSigned (2^255 - 1)) = ofNat (2^255 - 1) := by rfl
 -- Smallest two’s complement signed 256-bit integer
 example : fromSigned (toSigned (-2^255)) = -2^255 := by rfl
+example : abs (toSigned (-2^255)) = ofNat (2^255) := by rfl
 
 instance : Complement UInt256 := ⟨EvmYul.UInt256.complement⟩
 
@@ -101,7 +134,7 @@ private def powAux (a : UInt256) (c : UInt256) : ℕ → UInt256
                  then powAux (a * c) (c * c) (n / 2)
                  else powAux a       (c * c) (n / 2)
 
-def pow (b : UInt256) (n : UInt256) := powAux 1 b n.1
+def pow (b : UInt256) (n : UInt256) := powAux ⟨1⟩ b n.1
 
 instance : HPow UInt256 UInt256 UInt256 := ⟨pow⟩
 instance : AndOp UInt256 := ⟨UInt256.land⟩
@@ -109,7 +142,16 @@ instance : OrOp UInt256 := ⟨UInt256.lor⟩
 instance : Xor UInt256 := ⟨UInt256.xor⟩
 instance : ShiftLeft UInt256 := ⟨UInt256.shiftLeft⟩
 instance : ShiftRight UInt256 := ⟨UInt256.shiftRight⟩
-instance : DecidableEq UInt256 := decEq
+-- TODO: It can probably be done more concisely
+instance : DecidableEq UInt256 := λ a b ↦
+  match decEq a.val b.val with
+    | isTrue h => isTrue (congrArg UInt256.mk h)
+    | isFalse h => by
+      have neq : ¬ a = b := by
+        intro eq
+        have eq' : a.val = b.val := congrArg UInt256.val eq
+        contradiction
+      exact isFalse neq
 
 def decLt (a b : UInt256) : Decidable (a < b) :=
   match a, b with
@@ -124,65 +166,55 @@ instance (a b : UInt256) : Decidable (a ≤ b) := UInt256.decLe a b
 instance : Max UInt256 := maxOfLe
 instance : Min UInt256 := minOfLe
 
-def toNat (n : UInt256) : ℕ := n.1
-def eq0 (a : UInt256) : Bool := a = 0
-def lnot (a : UInt256) : UInt256 := (UInt256.size - 1) - a
+def eq0 (a : UInt256) : Bool := a == ⟨0⟩
 
 def byteAt (a b : UInt256) : UInt256 :=
-  -- dbg_trace "BYTE AT"
-  b >>> (UInt256.ofNat ((31 - a.toNat) * 8)) &&& 0xFF
+  b >>> (UInt256.ofNat ((31 - a.toNat) * 8)) &&& ⟨0xFF⟩
 
-def sgn (a : UInt256) : UInt256 :=
-  if 2 ^ 255 <= a
-  then -1
+def sgn (a : UInt256) : ℤ :=
+  if 2 ^ 255 <= a.toNat then
+    -1
   else
-    if a = 0
-    then 0
-    else 1
+    if eq0 a then 0 else 1
 
-def abs (a : UInt256) : UInt256 :=
-  if 2 ^ 255 <= a
-  then a * -1
-  else a
-
-def bigUInt : UInt256 := 0xffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffff
+def bigUInt : UInt256 := ofNat 0xffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffff
 
 def sdiv (a b : UInt256) : UInt256 :=
-  if 2 ^ 255 <= a then
-    if 2 ^ 255 <= b then
+  if 2 ^ 255 <= a.toNat then
+    if 2 ^ 255 <= b.toNat then
       abs a / abs b
-    else (abs a / b) * -1
+    else ⟨(abs a / b).val * -1⟩
   else
-    if 2 ^ 255 <= b then
-       (a / abs b) * -1
+    if 2 ^ 255 <= b.toNat then
+      ⟨(a / abs b).val * -1⟩
     else a / b
 
 def smod (a b : UInt256) : UInt256 :=
-  if b == 0 then 0
+  if b.toNat == 0 then ⟨0⟩
   else
-    let sgnA := if 2 ^ 255 <= a then -1 else 1
-    let sgnB := if 2 ^ 255 <= b then -1 else 1
-    let mask : UInt256 := ofNat (2 ^ 256 - 1 : ℕ)
-    let absA := if sgnA == 1 then a else - (UInt256.xor a mask + 1)
-    let absB := if sgnB == 1 then b else - (UInt256.xor b mask + 1)
-    sgnA * (absA % absB)
+    -- let sgnA : ℤ := if 2 ^ 255 <= a.toNat then -1 else 1
+    -- let sgnB : ℤ := if 2 ^ 255 <= b.toNat then -1 else 1
+    -- let mask : UInt256 := ofNat (2 ^ 256 - 1 : ℕ)
+    -- let absA := abs a -- if sgnA == 1 then a else ⟨- (UInt256.xor a mask + ⟨1⟩).val⟩
+    -- let absB := abs b -- if sgnB == 1 then b else ⟨- (UInt256.xor b mask + ⟨1⟩).val⟩
+    toSigned <| sgn a * (abs a % abs b).toNat
 
 def sltBool (a b : UInt256) : Bool :=
-  if a ≥ 2 ^ 255 then
-    if b ≥ 2 ^ 255 then
+  if a.toNat ≥ 2 ^ 255 then
+    if b.toNat ≥ 2 ^ 255 then
       a < b
     else true
   else
-    if b ≥ 2 ^ 255 then false
+    if b.toNat ≥ 2 ^ 255 then false
     else a < b
 
 def sgtBool (a b : UInt256) : Bool :=
-  if a ≥ 2 ^ 255 then
-    if b ≥ 2 ^ 255 then
+  if a.toNat ≥ 2 ^ 255 then
+    if b.toNat ≥ 2 ^ 255 then
       a > b
     else false
   else
-    if b ≥ 2 ^ 255 then true
+    if b.toNat ≥ 2 ^ 255 then true
     else a > b
 
 abbrev fromBool := Bool.toUInt256
@@ -194,12 +226,12 @@ def sgt (a b : UInt256) :=
   fromBool (sgtBool a b)
 
 def sar (a b : UInt256) : UInt256 :=
-  if sltBool b 0
+  if sltBool b ⟨0⟩
   then UInt256.complement (UInt256.complement b >>> a)
   else b >>> a
 
-example : sar 2 (toSigned 32) = toSigned 8 := by rfl
-example : sar 2 (toSigned (-32)) = toSigned (-8) := by rfl
+example : sar ⟨2⟩ (toSigned 32) = toSigned 8 := by rfl
+example : sar ⟨2⟩ (toSigned (-32)) = toSigned (-8) := by rfl
 
 private partial def dbg_toHex (n : Nat) : String :=
   if n < 16
@@ -207,24 +239,24 @@ private partial def dbg_toHex (n : Nat) : String :=
   else (dbg_toHex (n / 16)) ++ hexDigitRepr (n % 16)
 
 def signextend (a b : UInt256) : UInt256 :=
-  if a ≤ 31 then
-    let test_bit := a * 8 + 7
-    let sign_bit := 1 <<< test_bit
-    if b &&& sign_bit ≠ 0 then
+  if a.toNat ≤ 31 then
+    let test_bit := a * ⟨8⟩ + ⟨7⟩
+  let sign_bit := ⟨1⟩ <<< test_bit
+    if b &&& sign_bit ≠ ⟨0⟩ then
       b ||| (UInt256.size.toUInt256 - sign_bit)
-    else b &&& (sign_bit - 1)
+    else b &&& (sign_bit - ⟨1⟩)
   else b
 
 def addMod (a b c : UInt256) : UInt256 :=
   -- "All intermediate calculations of this operation are **not** subject to the 2^256 modulo."
-  if c = 0 then 0 else
-    Nat.mod (a.val + b.val) c
+  if eq0 c then ⟨0⟩ else
+    ofNat <| Nat.mod (a.val + b.val) c.toNat
 
 def mulMod (a b c : UInt256) : UInt256 :=
   -- "All intermediate calculations of this operation are **not** subject to the 2^256 modulo."
   -- dbg_trace s!"mulmod: {a} {b} {c}"
-  if c = 0 then 0 else
-    Nat.mod (a.val * b.val) c
+  if eq0 c then ⟨0⟩ else
+    ofNat <| Nat.mod (a.val * b.val) c.toNat
 
 def exp (a b : UInt256) : UInt256 := pow a b
   -- a ^ b.val
@@ -240,7 +272,7 @@ def eq (a b : UInt256) :=
   fromBool (a = b)
 
 def isZero (a : UInt256) :=
-  fromBool (a = 0)
+  fromBool (eq0 a)
 
 end UInt256
 
@@ -363,19 +395,8 @@ def fromBytes_if_you_really_must? (bs : List UInt8) : UInt256 :=
 
 def toBytes! (n : UInt256) : List UInt8 := zeroPadBytes 32 (toBytes' n.1)
 
-@[simp]
-lemma length_toBytes! {n : UInt256} : (toBytes! n).length = 32 := zeroPadBytes_len (toBytes'_UInt256_le n.2)
-
-def uInt256OfByteArray' (arr : ByteArray) : UInt256 := Id.run do
-  let mut acc : ℕ := 0
-  let mut exp : ℕ := arr.size - 1
-  for byte in arr do
-    acc := acc + byte.toNat * 2 ^ (8 * exp)
-    exp := exp - 1
-  return acc
-
 def uInt256OfByteArray (arr : ByteArray) : UInt256 :=
-  fromBytes' arr.data.toList.reverse
+  .ofNat <| fromBytes' arr.data.toList.reverse
 
 end EvmYul
 

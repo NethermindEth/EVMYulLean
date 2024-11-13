@@ -34,7 +34,7 @@ def AddrMap.keys {α : Type} [Inhabited α] (self : AddrMap α) : Multiset Accou
   .ofList <| self.toList.map Prod.fst
 
 instance : LE ((_ : UInt256) × UInt256) where
-  le lhs rhs := if lhs.1 = rhs.1 then lhs.2 ≤ rhs.2 else lhs.1 ≤ rhs.1
+  le lhs rhs := if lhs.1.val = rhs.1.val then lhs.2.val ≤ rhs.2.val else lhs.1.val ≤ rhs.1.val
 
 instance : IsTrans ((_ : UInt256) × UInt256) (· ≤ ·) where
   trans a b c h₁ h₂ := by

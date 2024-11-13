@@ -781,7 +781,7 @@ end Operation
 open EvmYul.UInt256
 
 def exp (a b : UInt256) : UInt256 :=
-  a ^ b.val
+  a ^ b
 
 abbrev fromBool := Bool.toUInt256
 
@@ -801,7 +801,7 @@ def eq (a b : UInt256) :=
   fromBool (a = b)
 
 def isZero (a : UInt256) :=
-  fromBool (a = 0)
+  fromBool (eq0 a)
 
 end EvmYul
 

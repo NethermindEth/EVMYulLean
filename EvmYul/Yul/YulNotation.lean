@@ -203,7 +203,7 @@ def parseFunction : String → PrimOp ⊕ Identifier
 partial def translateExpr (expr : TSyntax `expr) : TermElabM Term :=
   match expr with
     | `(expr| $idn:ident) => `(Expr.Var $(translateIdent idn))
-    | `(expr| $num:num) => `(Expr.Lit $num)
+    | `(expr| $num:num) => `(Expr.Lit (.ofNat $num))
     | `(expr| $name:ident($args:expr,*)) => do
       let args' ← (args : TSyntaxArray `expr).mapM translateExpr
       let f' := parseFunction (TSyntax.getId name).lastComponentAsString
@@ -217,7 +217,7 @@ partial def translateExpr (expr : TSyntax `expr) : TermElabM Term :=
 
 partial def translateExpr' (expr : TSyntax `expr) : TermElabM Term :=
   match expr with
-  | `(expr| $num:num) => `($num)
+  | `(expr| $num:num) => `(.ofNat $num)
   | exp => translateExpr exp
 
 partial def translateParamsList
@@ -391,17 +391,17 @@ def f : FunctionDefinition := <f
 
 example : <params [a,b,c] > = ["a", "b", "c"] := rfl
 example : << bar >> = Expr.Var "bar" := rfl
-example : << 42 >> = Expr.Lit 42 := rfl
+example : << 42 >> = Expr.Lit ⟨42⟩ := rfl
 example : <s break > = Stmt.Break := rfl
-example : <s let a, b := f(42) > = Stmt.LetCall ["a", "b"] f [Expr.Lit 42] := rfl
+example : <s let a, b := f(42) > = Stmt.LetCall ["a", "b"] f [Expr.Lit ⟨42⟩] := rfl
 example : <s let a > = Stmt.Let ["a"] := rfl
-example : <s let a := 5 > = Stmt.LetEq "a" (.Lit 5) := rfl
-example : <s a, b := f(42) > = Stmt.AssignCall ["a", "b"] f [Expr.Lit 42] := rfl
-example : <s a := 42 > = Stmt.Assign "a" (.Lit 42) := rfl
+example : <s let a := 5 > = Stmt.LetEq "a" (.Lit ⟨5⟩) := rfl
+example : <s a, b := f(42) > = Stmt.AssignCall ["a", "b"] f [Expr.Lit ⟨42⟩] := rfl
+example : <s a := 42 > = Stmt.Assign "a" (.Lit ⟨42⟩) := rfl
 
 example : <s c := add(a, b) > = Stmt.AssignPrimCall ["c"] (Operation.StopArith Operation.SAOp.ADD) [Expr.Var "a", Expr.Var "b"] := rfl
 example : <s let c := sub(a, b) > = Stmt.LetPrimCall ["c"] (Operation.StopArith Operation.SAOp.SUB) [Expr.Var "a", Expr.Var "b"] := rfl
-example : <s let a := 5 > = Stmt.LetEq "a" (.Lit 5) := rfl
+example : <s let a := 5 > = Stmt.LetEq "a" (.Lit ⟨5⟩) := rfl
 example : <s {} >
   = Stmt.Block [] := rfl
 example : <s
@@ -424,11 +424,11 @@ example : <ss {
   let c
 } > = [<s let a>, <s let b>, <s let c>] := rfl
 
-example : <s for {} 0 {} {} > = Stmt.For (.Lit 0) [] [] := by rfl
+example : <s for {} 0 {} {} > = Stmt.For (.Lit ⟨0⟩) [] [] := by rfl
 
 example : <<
   add(1, 1)
-  >> = Expr.PrimCall (Operation.StopArith Operation.SAOp.ADD) [Expr.Lit 1, Expr.Lit 1] := rfl
+  >> = Expr.PrimCall (Operation.StopArith Operation.SAOp.ADD) [Expr.Lit ⟨1⟩, Expr.Lit ⟨1⟩] := rfl
 
 example : <s
   for {} lt(i, exponent) { i := add(i, 1) }
@@ -459,16 +459,16 @@ example : <s
   switch a
   case 42 { continue }
   default { break }
-> = Stmt.Switch (Expr.Var "a") [(42, [.Continue])] [.Break] := rfl
+> = Stmt.Switch (Expr.Var "a") [(⟨42⟩, [.Continue])] [.Break] := rfl
 
 example : <s let a, b, c > = Stmt.Let ["a", "b", "c"] := rfl
-example : <s revert(0, 0) > = Stmt.ExprStmtPrimCall (.System (.REVERT)) [(Expr.Lit 0), (Expr.Lit 0)] := rfl
-example : <s if 1 { leave } > = Stmt.If (.Lit 1) [Stmt.Leave] := rfl
+example : <s revert(0, 0) > = Stmt.ExprStmtPrimCall (.System (.REVERT)) [(Expr.Lit ⟨0⟩), (Expr.Lit ⟨0⟩)] := rfl
+example : <s if 1 { leave } > = Stmt.If (.Lit ⟨1⟩) [Stmt.Leave] := rfl
 example : <s {
     if 1 { leave }
     leave
   }
-> = Stmt.Block [Stmt.If (.Lit 1) [.Leave], .Leave] := rfl
+> = Stmt.Block [Stmt.If (.Lit ⟨1⟩) [.Leave], .Leave] := rfl
 
 end Notation
 

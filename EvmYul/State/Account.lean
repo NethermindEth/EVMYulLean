@@ -42,6 +42,6 @@ structure Account :=
 deriving BEq, Inhabited, Repr
 
 def Account.codeHash (self : Account) : UInt256 :=
-  fromBytesBigEndian (KEC self.code).data.data
+  .ofNat <| fromBytesBigEndian (KEC self.code).data.data
 
 end EvmYul
