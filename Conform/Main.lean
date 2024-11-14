@@ -262,10 +262,10 @@ GeneralStateTests:
     Success rate of: 80.769231
 
   stReturnDataTest                      4m56
-    Total tests: 269
-    The post was NOT equal to the resulting state: 12
-    Succeeded: 257
-    Success rate of: 95.539033
+    Total tests: 273
+    The post was NOT equal to the resulting state: 1
+    Succeeded: 272
+    Success rate of: 99.633700
 
   stRevertTest                          4m44
     Total tests: 233
