@@ -150,19 +150,19 @@ def returndatasize (self : MachineState) : UInt256 :=
   .ofNat self.returnData.size
 
 def returndataat (self : MachineState) (pos : UInt256) : UInt8 :=
-  self.returnData.data.getD pos.val 0
+  self.returnData.data.getD pos.toNat 0
 
 def returndatacopy (self : MachineState) (mstart rstart size : UInt256) : Option MachineState :=
-  let pos := rstart.val + size.val
+  let pos := rstart.toNat + size.toNat
   -- TODO:
   -- "The additions in μₛ[1]+i are not subject to the 2^256 modulo"
-  if UInt256.size ≤ pos || self.returndatasize.val < pos then .none
+  if UInt256.size ≤ pos || self.returndatasize.toNat < pos then .none
   else
-    let rdata := self.returnData.readBytes rstart.val size.val
+    let rdata := self.returnData.readBytes rstart.toNat size.toNat
     self.writeBytes rdata mstart size.toNat
 
 def evmReturn (self : MachineState) (mstart s : UInt256) : MachineState := Id.run do
-  let (bytes, newMachineState) := self.readBytes mstart s.val
+  let (bytes, newMachineState) := self.readBytes mstart s.toNat
   newMachineState.setHReturn bytes
 
 def evmRevert (self : MachineState) (mstart s : UInt256) : MachineState :=
@@ -172,7 +172,7 @@ end ReturnData
 
 def keccak256 (self : MachineState) (mstart s : UInt256) : UInt256 × MachineState :=
   -- dbg_trace s!"called keccak256; going to be looking up a lot of vals; s: {s}"
-  let (bytes, newMachineState) := self.readBytes mstart s.val
+  let (bytes, newMachineState) := self.readBytes mstart s.toNat
   -- dbg_trace s!"got vals {vals}"
   let kec := KEC bytes
   -- dbg_trace s!"got kec {kec}"

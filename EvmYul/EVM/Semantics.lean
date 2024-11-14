@@ -185,7 +185,7 @@ def call (debugMode : Bool) (fuel : Nat)
               (o  := state.executionEnv.sender)     -- Iₒ in Θ(.., Iₒ, ..)
               (r  := recipient)                             -- t in Θ(.., t, ..)
               (c  := toExecute σ t)
-              (g  := callgas)
+              (g  := .ofNat callgas)
               (p  := .ofNat state.executionEnv.gasPrice)   -- Iₚ in Θ(.., Iₚ, ..)
               (v  := value)
               (v' := value')
@@ -197,7 +197,7 @@ def call (debugMode : Bool) (fuel : Nat)
           else
           -- otherwise (σ, CCALLGAS(σ, μ, A), A, 0, ())
           .ok
-            (state.createdAccounts, state.toState.accountMap, callgas, state.toState.substate, false, .some .empty)
+            (state.createdAccounts, state.toState.accountMap, .ofNat callgas, state.toState.substate, false, .some .empty)
       -- n ≡ min({μs[6], ‖o‖})
       let n : UInt256 := min outSize (o.elim ⟨0⟩ (UInt256.ofNat ∘ ByteArray.size))
 
@@ -593,15 +593,15 @@ def X (debugMode : Bool) (fuel : ℕ) (evmState : State) : Except EVM.Exception 
           -- on the stack because this is guarded above. As such, `C` can be pure here.
           let gasCost ← C evmState evmState'.activeWords w
           -- dbg_trace s!"gasAvailable: {evmState.gasAvailable}; gasCost: {gasCost} for instruction {w.pretty}"
-          if debugMode && evmState.gasAvailable < gasCost then
+          if debugMode && evmState.gasAvailable.toNat < gasCost then
             dbg_trace s!"gasAvailable: {evmState.gasAvailable} < gasCost: {gasCost} for instruction {w.pretty}"
-          if evmState.gasAvailable < gasCost then do
+          if evmState.gasAvailable.toNat < gasCost then do
             -- Out of gas. This is a part of `Z`, as such, we have the same return value.
             -- dbg_trace "Out of gass!"
             -- dbg_trace s!"gas available: {evmState.gasAvailable}; gas cost: {gasCost}"
             .ok ({evmState with accountMap := ∅}, none)
           else do
-            let evmState' := {evmState' with gasAvailable := evmState'.gasAvailable - gasCost}
+            let evmState' := {evmState' with gasAvailable := evmState'.gasAvailable - .ofNat gasCost}
             -- dbg_trace s!"new gas available after {w.pretty}: {evmState.gasAvailable - gasCost}"
             -- dbg_trace s!"gas cost after {w.pretty}: {gasCost}"
             match H evmState'.toMachineState w with -- The YP does this in a weird way.
@@ -1137,7 +1137,8 @@ def Υ (debugMode : Bool) (fuel : ℕ) (σ : YPState) (chainId H_f : ℕ) (H : B
         )
         0
     g₀_data + g₀_create + GasConstants.Gtransaction + g₀_accessList
-
+  if T.base.gasLimit.toNat < g₀ then
+    .error <| .InvalidTransaction .INTRINSIC_GAS_TOO_LOW
   let senderAccount := (σ.find? S_T).get!
   -- The priority fee (67)
   let f :=

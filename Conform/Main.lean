@@ -47,9 +47,9 @@ GeneralStateTests:
 
   Pyspecs                               28m7
     Total tests: 1553
-    The post was NOT equal to the resulting state: 254
-    Succeeded: 1299
-    Success rate of: 83.644559
+    The post was NOT equal to the resulting state: 246
+    Succeeded: 1307
+    Success rate of: 84.159691
 
   Shanghai                              0m42
     Total tests: 27

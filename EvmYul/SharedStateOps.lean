@@ -35,12 +35,12 @@ def writeBytes (self : SharedState) (source : ByteArray) (s n : Nat) : SharedSta
   { self with toMachineState := self.toMachineState.writeBytes source (.ofNat s) n }
 
 def calldatacopy (self : SharedState) (mstart datastart size : UInt256) : SharedState :=
-  let arr := self.toState.executionEnv.inputData.readBytes datastart.val size.val
+  let arr := self.toState.executionEnv.inputData.readBytes datastart.toNat size.toNat
   -- dbg_trace s!"{arr}"
   self.writeBytes arr mstart.toNat size.toNat
 
 def codeCopy (self : SharedState) (mstart cstart size : UInt256) : SharedState :=
-  let Ib := self.toState.executionEnv.code.readBytes cstart.val size.val -- TODO(double check, changed in a fast-and-loose manner)
+  let Ib := self.toState.executionEnv.code.readBytes cstart.toNat size.toNat -- TODO(double check, changed in a fast-and-loose manner)
   -- dbg_trace s!"code: {toHex Ib}"
   self.writeBytes Ib mstart.toNat size.toNat
 

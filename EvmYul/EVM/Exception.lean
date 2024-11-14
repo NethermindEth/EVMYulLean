@@ -15,6 +15,7 @@ inductive InvalidTransactionException where
   | InitCodeDataGreaterThan49152 : InvalidTransactionException
   | TYPE_3_TX_ZERO_BLOBS : InvalidTransactionException
   | TYPE_3_TX_PRE_FORK : InvalidTransactionException
+  | INTRINSIC_GAS_TOO_LOW : InvalidTransactionException
 
 instance : Repr InvalidTransactionException where
   reprPrec s _ :=
@@ -29,6 +30,7 @@ instance : Repr InvalidTransactionException where
       | .InitCodeDataGreaterThan49152  => "InitCodeDataGreaterThan49152"
       | .TYPE_3_TX_ZERO_BLOBS => "TYPE_3_TX_ZERO_BLOBS"
       | .TYPE_3_TX_PRE_FORK => "TYPE_3_TX_PRE_FORK"
+      | .INTRINSIC_GAS_TOO_LOW => "INTRINSIC_GAS_TOO_LOW"
 
 -- TODO - fix / cleanup.
 inductive Exception where
