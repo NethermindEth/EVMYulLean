@@ -208,10 +208,10 @@ GeneralStateTests:
     Success rate of: 92.682927
 
   stMemoryTest                          10m29
-    Total tests: 561
-    The post was NOT equal to the resulting state: 79
-    Succeeded: 482
-    Success rate of: 85.918004
+    Total tests: 559
+    The post was NOT equal to the resulting state: 39
+    Succeeded: 520
+    Success rate of: 93.023256
 
   stNonZeroCallsTest                    0m38
     Total tests: 24
@@ -443,7 +443,7 @@ def main : IO Unit := do
     let res ←
       ExceptT.run <|
         EvmYul.Conform.processTestsOfFile
-          -- (whitelist := #["add_d4g0v0_Cancun"])
+          -- (whitelist := #["bufferSrcOffset_d103g0v0_Cancun"])
           testFile
     match res with
       | .error err         => discardedFiles := discardedFiles.push (testFile, err)

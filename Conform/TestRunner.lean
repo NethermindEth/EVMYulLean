@@ -71,6 +71,8 @@ def VerySlowTests : Array String :=
   , "bufferSrcOffset_d39g0v0_Cancun"
   , "bufferSrcOffset_d3g0v0_Cancun"
   , "bufferSrcOffset_d7g0v0_Cancun"
+  , "bufferSrcOffset_d103g0v0_Cancun"
+  , "bufferSrcOffset_d79g0v0_Cancun"
   , "buffer_d16g0v0_Cancun"
   , "buffer_d18g0v0_Cancun"
   , "CREATE_ContractRETURNBigOffset_d1g0v0_Cancun"
