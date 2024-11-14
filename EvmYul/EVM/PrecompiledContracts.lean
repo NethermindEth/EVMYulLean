@@ -26,7 +26,7 @@ def Ξ_ECREC
 :=
   let gᵣ : ℕ := 3000
 
-  if g.val < gᵣ then
+  if g.toNat < gᵣ then
     (∅, ⟨0⟩, A, .empty)
   else
     let d := I.inputData
@@ -94,7 +94,7 @@ def Ξ_SHA256
     let ceil := ( l + 31 ) / 32
     60 + 12 * ceil
 
-  if g.val < gᵣ then
+  if g.toNat < gᵣ then
     (∅, ⟨0⟩, A, .empty)
   else
     let o :=
@@ -134,7 +134,7 @@ def Ξ_RIP160
     let ceil := ( l + 31 ) / 32
     60 + 12 * ceil
 
-  if g.val < gᵣ then
+  if g.toNat < gᵣ then
     (∅, ⟨0⟩, A, .empty)
   else
     let o :=
@@ -174,7 +174,7 @@ def Ξ_ID
     let ceil := ( l + 31 ) / 32
     15 + 3 * ceil
 
-  if g.val < gᵣ then
+  if g.toNat < gᵣ then
     (∅, ⟨0⟩, A, .empty)
   else
     let o := I.inputData
@@ -259,7 +259,7 @@ def Ξ_EXPMOD
 
     max 200 (multiplication_complexity base_length modulus_length * iterations / G_quaddivisor)
 
-  if g.val < gᵣ then
+  if g.toNat < gᵣ then
     (∅, ⟨0⟩, A, .empty)
   else
     let base := nat_of_slice data 96 base_length
@@ -314,7 +314,7 @@ def Ξ_BN_ADD
 :=
   let gᵣ : ℕ := 150
 
-  if g.val < gᵣ then
+  if g.toNat < gᵣ then
     (∅, ⟨0⟩, A, .empty)
   else
     let d := I.inputData
@@ -368,7 +368,7 @@ def Ξ_BN_MUL
 :=
   let gᵣ : ℕ := 6000
 
-  if g.val < gᵣ then
+  if g.toNat < gᵣ then
     (∅, ⟨0⟩, A, .empty)
   else
     let d := I.inputData
@@ -412,7 +412,7 @@ def Ξ_SNARKV
   let k := d.size / 192
   let gᵣ : ℕ := 34000 * k + 45000
 
-  if g.val < gᵣ then
+  if g.toNat < gᵣ then
     (∅, ⟨0⟩, A, .empty)
   else
     let o := SNARKV d
@@ -452,7 +452,7 @@ def Ξ_BLAKE2_F
   let k := d.size / 192
   let gᵣ : ℕ := 34000 * k + 45000
 
-  if g.val < gᵣ then
+  if g.toNat < gᵣ then
     (∅, ⟨0⟩, A, .empty)
   else
     let o := BLAKE2_F d
@@ -496,7 +496,7 @@ def Ξ_PointEval
   let d := I.inputData
   let gᵣ : ℕ := 50000
 
-  if g.val < gᵣ then
+  if g.toNat < gᵣ then
     (∅, ⟨0⟩, A, .empty)
   else
     let o := PointEval d
