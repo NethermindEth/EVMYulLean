@@ -39,7 +39,7 @@ deriving BEq, Repr
 - `yParity`    `y`
 -/
 structure Transaction.WithAccessList where
-  chainId : ChainID
+  chainId : UInt256
   accessList : Batteries.RBMap AccountAddress (Array UInt256) compare
   yParity : UInt256
 deriving BEq, Repr

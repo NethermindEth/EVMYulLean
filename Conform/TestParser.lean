@@ -163,7 +163,7 @@ instance : FromJson Transaction where
         -- Any other transaction now necessarily has an access list.
         let accessListTransaction : Transaction.WithAccessList :=
           {
-            chainId    := let mainnet : Nat := 1; mainnet
+            chainId    := ← json.getObjValAsD UInt256 "chainId" ⟨1⟩
             accessList := ← FromJson.fromJson? accessList <&> accessListToRBMap
             yParity    := ← json.getObjValAsD! UInt256 "v"
           }

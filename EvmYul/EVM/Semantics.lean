@@ -1070,7 +1070,7 @@ def checkTransactionGetSender (σ : YPState) (chainId H_f : ℕ) (T : Transactio
 
       | /- 1 -/ .access t =>
         .ok ∘ .𝕃 <|
-          [ .𝔹 (BE t.chainId) -- T_c
+          [ .𝔹 (BE t.chainId.toNat) -- T_c
           , .𝔹 (BE t.nonce.toNat) -- Tₙ
           , .𝔹 (BE t.gasPrice.toNat) -- Tₚ
           , .𝔹 (BE t.gasLimit.toNat) -- T_g
@@ -1082,7 +1082,7 @@ def checkTransactionGetSender (σ : YPState) (chainId H_f : ℕ) (T : Transactio
           ]
       | /- 2 -/ .dynamic t =>
         .ok ∘ .𝕃 <|
-          [ .𝔹 (BE t.chainId) -- T_c
+          [ .𝔹 (BE t.chainId.toNat) -- T_c
           , .𝔹 (BE t.nonce.toNat) -- Tₙ
           , .𝔹 (BE t.maxPriorityFeePerGas.toNat) -- T_f
           , .𝔹 (BE t.maxFeePerGas.toNat) -- Tₘ
@@ -1095,7 +1095,7 @@ def checkTransactionGetSender (σ : YPState) (chainId H_f : ℕ) (T : Transactio
           ]
       | /- 3 -/ .blob t =>
         .ok ∘ .𝕃 <|
-          [ .𝔹 (BE t.chainId) -- T_c
+          [ .𝔹 (BE t.chainId.toNat) -- T_c
           , .𝔹 (BE t.nonce.toNat) -- Tₙ
           , .𝔹 (BE t.maxPriorityFeePerGas.toNat) -- T_f
           , .𝔹 (BE t.maxFeePerGas.toNat) -- Tₘ

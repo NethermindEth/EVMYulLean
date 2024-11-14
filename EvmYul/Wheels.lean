@@ -49,15 +49,6 @@ def toHex (bytes : ByteArray) : String :=
 instance : Repr ByteArray where
   reprPrec s _ := toHex s
 
-/--
-  Is an enumerate type, but nat is okay for now TODO(model properly)
--/
-def ChainID : Type := Nat
-  deriving Repr
-
-deriving instance DecidableEq for ChainID
-deriving instance Inhabited for ChainID
-
 def Identifier := String
 instance : ToString Identifier := inferInstanceAs (ToString String)
 instance : Inhabited Identifier := inferInstanceAs (Inhabited String)
