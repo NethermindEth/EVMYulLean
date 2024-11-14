@@ -25,8 +25,8 @@ The partial shared `MachineState` `μ`. Section 9.4.1.
 -/
 structure MachineState where
   gasAvailable        : UInt256
-  activeWords         : ℕ
-  activeWordsWritten  : ℕ
+  activeWords         : UInt256
+  activeWordsWritten  : UInt256
   memory              : Memory
   returnData          : ByteArray
   H_return            : ByteArray

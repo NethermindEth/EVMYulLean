@@ -591,7 +591,7 @@ def X (debugMode : Bool) (fuel : ℕ) (evmState : State) : Except EVM.Exception 
           -- that neither really was the YP.
           -- Similarly, we cannot reach a situation in which the stack elements are not available
           -- on the stack because this is guarded above. As such, `C` can be pure here.
-          let gasCost ← C evmState (.ofNat evmState'.activeWords) w
+          let gasCost ← C evmState evmState'.activeWords w
           -- dbg_trace s!"gasAvailable: {evmState.gasAvailable}; gasCost: {gasCost} for instruction {w.pretty}"
           if debugMode && evmState.gasAvailable < gasCost then
             dbg_trace s!"gasAvailable: {evmState.gasAvailable} < gasCost: {gasCost} for instruction {w.pretty}"

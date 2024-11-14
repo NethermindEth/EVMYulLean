@@ -221,7 +221,7 @@ def Ccall (t : AccountAddress) (val g : UInt256) (σ : AccountMap) (μ : Machine
 /--
 (65)
 -/
-def R (x : ℕ) : ℕ := Ginitcodeword * (x + 31 / 32)
+def R (x : ℕ) : ℕ := Ginitcodeword * ((x + 31) / 32)
 
 /--
 H.1. Gas Cost - the third summand.
@@ -279,7 +279,7 @@ NB this differs ever so slightly from how it is defined in the YP, please refer 
 -/
 def C (s : EVM.State) (μ'ᵢ : UInt256) (instr : Operation .EVM) : Except EVM.Exception UInt256 := do
   let { toMachineState := μ, ..} := s
-  pure <| Cₘ μ'ᵢ - Cₘ (.ofNat μ.activeWords) + (← C' s instr)
+  pure <| Cₘ μ'ᵢ - Cₘ μ.activeWords + (← C' s instr)
 
 end Gas
 

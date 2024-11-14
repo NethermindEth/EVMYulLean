@@ -24,7 +24,7 @@ def M (s f l : ℕ) : ℕ :=
     max s (if rem == 0 then divided else divided + 1)
 
 def newMax (self : MachineState) (addr : UInt256) (numOctets : ℕ) : ℕ :=
-  M self.activeWords addr.1 numOctets
+  M self.activeWords.toNat addr.1 numOctets
 
 def x : ByteArray := "hello".toUTF8
 def y : ByteArray := "kokusho".toUTF8
@@ -32,7 +32,7 @@ def y : ByteArray := "kokusho".toUTF8
 def writeBytes (self : MachineState) (source : ByteArray) (addr : UInt256) (size : ℕ) : MachineState :=
   -- dbg_trace "writeBytes"
   -- dbg_trace s!"current mem: {self.memory} source: {source} s: {s} n: {n}"
-  let maxPracticalAddress := self.activeWordsWritten * 32
+  let maxPracticalAddress := self.activeWordsWritten.toNat * 32
   let practicalSize₁ := min source.size size
   let practicalSize₂ : ℕ := maxPracticalAddress - (addr.toNat + practicalSize₁)
   { self with
@@ -41,8 +41,8 @@ def writeBytes (self : MachineState) (source : ByteArray) (addr : UInt256) (size
           source
           addr
           (practicalSize₁ + practicalSize₂)
-      activeWords := self.newMax addr size
-      activeWordsWritten := self.newMax addr practicalSize₁
+      activeWords := .ofNat <| self.newMax addr size
+      activeWordsWritten := .ofNat <| self.newMax addr practicalSize₁
   }
 
 def writeWord (self : MachineState) (addr val : UInt256) : MachineState :=
@@ -71,11 +71,11 @@ def readBytes (self : MachineState) (addr : UInt256) (size : ℕ) : ByteArray ×
     if size > 2^35 then
       panic! s!"Can not handle reding byte arrays larger than 2^35 ({2^35})"
     else size
-  let maxPracticalAddress := self.activeWordsWritten * 32
+  let maxPracticalAddress := self.activeWordsWritten.toNat * 32
   let practicalLastAddr := min maxPracticalAddress (addr.toNat + size)
-  let practicalSize : ℕ := practicalLastAddr - addr.val
+  let practicalSize := practicalLastAddr - addr.toNat
   let bytes := self.memory.readMemory addr.toNat practicalSize ++ ByteArray.zeroes ⟨size - practicalSize⟩
-  let newMachineState := { self with activeWords := self.newMax addr size}
+  let newMachineState := { self with activeWords := .ofNat <| self.newMax addr size}
   (bytes, newMachineState)
 
 /--
@@ -118,7 +118,7 @@ def lookupMemory (self : MachineState) (addr : UInt256) : UInt256 × MachineStat
 --   readBytes''_aux self addr .empty size
 
 def msize (self : MachineState) : UInt256 :=
-  .ofNat (self.activeWords * 32)
+  self.activeWords * ⟨32⟩
 
 def mload (self : MachineState) (spos : UInt256) : UInt256 × MachineState :=
   self.lookupMemory spos
