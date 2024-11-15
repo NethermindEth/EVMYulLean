@@ -197,6 +197,7 @@ def executeTransaction (transaction : Transaction) (s : EVM.State) (header : Blo
   -- Validate transaction
   match transaction with
     | .blob t =>
+      if t.maxFeePerBlobGas.toNat < header.getBlobGasprice then .error (.InvalidTransaction .INSUFFICIENT_MAX_FEE_PER_BLOB_GAS)
       if header.blobGasUsed == none || header.excessBlobGas == none then .error (.InvalidTransaction .TYPE_3_TX_PRE_FORK)
       match t.blobVersionedHashes with
         | [] => .error (.InvalidTransaction .TYPE_3_TX_ZERO_BLOBS)

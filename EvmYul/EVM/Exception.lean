@@ -16,6 +16,7 @@ inductive InvalidTransactionException where
   | TYPE_3_TX_ZERO_BLOBS : InvalidTransactionException
   | TYPE_3_TX_PRE_FORK : InvalidTransactionException
   | INTRINSIC_GAS_TOO_LOW : InvalidTransactionException
+  | INSUFFICIENT_MAX_FEE_PER_BLOB_GAS : InvalidTransactionException
 
 instance : Repr InvalidTransactionException where
   reprPrec s _ :=
@@ -31,6 +32,7 @@ instance : Repr InvalidTransactionException where
       | .TYPE_3_TX_ZERO_BLOBS => "TYPE_3_TX_ZERO_BLOBS"
       | .TYPE_3_TX_PRE_FORK => "TYPE_3_TX_PRE_FORK"
       | .INTRINSIC_GAS_TOO_LOW => "INTRINSIC_GAS_TOO_LOW"
+      | .INSUFFICIENT_MAX_FEE_PER_BLOB_GAS => "INTRINSIC_GAS_TOO_LOW"
 
 -- TODO - fix / cleanup.
 inductive Exception where

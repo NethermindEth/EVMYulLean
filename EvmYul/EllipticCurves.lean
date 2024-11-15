@@ -87,5 +87,3 @@ private example :
 := by native_decide
 
 open Batteries
-
-#eval ByteArray.zeroes ⟨12⟩ ++ (KEC pᵤ).extract 12 32
