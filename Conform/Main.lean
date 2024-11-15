@@ -39,13 +39,13 @@ def log (testFile : System.FilePath) (testName : String) (result : TestResult) :
 
 /-
 GeneralStateTests:
-  Cancun
+  Cancun                                2m43
     Total tests: 173
     The post was NOT equal to the resulting state: 5
     Succeeded: 168
     Success rate of: 97.109827
 
-  Pyspecs                               28m7
+  Pyspecs                               22m55
     Total tests: 1553
     The post was NOT equal to the resulting state: 246
     Succeeded: 1307
@@ -69,7 +69,7 @@ GeneralStateTests:
     Succeeded: 0
     Success rate of: 0.000000
 
-  stBadOpcode                           73m38
+  stBadOpcode                           62m48
     Total tests: 4132
     The post was NOT equal to the resulting state: 1227
     Succeeded: 2905
@@ -143,9 +143,9 @@ GeneralStateTests:
 
   stEIP1559                             26m52
     Total tests: 1845
-    The post was NOT equal to the resulting state: 238
-    Succeeded: 1607
-    Success rate of: 87.100271
+    The post was NOT equal to the resulting state: 2
+    Succeeded: 1843
+    Success rate of: 99.891599
 
   stEIP158Specific                      0m22
     Total tests: 8

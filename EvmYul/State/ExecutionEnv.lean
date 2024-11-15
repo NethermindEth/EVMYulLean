@@ -37,7 +37,8 @@ def prevRandao (e : ExecutionEnv) : UInt256 :=
 def basefee (e : ExecutionEnv) : UInt256 :=
   .ofNat e.header.baseFeePerGas
 
-def ExecutionEnv.getBlobGasprice (e : ExecutionEnv) : UInt256 := e.header.getBlobGasprice
+def ExecutionEnv.getBlobGasprice (e : ExecutionEnv) : UInt256 :=
+  .ofNat e.header.getBlobGasprice
 
 def blobhash (e : ExecutionEnv) (i : UInt256) : UInt256 :=
   e.blobVersionedHashes[i.toNat]?.option ⟨0⟩

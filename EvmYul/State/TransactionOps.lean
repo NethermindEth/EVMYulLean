@@ -26,6 +26,6 @@ def Transaction.blobVersionedHashes (t : Transaction) : List ByteArray :=
 
 def calcBlobFee (header: BlockHeader) (t : Transaction) : ℕ :=
   let totalBlobGas := getTotalBlobGas t |>.getD 0
-  totalBlobGas * header.getBlobGasprice.toNat
+  totalBlobGas * header.getBlobGasprice
 
 end EvmYul
