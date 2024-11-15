@@ -27,7 +27,11 @@ instance : ToString UInt256 where
 
 namespace UInt256
 
-def ofNat (n : ℕ) : UInt256 := ⟨Fin.ofNat n⟩
+def ofNat (n : ℕ) : UInt256 := Id.run do
+  if n >= UInt256.size then
+    dbg_trace s!"Truncating large number for UInt256 casting: {n}"
+  ⟨Fin.ofNat n⟩
+
 def toNat (u : UInt256) : ℕ := u.val.val
 
 instance : Repr UInt256 where
