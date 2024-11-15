@@ -31,6 +31,7 @@ private def fromBlobString {α} (f : Blob → Except String α) : FromJson α :=
   }
 
 instance : FromJson UInt256 := fromBlobString UInt256.fromBlob?
+instance : FromJson ℕ := fromBlobString Nat.fromBlob?
 
 instance : FromJson AccountAddress := fromBlobString AccountAddress.fromBlob?
 
@@ -103,15 +104,15 @@ instance : FromJson BlockHeader where
         receiptRoot   := TODO -- TODO - Does not seem to be used in Υ?
         logsBloom     := ← json.getObjValAsD! ByteArray "bloom"
         difficulty    := 0  -- [deprecated] 0.
-        number        := ← json.getObjValAsD! _         "number"        <&> UInt256.toNat
-        gasLimit      := ← json.getObjValAsD! _         "gasLimit"      <&> UInt256.toNat
-        gasUsed       := ← json.getObjValAsD! _         "gasUsed"       <&> UInt256.toNat
-        timestamp     := ← json.getObjValAsD! _         "timestamp"     <&> UInt256.toNat
+        number        := ← json.getObjValAsD! ℕ         "number"
+        gasLimit      := ← json.getObjValAsD! ℕ         "gasLimit"
+        gasUsed       := ← json.getObjValAsD! ℕ         "gasUsed"
+        timestamp     := ← json.getObjValAsD! ℕ         "timestamp"
         extraData     := ← json.getObjValAsD! ByteArray "extraData"
         minHash       := TODO -- TODO - Does not seem to be used in Υ?
         chainId       := ← json.getObjValAsD UInt256 "chainId" ⟨1⟩ -- (5)
         nonce         := 0 -- [deprecated] 0.
-        baseFeePerGas := ← json.getObjValAsD! _         "baseFeePerGas" <&> UInt256.toNat
+        baseFeePerGas := ← json.getObjValAsD! ℕ         "baseFeePerGas"
         parentBeaconBlockRoot := ← json.getObjValAsD! ByteArray "parentBeaconBlockRoot"
         prevRandao    := ← json.getObjValAsD! UInt256 "mixHash"
         withdrawalsRoot := ← json.getObjValAsD! (Option ByteArray) "withdrawalsRoot"

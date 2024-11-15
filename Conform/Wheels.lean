@@ -99,6 +99,10 @@ def fromBlob! (blob : Blob) : UInt256 := fromBlob? blob |>.toOption.get!
 
 end UInt256
 
+def Nat.fromBlob? (blob : Blob) : Except String ℕ :=
+  ((·.1) <| blob.foldr (init := (.ok 0, 0)) λ digit (acc, exp) ↦
+    (do pure <| (←acc) + (16 ^ exp) * (←Conform.toHex digit), exp + 1))
+
 namespace AccountAddress
 
 def fromBlob? (s : Blob) : Except String AccountAddress := (Fin.ofNat ·.toNat) <$> UInt256.fromBlob? s
