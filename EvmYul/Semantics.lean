@@ -71,9 +71,9 @@ private def dispatchUnaryExecutionEnvOp (debugMode : Bool) (τ : OperationType) 
     | .EVM => EVM.unaryExecutionEnvOp debugMode op
     | .Yul => Yul.unaryExecutionEnvOp op
 
-private def dispatchMachineStateOp (τ : OperationType) (op : MachineState → UInt256) : Transformer τ :=
+private def dispatchMachineStateOp (debugMode : Bool) (τ : OperationType) (op : MachineState → UInt256) : Transformer τ :=
   match τ with
-    | .EVM => EVM.machineStateOp op
+    | .EVM => EVM.machineStateOp debugMode op
     | .Yul => Yul.machineStateOp op
 
 private def dispatchUnaryStateOp (debugMode : Bool) (τ : OperationType) (op : State → UInt256 → State × UInt256) : Transformer τ :=
@@ -266,7 +266,7 @@ def step {τ : OperationType} (debugMode : Bool) (op : Operation τ) : Transform
     | τ, .EXTCODECOPY =>
       dispatchQuaternaryCopyOp debugMode τ EvmYul.SharedState.extCodeCopy'
     | τ, .RETURNDATASIZE =>
-      dispatchMachineStateOp τ EvmYul.MachineState.returndatasize
+      dispatchMachineStateOp debugMode τ EvmYul.MachineState.returndatasize
     | .EVM, .RETURNDATACOPY =>
             λ evmState ↦
         match evmState.stack.pop3 with
@@ -334,9 +334,9 @@ def step {τ : OperationType} (debugMode : Bool) (op : Operation τ) : Transform
       dispatchBinaryStateOp debugMode τ EvmYul.State.sstore
     | τ, .TLOAD => dispatchUnaryStateOp debugMode τ EvmYul.State.tload
     | τ, .TSTORE => dispatchBinaryStateOp debugMode τ EvmYul.State.tstore
-    | τ, .MSIZE => dispatchMachineStateOp τ MachineState.msize
+    | τ, .MSIZE => dispatchMachineStateOp debugMode τ MachineState.msize
     | τ, .GAS =>
-      dispatchMachineStateOp τ MachineState.gas
+      dispatchMachineStateOp debugMode τ MachineState.gas
     | τ, .MCOPY => dispatchTernaryMachineStateOp debugMode τ MachineState.mcopy
 
     | τ, .LOG0 => dispatchLog0 debugMode τ

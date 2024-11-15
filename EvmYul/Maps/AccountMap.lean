@@ -33,7 +33,7 @@ section RemoveLater
 abbrev AccountMap := Batteries.RBMap AccountAddress Account compare
 
 def toExecute (σ : AccountMap) (t : AccountAddress) : ToExecute :=
-  if /- t is a precompiled account -/ 1 ≤ t && t ≤ 9 then
+  if /- t is a precompiled account -/ t ∈ π then
     ToExecute.Precompiled t
   else Id.run do
     -- We use the code directly without an indirection a'la `codeMap[t]`.

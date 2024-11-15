@@ -7,9 +7,9 @@ import EvmYul.Wheels
 namespace EvmYul
 
 /--
-  (142) `π ≡ {1, 2, 3, 4, 5, 6, 7, 8, 9}`
+  (142) `π ≡ {1, 2, 3, 4, 5, 6, 7, 8, 9, 10}`
 -/
-def π : Batteries.RBSet AccountAddress compare := Batteries.RBSet.ofList ((List.range 10).tail.map Fin.ofNat) compare
+def π : Batteries.RBSet AccountAddress compare := Batteries.RBSet.ofList ((List.range 11).tail.map Fin.ofNat) compare
 
 inductive ToExecute := | Code (code : ByteArray) | Precompiled (precompiled : AccountAddress)
 
