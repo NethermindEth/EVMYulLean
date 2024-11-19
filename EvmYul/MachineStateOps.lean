@@ -4,6 +4,8 @@ import EvmYul.MachineState
 
 import EvmYul.SpongeHash.Keccak256
 
+-- import EvmYul.EVM.Gas
+
 namespace EvmYul
 
 namespace MachineState
@@ -12,19 +14,17 @@ section Memory
 
 open Batteries (RBMap)
 
--- Apendix H, (320)
+-- Appendix H, (320)
 def M (s f l : ℕ) : ℕ :=
   match l with
   | 0 => s
   | l =>
     -- ⌈ (f + l) ÷ 32 ⌉
     -- The addition is not subject to s²⁵⁶ division (at least that's what MSTORE suggests)
-    let rem := (f + l) % 32
-    let divided := (f + l) / 32
-    max s (if rem == 0 then divided else divided + 1)
+    max s ((f + l + 31) / 32)
 
-def newMax (self : MachineState) (addr : UInt256) (numOctets : ℕ) : ℕ :=
-  M self.activeWords.toNat addr.1 numOctets
+-- def newMax (self : MachineState) (addr : UInt256) (numOctets : ℕ) : ℕ :=
+--   M self.activeWords.toNat addr.1 numOctets
 
 def x : ByteArray := "hello".toUTF8
 def y : ByteArray := "kokusho".toUTF8
@@ -41,8 +41,8 @@ def writeBytes (self : MachineState) (source : ByteArray) (addr : UInt256) (size
           source
           addr
           (practicalSize₁ + practicalSize₂)
-      activeWords := .ofNat <| self.newMax addr size
-      activeWordsWritten := .ofNat <| self.newMax addr practicalSize₁
+      activeWords := .ofNat <| M self.activeWords.toNat addr.toNat size
+      activeWordsWritten := .ofNat <| M self.activeWords.toNat addr.toNat practicalSize₁
   }
 
 def writeWord (self : MachineState) (addr val : UInt256) : MachineState :=
@@ -75,7 +75,7 @@ def readBytes (self : MachineState) (addr : UInt256) (size : ℕ) : ByteArray ×
   let practicalLastAddr := min maxPracticalAddress (addr.toNat + size)
   let practicalSize := practicalLastAddr - addr.toNat
   let bytes := self.memory.readMemory addr.toNat practicalSize ++ ByteArray.zeroes ⟨size - practicalSize⟩
-  let newMachineState := { self with activeWords := .ofNat <| self.newMax addr size}
+  let newMachineState := { self with activeWords := .ofNat <| M self.activeWords.toNat addr.toNat size}
   (bytes, newMachineState)
 
 /--

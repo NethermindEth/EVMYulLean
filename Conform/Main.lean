@@ -47,15 +47,15 @@ GeneralStateTests:
 
   Pyspecs                               22m55
     Total tests: 1553
-    The post was NOT equal to the resulting state: 246
-    Succeeded: 1307
-    Success rate of: 84.159691
+    The post was NOT equal to the resulting state: 188
+    Succeeded: 1365
+    Success rate of: 87.894398
 
   Shanghai                              0m42
     Total tests: 27
-    The post was NOT equal to the resulting state: 5
-    Succeeded: 22
-    Success rate of: 81.481481
+    The post was NOT equal to the resulting state: 6
+    Succeeded: 21
+    Success rate of: 77.777778
 
   stArgsZeroOneBalance                  1m47
     Total tests: 96
@@ -71,9 +71,9 @@ GeneralStateTests:
 
   stBadOpcode                           62m48
     Total tests: 4132
-    The post was NOT equal to the resulting state: 1227
-    Succeeded: 2905
-    Success rate of: 70.304937
+    The post was NOT equal to the resulting state: 1226
+    Succeeded: 2906
+    Success rate of: 70.329138
 
   stBugs                                0m23
     Total tests: 9
@@ -81,17 +81,29 @@ GeneralStateTests:
     Succeeded: 9
     Success rate of: 100.000000
 
-  stCallCodes                           -
+  stCallCodes                           1m30
+    Total tests: 84
+    The post was NOT equal to the resulting state: 8
+    Succeeded: 76
+    Success rate of: 90.476190
 
   stCallCreateCallCodeTest              1m5
     Total tests: 55
-    The post was NOT equal to the resulting state: 8
-    Succeeded: 47
-    Success rate of: 85.454545
+    The post was NOT equal to the resulting state: 17
+    Succeeded: 38
+    Success rate of: 69.090909
 
-  stCallDelegateCodesCallCodeHomestead  -
+  stCallDelegateCodesCallCodeHomestead  1m5
+    Total tests: 56
+    The post was NOT equal to the resulting state: 7
+    Succeeded: 49
+    Success rate of: 87.500000
 
-  stCallDelegateCodesHomestead          -
+  stCallDelegateCodesHomestead          1m5
+    Total tests: 56
+    The post was NOT equal to the resulting state: 7
+    Succeeded: 49
+    Success rate of: 87.500000
 
   stChainId                             0m16
     Total tests: 2
@@ -107,21 +119,21 @@ GeneralStateTests:
 
   stCodeSizeLimit                       0m23
     Total tests: 9
-    The post was NOT equal to the resulting state: 0
-    Succeeded: 9
-    Success rate of: 100.000000
+    The post was NOT equal to the resulting state: 4
+    Succeeded: 5
+    Success rate of: 55.555556
 
   stCreate2                             3m10
-    Total tests: 183
-    The post was NOT equal to the resulting state: 46
-    Succeeded: 137
-    Success rate of: 74.863388
+    Total tests: 187
+    The post was NOT equal to the resulting state: 54
+    Succeeded: 133
+    Success rate of: 71.122995
 
   stCreateTest                          3m10
-    Total tests: 196
-    The post was NOT equal to the resulting state: 78
-    Succeeded: 118
-    Success rate of: 60.204082
+    Total tests: 202
+    The post was NOT equal to the resulting state: 77
+    Succeeded: 125
+    Success rate of: 61.881188
 
   stDelegatecallTestHomestead           0m52
     Total tests: 33
@@ -208,10 +220,10 @@ GeneralStateTests:
     Success rate of: 92.682927
 
   stMemoryTest                          10m29
-    Total tests: 559
-    The post was NOT equal to the resulting state: 39
-    Succeeded: 520
-    Success rate of: 93.023256
+    Total tests: 578
+    The post was NOT equal to the resulting state: 4
+    Succeeded: 574
+    Success rate of: 99.307958
 
   stNonZeroCallsTest                    0m38
     Total tests: 24
@@ -220,10 +232,10 @@ GeneralStateTests:
     Success rate of: 66.666667
 
   stPreCompiledContracts                15m21
-    Total tests: 894
-    The post was NOT equal to the resulting state: 67
-    Succeeded: 827
-    Success rate of: 92.505593
+    Total tests: 960
+    The post was NOT equal to the resulting state: 10
+    Succeeded: 950
+    Success rate of: 98.958333
 
   stPreCompiledContracts2               56m40
     Total tests: 226
@@ -268,10 +280,10 @@ GeneralStateTests:
     Success rate of: 99.633700
 
   stRevertTest                          4m44
-    Total tests: 233
-    The post was NOT equal to the resulting state: 23
-    Succeeded: 210
-    Success rate of: 90.128755
+    Total tests: 271
+    The post was NOT equal to the resulting state: 86
+    Succeeded: 185
+    Success rate of: 68.265683
 
   stSelfBalance                         0m58
     Total tests: 42
@@ -305,9 +317,9 @@ GeneralStateTests:
 
   stSStoreTest                          9m10
     Total tests: 475
-    The post was NOT equal to the resulting state: 116
-    Succeeded: 359
-    Success rate of: 75.578947
+    The post was NOT equal to the resulting state: 9
+    Succeeded: 466
+    Success rate of: 98.105263
 
   stStackTests                          3m53
     Total tests: 209
@@ -352,9 +364,9 @@ GeneralStateTests:
     Success rate of: 100.000000
 
   stWalletTest                          0m58
-    Total tests: 41
+    Total tests: 46
     The post was NOT equal to the resulting state: 0
-    Succeeded: 41
+    Succeeded: 46
     Success rate of: 100.000000
 
   stZeroCallsRevert                     0m29
@@ -405,15 +417,15 @@ TransitionTests                         1m3
 /-
 ValidBlocks                             15m40
   Total tests: 437
-  The post was NOT equal to the resulting state: 112
-  Succeeded: 325
-  Success rate of: 74.370709
+  The post was NOT equal to the resulting state: 102
+  Succeeded: 335
+  Success rate of: 76.659039
 -/
-def directoryBlacklist : List System.FilePath :=
-  [ "EthereumTests/BlockchainTests/GeneralStateTests/stCallCodes" -- 86 tests
-  , "EthereumTests/BlockchainTests/GeneralStateTests/stCallDelegateCodesCallCodeHomestead" -- 58 tests
-  , "EthereumTests/BlockchainTests/GeneralStateTests/stCallDelegateCodesHomestead" -- 58 tests
-  ]
+def directoryBlacklist : List System.FilePath := []
+  -- [ "EthereumTests/BlockchainTests/GeneralStateTests/stCallCodes" -- 86 tests
+  -- , "EthereumTests/BlockchainTests/GeneralStateTests/stCallDelegateCodesCallCodeHomestead" -- 58 tests
+  -- , "EthereumTests/BlockchainTests/GeneralStateTests/stCallDelegateCodesHomestead" -- 58 tests
+  -- ]
 
 def fileBlacklist : List System.FilePath := []
   -- [ "EthereumTests/BlockchainTests/GeneralStateTests/stRevertTest/RevertPrecompiledTouch_nonce.json"
@@ -426,24 +438,24 @@ def main : IO Unit := do
         (enter := λ path ↦ pure <| path ∉ directoryBlacklist)
         ("EthereumTests/BlockchainTests")
 
+  let mut discardedFiles := #[]
+
   -- let testFiles := #[SimpleFile]
   -- let testFiles := #[BuggyFile]
   -- let testFiles := #[SpecificFile]
-
-  let mut discardedFiles := #[]
 
   let mut numFailedTest := 0
   let mut numSuccess := 0
 
   if ←System.FilePath.pathExists logFile then IO.FS.removeFile logFile
-
   for testFile in testFiles do
     if fileBlacklist.contains testFile then continue
     dbg_trace s!"File under test: {testFile}"
     let res ←
       ExceptT.run <|
         EvmYul.Conform.processTestsOfFile
-          -- (whitelist := #["bufferSrcOffset_d103g0v0_Cancun"])
+          -- (whitelist := #["push0Gas_d0g0v0_Cancun"])
+          -- (whitelist := #["CreateOOGafterInitCode_d0g0v0_Cancun"])
           testFile
     match res with
       | .error err         => discardedFiles := discardedFiles.push (testFile, err)

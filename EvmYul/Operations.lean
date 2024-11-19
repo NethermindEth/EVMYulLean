@@ -1,5 +1,4 @@
 import EvmYul.UInt256
-import EvmYul.MachineStateOps
 import EvmYul.MachineState
 
 import Mathlib.Data.Finmap

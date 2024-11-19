@@ -80,7 +80,7 @@ def serializeStackMemFlowInstr : SMSFOp .EVM → UInt8
   | .JUMP     => 0x56
   | .JUMPI    => 0x57
   | .PC       => 0x58
-  | .MSIZE    => 0x58
+  | .MSIZE    => 0x59
   | .GAS      => 0x5a
   | .JUMPDEST => 0x5b
   | .TLOAD    => 0x5c
