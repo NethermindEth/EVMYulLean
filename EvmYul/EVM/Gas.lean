@@ -220,8 +220,8 @@ def Ccallgas (t : AccountAddress) (val g : UInt256) (σ : AccountMap) (μ : Mach
 NB Assumes stack coherence.
 -/
 def Ccall (t : AccountAddress) (val g : UInt256) (σ : AccountMap) (μ : MachineState) (A : Substate) : ℕ :=
-  -- dbg_trace s!"Ccall: {Cgascap μₛ σ μ A} + {Cextra σ μₛ A}"
-  Ccallgas t val g σ μ A + Cextra t val σ A
+  -- dbg_trace s!"Ccall: {Cgascap t val g σ μ A} + {Cextra t val σ A}"
+  Cgascap t val g σ μ A + Cextra t val σ A
 
 /--
 (65)
@@ -262,7 +262,7 @@ private def C' (s : State) (instr : Operation .EVM) : ℕ :=
     | .CALL => Ccall (AccountAddress.ofUInt256 μₛ[1]!) μₛ[2]! μₛ[0]! σ μ A
     | .CALLCODE => Ccall (AccountAddress.ofUInt256 μₛ[1]!) μₛ[2]! μₛ[0]! σ μ A
     | .DELEGATECALL => Ccall (AccountAddress.ofUInt256 μₛ[1]!) ⟨0⟩ μₛ[0]! σ μ A
-    | .STATICCALL => Ccall (AccountAddress.ofUInt256 μₛ[1]!) ⟨0⟩ μₛ[0]! σ μ A
+    | .STATICCALL   => Ccall (AccountAddress.ofUInt256 μₛ[1]!) ⟨0⟩ μₛ[0]! σ μ A
     | .BLOBHASH => HASH_OPCODE_GAS
     | w =>
       if w ∈ Wcopy then Gverylow + Gcopy * ((μₛ[2]!.toNat + 31) / 32) else
@@ -289,6 +289,7 @@ NB this differs ever so slightly from how it is defined in the YP, please refer 
 
 def newC (s : EVM.State) (instr : Operation .EVM) : ℕ :=
   -- let { toMachineState := μ, ..} := s
+  -- dbg_trace s!"{Cₘ μᵢ'} - {Cₘ s.toMachineState.activeWords} + {C' s instr}"
   Cₘ μᵢ' - Cₘ s.toMachineState.activeWords + C' s instr
  where
   μᵢ' : UInt256 :=
