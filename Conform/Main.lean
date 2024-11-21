@@ -396,13 +396,13 @@ def main : IO Unit := do
     Array.filter isTestFile <$>
       System.FilePath.walkDir
         (enter := λ path ↦ pure <| path ∉ directoryBlacklist)
-        ("EthereumTests/BlockchainTests/GeneralStateTests/stBadOpcode")
+        ("EthereumTests/BlockchainTests")
 
   let mut discardedFiles := #[]
 
   -- let testFiles := #[SimpleFile]
   -- let testFiles := #[BuggyFile]
-  let testFiles := #[SpecificFile]
+  -- let testFiles := #[SpecificFile]
 
   let mut numFailedTest := 0
   let mut numSuccess := 0
@@ -414,7 +414,7 @@ def main : IO Unit := do
     let res ←
       ExceptT.run <|
         EvmYul.Conform.processTestsOfFile
-          (whitelist := #["badOpcodes_d26g0v0_Cancun"])
+          -- (whitelist := #["badOpcodes_d26g0v0_Cancun"])
           -- (whitelist := #["CreateOOGafterInitCode_d0g0v0_Cancun"])
           testFile
     match res with
