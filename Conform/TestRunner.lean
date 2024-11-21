@@ -20,24 +20,9 @@ namespace Conform
 def VerySlowTests : Array String :=
   #[
     "sha3_d3g0v0_Cancun" -- ~6MB getting keccak256'd, estimated time on my PC: ~1 hour, best guess: unfoldr.go in keccak256.lean
-  , "CallGoesOOGOnSecondLevel2_d0g0v0_Cancun"
-  , "CallGoesOOGOnSecondLevel_d0g0v0_Cancun"
-  , "callcallcallcode_001_OOGMAfter_d0g0v0_Cancun"
-  , "callcallcallcode_001_OOGMBefore_d0g0v0_Cancun"
   , "operationDiffGas_d9g0v0_Cancun"
-  , "besuBaseFeeBug_Cancun"
-  , "logRevert_Cancun"
-  , "randomStatetest116_d0g0v0_Cancun"
-  , "deploymentError_d0g0v0_Cancun"
   , "static_RETURN_BoundsOOG_d0g0v0_Cancun"
-  , "randomStatetest177_d0g0v0_Cancun"
-  , "codecopy_d1g0v0_Cancun"
-  , "createInitFail_OOGduringInit2_d0g0v0_Cancun"
-  , "failed_tx_xcf416c53_Paris_d0g0v0_Cancun"
   , "CALLBlake2f_MaxRounds_d0g0v0_Cancun"
-  , "19_oogUndoesTransientStore_d0g0v0_Cancun"
-  , "20_oogUndoesTransientStoreInCall_d0g0v0_Cancun"
-  , "static_CallEcrecover0_0input_d5g0v0_Cancun"
   ]
 
 def GlobalBlacklist : Array String := VerySlowTests
@@ -136,7 +121,7 @@ def executeTransaction (transaction : Transaction) (s : EVM.State) (header : Blo
             .error (.InvalidTransaction .TYPE_3_TX_ZERO_BLOBS)
     | _ => pure ()
 
-  let (ypState, substate, z) ← EVM.Υ (debugMode := false) _TODOfuel s.accountMap header.chainId.toNat header.baseFeePerGas header transaction transaction.base.expectedSender
+  let (ypState, substate, z) ← EVM.Υ (debugMode := true) _TODOfuel s.accountMap header.chainId.toNat header.baseFeePerGas header transaction transaction.base.expectedSender
 
   -- as EIP 4788 (https://eips.ethereum.org/EIPS/eip-4788).
 

@@ -25,9 +25,11 @@ def execBinOp (debugMode : Bool) (f : Primop.Binary) : Transformer :=
   λ s ↦
     match s.stack.pop2 with
       | some ⟨stack, μ₀, μ₁⟩ => Id.run do
+        let result := f μ₀ μ₁
         if debugMode then
           dbg_trace s!"called with μ₀: {μ₀} μ₁: {μ₁}"
-        .ok <| s.replaceStackAndIncrPC (stack.push <| f μ₀ μ₁)
+          dbg_trace s!"result: {result}"
+        .ok <| s.replaceStackAndIncrPC (stack.push result)
       | _ =>
         .error .InvalidStackSizeException
 

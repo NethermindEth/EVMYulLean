@@ -584,7 +584,7 @@ def parseInstr : UInt8 → Option (Operation .EVM)
   | 0xfd => some .REVERT
   | 0xfe => some .INVALID
   | 0xff => some .SELFDESTRUCT
-  | _    => none
+  | _    => some .INVALID -- `INVALID` behaves just like any other invalid instruction
 
 end EVM
 

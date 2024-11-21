@@ -69,7 +69,7 @@ def writeWord (self : MachineState) (addr val : UInt256) : MachineState :=
 def readBytes (self : MachineState) (addr : UInt256) (size : ℕ) : ByteArray × MachineState := -- dbg_trace s!"readBytes addr: {addr} size: {size}"
   let size :=
     if size > 2^35 then
-      panic! s!"Can not handle reding byte arrays larger than 2^35 ({2^35})"
+      panic! s!"Can not handle reading byte arrays larger than 2^35 ({2^35})"
     else size
   let maxPracticalAddress := self.activeWordsWritten.toNat * 32
   let practicalLastAddr := min maxPracticalAddress (addr.toNat + size)

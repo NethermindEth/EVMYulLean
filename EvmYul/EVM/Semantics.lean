@@ -161,8 +161,6 @@ def call (debugMode : Bool) (fuel : Nat)
   match fuel with
     | 0 => dbg_trace "nofuel"; .ok (⟨1⟩, evmState)
     | .succ f =>
-      -- m[μs[3] . . . (μs[3] + μs[4] − 1)]
-      let (i, newMachineState) := evmState.toMachineState.readBytes inOffset inSize.toNat
       -- t ≡ μs[1] mod 2^160
       let t : AccountAddress := AccountAddress.ofUInt256 t
       let recipient : AccountAddress := AccountAddress.ofUInt256 recipient
@@ -174,6 +172,8 @@ def call (debugMode : Bool) (fuel : Nat)
       -- dbg_trace s!"callgas: {callgas}"
       -- dbg_trace s!"gas available: {evmState.gasAvailable}"
       let evmState := {evmState with gasAvailable := evmState.gasAvailable - UInt256.ofNat gasCost}
+      -- m[μs[3] . . . (μs[3] + μs[4] − 1)]
+      let (i, newMachineState) := evmState.toMachineState.readBytes inOffset inSize.toNat
       let (cA, σ', g', A', z, o) ← do
         -- TODO - Refactor condition and possibly share with CREATE
         if value ≤ (σ.find? Iₐ |>.option ⟨0⟩ Account.balance) ∧ Iₑ < 1024 then
@@ -209,6 +209,7 @@ def call (debugMode : Bool) (fuel : Nat)
       let μ'ₘ := newMachineState.writeBytes (o.getD .empty) outOffset n.toNat -- μ′_m[μs[5]  ... (μs[5] + n − 1)] = o[0 ... (n − 1)]
       let μ'ₒ := o -- μ′o = o
       let μ'_g := μ'ₘ.gasAvailable + g' -- Ccall is subtracted in X as part of C
+      -- dbg_trace s!"μ'_g = {μ'ₘ.gasAvailable} + {g'}"
 
       let codeExecutionFailed   : Bool := !z
       let notEnoughFunds        : Bool := value > (σ.find? evmState.executionEnv.codeOwner |>.elim ⟨0⟩ Account.balance) -- TODO - Unify condition with CREATE.
@@ -354,7 +355,8 @@ def step (debugMode : Bool) (fuel : ℕ) (gasCost : ℕ) (instr : Option (Operat
             let (a, evmState', g', z, o)
                   : (AccountAddress × EVM.State × UInt256 × Bool × ByteArray)
               :=
-              if μ₀ ≤ (σ.find? Iₐ |>.option ⟨0⟩ Account.balance) ∧ Iₑ < 1024 then
+              -- TODO: Refactor this conditions
+              if μ₀ ≤ (σ.find? Iₐ |>.option ⟨0⟩ Account.balance) ∧ Iₑ < 1024 ∧ i.size ≤ 49152 then
                 match Λ with
                   | .ok (a, cA, σ', g', A', z, o) =>
                     -- dbg_trace "Lambda returned some"
@@ -372,8 +374,8 @@ def step (debugMode : Bool) (fuel : ℕ) (gasCost : ℕ) (instr : Option (Operat
               else
                 (0, evmState, .ofNat (L evmState.gasAvailable.toNat), False, .empty)
             let x : UInt256 :=
-              let balance := σ.find? a |>.option ⟨0⟩ Account.balance
-                if z = false ∨ Iₑ = 1024 ∨ μ₀ < balance then ⟨0⟩ else .ofNat a
+              let balance := σ.find? Iₐ |>.option ⟨0⟩ Account.balance
+                if z = false ∨ Iₑ = 1024 ∨ μ₀ > balance ∨ i.size > 49152 then ⟨0⟩ else .ofNat a
             let newReturnData : ByteArray := if z then .empty else o
             if (evmState'.gasAvailable + g').toNat < L (evmState'.gasAvailable.toNat) then
               .error .OutOfGass
@@ -423,7 +425,7 @@ def step (debugMode : Bool) (fuel : ℕ) (gasCost : ℕ) (instr : Option (Operat
                 I.header
                 I.perm
             let (a, evmState', g', z, o) : (AccountAddress × EVM.State × UInt256 × Bool × ByteArray) :=
-              if μ₀ ≤ (σ.find? Iₐ |>.option ⟨0⟩ Account.balance) ∧ Iₑ < 1024 then
+              if μ₀ ≤ (σ.find? Iₐ |>.option ⟨0⟩ Account.balance) ∧ Iₑ < 1024 ∧ i.size ≤ 49152 then
                 match Λ with
                   | .ok (a, cA, σ', g', A', z, o) =>
                     (a, {evmState with accountMap := σ', substate := A', createdAccounts := cA}, g', z, o)
@@ -431,8 +433,8 @@ def step (debugMode : Bool) (fuel : ℕ) (gasCost : ℕ) (instr : Option (Operat
               else
                 (0, evmState, .ofNat (L evmState.gasAvailable.toNat), False, .empty)
             let x : UInt256 :=
-              let balance := σ.find? a |>.option ⟨0⟩ Account.balance
-                if z = false ∨ Iₑ = 1024 ∨ μ₀ < balance then ⟨0⟩ else .ofNat a
+              let balance := σ.find? Iₐ |>.option ⟨0⟩ Account.balance
+                if z = false ∨ Iₑ = 1024 ∨ μ₀ > balance ∨ i.size > 49152 then ⟨0⟩ else .ofNat a
             let newReturnData : ByteArray := if z then .empty else o
             if (evmState'.gasAvailable + g').toNat < L (evmState'.gasAvailable).toNat then
               .error .OutOfGass
@@ -530,14 +532,19 @@ def X (debugMode : Bool) (fuel : ℕ) (evmState : State) : Except EVM.Exception 
     | .succ f =>
       let I_b := evmState.toState.executionEnv.code
       let instr@(w, _) := decode I_b evmState.pc |>.getD (.STOP, .none)
-      -- dbg_trace s!"gas available in X {evmState.gasAvailable} for {w.pretty}"
 
       -- (159)
       let W (w : Operation .EVM) (s : Stack UInt256) : Bool :=
-        w ∈ [.CREATE, .CREATE2, .SSTORE, .SELFDESTRUCT, .LOG0, .LOG1, .LOG2, .LOG3, .LOG4] ∨
+        -- EIP-1153 says `TSTORE` should result in an exception if called within the context of a `STATICCALL`.
+        -- but we, as KEVM, check if the context is static in general.
+        -- https://eips.ethereum.org/EIPS/eip-1153
+        w ∈ [.CREATE, .CREATE2, .SSTORE, .SELFDESTRUCT, .LOG0, .LOG1, .LOG2, .LOG3, .LOG4, .TSTORE] ∨
         (w = .CALL ∧ s.get? 2 ≠ some ⟨0⟩)
 
+      -- TODO: If we don't have enough items on the stack then `gasCost` will panic
+      -- but it doesn't matter because `Z₁` halts the execution before the result is used
       let gasCost := newC evmState w
+      -- dbg_trace s!"gasAvailable: {evmState.gasAvailable}; gasCost: {gasCost} for instruction {w.pretty}"
 
       -- Exceptional halting (158)
       let Z : Bool := Id.run do
@@ -552,7 +559,7 @@ def X (debugMode : Bool) (fuel : ℕ) (evmState : State) : Except EVM.Exception 
         if Z_g ∧ debugMode then
           dbg_trace s!"Exceptional halting: insufficient gas (available gas < gas cost)"
         if Z₀ ∧ debugMode then
-          dbg_trace s!"Exceptional halting: invalid operation {w.pretty} has δ = ∅"
+          dbg_trace s!"Exceptional halting: invalid operation (has δ = ∅)"
         if Z₁ ∧ debugMode then
           dbg_trace s!"Exceptional halting: insufficient stack items for {w.pretty}"
         if Z₂ ∧ debugMode then
@@ -577,59 +584,16 @@ def X (debugMode : Bool) (fuel : ℕ) (evmState : State) : Except EVM.Exception 
           else none
 
       if Z then
-        -- dbg_trace "exceptional halting"
         .ok ({evmState with accountMap := ∅}, none)
-      -- else
-        -- TODO - Probably an exceptional gas scenario, as we should have technically checked apriori.
-        -- if w = .REVERT then
-          -- The Yellow Paper says we don't call the "iterator function" "O" for `REVERT`,
-          -- but we actually have to call the semantics of `REVERT` to pass the test
-          -- EthereumTests/BlockchainTests/GeneralStateTests/stReturnDataTest/returndatacopy_after_revert_in_staticcall.json
-          -- And the EEL spec does so too.
-          -- .ok ({evmState with accountMap := ∅}, .some evmState.returnData)
         else
-          -- NB we still need to check gas, because `Z` needs to call `C`, which needs `μ'ᵢ`.
-          -- We first call `step` to obtain `μ'ᵢ`, which we then use to compute `C`.
-          -- dbg_trace s!"gasAvailable: {evmState.gasAvailable}; gasCost: {gasCost} for instruction {w.pretty}"
-          -- let evmState' := {evmState with gasAvailable := evmState.gasAvailable - UInt256.ofNat gasCost}
           let evmState' ← step debugMode f gasCost instr evmState
           if evmState.accountMap == ∅ then .ok <| ({evmState' with accountMap := ∅}, none) else
-          -- if w == .DELEGATECALL then
-          --   dbg_trace s!"gas available after step DELEGATECALL {evmState'.gasAvailable}"
-          -- NB: (327)
-          -- w := if pc < I.code.size
-          --      then match EVM.decode I.code pc with
-          --             | .none => .STOP
-          --             | .some instr => instr
-          --      else .STOP
-          -- Is not necessary - we have already decoded the instruction,
-          -- and computing with a default `.STOP` that costs 0 is not necessary.
           -- Maybe we should restructure in a way such that it is more meaningful to compute
           -- gas independently, but the model has not been set up thusly and it seems
           -- that neither really was the YP.
           -- Similarly, we cannot reach a situation in which the stack elements are not available
           -- on the stack because this is guarded above. As such, `C` can be pure here.
-          -- let gasCost ← C evmState evmState'.activeWords w
-          -- dbg_trace s!"gasAvailable: {evmState.gasAvailable}; gasCost: {gasCost} for instruction {w.pretty}"
-          -- if evmState.gasAvailable.toNat < gasCost then
-          --   .ok ({evmState with accountMap := ∅}, none)
-          -- else
-          -- if evmState'.gasAvailable.toNat < gasCost then do
-            -- Out of gas. This is a part of `Z`, as such, we have the same return value.
-            -- dbg_trace "Out of gas!"
-            -- dbg_trace s!"Out of gas only after primop was called"
-            -- .ok (evmState', some .empty)
-          -- else do
-            -- dbg_trace s!"new gas available after {w.pretty}: {evmState.gasAvailable - gasCost}"
-            -- dbg_trace s!"gas cost after {w.pretty}: {gasCost}"
           match H evmState'.toMachineState w with -- The YP does this in a weird way.
-            -- NB in our model, we need the max memory touched of the executed instruction
-            -- before we can check whether there is enough gas to execute the instruction.
-            -- It might turn out to be the case that we need to separate these two
-            -- and compute just the `maxMemory` before doing 'full execution', then check
-            -- the gas cost and only then execute, I am unsure as of right now.
-            -- Interestingly, the YP is defining `C` with parameters that are much 'broader'
-            -- than what is strictly necessary, e.g. we are decoding an instruction, instead of getting one in input.
             | none => X debugMode f evmState'
             | some o =>
               if w == .REVERT then
@@ -676,7 +640,7 @@ def Ξ -- Type `Ξ` using `\GX` or `\Xi`
       let (evmState', o) ← X debugMode f freshEvmState
       -- dbg_trace s!"σ = ∅: {evmState'.accountMap == ∅}, o: {o}"
       -- if debugMode then
-      -- dbg_trace s!"Ξ executed {evmState'.execLength} primops"
+      dbg_trace s!"Ξ executed {evmState'.execLength} primops"
       let finalGas := evmState'.gasAvailable -- TODO(check): Do we need to compute `C` here one more time?
       return (evmState'.createdAccounts, evmState'.accountMap, finalGas, evmState'.substate, o)
 
@@ -802,7 +766,7 @@ def Lambda
         let F₀ : Bool :=
           match σ.find? a with
           | .some ac => ac.code ≠ .empty ∨ ac.nonce ≠ ⟨0⟩
-            | .none => false
+          | .none => false
         if debugMode ∧ F₀ then
           dbg_trace "Contract creation failed: account {toHex (BE a)} already existed."
         let F₂ : Bool := gStarStar.toNat < c

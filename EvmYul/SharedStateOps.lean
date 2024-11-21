@@ -67,6 +67,7 @@ def extCodeCopy' (self : SharedState) (acc mstart cstart size : UInt256) : Share
   let addr := AccountAddress.ofUInt256 acc
   let b : ByteArray := self.toState.lookupAccount addr |>.option .empty Account.code
   let b : ByteArray := b.readBytes cstart size
+  -- dbg_trace s!"extCodeCopy: {toHex b}"
   let sState' := (self.writeBytes b mstart size)
   {sState' with toState.substate := .addAccessedAccount self.toState.substate addr}
 
