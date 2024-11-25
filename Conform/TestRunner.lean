@@ -87,8 +87,8 @@ This section exists for debugging / testing mostly. It's somewhat ad-hoc.
 notation "TODO" => default
 
 private def almostBEqButNotQuiteEvmYulState (s₁ s₂ : AddrMap AccountEntry) : Except String Bool := do
-  let s₁ := bashState s₁
-  let s₂ := bashState s₂
+  -- let s₁ := bashState s₁
+  -- let s₂ := bashState s₂
   if s₁ == s₂ then .ok true else throw "state mismatch"
  where
   bashState (s : AddrMap AccountEntry) : AddrMap AccountEntry :=
