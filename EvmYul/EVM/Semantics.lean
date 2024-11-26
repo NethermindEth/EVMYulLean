@@ -541,38 +541,56 @@ def X (debugMode : Bool) (fuel : ℕ) (evmState : State) : Except EVM.Exception 
         w ∈ [.CREATE, .CREATE2, .SSTORE, .SELFDESTRUCT, .LOG0, .LOG1, .LOG2, .LOG3, .LOG4, .TSTORE] ∨
         (w = .CALL ∧ s.get? 2 ≠ some ⟨0⟩)
 
-      -- TODO: If we don't have enough items on the stack then `gasCost` will panic
-      -- but it doesn't matter because `Z₁` halts the execution before the result is used
-      let gasCost := newC evmState w
-      -- dbg_trace s!"gasAvailable: {evmState.gasAvailable}; gasCost: {gasCost} for instruction {w.pretty}"
-
       -- Exceptional halting (158)
-      let Z : Bool := Id.run do
-        let Z_g := evmState.gasAvailable.toNat < gasCost
-        let Z₀ := δ w = none
-        let Z₁ := evmState.stack.length < (δ w).getD 0
-        let Z₂ := w = .JUMP ∧ notIn (evmState.stack.get? 0) (D_J I_b ⟨0⟩)
-        let Z₃ := w = .JUMPI ∧ (evmState.stack.get? 1 ≠ some ⟨0⟩) ∧ notIn (evmState.stack.get? 0) (D_J I_b ⟨0⟩)
-        let Z₄ := w = .RETURNDATACOPY ∧ evmState.stack.getD 1 ⟨0⟩ + evmState.stack.getD 2 ⟨0⟩ > .ofNat evmState.returnData.size
-        let Z₅ := evmState.stack.length - (δ w).getD 0 - (α w).getD 0 > 1024
-        let Z₆ := (¬ evmState.executionEnv.perm) ∧ W w evmState.stack
-        if Z_g ∧ debugMode then
-          dbg_trace s!"Exceptional halting: insufficient gas (available gas < gas cost)"
-        if Z₀ ∧ debugMode then
-          dbg_trace s!"Exceptional halting: invalid operation (has δ = ∅)"
-        if Z₁ ∧ debugMode then
-          dbg_trace s!"Exceptional halting: insufficient stack items for {w.pretty}"
-        if Z₂ ∧ debugMode then
-          dbg_trace s!"Exceptional halting: invalid JUMP destination"
-        if Z₃ ∧ debugMode then
-          dbg_trace s!"Exceptional halting: invalid JUMPI destination"
-        if Z₄ ∧ debugMode then
-          dbg_trace s!"Exceptional halting: not enough output data for RETURNDATACOPY: required {evmState.stack.getD 1 ⟨0⟩ + evmState.stack.getD 2 ⟨0⟩} bytes but got {evmState.returnData.size}"
-        if Z₅ ∧ debugMode then
-          dbg_trace s!"Exceptional halting: {w.pretty} would result in stack larger than 1024 elements"
-        if Z₆ ∧ debugMode then
-          dbg_trace s!"Exceptional halting: attempted {w.pretty} without permission"
-        pure (Z_g ∨ Z₀ ∨ Z₁ ∨ Z₂ ∨ Z₃ ∨ Z₄ ∨ Z₅ ∨ Z₆)
+      let Z (evmState : State) : Option (State × ℕ) := do
+        let cost₁ := memoryExpantionCost evmState w
+        if evmState.gasAvailable.toNat < cost₁ then
+          if debugMode then
+            dbg_trace s!"Exceptional halting: insufficient gas (available gas < gas cost for memory expantion)"
+          none
+        let gasAvailable := evmState.gasAvailable - .ofNat cost₁
+        let evmState := { evmState with gasAvailable := gasAvailable}
+        let cost₂ := C' evmState w
+        if evmState.gasAvailable.toNat < cost₂ then
+          if debugMode then
+            dbg_trace s!"Exceptional halting: insufficient gas (available gas < gas cost)"
+          none
+
+        if δ w = none then
+          if debugMode then
+            dbg_trace s!"Exceptional halting: invalid operation (has δ = ∅)"
+          none
+
+        if evmState.stack.length < (δ w).getD 0 then
+          if debugMode then
+            dbg_trace s!"Exceptional halting: insufficient stack items for {w.pretty}"
+          none
+
+        if w = .JUMP ∧ notIn (evmState.stack.get? 0) (D_J I_b ⟨0⟩) then
+          if debugMode then
+            dbg_trace s!"Exceptional halting: invalid JUMP destination"
+          none
+
+        if w = .JUMPI ∧ (evmState.stack.get? 1 ≠ some ⟨0⟩) ∧ notIn (evmState.stack.get? 0) (D_J I_b ⟨0⟩) then
+          if debugMode then
+            dbg_trace s!"Exceptional halting: invalid JUMPI destination"
+          none
+
+        if w = .RETURNDATACOPY ∧ evmState.stack.getD 1 ⟨0⟩ + evmState.stack.getD 2 ⟨0⟩ > .ofNat evmState.returnData.size then
+          if debugMode then
+            dbg_trace s!"Exceptional halting: not enough output data for RETURNDATACOPY: required {evmState.stack.getD 1 ⟨0⟩ + evmState.stack.getD 2 ⟨0⟩} bytes but got {evmState.returnData.size}"
+          none
+
+        if evmState.stack.length - (δ w).getD 0 - (α w).getD 0 > 1024 then
+          if debugMode then
+            dbg_trace s!"Exceptional halting: {w.pretty} would result in stack larger than 1024 elements"
+          none
+
+        if (¬ evmState.executionEnv.perm) ∧ W w evmState.stack then
+          if debugMode then
+            dbg_trace s!"Exceptional halting: attempted {w.pretty} without permission"
+          none
+        pure (evmState, cost₂)
 
       let H (μ : MachineState) (w : Operation .EVM) : Option ByteArray :=
         if w ∈ [.RETURN, .REVERT] then
@@ -583,10 +601,10 @@ def X (debugMode : Bool) (fuel : ℕ) (evmState : State) : Except EVM.Exception 
             some .empty
           else none
 
-      if Z then
-        .ok ({evmState with accountMap := ∅}, none)
-        else
-          let evmState' ← step debugMode f gasCost instr evmState
+      match Z evmState with
+        | none => .ok ({evmState with accountMap := ∅}, none)
+        | some (evmState, cost₂) =>
+          let evmState' ← step debugMode f cost₂ instr evmState
           if evmState.accountMap == ∅ then .ok <| ({evmState' with accountMap := ∅}, none) else
           -- Maybe we should restructure in a way such that it is more meaningful to compute
           -- gas independently, but the model has not been set up thusly and it seems

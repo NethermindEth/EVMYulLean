@@ -45,11 +45,11 @@ GeneralStateTests:
     Succeeded: 171
     Success rate of: 98.275862
 
-  Pyspecs                               22m55
-    Total tests: 1553
-    The post was NOT equal to the resulting state: 73
-    Succeeded: 1480
-    Success rate of: 95.299420
+  Pyspecs                               27m47
+    Total tests: 1675
+    The post was NOT equal to the resulting state: 41
+    Succeeded: 1634
+    Success rate of: 97.552239
 
   Shanghai                              0m42
     Total tests: 27
@@ -201,9 +201,9 @@ GeneralStateTests:
 
   stMemExpandingEIP150Calls             0m26
     Total tests: 14
-    The post was NOT equal to the resulting state: 2
-    Succeeded: 12
-    Success rate of: 85.714286
+    The post was NOT equal to the resulting state: 1
+    Succeeded: 13
+    Success rate of: 92.857143
 
   stMemoryStressTest                    2m46
     Total tests: 82
@@ -215,11 +215,15 @@ GeneralStateTests:
 
   stNonZeroCallsTest                    0m38
     Total tests: 24
-    The post was NOT equal to the resulting state: 8
-    Succeeded: 16
-    Success rate of: 66.666667
+    The post was NOT equal to the resulting state: 1
+    Succeeded: 23
+    Success rate of: 95.833333
 
   stPreCompiledContracts                15m21
+    Total tests: 960
+    The post was NOT equal to the resulting state: 7
+    Succeeded: 953
+    Success rate of: 99.270833
 
   stPreCompiledContracts2               56m40
 
@@ -287,11 +291,11 @@ GeneralStateTests:
     Succeeded: 208
     Success rate of: 99.521531
 
-  stStaticCall                          15m39
-    Total tests: 468
-    The post was NOT equal to the resulting state: 55
-    Succeeded: 413
-    Success rate of: 88.247863
+  stStaticCall                          12m33
+    Total tests: 477
+    The post was NOT equal to the resulting state: 50
+    Succeeded: 427
+    Success rate of: 89.517820
 
   stStaticFlagEnabled                   0m46
     Total tests: 34
@@ -337,9 +341,9 @@ GeneralStateTests:
 
   stZeroCallsTest                       0m38
     Total tests: 24
-    The post was NOT equal to the resulting state: 12
-    Succeeded: 12
-    Success rate of: 50.000000
+    The post was NOT equal to the resulting state: 0
+    Succeeded: 24
+    Success rate of: 100.000000
 
   stZeroKnowledge                       13m15
     Total tests: 944
@@ -399,7 +403,6 @@ def main : IO Unit := do
         ("EthereumTests/BlockchainTests")
 
   let mut discardedFiles := #[]
-
   -- let testFiles := #[SimpleFile]
   -- let testFiles := #[BuggyFile]
   -- let testFiles := #[SpecificFile]
@@ -414,7 +417,7 @@ def main : IO Unit := do
     let res ←
       ExceptT.run <|
         EvmYul.Conform.processTestsOfFile
-          -- (whitelist := #["badOpcodes_d26g0v0_Cancun"])
+          -- (whitelist := #["CallcodeToPrecompileFromTransaction_d0g0v0_Cancun"])
           -- (whitelist := #["CreateOOGafterInitCode_d0g0v0_Cancun"])
           testFile
     match res with

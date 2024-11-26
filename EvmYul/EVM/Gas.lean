@@ -234,7 +234,7 @@ H.1. Gas Cost - the third summand.
 NB Stack accesses are assumed guarded here and we access with `!`.
 This is for keeping in sync with the way the YP is structures, at least for the time being.
 -/
-private def C' (s : State) (instr : Operation .EVM) : ℕ :=
+def C' (s : State) (instr : Operation .EVM) : ℕ :=
   let { accountMap := σ, stack := μₛ, substate := A, toMachineState := μ, executionEnv := I, ..} := s
   match instr with
     | .SSTORE => Csstore s
@@ -287,10 +287,10 @@ NB this differs ever so slightly from how it is defined in the YP, please refer 
 --   pure <| Cₘ μ'ᵢ - Cₘ μ.activeWords + (← C' s instr)
 
 
-def newC (s : EVM.State) (instr : Operation .EVM) : ℕ :=
+def memoryExpantionCost (s : EVM.State) (instr : Operation .EVM) : ℕ :=
   -- let { toMachineState := μ, ..} := s
   -- dbg_trace s!"{Cₘ μᵢ'} - {Cₘ s.toMachineState.activeWords} + {C' s instr}"
-  Cₘ μᵢ' - Cₘ s.toMachineState.activeWords + C' s instr
+  Cₘ μᵢ' - Cₘ s.toMachineState.activeWords
  where
   μᵢ' : UInt256 :=
     match instr with
