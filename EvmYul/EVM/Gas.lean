@@ -287,7 +287,7 @@ NB this differs ever so slightly from how it is defined in the YP, please refer 
 --   pure <| Cₘ μ'ᵢ - Cₘ μ.activeWords + (← C' s instr)
 
 
-def memoryExpantionCost (s : EVM.State) (instr : Operation .EVM) : ℕ :=
+def memoryExpansionCost (s : EVM.State) (instr : Operation .EVM) : ℕ :=
   -- let { toMachineState := μ, ..} := s
   -- dbg_trace s!"{Cₘ μᵢ'} - {Cₘ s.toMachineState.activeWords} + {C' s instr}"
   Cₘ μᵢ' - Cₘ s.toMachineState.activeWords
