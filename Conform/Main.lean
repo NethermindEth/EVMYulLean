@@ -71,9 +71,9 @@ GeneralStateTests:
 
   stBadOpcode                           62m48
     Total tests: 4132
-    The post was NOT equal to the resulting state: 1216
-    Succeeded: 2916
-    Success rate of: 70.571152
+    The post was NOT equal to the resulting state: 138
+    Succeeded: 3994
+    Success rate of: 96.660213
 
   stBugs                                0m23
     Total tests: 8
@@ -119,21 +119,21 @@ GeneralStateTests:
 
   stCodeSizeLimit                       0m24
     Total tests: 9
-    The post was NOT equal to the resulting state: 4
-    Succeeded: 5
-    Success rate of: 55.555556
+    The post was NOT equal to the resulting state: 0
+    Succeeded: 9
+    Success rate of: 100.000000
 
   stCreate2                             3m10
     Total tests: 187
-    The post was NOT equal to the resulting state: 38
-    Succeeded: 149
-    Success rate of: 79.679144
+    The post was NOT equal to the resulting state: 39
+    Succeeded: 148
+    Success rate of: 79.144385
 
   stCreateTest                          3m10
     Total tests: 202
-    The post was NOT equal to the resulting state: 65
-    Succeeded: 137
-    Success rate of: 67.821782
+    The post was NOT equal to the resulting state: 50
+    Succeeded: 152
+    Success rate of: 75.247525
 
   stDelegatecallTestHomestead           0m48
     Total tests: 33
@@ -380,10 +380,10 @@ TransitionTests                         1m3
 -/
 /-
 ValidBlocks                             15m40
-  Total tests: 437
-  The post was NOT equal to the resulting state: 102
-  Succeeded: 335
-  Success rate of: 76.659039
+  Total tests: 439
+  The post was NOT equal to the resulting state: 12
+  Succeeded: 427
+  Success rate of: 97.266515
 -/
 def directoryBlacklist : List System.FilePath := []
   -- [ "EthereumTests/BlockchainTests/GeneralStateTests/stCallCodes" -- 86 tests
@@ -417,7 +417,7 @@ def main : IO Unit := do
     let res ←
       ExceptT.run <|
         EvmYul.Conform.processTestsOfFile
-          -- (whitelist := #["CallcodeToPrecompileFromTransaction_d0g0v0_Cancun"])
+          -- (whitelist := #["CREATE_ContractRETURNBigOffset_d1g0v0_Cancun"])
           -- (whitelist := #["CreateOOGafterInitCode_d0g0v0_Cancun"])
           testFile
     match res with

@@ -605,7 +605,7 @@ def X (debugMode : Bool) (fuel : ℕ) (evmState : State) : Except EVM.Exception 
         | none => .ok ({evmState with accountMap := ∅}, none)
         | some (evmState, cost₂) =>
           let evmState' ← step debugMode f cost₂ instr evmState
-          if evmState.accountMap == ∅ then .ok <| ({evmState' with accountMap := ∅}, none) else
+          -- if evmState.accountMap == ∅ then .ok <| ({evmState' with accountMap := ∅}, none) else
           -- Maybe we should restructure in a way such that it is more meaningful to compute
           -- gas independently, but the model has not been set up thusly and it seems
           -- that neither really was the YP.
@@ -698,12 +698,6 @@ def Lambda
   -- https://eips.ethereum.org/EIPS/eip-3860
   let MAX_CODE_SIZE := 24576
   let MAX_INITCODE_SIZE := 2 * MAX_CODE_SIZE
-  -- let FORK_BLKNUM := 2675000
-  if i.size > MAX_INITCODE_SIZE
-    -- TODO: "similar to transactions considered invalid for not meeting the intrinsic gas cost requirement"
-    then
-      dbg_trace s!"Contract creation failed: MAX_INITCODE_SIZE exceeded"
-      .error <| .InvalidTransaction .INITCODE_SIZE_EXCEEDED
 
   let n : UInt256 := (σ.find? s |>.option ⟨0⟩ Account.nonce) - ⟨1⟩
   -- dbg_trace s!"s: {toHex (BE s)}, n:{n}, ζ:{ζ},\n i:{toHex i}"
@@ -769,13 +763,6 @@ def Lambda
         -- We could use some refactoring.
       .ok (a, createdAccounts', σ, ⟨0⟩, AStar, false, .empty)
     | .ok (createdAccounts', σStarStar, gStarStar, AStarStar, some returnedData) =>
-      -- EIP-170 (required for EIP-386):
-      -- https://eips.ethereum.org/EIPS/eip-170
-      if returnedData.size > MAX_CODE_SIZE
-        -- TODO: out of gas error
-        then
-          dbg_trace s!"Contract creation failed: MAX_CODE_SIZE exceeded"
-          .error <| .InvalidTransaction .MAX_CODE_SIZE_EXCEEDED
 
       -- The code-deposit cost (113)
       let c := GasConstants.Gcodedeposit * returnedData.size
@@ -790,17 +777,16 @@ def Lambda
         let F₂ : Bool := gStarStar.toNat < c
         if debugMode ∧ F₂ then
           dbg_trace "Contract creation failed: g** < c"
-        let F₃ : Bool := returnedData.size > 24576
+        let F₃ : Bool := returnedData.size > MAX_CODE_SIZE
         if debugMode ∧ F₃ then
           dbg_trace "Contract creation failed: code computed for the new account > 24576"
-        let F₄ : Bool := returnedData = ⟨⟨0xef :: returnedData.data.toList.tail⟩⟩
+        let F₄ : Bool := ¬F₃ && returnedData[1]? = some 0xef
         if debugMode ∧ F₄ then
           dbg_trace "Contract creation failed: code computed for the new account starts with 0xef"
-        pure (F₀ ∨ F₂ ∨ F₃ ∨ F₄)
+        pure (F₀ ∨ F₂ ∨ F₃ ∨ F₄ ∨ i.size > MAX_INITCODE_SIZE)
       let fail := F || σStarStar == ∅
       -- (114)
       let g' := if F then 0 else gStarStar.toNat - c
-      -- dbg_trace s!"At the end of Λ : {toHex (BE a)} in g': {g'}"
       let σ' : YPState := -- (115)
         if fail then Id.run do
           -- dbg_trace "Λ fail!"
@@ -815,6 +801,7 @@ def Lambda
       let A' := if fail then AStar else AStarStar
       -- (117)
       let z := not fail
+      let returnedData := if fail then .empty else returnedData
       .ok (a, createdAccounts', σ', .ofNat g', A', z, returnedData) -- (93)
  where
   L_A (s : AccountAddress) (n : UInt256) (ζ : Option ByteArray) (i : ByteArray) :
@@ -1185,6 +1172,12 @@ def Υ (debugMode : Bool) (fuel : ℕ) (σ : YPState) (chainId H_f : ℕ) (H : B
   let (/- provisional state -/ σ_P, g', A, z) ← -- (76)
     match T.base.recipient with
       | none => do
+        let MAX_CODE_SIZE := 24576
+        let MAX_INITCODE_SIZE := 2 * MAX_CODE_SIZE
+        if T.base.data.size > MAX_INITCODE_SIZE then
+          dbg_trace s!"Contract creation failed: MAX_INITCODE_SIZE exceeded"
+          .error <| .InvalidTransaction .INITCODE_SIZE_EXCEEDED
+
         let (_, _, σ_P, g', A, z, _) ←
           Lambda debugMode fuel T.blobVersionedHashes createdAccounts σ₀ AStar S_T S_T g p T.base.value T.base.data ⟨0⟩ none H true
             -- | .none => dbg_trace "Lambda returned none; this should probably not be happening; test semantics will be off."; default
