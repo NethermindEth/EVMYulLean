@@ -543,7 +543,7 @@ def X (debugMode : Bool) (fuel : ℕ) (evmState : State) : Except EVM.Exception 
 
       -- Exceptional halting (158)
       let Z (evmState : State) : Option (State × ℕ) := do
-        let cost₁ := memoryExpantionCost evmState w
+        let cost₁ := memoryExpansionCost evmState w
         if evmState.gasAvailable.toNat < cost₁ then
           if debugMode then
             dbg_trace s!"Exceptional halting: insufficient gas (available gas < gas cost for memory expantion)"
