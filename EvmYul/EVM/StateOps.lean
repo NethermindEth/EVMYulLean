@@ -31,8 +31,8 @@ def liftState (f : EvmYul.State → EvmYul.State) : EVM.State → EVM.State :=
 
 instance : CoeFun (EvmYul.State → EvmYul.State) (λ _ ↦ EVM.State → EVM.State) := ⟨liftState⟩
 
-def transferBalance (sender : AccountAddress) (recipient : AccountAddress) (balance : UInt256) : EVM.State → Option EVM.State :=
-  EvmYul.State.transferBalance sender recipient balance
+-- def transferBalance (sender : AccountAddress) (recipient : AccountAddress) (balance : UInt256) : EVM.State → Option EVM.State :=
+--   EvmYul.State.transferBalance sender recipient balance
 
 def initialiseAccount (addr : AccountAddress) : EVM.State → EVM.State :=
   EvmYul.State.initialiseAccount addr

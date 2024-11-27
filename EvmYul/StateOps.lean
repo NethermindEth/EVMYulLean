@@ -4,6 +4,7 @@ import EvmYul.State.AccountOps
 import EvmYul.Maps.YPState
 
 import EvmYul.State
+import EvmYul.EVM.GasConstants
 
 namespace EvmYul
 
@@ -49,23 +50,23 @@ def balance (self : State) (k : UInt256) : State × UInt256 :=
   let addr := AccountAddress.ofUInt256 k
   (self.addAccessedAccount addr, self.accountMap.find? addr |>.elim ⟨0⟩ Account.balance)
 
-def transferBalance (sender : AccountAddress) (recipient : AccountAddress) (balance : UInt256) (self : State) : Option State :=
-  if sender == recipient then .some self -- NB this check renders `balance` validity irrelevant
-  else do
-    let senderAcc ← self.accountMap.find? sender
-    let recipientAcc ← self.accountMap.find? recipient
-    let (senderAcc, recipientAcc) ← senderAcc.transferBalanceTo balance recipientAcc
-    self.updateAccount sender senderAcc
-      |>.updateAccount recipient recipientAcc
+-- def transferBalance (sender : AccountAddress) (recipient : AccountAddress) (balance : UInt256) (self : State) : Option State :=
+--   if sender == recipient then .some self -- NB this check renders `balance` validity irrelevant
+--   else do
+--     let senderAcc ← self.accountMap.find? sender
+--     let recipientAcc ← self.accountMap.find? recipient
+--     let (senderAcc, recipientAcc) ← senderAcc.transferBalanceTo balance recipientAcc
+--     self.updateAccount sender senderAcc
+--       |>.updateAccount recipient recipientAcc
 
 def initialiseAccount (addr : AccountAddress) (self : State) : State :=
   if self.accountExists addr then self else self.updateAccount addr default
 
-def setBalance! (self : State) (addr : AccountAddress) (balance : UInt256) : State :=
-  self.updateAccount! addr (λ acc ↦ { acc with balance := balance })
+-- def setBalance! (self : State) (addr : AccountAddress) (balance : UInt256) : State :=
+--   self.updateAccount! addr (λ acc ↦ { acc with balance := balance })
 
-def setSelfBalance! (self : State) : UInt256 → State :=
-  self.setBalance! self.executionEnv.codeOwner
+-- def setSelfBalance! (self : State) : UInt256 → State :=
+--   self.setBalance! self.executionEnv.codeOwner
 
 def calldataload (self : State) (v : UInt256) : UInt256 :=
   -- dbg_trace s!"calldataload arr: {self.executionEnv.inputData.extract' v (v + 32)}"
@@ -148,11 +149,35 @@ def sload (self : State) (spos : UInt256) : State × UInt256 :=
 
 def sstore (self : State) (spos sval : UInt256) : State :=
   let Iₐ := self.executionEnv.codeOwner
+  let { storage := σ, ostorage := σ₀, .. } := self.accountMap.find! Iₐ
+  let v₀ := σ₀.findD spos ⟨0⟩
+  let v := σ.findD spos ⟨0⟩
+  let v' := sval
+
+  let r_dirtyclear : ℤ :=
+    if v₀ ≠ .ofNat 0 && v = .ofNat 0 then - GasConstants.Rsclear else
+    if v₀ ≠ .ofNat 0 && v' = .ofNat 0 then GasConstants.Rsclear else
+    0
+
+  let r_dirtyreset : ℤ :=
+    if v₀ = v' && v₀ = .ofNat 0 then GasConstants.Gsset - GasConstants.Gwarmaccess else
+    if v₀ = v' && v₀ ≠ .ofNat 0 then GasConstants.Gsreset - GasConstants.Gwarmaccess else
+    0
+
+  let ΔAᵣ : ℤ :=
+    if v ≠ v' && v₀ = v && v' = .ofNat 0 then GasConstants.Rsclear else
+    if v ≠ v' && v₀ ≠ v then r_dirtyclear + r_dirtyreset else
+    0
+
+  let newAᵣ : UInt256 :=
+    match ΔAᵣ with
+      | .ofNat n => self.substate.refundBalance + .ofNat n
+      | .negSucc n => self.substate.refundBalance - .ofNat n - ⟨1⟩
   self.lookupAccount Iₐ |>.option self λ acc ↦
-    let self' := self.setAccount Iₐ (acc.updateStorage spos sval)
-    { self' with
-        substate := self.substate.addAccessedStorageKey (Iₐ, spos)
-    }
+    let self' :=
+      self.setAccount Iₐ (acc.updateStorage spos sval)
+        |>.addAccessedStorageKey (Iₐ, spos)
+    { self' with substate.refundBalance := newAᵣ }
 
 def tload (self : State) (spos : UInt256) : State × UInt256 :=
   let Iₐ := self.executionEnv.codeOwner

@@ -41,9 +41,9 @@ def log (testFile : System.FilePath) (testName : String) (result : TestResult) :
 GeneralStateTests:
   Cancun                                2m43
     Total tests: 174
-    The post was NOT equal to the resulting state: 3
-    Succeeded: 171
-    Success rate of: 98.275862
+    The post was NOT equal to the resulting state: 5
+    Succeeded: 169
+    Success rate of: 97.126437
 
   Pyspecs                               27m47
     Total tests: 1675
