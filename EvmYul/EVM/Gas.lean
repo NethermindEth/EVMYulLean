@@ -133,8 +133,13 @@ We take `EVM.State`.
 -/
 def Cselfdestruct (s : EVM.State) : ℕ :=
   let r := AccountAddress.ofUInt256 s.stack[0]!
-  let { substate.accessedAccounts := Aₐ, .. } := s
-  if Aₐ.contains r then 0 else Gcoldaccountaccess
+  let { substate.accessedAccounts := Aₐ, accountMap := σ, executionEnv.codeOwner := Iₐ, .. } := s
+  let c_cold := if Aₐ.contains r then 0 else Gcoldaccountaccess
+  let c_new :=
+    if State.dead σ r ∧ (σ.find? Iₐ |>.option ⟨0⟩ Account.balance) ≠ ⟨0⟩ then
+      Gnewaccount
+    else 0
+  Gselfdestruct + c_cold + c_new
 
 /--
 NB Assumes stack coherency.
@@ -158,28 +163,28 @@ def Cnew (t : AccountAddress) (val : UInt256) (σ : AccountMap) : ℕ :=
 def Cxfer (val : UInt256) : ℕ :=
   if val != ⟨0⟩ then Gcallvalue else 0
 
-def Cextra (t : AccountAddress) (val : UInt256) (σ : AccountMap) (A : Substate) : ℕ :=
-  Caccess t A + Cxfer val + Cnew t val σ
+def Cextra (t r : AccountAddress) (val : UInt256) (σ : AccountMap) (A : Substate) : ℕ :=
+  Caccess t A + Cxfer val + Cnew r val σ
 
-def Cgascap (t : AccountAddress) (val g : UInt256) (σ : AccountMap) (μ : MachineState) (A : Substate) :=
-  if μ.gasAvailable.toNat >= Cextra t val σ A then
+def Cgascap (t r : AccountAddress) (val g : UInt256) (σ : AccountMap) (μ : MachineState) (A : Substate) :=
+  if μ.gasAvailable.toNat >= Cextra t r val σ A then
     -- dbg_trace s!"gasAvailable {μ.gasAvailable} >= Cextra {Cextra t val σ A}"
-    min (L <| (μ.gasAvailable.toNat - Cextra t val σ A)) g.toNat
+    min (L <| (μ.gasAvailable.toNat - Cextra t r val σ A)) g.toNat
   else
     -- dbg_trace s!"gasAvailable {μ.gasAvailable} < Cextra {Cextra t val σ A}"
     g.toNat
 
-def Ccallgas (t : AccountAddress) (val g : UInt256) (σ : AccountMap) (μ : MachineState) (A : Substate) : ℕ :=
+def Ccallgas (t r : AccountAddress) (val g : UInt256) (σ : AccountMap) (μ : MachineState) (A : Substate) : ℕ :=
   match val with
-    | ⟨0⟩ => Cgascap t val g σ μ A
-    | _ => Cgascap t val g σ μ A + GasConstants.Gcallstipend
+    | ⟨0⟩ => Cgascap t r val g σ μ A
+    | _ => Cgascap t r val g σ μ A + GasConstants.Gcallstipend
 
 /--
 NB Assumes stack coherence.
 -/
-def Ccall (t : AccountAddress) (val g : UInt256) (σ : AccountMap) (μ : MachineState) (A : Substate) : ℕ :=
+def Ccall (t r : AccountAddress) (val g : UInt256) (σ : AccountMap) (μ : MachineState) (A : Substate) : ℕ :=
   -- dbg_trace s!"Ccall: {Cgascap t val g σ μ A} + {Cextra t val σ A}"
-  Cgascap t val g σ μ A + Cextra t val σ A
+  Cgascap t r val g σ μ A + Cextra t r val σ A
 
 /--
 (65)
@@ -198,7 +203,7 @@ def C' (s : State) (instr : Operation .EVM) : ℕ :=
     | .SSTORE => Csstore s
     | .TSTORE => Ctstore
     | .EXP => let μ₁ := μₛ[1]!; if μ₁ == ⟨0⟩ then Gexp else Gexp + Gexpbyte * (1 + Nat.log 256 μ₁.toNat) -- TODO(check) I think this floors by itself. cf. H.1. YP.
-    | .EXTCODECOPY => Caccess (AccountAddress.ofUInt256 μₛ[0]!) A
+    | .EXTCODECOPY => Caccess (AccountAddress.ofUInt256 μₛ[0]!) A + Gcopy * ((μₛ[3]!.toNat + 31) / 32)
     | .LOG0 => Glog + Glogdata * μₛ[1]!.toNat
     | .LOG1 => Glog + Glogdata * μₛ[1]!.toNat +     Glogtopic
     | .LOG2 => Glog + Glogdata * μₛ[1]!.toNat + 2 * Glogtopic
@@ -217,10 +222,10 @@ def C' (s : State) (instr : Operation .EVM) : ℕ :=
       not what happens to be on the stack at index 2. Therefore it is 0 for
       `DELEGATECALL` and `STATICCALL`.
     -/
-    | .CALL => Ccall (AccountAddress.ofUInt256 μₛ[1]!) μₛ[2]! μₛ[0]! σ μ A
-    | .CALLCODE => Ccall (AccountAddress.ofUInt256 μₛ[1]!) μₛ[2]! μₛ[0]! σ μ A
-    | .DELEGATECALL => Ccall (AccountAddress.ofUInt256 μₛ[1]!) ⟨0⟩ μₛ[0]! σ μ A
-    | .STATICCALL   => Ccall (AccountAddress.ofUInt256 μₛ[1]!) ⟨0⟩ μₛ[0]! σ μ A
+    | .CALL => Ccall (AccountAddress.ofUInt256 μₛ[1]!) (AccountAddress.ofUInt256 μₛ[1]!) μₛ[2]! μₛ[0]! σ μ A
+    | .CALLCODE => Ccall (AccountAddress.ofUInt256 μₛ[1]!) s.executionEnv.codeOwner μₛ[2]! μₛ[0]! σ μ A
+    | .DELEGATECALL => Ccall (AccountAddress.ofUInt256 μₛ[1]!) s.executionEnv.codeOwner ⟨0⟩ μₛ[0]! σ μ A
+    | .STATICCALL   => Ccall (AccountAddress.ofUInt256 μₛ[1]!) (AccountAddress.ofUInt256 μₛ[1]!) ⟨0⟩ μₛ[0]! σ μ A
     | .BLOBHASH => HASH_OPCODE_GAS
     | w =>
       if w ∈ Wcopy then Gverylow + Gcopy * ((μₛ[2]!.toNat + 31) / 32) else

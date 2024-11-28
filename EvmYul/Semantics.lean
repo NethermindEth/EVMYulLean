@@ -451,9 +451,15 @@ def step {τ : OperationType} (debugMode : Bool) (op : Operation τ) : Transform
                             {(default : Account) with balance := σ_Iₐ.balance}
                               |>.insert Iₐ {σ_Iₐ with balance := ⟨0⟩}
                       | some σ_r =>
+                        if r ≠ Iₐ then
                           evmState.accountMap.insert r
                             {σ_r with balance := σ_r.balance + σ_Iₐ.balance}
                               |>.insert Iₐ {σ_Iₐ with balance := ⟨0⟩}
+                        else
+                          -- Note that if the target is the same as the contract
+                          -- calling SELFDESTRUCT there is no net change in balances.
+                          -- Unlike the prior specification, Ether will not be burnt in this case.
+                          evmState.accountMap
               let evmState' :=
                 {evmState with
                   accountMap := accountMap'

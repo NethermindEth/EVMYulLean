@@ -168,7 +168,7 @@ def call (debugMode : Bool) (fuel : Nat)
       let Iₐ := evmState.executionEnv.codeOwner
       let σ := evmState.accountMap
       let Iₑ := evmState.executionEnv.depth
-      let callgas := Ccallgas t value gas σ evmState.toMachineState evmState.substate
+      let callgas := Ccallgas t recipient value gas σ evmState.toMachineState evmState.substate
       -- dbg_trace s!"callgas: {callgas}"
       -- dbg_trace s!"gas available: {evmState.gasAvailable}"
       let evmState := {evmState with gasAvailable := evmState.gasAvailable - UInt256.ofNat gasCost}
@@ -706,26 +706,33 @@ def Lambda
     (KEC lₐ).extract 12 32 /- 160 bits = 20 bytes -/
       |>.data.data |> fromBytesBigEndian |> Fin.ofNat
   -- dbg_trace s!"addr: {toHex a.toByteArray}"
-  -- dbg_trace s!"s: {toHex s.toByteArray}"
-  -- dbg_trace s!"n: {toHex (BE n)}"
-  -- dbg_trace s!"code: {toHex i}"
+
   let createdAccounts := createdAccounts.insert a
 
   -- A* (97)
   let AStar := A.addAccessedAccount a
   -- σ*
-  let v' := -- (102)
-    match σ.find? a with
-      | none => ⟨0⟩
-      | some ac => ac.balance
+  let existentAccount := σ.findD a default
+
+  -- https://eips.ethereum.org/EIPS/eip-7610
+  -- If a contract creation is attempted due to a creation transaction,
+  -- the CREATE opcode, the CREATE2 opcode, or any other reason,
+  -- and the destination address already has either a nonzero nonce,
+  -- a nonzero code length, or non-empty storage, then the creation MUST throw
+  -- as if the first byte in the init code were an invalid opcode.
+  let i :=
+    if
+      existentAccount.nonce ≠ ⟨0⟩
+        || existentAccount.code.size ≠ 0
+        || existentAccount.storage != default
+    then
+      ⟨#[0xfe]⟩
+    else i
 
   let newAccount : Account :=
-    { nonce := ⟨1⟩
-    , balance := v + v'
-    , code := .empty
-    , storage := default
-    , tstorage := default
-    , ostorage := default
+    { existentAccount with
+        nonce := existentAccount.nonce + ⟨1⟩
+        balance := v + existentAccount.balance
     }
 
   -- TODO: (100) What if the sender account does not exist but `v` is non-zero?
