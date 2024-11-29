@@ -705,7 +705,6 @@ def Lambda
   let a : AccountAddress := -- (94) (95)
     (KEC lₐ).extract 12 32 /- 160 bits = 20 bytes -/
       |>.data.data |> fromBytesBigEndian |> Fin.ofNat
-  -- dbg_trace s!"addr: {toHex a.toByteArray}"
 
   let createdAccounts := createdAccounts.insert a
 
@@ -787,7 +786,7 @@ def Lambda
         let F₃ : Bool := returnedData.size > MAX_CODE_SIZE
         if debugMode ∧ F₃ then
           dbg_trace "Contract creation failed: code computed for the new account > 24576"
-        let F₄ : Bool := ¬F₃ && returnedData[1]? = some 0xef
+        let F₄ : Bool := ¬F₃ && returnedData[0]? = some 0xef
         if debugMode ∧ F₄ then
           dbg_trace "Contract creation failed: code computed for the new account starts with 0xef"
         pure (F₀ ∨ F₂ ∨ F₃ ∨ F₄ ∨ i.size > MAX_INITCODE_SIZE)
