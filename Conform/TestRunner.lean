@@ -20,8 +20,6 @@ namespace Conform
 def VerySlowTests : Array String :=
   #[
     "sha3_d3g0v0_Cancun" -- ~6MB getting keccak256'd, estimated time on my PC: ~1 hour, best guess: unfoldr.go in keccak256.lean
-  , "operationDiffGas_d9g0v0_Cancun"
-  , "static_RETURN_BoundsOOG_d0g0v0_Cancun"
   , "CALLBlake2f_MaxRounds_d0g0v0_Cancun"
   ]
 
