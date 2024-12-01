@@ -19,6 +19,7 @@ namespace Conform
 
 def VerySlowTests : Array String :=
   #[
+    -- TODO: Is https://eips.ethereum.org/EIPS/eip-7623 relevant?
     "sha3_d3g0v0_Cancun" -- ~6MB getting keccak256'd, estimated time on my PC: ~1 hour, best guess: unfoldr.go in keccak256.lean
   , "CALLBlake2f_MaxRounds_d0g0v0_Cancun"
   ]
@@ -276,7 +277,7 @@ instance (priority := high) : Repr AccountMap := ⟨λ m _ ↦
   Id.run do
     let mut result := ""
     for (k, v) in m do
-      result := result ++ s!"\nAccount[...{(EvmYul.toHex k.toByteArray) |>.takeRight 5}]\n"
+      result := result ++ s!"\nAccount[...{(EvmYul.toHex k.toByteArray) /-|>.takeRight 5-/}]\n"
       result := result ++ s!"balance: {v.balance}\nnonce: {v.nonce}\nstorage: \n"
       for (sk, sv) in v.storage do
         result := result ++ s!"{sk} → {sv}\n"

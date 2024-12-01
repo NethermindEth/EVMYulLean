@@ -7,11 +7,11 @@ def SimpleFile := "EthereumTests/BlockchainTests/GeneralStateTests/VMTests/vmAri
 -- def BuggyFile := "EthereumTests/BlockchainTests/GeneralStateTests/VMTests/vmArithmeticTest/exp.json"
 def BuggyFile := "Conform/testfile.json"
 -- def BuggyFile := "EthereumTests/BlockchainTests/GeneralStateTests/VMTests/vmTests/calldatacopy.json"
-def SpecificFile := "EthereumTests/BlockchainTests/GeneralStateTests/stBadOpcode/badOpcodes.json"
+def SpecificFile := "EthereumTests/BlockchainTests/GeneralStateTests/stCreate2/returndatacopy_following_revert_in_create.json"
 
 
 def TestsSubdir := "BlockchainTests"
-def isTestFile (file : System.FilePath) : Bool := file.extension.option false (· == "json")
+def isTestFile (file : System.FilePath  ) : Bool := file.extension.option false (· == "json")
 /--
 CannotParse - Missing `postState` entirely.
             - There's a single test that says :intMax or some such before giving an 0x value. What?
@@ -65,9 +65,9 @@ GeneralStateTests:
 
   stAttackTest                          0m16
     Total tests: 2
-    The post was NOT equal to the resulting state: 2
-    Succeeded: 0
-    Success rate of: 0.000000
+    The post was NOT equal to the resulting state: 1
+    Succeeded: 1
+    Success rate of: 50.000000
 
   stBadOpcode                           62m48
     Total tests: 4132
@@ -89,9 +89,9 @@ GeneralStateTests:
 
   stCallCreateCallCodeTest              1m5
     Total tests: 56
-    The post was NOT equal to the resulting state: 7
-    Succeeded: 49
-    Success rate of: 87.500000
+    The post was NOT equal to the resulting state: 6
+    Succeeded: 50
+    Success rate of: 89.285714
 
   stCallDelegateCodesCallCodeHomestead  1m5
     Total tests: 58
@@ -125,15 +125,15 @@ GeneralStateTests:
 
   stCreate2                             3m10
     Total tests: 187
-    The post was NOT equal to the resulting state: 39
-    Succeeded: 148
-    Success rate of: 79.144385
+    The post was NOT equal to the resulting state: 42
+    Succeeded: 145
+    Success rate of: 77.540107
 
   stCreateTest                          3m10
     Total tests: 202
-    The post was NOT equal to the resulting state: 50
-    Succeeded: 152
-    Success rate of: 75.247525
+    The post was NOT equal to the resulting state: 53
+    Succeeded: 149
+    Success rate of: 73.762376
 
   stDelegatecallTestHomestead           0m48
     Total tests: 33
@@ -417,8 +417,9 @@ def main : IO Unit := do
     let res ←
       ExceptT.run <|
         EvmYul.Conform.processTestsOfFile
-          -- (whitelist := #["CREATE_ContractRETURNBigOffset_d1g0v0_Cancun"])
-          -- (whitelist := #["CreateOOGafterInitCode_d0g0v0_Cancun"])
+          -- (whitelist := #["returndatacopy_following_revert_in_create_d0g0v0_Cancun"])
+          -- (whitelist := #["CreateOOGafterInitCodeRevert2_d1g0v0_Cancun"])
+
           testFile
     match res with
       | .error err         => discardedFiles := discardedFiles.push (testFile, err)

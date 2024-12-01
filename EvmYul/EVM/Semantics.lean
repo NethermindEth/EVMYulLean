@@ -377,7 +377,8 @@ def step (debugMode : Bool) (fuel : ℕ) (gasCost : ℕ) (instr : Option (Operat
               let balance := σ.find? Iₐ |>.option ⟨0⟩ Account.balance
                 if z = false ∨ Iₑ = 1024 ∨ μ₀ > balance ∨ i.size > 49152 then ⟨0⟩ else .ofNat a
             let newReturnData : ByteArray := if z then .empty else o
-            if (evmState'.gasAvailable + g').toNat < L (evmState'.gasAvailable.toNat) then
+            -- TODO: Redundant
+            if (evmState.gasAvailable + g').toNat < L (evmState.gasAvailable.toNat) then
               .error .OutOfGass
             -- dbg_trace s!"gasAvailable at the end of CREATE: {evmState'.gasAvailable.toNat - L (evmState'.gasAvailable.toNat) + g'.toNat}"
             let evmState' :=
@@ -386,7 +387,7 @@ def step (debugMode : Bool) (fuel : ℕ) (gasCost : ℕ) (instr : Option (Operat
                   { newMachineState with
                       returnData := newReturnData
                       gasAvailable :=
-                        .ofNat <| evmState'.gasAvailable.toNat - L (evmState'.gasAvailable.toNat) + g'.toNat
+                        .ofNat <| evmState.gasAvailable.toNat - L (evmState.gasAvailable.toNat) + g'.toNat
                   }
               }
             .ok <| evmState'.replaceStackAndIncrPC (evmState.stack.push x)
@@ -427,23 +428,26 @@ def step (debugMode : Bool) (fuel : ℕ) (gasCost : ℕ) (instr : Option (Operat
             let (a, evmState', g', z, o) : (AccountAddress × EVM.State × UInt256 × Bool × ByteArray) :=
               if μ₀ ≤ (σ.find? Iₐ |>.option ⟨0⟩ Account.balance) ∧ Iₑ < 1024 ∧ i.size ≤ 49152 then
                 match Λ with
-                  | .ok (a, cA, σ', g', A', z, o) =>
+                  | .ok (a, cA, σ', g', A', z, o) => -- dbg_trace "Lambda ok"
                     (a, {evmState with accountMap := σ', substate := A', createdAccounts := cA}, g', z, o)
-                  | _ => (0, {evmState with accountMap := ∅}, ⟨0⟩, False, .empty)
+                  | _ => /- dbg_trace "Lambda not ok"; -/ (0, {evmState with accountMap := ∅}, ⟨0⟩, False, .empty)
               else
                 (0, evmState, .ofNat (L evmState.gasAvailable.toNat), False, .empty)
+            -- dbg_trace s!"After Λ: {toHex o}"
             let x : UInt256 :=
               let balance := σ.find? Iₐ |>.option ⟨0⟩ Account.balance
                 if z = false ∨ Iₑ = 1024 ∨ μ₀ > balance ∨ i.size > 49152 then ⟨0⟩ else .ofNat a
             let newReturnData : ByteArray := if z then .empty else o
-            if (evmState'.gasAvailable + g').toNat < L (evmState'.gasAvailable).toNat then
+            -- TODO: Redundant
+            if (evmState.gasAvailable + g').toNat < L (evmState.gasAvailable).toNat then
               .error .OutOfGass
+            -- dbg_trace s!"g' in CREATE2 = {g'}"
             let evmState' :=
               {evmState' with
                 toMachineState :=
                   { newMachineState with
                       returnData := newReturnData
-                      gasAvailable := .ofNat <| evmState'.gasAvailable.toNat - L (evmState'.gasAvailable.toNat) + g'.toNat
+                      gasAvailable := .ofNat <| evmState.gasAvailable.toNat - L (evmState.gasAvailable.toNat) + g'.toNat
                   }
               }
             .ok <| evmState'.replaceStackAndIncrPC (evmState.stack.push x)
@@ -521,7 +525,9 @@ def step (debugMode : Bool) (fuel : ℕ) (gasCost : ℕ) (instr : Option (Operat
         let μ'ₛ := stack.push x -- μ′s[0] ≡ x
         let evmState' := state'.replaceStackAndIncrPC μ'ₛ
         .ok evmState'
-      | instr => EvmYul.step debugMode instr {evmState with gasAvailable := evmState.gasAvailable - UInt256.ofNat gasCost}
+      | instr =>
+        -- dbg_trace s!"{instr.pretty} called by {toHex evmState.executionEnv.codeOwner.toByteArray}"
+        EvmYul.step debugMode instr {evmState with gasAvailable := evmState.gasAvailable - UInt256.ofNat gasCost}
 
 /--
   Iterative progression of `step`
@@ -544,16 +550,22 @@ def X (debugMode : Bool) (fuel : ℕ) (evmState : State) : Except EVM.Exception 
       -- Exceptional halting (158)
       let Z (evmState : State) : Option (State × ℕ) := do
         let cost₁ := memoryExpansionCost evmState w
+        -- dbg_trace s!"gasAvailable: {evmState.gasAvailable.toNat}"
+        -- dbg_trace s!"cost₁: {cost₁}"
+
         if evmState.gasAvailable.toNat < cost₁ then
           if debugMode then
             dbg_trace s!"Exceptional halting: insufficient gas (available gas < gas cost for memory expantion)"
+            -- dbg_trace s!"({evmState.gasAvailable.toNat} < {cost₁}"
           none
         let gasAvailable := evmState.gasAvailable - .ofNat cost₁
         let evmState := { evmState with gasAvailable := gasAvailable}
         let cost₂ := C' evmState w
+        -- dbg_trace s!"cost₂: {cost₂}"
         if evmState.gasAvailable.toNat < cost₂ then
           if debugMode then
             dbg_trace s!"Exceptional halting: insufficient gas (available gas < gas cost)"
+            -- dbg_trace s!"({evmState.gasAvailable.toNat} < {cost₂})"
           none
 
         if δ w = none then
@@ -619,6 +631,7 @@ def X (debugMode : Bool) (fuel : ℕ) (evmState : State) : Except EVM.Exception 
                 -- but we actually have to call the semantics of `REVERT` to pass the test
                 -- EthereumTests/BlockchainTests/GeneralStateTests/stReturnDataTest/returndatacopy_after_revert_in_staticcall.json
                 -- And the EEL spec does so too.
+                -- dbg_trace s!"Output data after REVERT: {toHex o}"
                 .ok <| ({evmState' with accountMap := ∅}, some o)
               else
                 .ok <| (evmState', some o)
@@ -807,7 +820,7 @@ def Lambda
       let A' := if fail then AStar else AStarStar
       -- (117)
       let z := not fail
-      let returnedData := if fail then .empty else returnedData
+      -- let returnedData := if fail then .empty else returnedData
       .ok (a, createdAccounts', σ', .ofNat g', A', z, returnedData) -- (93)
  where
   L_A (s : AccountAddress) (n : UInt256) (ζ : Option ByteArray) (i : ByteArray) :
@@ -1145,6 +1158,7 @@ def Υ (debugMode : Bool) (fuel : ℕ) (σ : YPState) (chainId H_f : ℕ) (H : B
     match T with
       | .legacy t | .access t => t.gasPrice
       | .dynamic _ | .blob _ => f + .ofNat H_f
+  -- dbg_trace s!"TYPE: {T.type}, calcBlobFee: {calcBlobFee H T}"
   let senderAccount :=
     { senderAccount with
         /-
