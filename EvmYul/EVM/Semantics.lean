@@ -356,6 +356,7 @@ def step (debugMode : Bool) (fuel : ℕ) (gasCost : ℕ) (instr : Option (Operat
                   : (AccountAddress × EVM.State × UInt256 × Bool × ByteArray)
               :=
               -- TODO: Refactor this conditions
+              if σ_Iₐ.nonce.toNat = 2^64-1 then (default, evmState, .ofNat (L evmState.gasAvailable.toNat), False, .empty) else
               if μ₀ ≤ (σ.find? Iₐ |>.option ⟨0⟩ Account.balance) ∧ Iₑ < 1024 ∧ i.size ≤ 49152 then
                 match Λ with
                   | .ok (a, cA, σ', g', A', z, o) =>
@@ -426,6 +427,7 @@ def step (debugMode : Bool) (fuel : ℕ) (gasCost : ℕ) (instr : Option (Operat
                 I.header
                 I.perm
             let (a, evmState', g', z, o) : (AccountAddress × EVM.State × UInt256 × Bool × ByteArray) :=
+              if σ_Iₐ.nonce.toNat = 2^64-1 then (default, evmState, .ofNat (L evmState.gasAvailable.toNat), False, .empty) else
               if μ₀ ≤ (σ.find? Iₐ |>.option ⟨0⟩ Account.balance) ∧ Iₑ < 1024 ∧ i.size ≤ 49152 then
                 match Λ with
                   | .ok (a, cA, σ', g', A', z, o) => -- dbg_trace "Lambda ok"
@@ -439,7 +441,7 @@ def step (debugMode : Bool) (fuel : ℕ) (gasCost : ℕ) (instr : Option (Operat
                 if z = false ∨ Iₑ = 1024 ∨ μ₀ > balance ∨ i.size > 49152 then ⟨0⟩ else .ofNat a
             let newReturnData : ByteArray := if z then .empty else o
             -- TODO: Redundant
-            if (evmState.gasAvailable + g').toNat < L (evmState.gasAvailable).toNat then
+            if (evmState.gasAvailable + g').toNat < L evmState.gasAvailable.toNat then
               .error .OutOfGass
             -- dbg_trace s!"g' in CREATE2 = {g'}"
             let evmState' :=
@@ -967,6 +969,8 @@ def checkTransactionGetSender (σ : YPState) (chainId H_f : ℕ) (T : Transactio
   : Except EVM.Exception AccountAddress
 := do
   -- dbg_trace "Transaction: {repr T}"
+  if T.base.nonce.toNat = 2^64-1 then
+    .error <| .InvalidTransaction .NONCE_IS_MAX
   let some T_RLP := RLP (← (L_X T)) | .error <| .InvalidTransaction .IllFormedRLP
 
   let r : ℕ := fromBytesBigEndian T.base.r.data.data

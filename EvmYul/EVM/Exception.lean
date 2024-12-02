@@ -19,6 +19,7 @@ inductive InvalidTransactionException where
   | INSUFFICIENT_MAX_FEE_PER_BLOB_GAS : InvalidTransactionException
   | INITCODE_SIZE_EXCEEDED : InvalidTransactionException
   | MAX_CODE_SIZE_EXCEEDED : InvalidTransactionException
+  | NONCE_IS_MAX : InvalidTransactionException
 
 instance : Repr InvalidTransactionException where
   reprPrec s _ :=
@@ -37,6 +38,7 @@ instance : Repr InvalidTransactionException where
       | .INSUFFICIENT_MAX_FEE_PER_BLOB_GAS => "INTRINSIC_GAS_TOO_LOW"
       | .INITCODE_SIZE_EXCEEDED => "INITCODE_SIZE_EXCEEDED"
       | .MAX_CODE_SIZE_EXCEEDED => "MAX_CODE_SIZE_EXCEEDED"
+      | .NONCE_IS_MAX => "NONCE_IS_MAX"
 
 -- TODO - fix / cleanup.
 inductive Exception where
