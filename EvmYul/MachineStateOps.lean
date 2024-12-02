@@ -32,17 +32,13 @@ def y : ByteArray := "kokusho".toUTF8
 def writeBytes (self : MachineState) (source : ByteArray) (addr : UInt256) (size : ℕ) : MachineState :=
   -- dbg_trace "writeBytes"
   -- dbg_trace s!"current mem: {self.memory} source: {source} s: {s} n: {n}"
-  let maxPracticalAddress := self.activeWordsWritten.toNat * 32
-  let practicalSize₁ := min source.size size
-  let practicalSize₂ : ℕ := maxPracticalAddress - (addr.toNat + practicalSize₁)
   { self with
       memory :=
         self.memory.writeMemory
           source
           addr
-          (practicalSize₁ + practicalSize₂)
+          size
       activeWords := .ofNat <| M self.activeWords.toNat addr.toNat size
-      activeWordsWritten := .ofNat <| M self.activeWords.toNat addr.toNat practicalSize₁
   }
 
 def writeWord (self : MachineState) (addr val : UInt256) : MachineState :=
@@ -71,10 +67,7 @@ def readBytes (self : MachineState) (addr : UInt256) (size : ℕ) : ByteArray ×
     if size > 2^35 then
       panic! s!"Can not handle reading byte arrays larger than 2^35 ({2^35})"
     else size
-  let maxPracticalAddress := self.activeWordsWritten.toNat * 32
-  let practicalLastAddr := min maxPracticalAddress (addr.toNat + size)
-  let practicalSize := practicalLastAddr - addr.toNat
-  let bytes := self.memory.readMemory addr.toNat practicalSize ++ ByteArray.zeroes ⟨size - practicalSize⟩
+  let bytes := self.memory.readMemory addr.toNat size
   let newMachineState := { self with activeWords := .ofNat <| M self.activeWords.toNat addr.toNat size}
   (bytes, newMachineState)
 

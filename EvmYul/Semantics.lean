@@ -286,7 +286,7 @@ def step {τ : OperationType} (debugMode : Bool) (op : Operation τ) : Transform
               | .error .InvalidArguments
             .ok <| (yulState.setMachineState mState', .none)
           | _ => .error .InvalidArguments
-    | τ, .EXTCODEHASH => dispatchUnaryStateOp debugMode τ (λ s v ↦ (s, EvmYul.State.extCodeHash s v))
+    | τ, .EXTCODEHASH => dispatchUnaryStateOp debugMode τ EvmYul.State.extCodeHash
 
     | τ, .BLOCKHASH => dispatchUnaryStateOp debugMode τ (λ s v ↦ (s, EvmYul.State.blockHash s v))
     | τ, .COINBASE => dispatchStateOp τ (.ofNat ∘ Fin.val ∘ EvmYul.State.coinBase)

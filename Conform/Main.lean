@@ -7,8 +7,7 @@ def SimpleFile := "EthereumTests/BlockchainTests/GeneralStateTests/VMTests/vmAri
 -- def BuggyFile := "EthereumTests/BlockchainTests/GeneralStateTests/VMTests/vmArithmeticTest/exp.json"
 def BuggyFile := "Conform/testfile.json"
 -- def BuggyFile := "EthereumTests/BlockchainTests/GeneralStateTests/VMTests/vmTests/calldatacopy.json"
-def SpecificFile := "EthereumTests/BlockchainTests/GeneralStateTests/stCreate2/returndatacopy_following_revert_in_create.json"
-
+def SpecificFile := "EthereumTests/BlockchainTests/GeneralStateTests/stCreate2/RevertOpcodeInCreateReturnsCreate2.json"
 
 def TestsSubdir := "BlockchainTests"
 def isTestFile (file : System.FilePath  ) : Bool := file.extension.option false (· == "json")
@@ -125,15 +124,15 @@ GeneralStateTests:
 
   stCreate2                             3m10
     Total tests: 187
-    The post was NOT equal to the resulting state: 42
-    Succeeded: 145
-    Success rate of: 77.540107
+    The post was NOT equal to the resulting state: 33
+    Succeeded: 154
+    Success rate of: 82.352941
 
   stCreateTest                          3m10
     Total tests: 202
-    The post was NOT equal to the resulting state: 53
-    Succeeded: 149
-    Success rate of: 73.762376
+    The post was NOT equal to the resulting state: 45
+    Succeeded: 157
+    Success rate of: 77.722772
 
   stDelegatecallTestHomestead           0m48
     Total tests: 33
@@ -177,9 +176,9 @@ GeneralStateTests:
 
   stExtCodeHash                         1m27
     Total tests: 69
-    The post was NOT equal to the resulting state: 1
-    Succeeded: 68
-    Success rate of: 98.550725
+    The post was NOT equal to the resulting state: 3
+    Succeeded: 66
+    Success rate of: 95.652174
 
   stHomesteadSpecific                   0m19
     Total tests: 5
@@ -246,8 +245,16 @@ GeneralStateTests:
     Success rate of: 80.769231
 
   stReturnDataTest                      4m56
+    Total tests: 273
+    The post was NOT equal to the resulting state: 19
+    Succeeded: 254
+    Success rate of: 93.040293
 
   stRevertTest                          4m44
+    Total tests: 271
+    The post was NOT equal to the resulting state: 21
+    Succeeded: 250
+    Success rate of: 92.250923
 
   stSelfBalance                         0m58
     Total tests: 42
@@ -292,10 +299,10 @@ GeneralStateTests:
     Success rate of: 99.521531
 
   stStaticCall                          12m33
-    Total tests: 477
-    The post was NOT equal to the resulting state: 50
-    Succeeded: 427
-    Success rate of: 89.517820
+    Total tests: 478
+    The post was NOT equal to the resulting state: 78
+    Succeeded: 400
+    Success rate of: 83.682008
 
   stStaticFlagEnabled                   0m46
     Total tests: 34
@@ -417,8 +424,13 @@ def main : IO Unit := do
     let res ←
       ExceptT.run <|
         EvmYul.Conform.processTestsOfFile
+          -- (whitelist := #["RevertOpcodeInCreateReturnsCreate2_d0g0v0_Cancun"])
+          -- (whitelist := #["RevertOpcodeInInit_d0g0v1_Cancun"])
           -- (whitelist := #["returndatacopy_following_revert_in_create_d0g0v0_Cancun"])
           -- (whitelist := #["CreateOOGafterInitCodeRevert2_d1g0v0_Cancun"])
+          -- (whitelist := #["returndatacopy_afterFailing_create_d0g0v0_Cancun"])
+          -- (whitelist := #["randomStatetest645_d0g0v0_Cancun"])
+
 
           testFile
     match res with

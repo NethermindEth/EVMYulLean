@@ -14,6 +14,7 @@ import EvmYul.State.TransactionOps
 
 import EvmYul.EVM.Exception
 import EvmYul.EVM.Gas
+import EvmYul.EVM.GasConstants
 import EvmYul.EVM.State
 import EvmYul.EVM.StateOps
 import EvmYul.EVM.Exception
@@ -174,10 +175,10 @@ def call (debugMode : Bool) (fuel : Nat)
       let evmState := {evmState with gasAvailable := evmState.gasAvailable - UInt256.ofNat gasCost}
       -- m[μs[3] . . . (μs[3] + μs[4] − 1)]
       let (i, newMachineState) := evmState.toMachineState.readBytes inOffset inSize.toNat
+      let A' := evmState.addAccessedAccount t |>.substate
       let (cA, σ', g', A', z, o) ← do
         -- TODO - Refactor condition and possibly share with CREATE
         if value ≤ (σ.find? Iₐ |>.option ⟨0⟩ Account.balance) ∧ Iₑ < 1024 then
-          let A' := evmState.addAccessedAccount t |>.substate -- A' ≡ A except A'ₐ ≡ Aₐ ∪ {t}
           let resultOfΘ ←
             Θ (debugMode := debugMode)
               (fuel := f)
@@ -201,7 +202,7 @@ def call (debugMode : Bool) (fuel : Nat)
           else
           -- otherwise (σ, CCALLGAS(σ, μ, A), A, 0, ())
           .ok
-            (evmState.createdAccounts, evmState.toState.accountMap, .ofNat callgas, evmState.toState.substate, false, .some .empty)
+            (evmState.createdAccounts, evmState.toState.accountMap, .ofNat callgas, A', false, .some .empty)
       -- n ≡ min({μs[6], ‖o‖})
       let n : UInt256 := min outSize (o.elim ⟨0⟩ (UInt256.ofNat ∘ ByteArray.size))
 
@@ -604,6 +605,12 @@ def X (debugMode : Bool) (fuel : ℕ) (evmState : State) : Except EVM.Exception 
           if debugMode then
             dbg_trace s!"Exceptional halting: attempted {w.pretty} without permission"
           none
+
+        if (w = .SSTORE) ∧ evmState.gasAvailable.toNat < GasConstants.Gcallstipend then
+          if debugMode then
+            dbg_trace s!"Exceptional halting: attempted {w.pretty} without permission"
+          none
+
         pure (evmState, cost₂)
 
       let H (μ : MachineState) (w : Operation .EVM) : Option ByteArray :=
@@ -806,8 +813,7 @@ def Lambda
           dbg_trace "Contract creation failed: code computed for the new account starts with 0xef"
         pure (F₀ ∨ F₂ ∨ F₃ ∨ F₄ ∨ i.size > MAX_INITCODE_SIZE)
       let fail := F || σStarStar == ∅
-      -- (114)
-      let g' := if F then 0 else gStarStar.toNat - c
+
       let σ' : YPState := -- (115)
         if fail then Id.run do
           -- dbg_trace "Λ fail!"
@@ -818,6 +824,15 @@ def Lambda
           else
             let newAccount' := σStarStar.findD a default
             σStarStar.insert a {newAccount' with code := returnedData}
+
+
+      let newCodeSize : ℕ := σ'.find? a |>.option 0 (ByteArray.size ∘ Account.code)
+      -- The code-deposit cost
+      let c := GasConstants.Gcodedeposit * newCodeSize
+
+      -- (114)
+      let g' := if F then 0 else gStarStar.toNat - c
+
       -- (116)
       let A' := if fail then AStar else AStarStar
       -- (117)
@@ -1141,6 +1156,7 @@ def Υ (debugMode : Bool) (fuel : ℕ) (σ : YPState) (chainId H_f : ℕ) (H : B
       if T.base.recipient == none then
         GasConstants.Gtxcreate + R (T.base.data.size)
       else 0
+    -- dbg_trace s!"T.getAccessList : {T.getAccessList}"
     let g₀_accessList : ℕ :=
       T.getAccessList.foldl
         (λ acc (_, s) ↦
