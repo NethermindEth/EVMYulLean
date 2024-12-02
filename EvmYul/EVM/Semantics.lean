@@ -222,6 +222,10 @@ def call (debugMode : Bool) (fuel : Nat)
         { μ'ₘ with
             returnData   := μ'ₒ.getD .empty -- TODO - Check stuff wrt. .none
             gasAvailable := μ'_g
+            activeWords :=
+              let m : ℕ:= MachineState.M evmState.toMachineState.activeWords.toNat inOffset.toNat inSize.toNat
+              .ofNat <| MachineState.M m outOffset.toNat outSize.toNat
+
         }
 
       let result : State := { evmState with accountMap := σ', substate := A', createdAccounts := cA }
