@@ -829,6 +829,7 @@ def Lambda
             let newAccount' := σStarStar.findD a default
             σStarStar.insert a {newAccount' with code := returnedData}
 
+      let reverted := ¬F ∧ σStarStar == ∅
 
       let newCodeSize : ℕ := σ'.find? a |>.option 0 (ByteArray.size ∘ Account.code)
       -- The code-deposit cost
@@ -841,7 +842,7 @@ def Lambda
       let A' := if fail then AStar else AStarStar
       -- (117)
       let z := not fail
-      -- let returnedData := if fail then .empty else returnedData
+      let returnedData := if reverted then returnedData else .empty
       .ok (a, createdAccounts', σ', .ofNat g', A', z, returnedData) -- (93)
  where
   L_A (s : AccountAddress) (n : UInt256) (ζ : Option ByteArray) (i : ByteArray) :
