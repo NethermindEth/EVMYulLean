@@ -16,7 +16,7 @@ x0_bytes = bytes.fromhex(sys.argv[1])
 x0_value = U256.from_be_bytes(x0_bytes)
 y0_bytes = bytes.fromhex(sys.argv[2])
 y0_value = U256.from_be_bytes(y0_bytes)
-n = U256.from_be_bytes(bytes.fromhex(sys.argv[2]))
+n = U256.from_be_bytes(bytes.fromhex(sys.argv[3]))
 
 for i in (x0_value, y0_value):
     if i >= ALT_BN128_PRIME:
