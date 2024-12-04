@@ -132,7 +132,7 @@ def Ξ_RIP160
   let gᵣ : ℕ :=
     let l := I.inputData.size
     let ceil := ( l + 31 ) / 32
-    60 + 12 * ceil
+    600 + 120 * ceil
 
   if g.toNat < gᵣ then
     (∅, ⟨0⟩, A, .empty)
@@ -155,9 +155,8 @@ private def ripOutput :=
         inputData := longInput.toUTF8
       }
   o
-
 private example :
-  EvmYul.toHex ripOutput = "5cff4c1668e5542c74a609a3146427c28e51ff5a"
+  EvmYul.toHex ripOutput = "0000000000000000000000005cff4c1668e5542c74a609a3146427c28e51ff5a"
 := by native_decide
 
 
@@ -235,24 +234,26 @@ def Ξ_EXPMOD
   let base_length := nat_of_slice data 0 32
   let exp_length := nat_of_slice data 32 32
   let modulus_length := nat_of_slice data 64 32
-
-  let exp_head := nat_of_slice data (96 + base_length) (min 32 exp_length)
+  let base := nat_of_slice data 96 base_length
+  let exp := nat_of_slice data (96 + base_length) exp_length
+  let modulus := nat_of_slice data (96 + base_length + exp_length) modulus_length
 
   let gᵣ :=
     let multiplication_complexity x y := ((max x y + 7) / 8) ^ 2
     let adjusted_exp_length :=
-      if exp_length ≤ 32 && exp_head == 0 then
+      if exp_length ≤ 32 && exp == 0 then
         0
       else
         if exp_length ≤ 32 then
-          Nat.log 2 exp_head
+          Nat.log 2 exp
         else
           let length_part := 8 * (exp_length - 32)
           let bits_part :=
-            if exp_head != 0 then
-              0
-            else
+            let exp_head := nat_of_slice data (96 + base_length) 32
+            if 32 < exp_length ∧ exp_head != 0 then
               Nat.log 2 exp_head
+            else
+              0
           length_part + bits_part
     let iterations := max adjusted_exp_length 1
     let G_quaddivisor := 3
@@ -262,10 +263,6 @@ def Ξ_EXPMOD
   if g.toNat < gᵣ then
     (∅, ⟨0⟩, A, .empty)
   else
-    let base := nat_of_slice data 96 base_length
-    let exp := nat_of_slice data (96 + base_length) exp_length
-    let modulus := nat_of_slice data (96 + base_length + exp_length) modulus_length
-
     let o : ByteArray :=
       if modulus_length == 0 || modulus == 0 then
         ByteArray.zeroes ⟨modulus_length⟩
@@ -449,8 +446,7 @@ def Ξ_BLAKE2_F
   (AccountMap × UInt256 × Substate × ByteArray)
 :=
   let d := I.inputData
-  let k := d.size / 192
-  let gᵣ : ℕ := 34000 * k + 45000
+  let gᵣ : ℕ := fromBytesBigEndian (d.extract 0 4).data.data
 
   if g.toNat < gᵣ then
     (∅, ⟨0⟩, A, .empty)
