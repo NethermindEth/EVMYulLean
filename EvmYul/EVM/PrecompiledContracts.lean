@@ -207,7 +207,7 @@ def nat_of_slice
     if aux_slice = 0 then
       0
     else
-      let byte_shift := 2 ^ ( 8 * ( start + width - B.size ) )
+      let byte_shift := 2 <<< ( 8 * ( start + width - B.size ) )
       aux_slice * byte_shift
   else
     B.readBytes start width |>.data.data |> fromBytesBigEndian
@@ -234,18 +234,18 @@ def Ξ_EXPMOD
   let base_length := nat_of_slice data 0 32
   let exp_length := nat_of_slice data 32 32
   let modulus_length := nat_of_slice data 64 32
-  let base := nat_of_slice data 96 base_length
-  let exp := nat_of_slice data (96 + base_length) exp_length
-  let modulus := nat_of_slice data (96 + base_length + exp_length) modulus_length
+  -- Pseudo laziness
+  -- We don't want to call `nat_of_slice` unless we need it
+  let exp := λ () ↦ nat_of_slice data (96 + base_length) exp_length
 
   let gᵣ :=
     let multiplication_complexity x y := ((max x y + 7) / 8) ^ 2
     let adjusted_exp_length :=
-      if exp_length ≤ 32 && exp == 0 then
+      if exp_length ≤ 32 && exp () == 0 then
         0
       else
         if exp_length ≤ 32 then
-          Nat.log 2 exp
+          Nat.log 2 (exp ())
         else
           let length_part := 8 * (exp_length - 32)
           let bits_part :=
@@ -263,10 +263,13 @@ def Ξ_EXPMOD
   if g.toNat < gᵣ then
     (∅, ⟨0⟩, A, .empty)
   else
+    let modulus := nat_of_slice data (96 + base_length + exp_length) modulus_length
     let o : ByteArray :=
       if modulus_length == 0 || modulus == 0 then
         ByteArray.zeroes ⟨modulus_length⟩
       else
+        let base := nat_of_slice data 96 base_length
+        let exp := nat_of_slice data (96 + base_length) exp_length
         let expmod_base := BE (expMod modulus (.ofNat base) exp)
         let expmod_zeroes :=
           if modulus_length ≥ expmod_base.size then
