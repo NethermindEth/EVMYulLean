@@ -396,7 +396,7 @@ def step (debugMode : Bool) (fuel : ℕ) (gasCost : ℕ) (instr : Option (Operat
                         .ofNat <| evmState.gasAvailable.toNat - L (evmState.gasAvailable.toNat) + g'.toNat
                   }
               }
-            .ok <| evmState'.replaceStackAndIncrPC (evmState.stack.push x)
+            .ok <| evmState'.replaceStackAndIncrPC (stack.push x)
           | _ =>
           .error .InvalidStackSizeException
       | .CREATE2 =>
@@ -457,7 +457,7 @@ def step (debugMode : Bool) (fuel : ℕ) (gasCost : ℕ) (instr : Option (Operat
                       gasAvailable := .ofNat <| evmState.gasAvailable.toNat - L (evmState.gasAvailable.toNat) + g'.toNat
                   }
               }
-            .ok <| evmState'.replaceStackAndIncrPC (evmState.stack.push x)
+            .ok <| evmState'.replaceStackAndIncrPC (stack.push x)
           | _ =>
           .error .InvalidStackSizeException
       -- TODO: Factor out the semantics for `CALL`, `CALLCODE`, `DELEGATECALL`, `STATICCALL`
