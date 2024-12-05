@@ -610,9 +610,9 @@ def X (debugMode : Bool) (fuel : ℕ) (evmState : State) : Except EVM.Exception 
             dbg_trace s!"Exceptional halting: attempted {w.pretty} without permission"
           none
 
-        if (w = .SSTORE) ∧ evmState.gasAvailable.toNat < GasConstants.Gcallstipend then
+        if (w = .SSTORE) ∧ evmState.gasAvailable.toNat ≤ GasConstants.Gcallstipend then
           if debugMode then
-            dbg_trace s!"Exceptional halting: attempted {w.pretty} without permission"
+            dbg_trace s!"Exceptional halting: attempted SSTORE with gas ≤ Gcallstipend"
           none
 
         pure (evmState, cost₂)
@@ -731,6 +731,8 @@ def Lambda
   let a : AccountAddress := -- (94) (95)
     (KEC lₐ).extract 12 32 /- 160 bits = 20 bytes -/
       |>.data.data |> fromBytesBigEndian |> Fin.ofNat
+
+  -- dbg_trace s!"New address: {toHex a.toByteArray}"
 
   let createdAccounts := createdAccounts.insert a
 
@@ -1236,9 +1238,12 @@ def Υ (debugMode : Bool) (fuel : ℕ) (σ : YPState) (chainId H_f : ℕ) (H : B
         pure (σ_P, g', A, z)
   -- The amount to be refunded (82)
   let gStar := g' + min ((T.base.gasLimit - g') / ⟨5⟩) A.refundBalance
+  -- dbg_trace s!"refundBalance = {A.refundBalance}"
+  -- dbg_trace s!"g* = {gStar}"
   -- The pre-final state (83)
   let σStar :=
     σ_P.increaseBalance S_T (gStar * p)
+
   let beneficiaryFee := (T.base.gasLimit - gStar) * f
   let σStar' :=
     if beneficiaryFee != ⟨0⟩ then
@@ -1247,6 +1252,7 @@ def Υ (debugMode : Bool) (fuel : ℕ) (σ : YPState) (chainId H_f : ℕ) (H : B
   let σ' := A.selfDestructSet.1.foldl Batteries.RBMap.erase σStar' -- (87)
   let deadAccounts := A.touchedAccounts.filter (State.dead σStar' ·)
   let σ' := deadAccounts.foldl Batteries.RBMap.erase σ' -- (88)
+  let σ' := σ'.map λ (addr, acc) ↦ (addr, { acc with tstorage := .empty})
   .ok (σ', A, z)
 end EVM
 
