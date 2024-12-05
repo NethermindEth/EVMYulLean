@@ -139,8 +139,9 @@ def binaryStateOp
       .ok <| evmState'.replaceStackAndIncrPC s
     | _ => .error EVM.Exception.InvalidStackSizeException
 
-def stateOp (op : EvmYul.State → UInt256) : Transformer :=
-  λ evmState ↦
+def stateOp (debugMode : Bool) (op : EvmYul.State → UInt256) : Transformer :=
+  λ evmState ↦ Id.run do
+    if debugMode then dbg_trace s!"got result: {op evmState.toState}";
     .ok <|
       evmState.replaceStackAndIncrPC (evmState.stack.push <| op evmState.toState)
 
