@@ -248,7 +248,7 @@ def δ : Operation .EVM → Option ℕ
   | .POP            => some 1
   | .MLOAD          => some 1
   | .MSTORE         => some 2
-  | .MSTORE8        => some 1
+  | .MSTORE8        => some 2
   | .SLOAD          => some 1
   | .SSTORE         => some 2
   | .PC             => some 0
@@ -395,7 +395,7 @@ def α : Operation .EVM → Option ℕ
   | .DUP13 => some 14
   | .DUP14 => some 15
   | .DUP15 => some 16
-  | .DUP16 => some 16
+  | .DUP16 => some 17
   | .SWAP1 => some 2
   | .SWAP2 => some 3
   | .SWAP3 => some 4
@@ -419,7 +419,7 @@ def α : Operation .EVM → Option ℕ
   | .RETURN => some 0
   | .DELEGATECALL => some 1
   | .CREATE2 => some 1
-  | .STATICCALL => some 0
+  | .STATICCALL => some 1
   | .REVERT => some 0
   | .INVALID => none
   | .SELFDESTRUCT => some 0
