@@ -173,7 +173,8 @@ instance : Min UInt256 := minOfLe
 def eq0 (a : UInt256) : Bool := a == ⟨0⟩
 
 def byteAt (a b : UInt256) : UInt256 :=
-  b >>> (UInt256.ofNat ((31 - a.toNat) * 8)) &&& ⟨0xFF⟩
+  if a > ⟨31⟩ then ⟨0⟩ else
+    b >>> (UInt256.ofNat ((31 - a.toNat) * 8)) &&& ⟨0xFF⟩
 
 def sgn (a : UInt256) : ℤ :=
   if 2 ^ 255 <= a.toNat then
