@@ -621,6 +621,11 @@ def X (debugMode : Bool) (fuel : ℕ) (evmState : State) : Except EVM.Exception 
             dbg_trace s!"Exceptional halting: attempted SSTORE with gas ≤ Gcallstipend"
           none
 
+        if
+          w.isCreate ∧ evmState.stack.getD 2 ⟨0⟩ > ⟨49152⟩
+        then
+          none
+
         pure (evmState, cost₂)
 
       let H (μ : MachineState) (w : Operation .EVM) : Option ByteArray :=
