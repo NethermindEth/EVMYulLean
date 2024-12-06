@@ -343,30 +343,30 @@ def step (debugMode : Bool) (fuel : ℕ) (gasCost : ℕ) (instr : Option (Operat
             let σ_Iₐ : Account := σ.find? Iₐ |>.getD default
             let σStar := σ.insert Iₐ {σ_Iₐ with nonce := σ_Iₐ.nonce + ⟨1⟩}
 
-            let Λ :=
-              Lambda debugMode f
-                evmState.executionEnv.blobVersionedHashes
-                evmState.createdAccounts
-                evmState.genesisBlockHeader
-                evmState.blocks
-                σStar
-                evmState.toState.substate
-                Iₐ
-                Iₒ
-                (.ofNat <| L evmState.gasAvailable.toNat)
-                (.ofNat I.gasPrice)
-                μ₀
-                i
-                (.ofNat <| Iₑ + 1)
-                ζ
-                I.header
-                I.perm
             let (a, evmState', g', z, o)
                   : (AccountAddress × EVM.State × UInt256 × Bool × ByteArray)
               :=
               -- TODO: Refactor this conditions
               if σ_Iₐ.nonce.toNat ≥ 2^64-1 then (default, evmState, .ofNat (L evmState.gasAvailable.toNat), False, .empty) else
               if μ₀ ≤ (σ.find? Iₐ |>.option ⟨0⟩ Account.balance) ∧ Iₑ < 1024 ∧ i.size ≤ 49152 then
+                let Λ :=
+                  Lambda debugMode f
+                    evmState.executionEnv.blobVersionedHashes
+                    evmState.createdAccounts
+                    evmState.genesisBlockHeader
+                    evmState.blocks
+                    σStar
+                    evmState.toState.substate
+                    Iₐ
+                    Iₒ
+                    (.ofNat <| L evmState.gasAvailable.toNat)
+                    (.ofNat I.gasPrice)
+                    μ₀
+                    i
+                    (.ofNat <| Iₑ + 1)
+                    ζ
+                    I.header
+                    I.perm
                 match Λ with
                   | .ok (a, cA, σ', g', A', z, o) =>
                     -- dbg_trace "Lambda returned some"
@@ -419,27 +419,27 @@ def step (debugMode : Bool) (fuel : ℕ) (gasCost : ℕ) (instr : Option (Operat
             let σ := evmState.accountMap
             let σ_Iₐ : Account := σ.find? Iₐ |>.getD default
             let σStar := σ.insert Iₐ {σ_Iₐ with nonce := σ_Iₐ.nonce + ⟨1⟩}
-            let Λ :=
-              Lambda debugMode f
-                evmState.executionEnv.blobVersionedHashes
-                evmState.createdAccounts
-                evmState.genesisBlockHeader
-                evmState.blocks
-                σStar
-                evmState.toState.substate
-                Iₐ
-                Iₒ
-                (.ofNat <| L evmState.gasAvailable.toNat)
-                (.ofNat I.gasPrice)
-                μ₀
-                i
-                (.ofNat <| Iₑ + 1)
-                ζ
-                I.header
-                I.perm
             let (a, evmState', g', z, o) : (AccountAddress × EVM.State × UInt256 × Bool × ByteArray) :=
               if σ_Iₐ.nonce.toNat ≥ 2^64-1 then (default, evmState, .ofNat (L evmState.gasAvailable.toNat), False, .empty) else
               if μ₀ ≤ (σ.find? Iₐ |>.option ⟨0⟩ Account.balance) ∧ Iₑ < 1024 ∧ i.size ≤ 49152 then
+                let Λ :=
+                  Lambda debugMode f
+                    evmState.executionEnv.blobVersionedHashes
+                    evmState.createdAccounts
+                    evmState.genesisBlockHeader
+                    evmState.blocks
+                    σStar
+                    evmState.toState.substate
+                    Iₐ
+                    Iₒ
+                    (.ofNat <| L evmState.gasAvailable.toNat)
+                    (.ofNat I.gasPrice)
+                    μ₀
+                    i
+                    (.ofNat <| Iₑ + 1)
+                    ζ
+                    I.header
+                    I.perm
                 match Λ with
                   | .ok (a, cA, σ', g', A', z, o) => -- dbg_trace "Lambda ok"
                     (a, {evmState with accountMap := σ', substate := A', createdAccounts := cA}, g', z, o)
@@ -735,7 +735,6 @@ def Lambda
   -- EIP-3860 (includes EIP-170)
   -- https://eips.ethereum.org/EIPS/eip-3860
   let MAX_CODE_SIZE := 24576
-  let MAX_INITCODE_SIZE := 2 * MAX_CODE_SIZE
 
   let n : UInt256 := (σ.find? s |>.option ⟨0⟩ Account.nonce) - ⟨1⟩
   -- dbg_trace s!"s: {toHex (BE s)}, n:{n}, ζ:{ζ},\n i:{toHex i}"
@@ -829,7 +828,10 @@ def Lambda
         let F₄ : Bool := ¬F₃ && returnedData[0]? = some 0xef
         if debugMode ∧ F₄ then
           dbg_trace "Contract creation failed: code computed for the new account starts with 0xef"
-        pure (F₀ ∨ F₂ ∨ F₃ ∨ F₄ ∨ i.size > MAX_INITCODE_SIZE)
+        pure (F₀ ∨ F₂ ∨ F₃ ∨ F₄)
+
+      -- dbg_trace s!"in Lambda F = {F}"
+
       let fail := F || σStarStar == ∅
 
       let σ' : YPState := -- (115)
