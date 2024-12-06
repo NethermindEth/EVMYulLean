@@ -603,7 +603,7 @@ def X (debugMode : Bool) (fuel : ℕ) (evmState : State) : Except EVM.Exception 
 
         if w = .RETURNDATACOPY ∧ (evmState.stack.getD 1 ⟨0⟩).toNat + (evmState.stack.getD 2 ⟨0⟩).toNat > evmState.returnData.size then
           if debugMode then
-            dbg_trace s!"Exceptional halting: not enough output data for RETURNDATACOPY: required {evmState.stack.getD 1 ⟨0⟩ + evmState.stack.getD 2 ⟨0⟩} bytes but got {evmState.returnData.size}"
+            dbg_trace s!"Exceptional halting: not enough output data for RETURNDATACOPY"
           none
 
         if evmState.stack.length - (δ w).getD 0 - (α w).getD 0 > 1024 then
