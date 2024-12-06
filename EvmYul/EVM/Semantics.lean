@@ -815,7 +815,7 @@ def Lambda
     | .ok (createdAccounts', σStarStar, gStarStar, AStarStar, some returnedData) =>
 
       -- The code-deposit cost (113)
-      let c := GasConstants.Gcodedeposit * returnedData.size
+      let c := if σStarStar == ∅ then 0 else GasConstants.Gcodedeposit * returnedData.size
 
       let F : Bool := Id.run do -- (118)
         let F₀ : Bool :=
@@ -826,7 +826,7 @@ def Lambda
           dbg_trace "Contract creation failed: account {toHex (BE a)} already existed."
         let F₂ : Bool := gStarStar.toNat < c
         if debugMode ∧ F₂ then
-          dbg_trace "Contract creation failed: g** < c"
+          dbg_trace s!"Contract creation failed: g** < c (size = {returnedData.size})"
         let F₃ : Bool := returnedData.size > MAX_CODE_SIZE
         if debugMode ∧ F₃ then
           dbg_trace "Contract creation failed: code computed for the new account > 24576"
@@ -854,7 +854,7 @@ def Lambda
 
       let newCodeSize : ℕ := σ'.find? a |>.option 0 (ByteArray.size ∘ Account.code)
       -- The code-deposit cost
-      let c := GasConstants.Gcodedeposit * newCodeSize
+      let c := if reverted then 0 else GasConstants.Gcodedeposit * newCodeSize
 
       -- (114)
       let g' := if F then 0 else gStarStar.toNat - c
