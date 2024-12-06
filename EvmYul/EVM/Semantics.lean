@@ -601,7 +601,7 @@ def X (debugMode : Bool) (fuel : ℕ) (evmState : State) : Except EVM.Exception 
             dbg_trace s!"Exceptional halting: invalid JUMPI destination"
           none
 
-        if w = .RETURNDATACOPY ∧ evmState.stack.getD 1 ⟨0⟩ + evmState.stack.getD 2 ⟨0⟩ > .ofNat evmState.returnData.size then
+        if w = .RETURNDATACOPY ∧ (evmState.stack.getD 1 ⟨0⟩).toNat + (evmState.stack.getD 2 ⟨0⟩).toNat > evmState.returnData.size then
           if debugMode then
             dbg_trace s!"Exceptional halting: not enough output data for RETURNDATACOPY: required {evmState.stack.getD 1 ⟨0⟩ + evmState.stack.getD 2 ⟨0⟩} bytes but got {evmState.returnData.size}"
           none
