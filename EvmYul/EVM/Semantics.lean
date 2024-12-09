@@ -1009,17 +1009,42 @@ end
 open Batteries (RBMap RBSet)
 
 def checkTransactionGetSender (σ : YPState) (chainId H_f : ℕ) (T : Transaction) (expectedSender : AccountAddress)
-  : Except EVM.Exception AccountAddress
+  : Except EVM.Exception (AccountAddress × ℕ)
 := do
-  -- dbg_trace "Transaction: {repr T}"
   if T.base.nonce.toNat ≥ 2^64-1 then
-    .error <| .InvalidTransaction .NONCE_IS_MAX
-  let some T_RLP := RLP (← (L_X T)) | .error <| .InvalidTransaction .IllFormedRLP
+    .error <| .TransactionException .NONCE_IS_MAX
+  let some T_RLP := RLP (← (L_X T)) | .error <| .TransactionException .IllFormedRLP
+
+  let g₀ : ℕ := -- (64)
+    let g₀_data :=
+      T.base.data.foldl
+        (λ acc b ↦
+          acc +
+            if b == 0 then
+              GasConstants.Gtxdatazero
+            else GasConstants.Gtxdatanonzero
+        )
+        0
+    let g₀_create : ℕ :=
+      if T.base.recipient == none then
+        GasConstants.Gtxcreate + R (T.base.data.size)
+      else 0
+
+    let g₀_accessList : ℕ :=
+      T.getAccessList.foldl
+        (λ acc (_, s) ↦
+          acc + GasConstants.Gaccesslistaddress + s.size * GasConstants.Gaccessliststorage
+        )
+        0
+    g₀_data + g₀_create + GasConstants.Gtransaction + g₀_accessList
+
+  if T.base.gasLimit.toNat < g₀ then
+    .error <| .TransactionException .INTRINSIC_GAS_TOO_LOW
 
   let r : ℕ := fromBytesBigEndian T.base.r.data.data
   let s : ℕ := fromBytesBigEndian T.base.s.data.data
-  if 0 ≥ r ∨ r ≥ secp256k1n then .error <| .InvalidTransaction .InvalidSignature
-  if 0 ≥ s ∨ s > secp256k1n / 2 then .error <| .InvalidTransaction .InvalidSignature
+  if 0 ≥ r ∨ r ≥ secp256k1n then .error <| .TransactionException .InvalidSignature
+  if 0 ≥ s ∨ s > secp256k1n / 2 then .error <| .TransactionException .InvalidSignature
   let v : ℕ := -- (324)
     match T with
       | .legacy t =>
@@ -1032,7 +1057,7 @@ def checkTransactionGetSender (σ : YPState) (chainId H_f : ℕ) (T : Transactio
           else
             w
       | .access t | .dynamic t | .blob t => t.yParity.toNat
-  if v ∉ [0, 1] then .error <| .InvalidTransaction .InvalidSignature
+  if v ∉ [0, 1] then .error <| .TransactionException .InvalidSignature
 
   let h_T := -- (318)
     match T with
@@ -1058,33 +1083,33 @@ def checkTransactionGetSender (σ : YPState) (chainId H_f : ℕ) (T : Transactio
         (.empty, ⟨0⟩, ⟨0⟩)
 
 
-  if senderCode ≠ .empty then .error <| .InvalidTransaction .SenderCodeNotEmpty
-  if senderNonce ≠ T.base.nonce then .error <| .InvalidTransaction .InvalidSenderNonce
+  if senderCode ≠ .empty then .error <| .TransactionException .SenderCodeNotEmpty
+  if senderNonce ≠ T.base.nonce then .error <| .TransactionException .InvalidSenderNonce
   let v₀ :=
     match T with
       | .legacy t | .access t => t.gasLimit * t.gasPrice + t.value
       | .dynamic t => t.gasLimit * t.maxFeePerGas + t.value
       | .blob t    => t.gasLimit * t.maxFeePerGas + t.value + (UInt256.ofNat <| (getTotalBlobGas T).getD 0) * t.maxFeePerBlobGas
   -- dbg_trace s!"v₀: {v₀}, senderBalance: {senderBalance}"
-  if v₀ > senderBalance then .error <| .InvalidTransaction .UpFrontPayment
+  if v₀ > senderBalance then .error <| .TransactionException .INSUFFICIENT_ACCOUNT_FUNDS
 
   if H_f >
     match T with
       | .dynamic t | .blob t => t.maxFeePerGas.toNat
       | .legacy t | .access t => t.gasPrice.toNat
-    then .error <| .InvalidTransaction .BaseFeeTooHigh
+    then .error <| .TransactionException .BaseFeeTooHigh
 
   let n :=
     match T.base.recipient with
       | some _ => T.base.data.size
       | none => 0
-  if n > 49152 then .error <| .InvalidTransaction .InitCodeDataGreaterThan49152
+  if n > 49152 then .error <| .TransactionException .InitCodeDataGreaterThan49152
 
   match T with
     | .dynamic t =>
-      if t.maxPriorityFeePerGas > t.maxFeePerGas then .error <| .InvalidTransaction .InconsistentFees
-      pure S_T
-    | _ => pure S_T
+      if t.maxPriorityFeePerGas > t.maxFeePerGas then .error <| .TransactionException .InconsistentFees
+      pure (S_T, g₀)
+    | _ => pure (S_T, g₀)
 
  where
   L_X (T : Transaction) : Except EVM.Exception 𝕋 := -- (317)
@@ -1120,7 +1145,7 @@ def checkTransactionGetSender (σ : YPState) (chainId H_f : ℕ) (T : Transactio
               ]
           else
             dbg_trace "IllFormedRLP legacy transacion: Tw = {t.w}; chainId = {chainId}"
-            .error <| .InvalidTransaction .IllFormedRLP
+            .error <| .TransactionException .IllFormedRLP
 
       | /- 1 -/ .access t =>
         .ok ∘ .𝕃 <|
@@ -1168,33 +1193,33 @@ def checkTransactionGetSender (σ : YPState) (chainId H_f : ℕ) (T : Transactio
 def Υ (debugMode : Bool) (fuel : ℕ) (σ : YPState) (chainId H_f : ℕ) (H : BlockHeader) (genesisBlockHeader : BlockHeader) (blocks : Blocks) (T : Transaction) (expectedSender : AccountAddress)
   : Except EVM.Exception (YPState × Substate × Bool)
 := do
-  let S_T ← checkTransactionGetSender σ chainId H_f T expectedSender
+  let (S_T, g₀) ← checkTransactionGetSender σ chainId H_f T expectedSender
   -- "here can be no invalid transactions from this point"
-  let g₀ : ℕ := -- (64)
-    let g₀_data :=
-      T.base.data.foldl
-        (λ acc b ↦
-          acc +
-            if b == 0 then
-              GasConstants.Gtxdatazero
-            else GasConstants.Gtxdatanonzero
-        )
-        0
-    let g₀_create : ℕ :=
-      if T.base.recipient == none then
-        GasConstants.Gtxcreate + R (T.base.data.size)
-      else 0
-    -- dbg_trace s!"T.getAccessList : {T.getAccessList}"
-    let g₀_accessList : ℕ :=
-      T.getAccessList.foldl
-        (λ acc (_, s) ↦
-          acc + GasConstants.Gaccesslistaddress + s.size * GasConstants.Gaccessliststorage
-        )
-        0
-    g₀_data + g₀_create + GasConstants.Gtransaction + g₀_accessList
-  -- dbg_trace s!"g₀: ({g₀})"
-  if T.base.gasLimit.toNat < g₀ then
-    .error <| .InvalidTransaction .INTRINSIC_GAS_TOO_LOW
+  -- let g₀ : ℕ := -- (64)
+  --   let g₀_data :=
+  --     T.base.data.foldl
+  --       (λ acc b ↦
+  --         acc +
+  --           if b == 0 then
+  --             GasConstants.Gtxdatazero
+  --           else GasConstants.Gtxdatanonzero
+  --       )
+  --       0
+  --   let g₀_create : ℕ :=
+  --     if T.base.recipient == none then
+  --       GasConstants.Gtxcreate + R (T.base.data.size)
+  --     else 0
+  --   -- dbg_trace s!"T.getAccessList : {T.getAccessList}"
+  --   let g₀_accessList : ℕ :=
+  --     T.getAccessList.foldl
+  --       (λ acc (_, s) ↦
+  --         acc + GasConstants.Gaccesslistaddress + s.size * GasConstants.Gaccessliststorage
+  --       )
+  --       0
+  --   g₀_data + g₀_create + GasConstants.Gtransaction + g₀_accessList
+  -- -- dbg_trace s!"g₀: ({g₀})"
+  -- if T.base.gasLimit.toNat < g₀ then
+  --   .error <| .TransactionException .INTRINSIC_GAS_TOO_LOW
   let senderAccount := (σ.find? S_T).get!
   -- The priority fee (67)
   let f :=
@@ -1244,7 +1269,7 @@ def Υ (debugMode : Bool) (fuel : ℕ) (σ : YPState) (chainId H_f : ℕ) (H : B
         let MAX_INITCODE_SIZE := 2 * MAX_CODE_SIZE
         if T.base.data.size > MAX_INITCODE_SIZE then
           dbg_trace s!"Contract creation failed: MAX_INITCODE_SIZE exceeded"
-          .error <| .InvalidTransaction .INITCODE_SIZE_EXCEEDED
+          .error <| .TransactionException .INITCODE_SIZE_EXCEEDED
 
         let (_, _, σ_P, g', A, z, _) ←
           Lambda debugMode fuel T.blobVersionedHashes createdAccounts genesisBlockHeader blocks σ₀ AStar S_T S_T g p T.base.value T.base.data ⟨0⟩ none H true

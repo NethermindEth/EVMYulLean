@@ -111,13 +111,13 @@ def executeTransaction (transaction : Transaction) (s : EVM.State) (header : Blo
   -- Validate transaction
   match transaction with
     | .blob t =>
-      if t.maxFeePerBlobGas.toNat < header.getBlobGasprice then .error (.InvalidTransaction .INSUFFICIENT_MAX_FEE_PER_BLOB_GAS)
-      if header.blobGasUsed == none || header.excessBlobGas == none then .error (.InvalidTransaction .TYPE_3_TX_PRE_FORK)
+      if t.maxFeePerBlobGas.toNat < header.getBlobGasprice then .error (.TransactionException .INSUFFICIENT_MAX_FEE_PER_BLOB_GAS)
+      if header.blobGasUsed == none || header.excessBlobGas == none then .error (.TransactionException .TYPE_3_TX_PRE_FORK)
       match t.blobVersionedHashes with
-        | [] => .error (.InvalidTransaction .TYPE_3_TX_ZERO_BLOBS)
+        | [] => .error (.TransactionException .TYPE_3_TX_ZERO_BLOBS)
         | hs =>
           if hs.any (λ h ↦ h[0]? != .some VERSIONED_HASH_VERSION_KZG) then
-            .error (.InvalidTransaction .TYPE_3_TX_ZERO_BLOBS)
+            .error (.TransactionException .TYPE_3_TX_ZERO_BLOBS)
     | _ => pure ()
 
   let (ypState, substate, z) ← EVM.Υ (debugMode := false) _TODOfuel s.accountMap header.chainId.toNat header.baseFeePerGas header s.genesisBlockHeader s.blocks transaction transaction.base.expectedSender
@@ -147,8 +147,8 @@ def processBlocks (s₀ : EVM.State) : Except EVM.Exception EVM.State := do
       if calcExcessBlobGas parentHeader != block.blockHeader.excessBlobGas then
         if !block.exception.isEmpty then
           let e : EVM.Exception := .BlockException_INCORRECT_EXCESS_BLOB_GAS
-          dbg_trace s!"Expected exception: {block.exception}; got exception: {repr e} - we need to reconcile these as we debug tests. Currently, we mark the test as 'passed' as I assume this is the right kind of exception, but it doesn't need to be the case necessarily."
-          throw <| EVM.Exception.ExpectedException block.exception
+          if block.exception.containsSubstr (repr e).pretty then
+            dbg_trace s!"Expected exception: {block.exception}; got exception: {repr e}"
         else
           .error .BlockException_INCORRECT_EXCESS_BLOB_GAS
 
@@ -166,7 +166,8 @@ def processBlocks (s₀ : EVM.State) : Except EVM.Exception EVM.State := do
       | some _, none | none, some _ =>
         if !block.exception.isEmpty then
           let e : EVM.Exception := .BlockException_INCORRECT_BLOCK_FORMAT
-          dbg_trace s!"Expected exception: {block.exception}; got exception: {repr e} - we need to reconcile these as we debug tests. Currently, we mark the test as 'passed' as I assume this is the right kind of exception, but it doesn't need to be the case necessarily."
+          if block.exception.containsSubstr (repr e).pretty then
+            dbg_trace s!"Expected exception: {block.exception}; got exception: {repr e}"
           throw <| EVM.Exception.ExpectedException block.exception
         else
           .error .BlockException_INCORRECT_BLOCK_FORMAT
@@ -180,7 +181,8 @@ def processBlocks (s₀ : EVM.State) : Except EVM.Exception EVM.State := do
         if blobGasUsed != bGU.toNat || blobGasUsed > MAX_BLOB_GAS_PER_BLOCK then
           if !block.exception.isEmpty then
             let e : EVM.Exception := .BlockException_INCORRECT_BLOB_GAS_USED
-            dbg_trace s!"Expected exception: {block.exception}; got exception: {repr e} - we need to reconcile these as we debug tests. Currently, we mark the test as 'passed' as I assume this is the right kind of exception, but it doesn't need to be the case necessarily."
+            if block.exception.containsSubstr (repr e).pretty then
+              dbg_trace s!"Expected exception: {block.exception}; got exception: {repr e}"
             throw <| EVM.Exception.ExpectedException block.exception
           else
             .error .BlockException_INCORRECT_BLOB_GAS_USED
@@ -226,8 +228,8 @@ def processBlocks (s₀ : EVM.State) : Except EVM.Exception EVM.State := do
         try
           executeTransaction trans s block.blockHeader
         catch e =>
-          if !block.exception.isEmpty then
-            dbg_trace s!"Expected exception: {block.exception}; got exception: {repr e} - we need to reconcile these as we debug tests. Currently, we mark the test as 'passed' as I assume this is the right kind of exception, but it doesn't need to be the case necessarily."
+          if block.exception.containsSubstr (repr e).pretty then
+            dbg_trace s!"Expected exception: {block.exception}; got exception: {repr e}"
             throw <| EVM.Exception.ExpectedException block.exception
           else throw e
       )
@@ -241,8 +243,8 @@ def processBlocks (s₀ : EVM.State) : Except EVM.Exception EVM.State := do
               wR
               block.withdrawals
             catch e =>
-              if !block.exception.isEmpty then
-                dbg_trace s!"Expected exception: {block.exception}; got exception: {repr e} - we need to reconcile these as we debug tests. Currently, we mark the test as 'passed' as I assume this is the right kind of exception, but it doesn't need to be the case necessarily."
+              if block.exception.containsSubstr (repr e).pretty then
+                dbg_trace s!"Expected exception: {block.exception}; got exception: {repr e}"
                 throw <| EVM.Exception.ExpectedException block.exception
               else throw e
           )

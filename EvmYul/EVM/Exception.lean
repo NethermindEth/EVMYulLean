@@ -4,31 +4,31 @@ namespace EvmYul
 
 namespace EVM
 
-inductive InvalidTransactionException where
-  | IllFormedRLP : InvalidTransactionException
-  | InvalidSignature : InvalidTransactionException
-  | InvalidSenderNonce : InvalidTransactionException
-  | SenderCodeNotEmpty : InvalidTransactionException
-  | UpFrontPayment : InvalidTransactionException
-  | BaseFeeTooHigh : InvalidTransactionException
-  | InconsistentFees : InvalidTransactionException
-  | InitCodeDataGreaterThan49152 : InvalidTransactionException
-  | TYPE_3_TX_ZERO_BLOBS : InvalidTransactionException
-  | TYPE_3_TX_PRE_FORK : InvalidTransactionException
-  | INTRINSIC_GAS_TOO_LOW : InvalidTransactionException
-  | INSUFFICIENT_MAX_FEE_PER_BLOB_GAS : InvalidTransactionException
-  | INITCODE_SIZE_EXCEEDED : InvalidTransactionException
-  | MAX_CODE_SIZE_EXCEEDED : InvalidTransactionException
-  | NONCE_IS_MAX : InvalidTransactionException
+inductive TransactionExceptionException where
+  | IllFormedRLP : TransactionExceptionException
+  | InvalidSignature : TransactionExceptionException
+  | InvalidSenderNonce : TransactionExceptionException
+  | SenderCodeNotEmpty : TransactionExceptionException
+  | INSUFFICIENT_ACCOUNT_FUNDS : TransactionExceptionException
+  | BaseFeeTooHigh : TransactionExceptionException
+  | InconsistentFees : TransactionExceptionException
+  | InitCodeDataGreaterThan49152 : TransactionExceptionException
+  | TYPE_3_TX_ZERO_BLOBS : TransactionExceptionException
+  | TYPE_3_TX_PRE_FORK : TransactionExceptionException
+  | INTRINSIC_GAS_TOO_LOW : TransactionExceptionException
+  | INSUFFICIENT_MAX_FEE_PER_BLOB_GAS : TransactionExceptionException
+  | INITCODE_SIZE_EXCEEDED : TransactionExceptionException
+  | MAX_CODE_SIZE_EXCEEDED : TransactionExceptionException
+  | NONCE_IS_MAX : TransactionExceptionException
 
-instance : Repr InvalidTransactionException where
+instance : Repr TransactionExceptionException where
   reprPrec s _ :=
     match s with
       | .IllFormedRLP         => "IllFormedRLP"
       | .InvalidSignature     => "InvalidSignature"
       | .InvalidSenderNonce   => "InvalidSenderNonce"
       | .SenderCodeNotEmpty   => "SenderCodeNotEmpty"
-      | .UpFrontPayment       => "UpFrontPayment"
+      | .INSUFFICIENT_ACCOUNT_FUNDS => "INSUFFICIENT_ACCOUNT_FUNDS"
       | .BaseFeeTooHigh       => "BaseFeeTooHigh"
       | .InconsistentFees     => "InconsistentFees"
       | .InitCodeDataGreaterThan49152  => "InitCodeDataGreaterThan49152"
@@ -54,8 +54,8 @@ inductive Exception where
   -- | StopInvoked (s : EVM.State)                 : Exception
   | OutOfFuel                                   : Exception
   | OutOfGass                                   : Exception
-  | InvalidTransaction :
-                    InvalidTransactionException → Exception
+  | TransactionException :
+                    TransactionExceptionException → Exception
   | ReceiverNotInAccounts (a : AccountAddress)  : Exception
   | InvalidWithdrawal (s : String) : Exception
   | BogusExceptionToBeReplaced (s : String) : Exception
@@ -79,16 +79,16 @@ instance : Repr Exception where
                     -- | .StopInvoked _                     => "Execution halted by STOP."
                     | .OutOfFuel                         => "OutOfFuel"
                     | .OutOfGass                         => "OutOfGass"
-                    | .InvalidTransaction e              => "InvalidTransaction: " ++ repr e
+                    | .TransactionException e              => "TransactionException." ++ repr e
                     | .ReceiverNotInAccounts
                         (a : AccountAddress)             => s!"ReceiverNotInAccounts: {a}"
                     | .InvalidWithdrawal s               => s!"InvalidWithdrawal: {s}"
                     | .BogusExceptionToBeReplaced s      => s!"BogusExceptionToBeReplaced: {s}"
                     | .ExpectedException s               => s!"Expected exception: {s}"
-                    | .SenderRecoverError s              => "SenderRecoverError: " ++ s
-                    | .BlockException_INCORRECT_EXCESS_BLOB_GAS => "BlockException_INCORRECT_EXCESS_BLOB_GAS"
-                    | .BlockException_INCORRECT_BLOB_GAS_USED => "BlockException_INCORRECT_BLOB_GAS_USED"
-                    | .BlockException_INCORRECT_BLOCK_FORMAT => "BlockException_INCORRECT_BLOCK_FORMAT"
+                    | .SenderRecoverError s              => "SenderRecoverError." ++ s
+                    | .BlockException_INCORRECT_EXCESS_BLOB_GAS => "BlockException.INCORRECT_EXCESS_BLOB_GAS"
+                    | .BlockException_INCORRECT_BLOB_GAS_USED => "BlockException.INCORRECT_BLOB_GAS_USED"
+                    | .BlockException_INCORRECT_BLOCK_FORMAT => "BlockException.INCORRECT_BLOCK_FORMAT"
 
 end EVM
 
