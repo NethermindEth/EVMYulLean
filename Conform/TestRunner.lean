@@ -168,7 +168,7 @@ def processBlocks (s₀ : EVM.State) : Except EVM.Exception EVM.State := do
           let e : EVM.Exception := .BlockException_INCORRECT_BLOCK_FORMAT
           if block.exception.containsSubstr (repr e).pretty then
             dbg_trace s!"Expected exception: {block.exception}; got exception: {repr e}"
-          throw <| EVM.Exception.ExpectedException block.exception
+          throw <| EVM.Exception.ExpectedException s.accountMap
         else
           .error .BlockException_INCORRECT_BLOCK_FORMAT
       | _, _ => pure ()
@@ -183,7 +183,7 @@ def processBlocks (s₀ : EVM.State) : Except EVM.Exception EVM.State := do
             let e : EVM.Exception := .BlockException_INCORRECT_BLOB_GAS_USED
             if block.exception.containsSubstr (repr e).pretty then
               dbg_trace s!"Expected exception: {block.exception}; got exception: {repr e}"
-            throw <| EVM.Exception.ExpectedException block.exception
+            throw <| EVM.Exception.ExpectedException s.accountMap
           else
             .error .BlockException_INCORRECT_BLOB_GAS_USED
 
@@ -230,7 +230,7 @@ def processBlocks (s₀ : EVM.State) : Except EVM.Exception EVM.State := do
         catch e =>
           if block.exception.containsSubstr (repr e).pretty then
             dbg_trace s!"Expected exception: {block.exception}; got exception: {repr e}"
-            throw <| EVM.Exception.ExpectedException block.exception
+            throw <| EVM.Exception.ExpectedException s.accountMap
           else throw e
       )
       s
@@ -245,7 +245,7 @@ def processBlocks (s₀ : EVM.State) : Except EVM.Exception EVM.State := do
             catch e =>
               if block.exception.containsSubstr (repr e).pretty then
                 dbg_trace s!"Expected exception: {block.exception}; got exception: {repr e}"
-                throw <| EVM.Exception.ExpectedException block.exception
+                throw <| EVM.Exception.ExpectedException s.accountMap
               else throw e
           )
         | none => pure s.accountMap
@@ -258,7 +258,7 @@ def processBlocks (s₀ : EVM.State) : Except EVM.Exception EVM.State := do
 
 NB we can throw away the final state if it coincided with the expected one, hence `.none`.
 -/
-def preImpliesPost (pre : Pre) (post : Post) (genesisBlockHeader : BlockHeader) (blocks : Blocks) : Except EVM.Exception (Option EVM.State) := do
+def preImpliesPost (pre : Pre) (post : Post) (genesisBlockHeader : BlockHeader) (blocks : Blocks) : Except EVM.Exception (Option AccountMap) := do
   try
     let resultState ← processBlocks {pre.toEVMState with blocks := blocks, genesisBlockHeader := genesisBlockHeader}
     let result : AddrMap AccountEntry :=
@@ -267,10 +267,19 @@ def preImpliesPost (pre : Pre) (post : Post) (genesisBlockHeader : BlockHeader) 
     match almostBEqButNotQuite post result with
       | .error e =>
         dbg_trace e
-        pure (.some resultState) -- Feel free to inspect this error from `almostBEqButNotQuite`.
+        pure (.some resultState.accountMap) -- Feel free to inspect this error from `almostBEqButNotQuite`.
       | .ok _ => pure .none
-  catch | .ExpectedException _ => pure .none -- An expected exception was thrown, which means the test is ok.
-        | e                    => throw e
+  catch
+    | .ExpectedException σ =>
+      -- let result : AddrMap AccountEntry :=
+      --   σ.foldl
+      --     (λ r addr ⟨nonce, balance, storage, _, _, code⟩ ↦ r.insert addr ⟨nonce, balance, storage, code⟩) default
+      -- TODO: I think we should check the state after the last valid block, but now we just use the pre
+      if post == pre then
+        pure .none -- An expected exception was thrown, which means the test is ok.
+      else
+        pure (.some σ)
+    | e                    => throw e
 
 -- local instance : MonadLift (Except EVM.Exception) (Except Conform.Exception) := ⟨Except.mapError .EVMError⟩
 -- vvvvvvvvvvvvvv DO NOT DELETE PLEASE vvvvvvvvvvvvvvvvvv
@@ -293,9 +302,9 @@ def processTest (entry : TestEntry) (verbose : Bool := true) : TestResult := do
     | .error err => .mkFailed s!"{repr err}"
     | .ok result => errorF <$> result
 
-  where discardError : EVM.State → String := λ _ ↦ "ERROR."
-        verboseError : EVM.State → String := λ s ↦
-          let (postSubActual, actualSubPost) := storageΔ entry.postState.toEVMState.accountMap s.accountMap
+  where discardError : AccountMap → String := λ _ ↦ "ERROR."
+        verboseError : AccountMap → String := λ σ ↦
+          let (postSubActual, actualSubPost) := storageΔ entry.postState.toEVMState.accountMap σ
           s!"\npost / actual: {repr postSubActual} \nactual / post: {repr actualSubPost}"
         errorF := if verbose then verboseError else discardError
 

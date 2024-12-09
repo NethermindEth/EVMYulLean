@@ -1,5 +1,5 @@
 import EvmYul.Wheels
-
+import EvmYul.Maps.AccountMap
 namespace EvmYul
 
 namespace EVM
@@ -59,7 +59,7 @@ inductive Exception where
   | ReceiverNotInAccounts (a : AccountAddress)  : Exception
   | InvalidWithdrawal (s : String) : Exception
   | BogusExceptionToBeReplaced (s : String) : Exception
-  | ExpectedException (s : String)          : Exception
+  | ExpectedException (post : AccountMap)   : Exception
   | SenderRecoverError             : String → Exception
   | BlockException_INCORRECT_EXCESS_BLOB_GAS : Exception
   | BlockException_INCORRECT_BLOB_GAS_USED : Exception
@@ -84,7 +84,7 @@ instance : Repr Exception where
                         (a : AccountAddress)             => s!"ReceiverNotInAccounts: {a}"
                     | .InvalidWithdrawal s               => s!"InvalidWithdrawal: {s}"
                     | .BogusExceptionToBeReplaced s      => s!"BogusExceptionToBeReplaced: {s}"
-                    | .ExpectedException s               => s!"Expected exception: {s}"
+                    | .ExpectedException _               => s!"Expected exception"
                     | .SenderRecoverError s              => "SenderRecoverError." ++ s
                     | .BlockException_INCORRECT_EXCESS_BLOB_GAS => "BlockException.INCORRECT_EXCESS_BLOB_GAS"
                     | .BlockException_INCORRECT_BLOB_GAS_USED => "BlockException.INCORRECT_BLOB_GAS_USED"
