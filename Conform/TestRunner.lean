@@ -145,12 +145,13 @@ def processBlocks (s₀ : EVM.State) : Except EVM.Exception EVM.State := do
   withParentHeaders.forM
     λ (parentHeader, block) ↦ do
       if calcExcessBlobGas parentHeader != block.blockHeader.excessBlobGas then
-        if !block.exception.isEmpty then
-          let e : EVM.Exception := .BlockException_INCORRECT_EXCESS_BLOB_GAS
-          if block.exception.containsSubstr (repr e).pretty then
-            dbg_trace s!"Expected exception: {block.exception}; got exception: {repr e}"
+        -- if !block.exception.isEmpty then
+        let e : EVM.Exception := .BlockException_INCORRECT_EXCESS_BLOB_GAS
+        if block.exception.containsSubstr (repr e).pretty then
+          dbg_trace s!"Expected exception: {block.exception}; got exception: {repr e}"
+          throw <| EVM.Exception.ExpectedException s₀.accountMap
         else
-          .error .BlockException_INCORRECT_EXCESS_BLOB_GAS
+          throw <| .BlockException_INCORRECT_EXCESS_BLOB_GAS
 
   blocks.foldlM processBlock s₀
   where processBlock (s : EVM.State) (block : Block) : Except EVM.Exception EVM.State := do
@@ -164,13 +165,13 @@ def processBlocks (s₀ : EVM.State) : Except EVM.Exception EVM.State := do
     -- dbg_trace s!"blobGasUsed: {block.blockHeader.blobGasUsed}, excessBlobGas: {block.blockHeader.excessBlobGas}"
     match block.blockHeader.blobGasUsed, block.blockHeader.excessBlobGas with
       | some _, none | none, some _ =>
-        if !block.exception.isEmpty then
-          let e : EVM.Exception := .BlockException_INCORRECT_BLOCK_FORMAT
-          if block.exception.containsSubstr (repr e).pretty then
-            dbg_trace s!"Expected exception: {block.exception}; got exception: {repr e}"
+        -- if !block.exception.isEmpty then
+        let e : EVM.Exception := .BlockException_INCORRECT_BLOCK_FORMAT
+        if block.exception.containsSubstr (repr e).pretty then
+          dbg_trace s!"Expected exception: {block.exception}; got exception: {repr e}"
           throw <| EVM.Exception.ExpectedException s.accountMap
         else
-          .error .BlockException_INCORRECT_BLOCK_FORMAT
+          throw <| .BlockException_INCORRECT_BLOCK_FORMAT
       | _, _ => pure ()
 
     -- Validate `blobGasUsed`
@@ -179,13 +180,13 @@ def processBlocks (s₀ : EVM.State) : Except EVM.Exception EVM.State := do
       | none => pure ()
       | some bGU =>
         if blobGasUsed != bGU.toNat || blobGasUsed > MAX_BLOB_GAS_PER_BLOCK then
-          if !block.exception.isEmpty then
-            let e : EVM.Exception := .BlockException_INCORRECT_BLOB_GAS_USED
-            if block.exception.containsSubstr (repr e).pretty then
-              dbg_trace s!"Expected exception: {block.exception}; got exception: {repr e}"
+          -- if !block.exception.isEmpty then
+          let e : EVM.Exception := .BlockException_INCORRECT_BLOB_GAS_USED
+          if block.exception.containsSubstr (repr e).pretty then
+            dbg_trace s!"Expected exception: {block.exception}; got exception: {repr e}"
             throw <| EVM.Exception.ExpectedException s.accountMap
           else
-            .error .BlockException_INCORRECT_BLOB_GAS_USED
+            throw <| .BlockException_INCORRECT_BLOB_GAS_USED
 
     -- if no code exists at `BEACON_ROOTS_ADDRESS`, the call must fail silently
     let s ←
