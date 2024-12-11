@@ -816,7 +816,7 @@ def Lambda
     | .ok (.success (createdAccounts', σStarStar, gStarStar, AStarStar) returnedData) =>
 
       -- The code-deposit cost (113)
-      let c := if σStarStar == ∅ then 0 else GasConstants.Gcodedeposit * returnedData.size
+      let c := GasConstants.Gcodedeposit * returnedData.size
 
       let F : Bool := Id.run do -- (118)
         let F₀ : Bool :=
@@ -836,37 +836,19 @@ def Lambda
           dbg_trace "Contract creation failed: code computed for the new account starts with 0xef"
         pure (F₀ ∨ F₂ ∨ F₃ ∨ F₄)
 
-      -- dbg_trace s!"in Lambda F = {F}"
-
-      let fail := F || σStarStar == ∅
-
       let σ' : AccountMap := -- (115)
-        if fail then Id.run do
-          -- dbg_trace "Λ fail!"
-          σ
-        else
-          if State.dead σStarStar a then Id.run do
-            σStarStar.erase a -- TODO - why was this Finmap.extract that threw away the extracted value? @Andrei
-          else
-            let newAccount' := σStarStar.findD a default
-            σStarStar.insert a {newAccount' with code := returnedData}
-
-      let reverted := ¬F ∧ σStarStar == ∅
-
-      let newCodeSize : ℕ := σ'.find? a |>.option 0 (ByteArray.size ∘ Account.code)
-      -- The code-deposit cost
-      let c := if reverted then 0 else GasConstants.Gcodedeposit * newCodeSize
-      -- dbg_trace s!"Code deposit cost: {c}"
+        if F then σ else
+          let newAccount' := σStarStar.findD a default
+          σStarStar.insert a {newAccount' with code := returnedData}
 
       -- (114)
       let g' := if F then 0 else gStarStar.toNat - c
 
       -- (116)
-      let A' := if fail then AStar else AStarStar
+      let A' := if F then AStar else AStarStar
       -- (117)
-      let z := not fail
-      let returnedData := if reverted then returnedData else .empty
-      .ok (a, createdAccounts', σ', .ofNat g', A', z, returnedData) -- (93)
+      let z := not F
+      .ok (a, createdAccounts', σ', .ofNat g', A', z, .empty) -- (93)
  where
   L_A (s : AccountAddress) (n : UInt256) (ζ : Option ByteArray) (i : ByteArray) :
     Option ByteArray
