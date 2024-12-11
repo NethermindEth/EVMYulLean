@@ -4,6 +4,19 @@ namespace EvmYul
 
 namespace EVM
 
+inductive ExecutionException where
+  | OutOfFuel
+  | InvalidInstruction
+  | OutOfGass
+  | BadJumpDestination
+  | StackOverflow
+  | StackUnderflow
+  -- | CALL_DEPTH_EXCEEDED
+  | InvalidMemoryAccess
+  | StaticModeViolation
+  -- | PRECOMPILE_FAILURE
+  -- | NONCE_EXCEEDED
+
 inductive TransactionExceptionException where
   | IllFormedRLP : TransactionExceptionException
   | InvalidSignature : TransactionExceptionException
@@ -42,7 +55,11 @@ instance : Repr TransactionExceptionException where
 
 -- TODO - fix / cleanup.
 inductive Exception where
-  | InvalidStackSizeException                   : Exception
+  | StackUnderflow                            : Exception
+  | StackOverflow                             : Exception
+  | BadJumpDestination                          : Exception
+  | InvalidMemoryAccess                         : Exception
+  | StaticModeViolation                         : Exception
   | InvalidPC                                   : Exception
   | OutOfBounds                                 : Exception
   | NotEncodableRLP                             : Exception
@@ -66,29 +83,34 @@ inductive Exception where
   | BlockException_INCORRECT_BLOCK_FORMAT
 
 instance : Repr Exception where
-  reprPrec s _ := match s with
-                    | .InvalidStackSizeException         => "InvalidStackSizeException"
-                    | .InvalidPC                         => "InvalidPC"
-                    | .OutOfBounds                       => "OutOfBounds"
-                    | .NotEncodableRLP                   => "NotEncodableRLP"
-                    | .InvalidInstruction                => "InvalidInstruction"
-                    | .SenderMustExist                   => "SenderMustExist"
-                    | .ReceiverMustExistWithNonZeroValue => "ReceiverMustExistWithNonZeroValue"
-                    | .Underflow                         => "Underflow"
-                    | .Overflow                          => "Overflow"
-                    -- | .StopInvoked _                     => "Execution halted by STOP."
-                    | .OutOfFuel                         => "OutOfFuel"
-                    | .OutOfGass                         => "OutOfGass"
-                    | .TransactionException e              => "TransactionException." ++ repr e
-                    | .ReceiverNotInAccounts
-                        (a : AccountAddress)             => s!"ReceiverNotInAccounts: {a}"
-                    | .InvalidWithdrawal s               => s!"InvalidWithdrawal: {s}"
-                    | .BogusExceptionToBeReplaced s      => s!"BogusExceptionToBeReplaced: {s}"
-                    | .ExpectedException _               => s!"Expected exception"
-                    | .SenderRecoverError s              => "SenderRecoverError." ++ s
-                    | .BlockException_INCORRECT_EXCESS_BLOB_GAS => "BlockException.INCORRECT_EXCESS_BLOB_GAS"
-                    | .BlockException_INCORRECT_BLOB_GAS_USED => "BlockException.INCORRECT_BLOB_GAS_USED"
-                    | .BlockException_INCORRECT_BLOCK_FORMAT => "BlockException.INCORRECT_BLOCK_FORMAT"
+  reprPrec s _ :=
+    match s with
+      | .StaticModeViolation => "StaticModeViolation"
+      | .BadJumpDestination                => "BadJumpDestination"
+      | .InvalidMemoryAccess               => "InvalidMemoryAccess"
+      | .StackUnderflow                    => "StackUnderflow"
+      | .StackOverflow                     => "StackOverflow"
+      | .InvalidPC                         => "InvalidPC"
+      | .OutOfBounds                       => "OutOfBounds"
+      | .NotEncodableRLP                   => "NotEncodableRLP"
+      | .InvalidInstruction                => "InvalidInstruction"
+      | .SenderMustExist                   => "SenderMustExist"
+      | .ReceiverMustExistWithNonZeroValue => "ReceiverMustExistWithNonZeroValue"
+      | .Underflow                         => "Underflow"
+      | .Overflow                          => "Overflow"
+      -- | .StopInvoked _                     => "Execution halted by STOP."
+      | .OutOfFuel                         => "OutOfFuel"
+      | .OutOfGass                         => "OutOfGass"
+      | .TransactionException e              => "TransactionException." ++ repr e
+      | .ReceiverNotInAccounts
+          (a : AccountAddress)             => s!"ReceiverNotInAccounts: {a}"
+      | .InvalidWithdrawal s               => s!"InvalidWithdrawal: {s}"
+      | .BogusExceptionToBeReplaced s      => s!"BogusExceptionToBeReplaced: {s}"
+      | .ExpectedException _               => s!"Expected exception"
+      | .SenderRecoverError s              => "SenderRecoverError." ++ s
+      | .BlockException_INCORRECT_EXCESS_BLOB_GAS => "BlockException.INCORRECT_EXCESS_BLOB_GAS"
+      | .BlockException_INCORRECT_BLOB_GAS_USED => "BlockException.INCORRECT_BLOB_GAS_USED"
+      | .BlockException_INCORRECT_BLOCK_FORMAT => "BlockException.INCORRECT_BLOCK_FORMAT"
 
 end EVM
 

@@ -38,7 +38,7 @@ private abbrev Transformer : OperationType → Type
 
 private def dispatchInvalid (τ : OperationType) : Transformer τ :=
   match τ with
-    | .EVM => λ _ ↦ .error EVM.Exception.InvalidInstruction
+    | .EVM => λ _ ↦ .error .InvalidInstruction
     | .Yul => λ _ _ ↦ .error Yul.Exception.InvalidInstruction
 
 private def dispatchUnary (debugMode : Bool) (τ : OperationType) : Primop.Unary → Transformer τ :=
@@ -273,17 +273,15 @@ def step {τ : OperationType} (debugMode : Bool) (op : Operation τ) : Transform
           | some ⟨stack', μ₀, μ₁, μ₂⟩ => do
             if debugMode then
               dbg_trace s!"called with μ₀: {μ₀} μ₁: {μ₁} μ₂: {μ₂}"
-            let .some mState' := evmState.toMachineState.returndatacopy μ₀ μ₁ μ₂
-              | .error EVM.Exception.OutOfBounds
+            let mState' := evmState.toMachineState.returndatacopy μ₀ μ₁ μ₂
             let evmState' := {evmState with toMachineState := mState'}
             .ok <| evmState'.replaceStackAndIncrPC stack'
-          | _ => .error EVM.Exception.InvalidStackSizeException
+          | _ => .error .StackUnderflow
     | .Yul, .RETURNDATACOPY =>
       λ yulState lits ↦
         match lits with
           | [a, b, c] => do
-            let .some mState' := yulState.toSharedState.toMachineState.returndatacopy a b c
-              | .error .InvalidArguments
+            let mState' := yulState.toSharedState.toMachineState.returndatacopy a b c
             .ok <| (yulState.setMachineState mState', .none)
           | _ => .error .InvalidArguments
     | τ, .EXTCODEHASH => dispatchUnaryStateOp debugMode τ EvmYul.State.extCodeHash
@@ -307,7 +305,7 @@ def step {τ : OperationType} (debugMode : Bool) (op : Operation τ) : Transform
       λ evmState ↦
       match evmState.stack.pop with
         | some ⟨ s , _ ⟩ => .ok <| evmState.replaceStackAndIncrPC s
-        | _ => .error EVM.Exception.InvalidStackSizeException
+        | _ => .error .StackUnderflow
 
     | .EVM, .MLOAD => λ evmState ↦
       match evmState.stack.pop with
@@ -317,7 +315,7 @@ def step {τ : OperationType} (debugMode : Bool) (op : Operation τ) : Transform
           let (v, mState') := evmState.toMachineState.mload μ₀
           let evmState' := {evmState with toMachineState := mState'}
           .ok <| evmState'.replaceStackAndIncrPC (s.push v)
-        | _ => .error EVM.Exception.InvalidStackSizeException
+        | _ => .error .StackUnderflow
     | .Yul, .MLOAD => λ yulState lits ↦
         match lits with
           | [a] =>
@@ -466,7 +464,7 @@ def step {τ : OperationType} (debugMode : Bool) (op : Operation τ) : Transform
                   substate := A'
                 }
               .ok <| evmState'.replaceStackAndIncrPC s
-          | _ => .error EVM.Exception.InvalidStackSizeException
+          | _ => .error .StackUnderflow
     | .Yul, .SELFDESTRUCT => λ yulState lits ↦
       match lits with
         | [a] =>

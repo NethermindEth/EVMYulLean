@@ -19,6 +19,10 @@ structure State extends EvmYul.SharedState :=
   execLength : ℕ
   deriving Inhabited
 
+inductive ExecutionResult (S : Type) :=
+  | success (state : S) (o : ByteArray)
+  | revert (g : UInt256) (o : ByteArray)
+
 end EVM
 
 end EvmYul

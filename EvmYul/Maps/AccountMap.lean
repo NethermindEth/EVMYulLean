@@ -32,6 +32,13 @@ section RemoveLater
 
 abbrev AccountMap := Batteries.RBMap AccountAddress Account compare
 
+def AccountMap.increaseBalance (σ : AccountMap) (addr : AccountAddress) (amount : UInt256)
+  : AccountMap
+:=
+  match σ.find? addr with
+    | none => σ.insert addr {(default : Account) with balance := amount}
+    | some acc => σ.insert addr {acc with balance := acc.balance + amount}
+
 def toExecute (σ : AccountMap) (t : AccountAddress) : ToExecute :=
   if /- t is a precompiled account -/ t ∈ π then
     ToExecute.Precompiled t

@@ -145,7 +145,7 @@ def returndatasize (self : MachineState) : UInt256 :=
 def returndataat (self : MachineState) (pos : UInt256) : UInt8 :=
   self.returnData.data.getD pos.toNat 0
 
-def returndatacopy (self : MachineState) (mstart rstart size : UInt256) : Option MachineState :=
+def returndatacopy (self : MachineState) (mstart rstart size : UInt256) : MachineState :=
   let pos := rstart.toNat + size.toNat
   -- TODO:
   -- "The additions in μₛ[1]+i are not subject to the 2^256 modulo"

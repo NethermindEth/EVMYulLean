@@ -2,7 +2,7 @@
 
 import EvmYul.Wheels
 import EvmYul.PerformIO
-import EvmYul.Maps.YPState
+import EvmYul.Maps.AccountMap
 import Conform.Wheels
 import EvmYul.EVM.Exception
 
@@ -58,11 +58,11 @@ def computeTrieRoot (ws : Array Withdrawal) : Except String ByteArray := do
     | some ws => ByteArray.ofBlob (blobComputeTrieRoot ws)
 
 def applyWithdrawals
-  (σ : YPState)
+  (σ : AccountMap)
   (withdrawalsRoot : ByteArray)
   (ws : Array Withdrawal)
     :
-  Except EVM.Exception YPState
+  Except EVM.Exception AccountMap
 :=
   match computeTrieRoot ws with
     | .error e => .error (.InvalidWithdrawal e)
@@ -71,7 +71,7 @@ def applyWithdrawals
         then .error (.InvalidWithdrawal "Invalid withdrawals root.")
       .ok <| ws.foldl applyWithdrawal σ
  where
-  applyWithdrawal (σ : YPState) (w : Withdrawal) : YPState :=
+  applyWithdrawal (σ : AccountMap) (w : Withdrawal) : AccountMap :=
     if w.amount <= 0 then σ else
       match σ.find? w.address with
         | none =>

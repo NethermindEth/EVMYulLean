@@ -1,7 +1,7 @@
 import EvmYul.State.SubstateOps
 import EvmYul.State.AccountOps
 
-import EvmYul.Maps.YPState
+import EvmYul.Maps.AccountMap
 
 import EvmYul.State
 import EvmYul.EVM.GasConstants
@@ -22,7 +22,7 @@ DEAD(σ, a). Section 4.1., equation 15.
 def accountExists (self : State) (addr : AccountAddress) : Bool := self.accountMap.lookup addr |>.isSome
 TODO - some conundrum about the mismatch of particulars of states from YP, maybe this should not be here
 -/
-def dead (σ : YPState) (addr : AccountAddress) : Bool :=
+def dead (σ : AccountMap) (addr : AccountAddress) : Bool :=
   σ.find? addr |>.option True Account.emptyAccount
 
 def accountExists (self : State) (addr : AccountAddress) : Bool := self.accountMap.find? addr |>.isSome
