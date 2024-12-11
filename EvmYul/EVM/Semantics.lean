@@ -960,16 +960,16 @@ def Θ (debugMode : Bool)
     match c with
       | ToExecute.Precompiled p =>
         match p with
-          | 1  => .ok <| ((∅ : Batteries.RBSet _ _), Ξ_ECREC σ₁ g A I)
-          | 2  => .ok <| ((∅ : Batteries.RBSet _ _), Ξ_SHA256 σ₁ g A I)
-          | 3  => .ok <| ((∅ : Batteries.RBSet _ _), Ξ_RIP160 σ₁ g A I)
-          | 4  => .ok <| ((∅ : Batteries.RBSet _ _), Ξ_ID σ₁ g A I)
-          | 5  => .ok <| ((∅ : Batteries.RBSet _ _), Ξ_EXPMOD σ₁ g A I)
-          | 6  => .ok <| ((∅ : Batteries.RBSet _ _), Ξ_BN_ADD σ₁ g A I)
-          | 7  => .ok <| ((∅ : Batteries.RBSet _ _), Ξ_BN_MUL σ₁ g A I)
-          | 8  => .ok <| ((∅ : Batteries.RBSet _ _), Ξ_SNARKV σ₁ g A I)
-          | 9  => .ok <| ((∅ : Batteries.RBSet _ _), Ξ_BLAKE2_F σ₁ g A I)
-          | 10 => .ok <| ((∅ : Batteries.RBSet _ _), Ξ_PointEval σ₁ g A I)
+          | 1  => .ok <| (∅, Ξ_ECREC σ₁ g A I)
+          | 2  => .ok <| (∅, Ξ_SHA256 σ₁ g A I)
+          | 3  => .ok <| (∅, Ξ_RIP160 σ₁ g A I)
+          | 4  => .ok <| (∅, Ξ_ID σ₁ g A I)
+          | 5  => .ok <| (∅, Ξ_EXPMOD σ₁ g A I)
+          | 6  => .ok <| (∅, Ξ_BN_ADD σ₁ g A I)
+          | 7  => .ok <| (∅, Ξ_BN_MUL σ₁ g A I)
+          | 8  => .ok <| (∅, Ξ_SNARKV σ₁ g A I)
+          | 9  => .ok <| (∅, Ξ_BLAKE2_F σ₁ g A I)
+          | 10 => .ok <| (∅, Ξ_PointEval σ₁ g A I)
           | _ => default
       | ToExecute.Code _ =>
         match Ξ debugMode fuel createdAccounts genesisBlockHeader blocks σ₁ g A I with
@@ -982,14 +982,8 @@ def Θ (debugMode : Bool)
   -- Equation (127)
   let σ' := if σ'' == ∅ then σ else σ''
 
-  -- Equation (128)
-  -- let g' := if σ'' == ∅ && out.isNone then ⟨0⟩ else g''
-
   -- Equation (129)
   let A' := if σ'' == ∅ then A else A''
-
-  -- Equation (130)
-  -- let z := σ'' != ∅
 
   -- Equation (119)
   .ok (createdAccounts, σ', g', A', z, out)
