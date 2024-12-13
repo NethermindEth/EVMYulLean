@@ -38,7 +38,7 @@ private abbrev Transformer : OperationType → Type
 
 private def dispatchInvalid (τ : OperationType) : Transformer τ :=
   match τ with
-    | .EVM => λ _ ↦ .error <| .ExecutionException .InvalidInstruction
+    | .EVM => λ _ ↦ .error .InvalidInstruction
     | .Yul => λ _ _ ↦ .error Yul.Exception.InvalidInstruction
 
 private def dispatchUnary (debugMode : Bool) (τ : OperationType) : Primop.Unary → Transformer τ :=
@@ -276,7 +276,7 @@ def step {τ : OperationType} (debugMode : Bool) (op : Operation τ) : Transform
             let mState' := evmState.toMachineState.returndatacopy μ₀ μ₁ μ₂
             let evmState' := {evmState with toMachineState := mState'}
             .ok <| evmState'.replaceStackAndIncrPC stack'
-          | _ => .error <| .ExecutionException .StackUnderflow
+          | _ => .error .StackUnderflow
     | .Yul, .RETURNDATACOPY =>
       λ yulState lits ↦
         match lits with
@@ -305,7 +305,7 @@ def step {τ : OperationType} (debugMode : Bool) (op : Operation τ) : Transform
       λ evmState ↦
       match evmState.stack.pop with
         | some ⟨ s , _ ⟩ => .ok <| evmState.replaceStackAndIncrPC s
-        | _ => .error <| .ExecutionException .StackUnderflow
+        | _ => .error .StackUnderflow
 
     | .EVM, .MLOAD => λ evmState ↦
       match evmState.stack.pop with
@@ -315,7 +315,7 @@ def step {τ : OperationType} (debugMode : Bool) (op : Operation τ) : Transform
           let (v, mState') := evmState.toMachineState.mload μ₀
           let evmState' := {evmState with toMachineState := mState'}
           .ok <| evmState'.replaceStackAndIncrPC (s.push v)
-        | _ => .error <| .ExecutionException .StackUnderflow
+        | _ => .error .StackUnderflow
     | .Yul, .MLOAD => λ yulState lits ↦
         match lits with
           | [a] =>
@@ -464,7 +464,7 @@ def step {τ : OperationType} (debugMode : Bool) (op : Operation τ) : Transform
                   substate := A'
                 }
               .ok <| evmState'.replaceStackAndIncrPC s
-          | _ => .error <| .ExecutionException .StackUnderflow
+          | _ => .error .StackUnderflow
     | .Yul, .SELFDESTRUCT => λ yulState lits ↦
       match lits with
         | [a] =>

@@ -104,8 +104,8 @@ def decode (arr : ByteArray) (pc : UInt256) :
   )
 
 def fetchInstr (I : EvmYul.ExecutionEnv) (pc : UInt256) :
-               Except EVM.Exception (Operation .EVM × Option (UInt256 × Nat)) :=
-  decode I.code pc |>.option (.error <| .ExecutionException .StackUnderflow) Except.ok
+               Except EVM.ExecutionException (Operation .EVM × Option (UInt256 × Nat)) :=
+  decode I.code pc |>.option (.error .StackUnderflow) Except.ok
 
 partial def D_J (c : ByteArray) (i : UInt256) : List UInt256 :=
   match c.get? i.toNat >>= EvmYul.EVM.parseInstr with
@@ -134,7 +134,7 @@ def dup (n : ℕ) : Transformer :=
   if top.length = n then
     .ok <| s.replaceStackAndIncrPC (top.getLast! :: s.stack)
   else
-    .error <| .ExecutionException .StackUnderflow
+    .error .StackUnderflow
 
 def swap (n : ℕ) : Transformer :=
   λ s ↦
@@ -143,10 +143,10 @@ def swap (n : ℕ) : Transformer :=
   if List.length top = (n + 1) then
     .ok <| s.replaceStackAndIncrPC (top.getLast! :: top.tail!.dropLast ++ [top.head!] ++ bottom)
   else
-    .error <| .ExecutionException .StackUnderflow
+    .error .StackUnderflow
 
-local instance : MonadLift Option (Except EVM.Exception) :=
-  ⟨Option.option (.error <| .ExecutionException .StackUnderflow) .ok⟩
+local instance : MonadLift Option (Except EVM.ExecutionException) :=
+  ⟨Option.option (.error .StackUnderflow) .ok⟩
 
 mutual
 
@@ -157,7 +157,7 @@ def call (debugMode : Bool) (fuel : Nat)
   (permission : Bool)
   (evmState : State)
     :
-  Except EVM.Exception (UInt256 × State)
+  Except EVM.ExecutionException (UInt256 × State)
 := do
   match fuel with
     | 0 => dbg_trace "nofuel"; .ok (⟨1⟩, evmState)
@@ -236,7 +236,9 @@ def call (debugMode : Bool) (fuel : Nat)
       }
       .ok (x, result)
 
-def step (debugMode : Bool) (fuel : ℕ) (gasCost : ℕ) (instr : Option (Operation .EVM × Option (UInt256 × Nat)) := .none) : EVM.Transformer :=
+def step (debugMode : Bool) (fuel : ℕ) (gasCost : ℕ) (instr : Option (Operation .EVM × Option (UInt256 × Nat)) := .none)
+  : EVM.Transformer
+:=
   match fuel with
     | 0 => .ok
     | .succ f =>
@@ -260,7 +262,7 @@ def step (debugMode : Bool) (fuel : ℕ) (gasCost : ℕ) (instr : Option (Operat
           evmState.replaceStackAndIncrPC (evmState.stack.push ⟨0⟩)
       | .Push _ => do
         let evmState := {evmState with gasAvailable := evmState.gasAvailable - UInt256.ofNat gasCost}
-        let some (arg, argWidth) := arg | .error <| .ExecutionException .StackUnderflow
+        let some (arg, argWidth) := arg | .error .StackUnderflow
         if debugMode then
           dbg_trace s!"called with {arg} | 0x{padLeft (2*argWidth) <| toHex (BE arg.toNat)}"
         .ok <| evmState.replaceStackAndIncrPC (evmState.stack.push arg) (pcΔ := argWidth.succ)
@@ -272,7 +274,7 @@ def step (debugMode : Bool) (fuel : ℕ) (gasCost : ℕ) (instr : Option (Operat
               dbg_trace s!"called with μ₀: {μ₀}"
             let newPc := μ₀
             .ok <| {evmState with pc := newPc, stack := stack}
-          | _ => .error <| .ExecutionException .StackUnderflow
+          | _ => .error .StackUnderflow
       | .JUMPI =>
         let evmState := {evmState with gasAvailable := evmState.gasAvailable - UInt256.ofNat gasCost}
         match evmState.stack.pop2 with
@@ -286,7 +288,7 @@ def step (debugMode : Bool) (fuel : ℕ) (gasCost : ℕ) (instr : Option (Operat
             else
               evmState.pc + ⟨1⟩
             .ok <| {evmState with pc := newPc, stack := stack}
-          | _ => .error <| .ExecutionException .StackUnderflow
+          | _ => .error .StackUnderflow
       | .PC =>
         let evmState := {evmState with gasAvailable := evmState.gasAvailable - UInt256.ofNat gasCost}
         .ok <| evmState.replaceStackAndIncrPC (evmState.stack.push evmState.pc)
@@ -389,7 +391,7 @@ def step (debugMode : Bool) (fuel : ℕ) (gasCost : ℕ) (instr : Option (Operat
             let newReturnData : ByteArray := if z then .empty else o
             -- TODO: Redundant
             if (evmState.gasAvailable + g').toNat < L (evmState.gasAvailable.toNat) then
-              .error <| .ExecutionException .OutOfGass
+              .error .OutOfGass
             -- dbg_trace s!"gasAvailable at the end of CREATE: {evmState'.gasAvailable.toNat - L (evmState'.gasAvailable.toNat) + g'.toNat}"
             let evmState' :=
               {evmState' with
@@ -402,7 +404,7 @@ def step (debugMode : Bool) (fuel : ℕ) (gasCost : ℕ) (instr : Option (Operat
               }
             .ok <| evmState'.replaceStackAndIncrPC (stack.push x)
           | _ =>
-          .error <| .ExecutionException .StackUnderflow
+          .error .StackUnderflow
       | .CREATE2 =>
         -- Exactly equivalent to CREATE except ζ ≡ μₛ[3]
         let evmState := {evmState with gasAvailable := evmState.gasAvailable - UInt256.ofNat gasCost}
@@ -453,7 +455,7 @@ def step (debugMode : Bool) (fuel : ℕ) (gasCost : ℕ) (instr : Option (Operat
             let newReturnData : ByteArray := if z then .empty else o
             -- TODO: Redundant
             if (evmState.gasAvailable + g').toNat < L evmState.gasAvailable.toNat then
-              .error <| .ExecutionException .OutOfGass
+              .error .OutOfGass
             -- dbg_trace s!"g' in CREATE2 = {g'}"
             let evmState' :=
               {evmState' with
@@ -465,7 +467,7 @@ def step (debugMode : Bool) (fuel : ℕ) (gasCost : ℕ) (instr : Option (Operat
               }
             .ok <| evmState'.replaceStackAndIncrPC (stack.push x)
           | _ =>
-          .error <| .ExecutionException .StackUnderflow
+          .error .StackUnderflow
       -- TODO: Factor out the semantics for `CALL`, `CALLCODE`, `DELEGATECALL`, `STATICCALL`
       | .CALL => do
         -- Names are from the YP, these are:
@@ -545,9 +547,11 @@ def step (debugMode : Bool) (fuel : ℕ) (gasCost : ℕ) (instr : Option (Operat
 /--
   Iterative progression of `step`
 -/
-def X (debugMode : Bool) (fuel : ℕ) (evmState : State) : Except EVM.Exception (ExecutionResult State) := do
+def X (debugMode : Bool) (fuel : ℕ) (evmState : State)
+  : Except EVM.ExecutionException (ExecutionResult State)
+:= do
   match fuel with
-    | 0 => .error <| .ExecutionException .OutOfFuel
+    | 0 => .error .OutOfFuel
     | .succ f =>
       let I_b := evmState.toState.executionEnv.code
       let instr@(w, _) := decode I_b evmState.pc |>.getD (.STOP, .none)
@@ -561,7 +565,7 @@ def X (debugMode : Bool) (fuel : ℕ) (evmState : State) : Except EVM.Exception 
         (w = .CALL ∧ s.get? 2 ≠ some ⟨0⟩)
 
       -- Exceptional halting (158)
-      let Z (evmState : State) : Except EVM.Exception (State × ℕ) := do
+      let Z (evmState : State) : Except EVM.ExecutionException (State × ℕ) := do
         let cost₁ := memoryExpansionCost evmState w
         -- dbg_trace s!"gasAvailable: {evmState.gasAvailable.toNat}"
         -- dbg_trace s!"cost₁: {cost₁}"
@@ -570,7 +574,7 @@ def X (debugMode : Bool) (fuel : ℕ) (evmState : State) : Except EVM.Exception 
           if debugMode then
             dbg_trace s!"Exceptional halting: insufficient gas (available gas < gas cost for memory expantion)"
             -- dbg_trace s!"({evmState.gasAvailable.toNat} < {cost₁}"
-          .error <| .ExecutionException .OutOfGass
+          .error .OutOfGass
         let gasAvailable := evmState.gasAvailable - .ofNat cost₁
         let evmState := { evmState with gasAvailable := gasAvailable}
         let cost₂ := C' evmState w
@@ -579,52 +583,52 @@ def X (debugMode : Bool) (fuel : ℕ) (evmState : State) : Except EVM.Exception 
           if debugMode then
             dbg_trace s!"Exceptional halting: insufficient gas (available gas < gas cost)"
             -- dbg_trace s!"({evmState.gasAvailable.toNat} < {cost₂})"
-          .error <| .ExecutionException .OutOfGass
+          .error .OutOfGass
 
         if δ w = none then
           if debugMode then
             dbg_trace s!"Exceptional halting: invalid operation (has δ = ∅)"
-          .error <| .ExecutionException .InvalidInstruction
+          .error .InvalidInstruction
 
         if evmState.stack.length < (δ w).getD 0 then
           if debugMode then
             dbg_trace s!"Exceptional halting: insufficient stack items for {w.pretty}"
-          .error <| .ExecutionException .StackUnderflow
+          .error .StackUnderflow
 
         if w = .JUMP ∧ notIn (evmState.stack.get? 0) (D_J I_b ⟨0⟩) then
           if debugMode then
             dbg_trace s!"Exceptional halting: invalid JUMP destination"
-          .error <| .ExecutionException .BadJumpDestination
+          .error .BadJumpDestination
 
         if w = .JUMPI ∧ (evmState.stack.get? 1 ≠ some ⟨0⟩) ∧ notIn (evmState.stack.get? 0) (D_J I_b ⟨0⟩) then
           if debugMode then
             dbg_trace s!"Exceptional halting: invalid JUMPI destination"
-          .error <| .ExecutionException .BadJumpDestination
+          .error .BadJumpDestination
 
         if w = .RETURNDATACOPY ∧ (evmState.stack.getD 1 ⟨0⟩).toNat + (evmState.stack.getD 2 ⟨0⟩).toNat > evmState.returnData.size then
           if debugMode then
             dbg_trace s!"Exceptional halting: not enough output data for RETURNDATACOPY"
-          .error <| .ExecutionException .InvalidMemoryAccess
+          .error .InvalidMemoryAccess
 
         if evmState.stack.length - (δ w).getD 0 - (α w).getD 0 > 1024 then
           if debugMode then
             dbg_trace s!"Exceptional halting: {w.pretty} would result in stack larger than 1024 elements"
-          .error <| .ExecutionException .StackOverflow
+          .error .StackOverflow
 
         if (¬ evmState.executionEnv.perm) ∧ W w evmState.stack then
           if debugMode then
             dbg_trace s!"Exceptional halting: attempted {w.pretty} without permission"
-          .error <| .ExecutionException .StaticModeViolation
+          .error .StaticModeViolation
 
         if (w = .SSTORE) ∧ evmState.gasAvailable.toNat ≤ GasConstants.Gcallstipend then
           if debugMode then
             dbg_trace s!"Exceptional halting: attempted SSTORE with gas ≤ Gcallstipend"
-          .error <| .ExecutionException .OutOfGass
+          .error .OutOfGass
 
         if
           w.isCreate ∧ evmState.stack.getD 2 ⟨0⟩ > ⟨49152⟩
         then
-          .error <| .ExecutionException .OutOfGass
+          .error .OutOfGass
 
         pure (evmState, cost₂)
 
@@ -681,11 +685,11 @@ def Ξ -- Type `Ξ` using `\GX` or `\Xi`
   (I : ExecutionEnv)
     :
   Except
-    EVM.Exception
+    EVM.ExecutionException
     (ExecutionResult (Batteries.RBSet AccountAddress compare × AccountMap × UInt256 × Substate))
 := do
   match fuel with
-    | 0 => .error <| .ExecutionException .OutOfFuel
+    | 0 => .error .OutOfFuel
     | .succ f =>
       let defState : EVM.State := default
       let freshEvmState : EVM.State :=
@@ -730,7 +734,7 @@ def Lambda
   (H : BlockHeader) -- "I_H has no special treatment and is determined from the blockchain"
   (w : Bool)      -- permission to make modifications to the state
   :
-  Except EVM.Exception
+  Except EVM.ExecutionException
     ( AccountAddress
     × Batteries.RBSet AccountAddress compare
     × AccountMap
@@ -741,7 +745,7 @@ def Lambda
     )
 :=
   match fuel with
-    | 0 => dbg_trace "nofuel"; .error <| .ExecutionException .OutOfFuel
+    | 0 => dbg_trace "nofuel"; .error .OutOfFuel
     | .succ f => do
 
   -- EIP-3860 (includes EIP-170)
@@ -902,11 +906,11 @@ def Θ (debugMode : Bool)
       (H : BlockHeader)
       (w  : Bool)
         :
-      Except EVM.Exception (Batteries.RBSet AccountAddress compare × AccountMap × UInt256 × Substate × Bool × ByteArray)
+      Except EVM.ExecutionException (Batteries.RBSet AccountAddress compare × AccountMap × UInt256 × Substate × Bool × ByteArray)
 :=
   -- dbg_trace s!"Θ receiver: {repr r}"
   match fuel with
-    | 0 => .error <| .ExecutionException .OutOfFuel
+    | 0 => .error .OutOfFuel
     | fuel + 1 => do
 
   -- (124) (125) (126)
@@ -1042,15 +1046,14 @@ def Υ (debugMode : Bool) (fuel : ℕ) (σ : AccountMap) (chainId H_f : ℕ) (H 
   let (/- provisional state -/ σ_P, g', A, z) ← -- (76)
     match T.base.recipient with
       | none => do
-        let (_, _, σ_P, g', A, z, _) ←
-          Lambda debugMode fuel T.blobVersionedHashes createdAccounts genesisBlockHeader blocks σ₀ AStar S_T S_T g p T.base.value T.base.data ⟨0⟩ none H true
-        pure (σ_P, g', A, z)
+        match Lambda debugMode fuel T.blobVersionedHashes createdAccounts genesisBlockHeader blocks σ₀ AStar S_T S_T g p T.base.value T.base.data ⟨0⟩ none H true with
+          | .ok (_, _, σ_P, g', A, z, _) => pure (σ_P, g', A, z)
+          | .error e => .error <| .ExecutionException e
       | some t =>
         -- Proposition (71) suggests the recipient can be inexistent
-        let (_, σ_P, g',  A, z, _) ←
-          Θ debugMode fuel T.blobVersionedHashes createdAccounts genesisBlockHeader blocks σ₀ AStar S_T S_T t (toExecute σ₀ t) g p T.base.value T.base.value T.base.data 0 H true
-              --  dbg_trace "Θ gave back σ_P: {repr σ_P}"
-        pure (σ_P, g', A, z)
+        match Θ debugMode fuel T.blobVersionedHashes createdAccounts genesisBlockHeader blocks σ₀ AStar S_T S_T t (toExecute σ₀ t) g p T.base.value T.base.value T.base.data 0 H true with
+          | .ok (_, σ_P, g',  A, z, _) => pure (σ_P, g', A, z)
+          | .error e => .error <| .ExecutionException e
   -- The amount to be refunded (82)
   let gStar := g' + min ((T.base.gasLimit - g') / ⟨5⟩) A.refundBalance
   -- dbg_trace s!"refundBalance = {A.refundBalance}"

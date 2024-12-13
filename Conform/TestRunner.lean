@@ -368,7 +368,7 @@ def processBlocks (s₀ : EVM.State) : Except EVM.Exception EVM.State := do
               let beaconRootsAddressCode := roots.code
               let _TODOfuel := 2^13
               -- the call does not count against the block’s gas limit
-              let (createdAccounts, σ, _, substate, _ /- can't fail-/, _) ←
+              let beaconCallResult :=
                 EVM.Θ (debugMode := false) _TODOfuel
                   []
                   .empty
@@ -388,6 +388,11 @@ def processBlocks (s₀ : EVM.State) : Except EVM.Exception EVM.State := do
                   0
                   block.blockHeader
                   true
+              let (createdAccounts, σ, substate) ←
+                match beaconCallResult with
+                  | .ok (createdAccounts, σ, _, substate, _ /- can't fail-/, _) =>
+                    pure (createdAccounts, σ, substate)
+                  | .error e => .error <| .ExecutionException e
               let s :=
                 {s₀ with
                   createdAccounts := createdAccounts
