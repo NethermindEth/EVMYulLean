@@ -52,24 +52,18 @@ def toBlobs (w : ℕ × Withdrawal) : Option (String × String) := do
   pure (EvmYul.toHex rlpᵢ, EvmYul.toHex rlp)
 
 -- EIP-4895
-def computeTrieRoot (ws : Array Withdrawal) : Except String ByteArray := do
+def computeTrieRoot (ws : Array Withdrawal) : Option ByteArray := do
   match Array.mapM toBlobs ((Array.range ws.size).zip ws) with
-    | none => .error "Could not encode withdrawal."
-    | some ws => ByteArray.ofBlob (blobComputeTrieRoot ws)
+    | none => .none
+    | some ws => (ByteArray.ofBlob (blobComputeTrieRoot ws)).toOption
 
 def applyWithdrawals
   (σ : AccountMap)
-  (withdrawalsRoot : ByteArray)
   (ws : Array Withdrawal)
     :
-  Except EVM.Exception AccountMap
+  AccountMap
 :=
-  match computeTrieRoot ws with
-    | .error e => .error (.InvalidWithdrawal e)
-    | .ok root => do
-      if root != withdrawalsRoot
-        then .error (.InvalidWithdrawal "Invalid withdrawals root.")
-      .ok <| ws.foldl applyWithdrawal σ
+  ws.foldl applyWithdrawal σ
  where
   applyWithdrawal (σ : AccountMap) (w : Withdrawal) : AccountMap :=
     if w.amount <= 0 then σ else
@@ -110,7 +104,7 @@ private def withdrawalZeroTrailingRoot : Withdrawal :=
   }
 
 private example :
-  (computeTrieRoot #[]).toOption
+  (computeTrieRoot #[])
     ==
   (ByteArray.ofBlob
     "56e81f171bcc55a6ff8345e692c0f86e5b48e01b996cadc001622fb5e363b421"
@@ -119,7 +113,7 @@ private example :
 
 /- From newly_created_contract.json -/
 private example :
-  (computeTrieRoot #[withdrawal₁]).toOption
+  (computeTrieRoot #[withdrawal₁])
     =
   (ByteArray.ofBlob
     "82cc6fbe74c41496b382fcdf25216c5af7bdbb5a3929e8f2e61bd6445ab66436"
@@ -128,7 +122,7 @@ private example :
 
 /- From beacon_root_contract_deploy.json -/
 private example :
-  (computeTrieRoot #[withdrawal₂, withdrawal₃]).toOption
+  (computeTrieRoot #[withdrawal₂, withdrawal₃])
     =
   (ByteArray.ofBlob
     "2aef4d3e6939af0b4bf4c0e7572a214eb7db9ba52937e1e82ad6c64b52d2e8bb"
@@ -137,7 +131,7 @@ private example :
 
 /- From withdrawing_to_precompiles.json -/
 private example :
-  (computeTrieRoot #[withdrawalZeroTrailingRoot]).toOption
+  (computeTrieRoot #[withdrawalZeroTrailingRoot])
     =
   (ByteArray.ofBlob
     "04cc2e3f94b587ff46b5f4c0787c589db306b7209f7f212f47022a12bc3e6e16"
@@ -166,7 +160,7 @@ private def w₂Index : Withdrawal :=
   }
 
 private example :
-  (computeTrieRoot #[w₀Index, w₂Index, w₁Index, w₂Index]).toOption
+  (computeTrieRoot #[w₀Index, w₂Index, w₁Index, w₂Index])
     =
   (ByteArray.ofBlob
     "a95b9a7b58a6b3cb4001eb0be67951c5517141cb0183a255b5cae027a7b10b36"

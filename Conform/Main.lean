@@ -40,9 +40,9 @@ def log (testFile : System.FilePath) (testName : String) (result : TestResult) :
 GeneralStateTests:
   Cancun                                2m43
     Total tests: 174
-    The post was NOT equal to the resulting state: 5
-    Succeeded: 169
-    Success rate of: 97.126437
+    The post was NOT equal to the resulting state: 8
+    Succeeded: 166
+    Success rate of: 95.402299
 
   Pyspecs                               27m47
     Total tests: 1675
@@ -52,9 +52,9 @@ GeneralStateTests:
 
   Shanghai                              0m42
     Total tests: 27
-    The post was NOT equal to the resulting state: 2
-    Succeeded: 25
-    Success rate of: 92.592593
+    The post was NOT equal to the resulting state: 0
+    Succeeded: 27
+    Success rate of: 100.000000
 
   stArgsZeroOneBalance                  1m47
     Total tests: 96
@@ -88,9 +88,9 @@ GeneralStateTests:
 
   stCallCreateCallCodeTest              1m5
     Total tests: 56
-    The post was NOT equal to the resulting state: 6
-    Succeeded: 50
-    Success rate of: 89.285714
+    The post was NOT equal to the resulting state: 5
+    Succeeded: 51
+    Success rate of: 91.071429
 
   stCallDelegateCodesCallCodeHomestead  1m5
     Total tests: 58
@@ -178,9 +178,9 @@ GeneralStateTests:
 
   stExample                             0m54
     Total tests: 39
-    The post was NOT equal to the resulting state: 1
-    Succeeded: 38
-    Success rate of: 97.435897
+    The post was NOT equal to the resulting state: 0
+    Succeeded: 39
+    Success rate of: 100.000000
 
   stExtCodeHash                         1m27
     Total tests: 69
@@ -300,9 +300,9 @@ GeneralStateTests:
 
   stSolidityTest                        0m38
     Total tests: 23
-    The post was NOT equal to the resulting state: 8
-    Succeeded: 15
-    Success rate of: 65.217391
+    The post was NOT equal to the resulting state: 0
+    Succeeded: 23
+    Success rate of: 100.000000
 
   stSpecialTest                         0m35
     Total tests: 22
@@ -328,7 +328,7 @@ GeneralStateTests:
     Succeeded: 418
     Success rate of: 87.447699
 
-  stStaticFlagEnabled                   0m46
+  stStaticFlagEnabled                   1m28
     Total tests: 34
     The post was NOT equal to the resulting state: 0
     Succeeded: 34
@@ -390,9 +390,9 @@ GeneralStateTests:
 
   VMTests                               9m16
     Total tests: 572
-    The post was NOT equal to the resulting state: 20
-    Succeeded: 552
-    Success rate of: 96.503497
+    The post was NOT equal to the resulting state: 14
+    Succeeded: 558
+    Success rate of: 97.552448
 -/
 /-
 InvalidBlocks                           2m56

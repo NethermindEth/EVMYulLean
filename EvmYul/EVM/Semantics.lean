@@ -105,7 +105,7 @@ def decode (arr : ByteArray) (pc : UInt256) :
 
 def fetchInstr (I : EvmYul.ExecutionEnv) (pc : UInt256) :
                Except EVM.Exception (Operation .EVM × Option (UInt256 × Nat)) :=
-  decode I.code pc |>.option (.error .StackUnderflow) Except.ok
+  decode I.code pc |>.option (.error <| .ExecutionException .StackUnderflow) Except.ok
 
 partial def D_J (c : ByteArray) (i : UInt256) : List UInt256 :=
   match c.get? i.toNat >>= EvmYul.EVM.parseInstr with
@@ -134,7 +134,7 @@ def dup (n : ℕ) : Transformer :=
   if top.length = n then
     .ok <| s.replaceStackAndIncrPC (top.getLast! :: s.stack)
   else
-    .error EVM.Exception.StackUnderflow
+    .error <| .ExecutionException .StackUnderflow
 
 def swap (n : ℕ) : Transformer :=
   λ s ↦
@@ -143,10 +143,10 @@ def swap (n : ℕ) : Transformer :=
   if List.length top = (n + 1) then
     .ok <| s.replaceStackAndIncrPC (top.getLast! :: top.tail!.dropLast ++ [top.head!] ++ bottom)
   else
-    .error EVM.Exception.StackUnderflow
+    .error <| .ExecutionException .StackUnderflow
 
 local instance : MonadLift Option (Except EVM.Exception) :=
-  ⟨Option.option (.error .StackUnderflow) .ok⟩
+  ⟨Option.option (.error <| .ExecutionException .StackUnderflow) .ok⟩
 
 mutual
 
@@ -260,7 +260,7 @@ def step (debugMode : Bool) (fuel : ℕ) (gasCost : ℕ) (instr : Option (Operat
           evmState.replaceStackAndIncrPC (evmState.stack.push ⟨0⟩)
       | .Push _ => do
         let evmState := {evmState with gasAvailable := evmState.gasAvailable - UInt256.ofNat gasCost}
-        let some (arg, argWidth) := arg | .error EVM.Exception.StackUnderflow
+        let some (arg, argWidth) := arg | .error <| .ExecutionException .StackUnderflow
         if debugMode then
           dbg_trace s!"called with {arg} | 0x{padLeft (2*argWidth) <| toHex (BE arg.toNat)}"
         .ok <| evmState.replaceStackAndIncrPC (evmState.stack.push arg) (pcΔ := argWidth.succ)
@@ -272,7 +272,7 @@ def step (debugMode : Bool) (fuel : ℕ) (gasCost : ℕ) (instr : Option (Operat
               dbg_trace s!"called with μ₀: {μ₀}"
             let newPc := μ₀
             .ok <| {evmState with pc := newPc, stack := stack}
-          | _ => .error EVM.Exception.StackUnderflow
+          | _ => .error <| .ExecutionException .StackUnderflow
       | .JUMPI =>
         let evmState := {evmState with gasAvailable := evmState.gasAvailable - UInt256.ofNat gasCost}
         match evmState.stack.pop2 with
@@ -286,7 +286,7 @@ def step (debugMode : Bool) (fuel : ℕ) (gasCost : ℕ) (instr : Option (Operat
             else
               evmState.pc + ⟨1⟩
             .ok <| {evmState with pc := newPc, stack := stack}
-          | _ => .error EVM.Exception.StackUnderflow
+          | _ => .error <| .ExecutionException .StackUnderflow
       | .PC =>
         let evmState := {evmState with gasAvailable := evmState.gasAvailable - UInt256.ofNat gasCost}
         .ok <| evmState.replaceStackAndIncrPC (evmState.stack.push evmState.pc)
@@ -389,7 +389,7 @@ def step (debugMode : Bool) (fuel : ℕ) (gasCost : ℕ) (instr : Option (Operat
             let newReturnData : ByteArray := if z then .empty else o
             -- TODO: Redundant
             if (evmState.gasAvailable + g').toNat < L (evmState.gasAvailable.toNat) then
-              .error .OutOfGass
+              .error <| .ExecutionException .OutOfGass
             -- dbg_trace s!"gasAvailable at the end of CREATE: {evmState'.gasAvailable.toNat - L (evmState'.gasAvailable.toNat) + g'.toNat}"
             let evmState' :=
               {evmState' with
@@ -402,7 +402,7 @@ def step (debugMode : Bool) (fuel : ℕ) (gasCost : ℕ) (instr : Option (Operat
               }
             .ok <| evmState'.replaceStackAndIncrPC (stack.push x)
           | _ =>
-          .error .StackUnderflow
+          .error <| .ExecutionException .StackUnderflow
       | .CREATE2 =>
         -- Exactly equivalent to CREATE except ζ ≡ μₛ[3]
         let evmState := {evmState with gasAvailable := evmState.gasAvailable - UInt256.ofNat gasCost}
@@ -453,7 +453,7 @@ def step (debugMode : Bool) (fuel : ℕ) (gasCost : ℕ) (instr : Option (Operat
             let newReturnData : ByteArray := if z then .empty else o
             -- TODO: Redundant
             if (evmState.gasAvailable + g').toNat < L evmState.gasAvailable.toNat then
-              .error .OutOfGass
+              .error <| .ExecutionException .OutOfGass
             -- dbg_trace s!"g' in CREATE2 = {g'}"
             let evmState' :=
               {evmState' with
@@ -465,7 +465,7 @@ def step (debugMode : Bool) (fuel : ℕ) (gasCost : ℕ) (instr : Option (Operat
               }
             .ok <| evmState'.replaceStackAndIncrPC (stack.push x)
           | _ =>
-          .error .StackUnderflow
+          .error <| .ExecutionException .StackUnderflow
       -- TODO: Factor out the semantics for `CALL`, `CALLCODE`, `DELEGATECALL`, `STATICCALL`
       | .CALL => do
         -- Names are from the YP, these are:
@@ -547,7 +547,7 @@ def step (debugMode : Bool) (fuel : ℕ) (gasCost : ℕ) (instr : Option (Operat
 -/
 def X (debugMode : Bool) (fuel : ℕ) (evmState : State) : Except EVM.Exception (ExecutionResult State) := do
   match fuel with
-    | 0 => .error .OutOfFuel
+    | 0 => .error <| .ExecutionException .OutOfFuel
     | .succ f =>
       let I_b := evmState.toState.executionEnv.code
       let instr@(w, _) := decode I_b evmState.pc |>.getD (.STOP, .none)
@@ -570,7 +570,7 @@ def X (debugMode : Bool) (fuel : ℕ) (evmState : State) : Except EVM.Exception 
           if debugMode then
             dbg_trace s!"Exceptional halting: insufficient gas (available gas < gas cost for memory expantion)"
             -- dbg_trace s!"({evmState.gasAvailable.toNat} < {cost₁}"
-          .error .OutOfGass
+          .error <| .ExecutionException .OutOfGass
         let gasAvailable := evmState.gasAvailable - .ofNat cost₁
         let evmState := { evmState with gasAvailable := gasAvailable}
         let cost₂ := C' evmState w
@@ -579,52 +579,52 @@ def X (debugMode : Bool) (fuel : ℕ) (evmState : State) : Except EVM.Exception 
           if debugMode then
             dbg_trace s!"Exceptional halting: insufficient gas (available gas < gas cost)"
             -- dbg_trace s!"({evmState.gasAvailable.toNat} < {cost₂})"
-          .error .OutOfGass
+          .error <| .ExecutionException .OutOfGass
 
         if δ w = none then
           if debugMode then
             dbg_trace s!"Exceptional halting: invalid operation (has δ = ∅)"
-          .error .InvalidInstruction
+          .error <| .ExecutionException .InvalidInstruction
 
         if evmState.stack.length < (δ w).getD 0 then
           if debugMode then
             dbg_trace s!"Exceptional halting: insufficient stack items for {w.pretty}"
-          .error .StackUnderflow
+          .error <| .ExecutionException .StackUnderflow
 
         if w = .JUMP ∧ notIn (evmState.stack.get? 0) (D_J I_b ⟨0⟩) then
           if debugMode then
             dbg_trace s!"Exceptional halting: invalid JUMP destination"
-          .error .BadJumpDestination
+          .error <| .ExecutionException .BadJumpDestination
 
         if w = .JUMPI ∧ (evmState.stack.get? 1 ≠ some ⟨0⟩) ∧ notIn (evmState.stack.get? 0) (D_J I_b ⟨0⟩) then
           if debugMode then
             dbg_trace s!"Exceptional halting: invalid JUMPI destination"
-          .error .BadJumpDestination
+          .error <| .ExecutionException .BadJumpDestination
 
         if w = .RETURNDATACOPY ∧ (evmState.stack.getD 1 ⟨0⟩).toNat + (evmState.stack.getD 2 ⟨0⟩).toNat > evmState.returnData.size then
           if debugMode then
             dbg_trace s!"Exceptional halting: not enough output data for RETURNDATACOPY"
-          .error .InvalidMemoryAccess
+          .error <| .ExecutionException .InvalidMemoryAccess
 
         if evmState.stack.length - (δ w).getD 0 - (α w).getD 0 > 1024 then
           if debugMode then
             dbg_trace s!"Exceptional halting: {w.pretty} would result in stack larger than 1024 elements"
-          .error .StackOverflow
+          .error <| .ExecutionException .StackOverflow
 
         if (¬ evmState.executionEnv.perm) ∧ W w evmState.stack then
           if debugMode then
             dbg_trace s!"Exceptional halting: attempted {w.pretty} without permission"
-          .error .StaticModeViolation
+          .error <| .ExecutionException .StaticModeViolation
 
         if (w = .SSTORE) ∧ evmState.gasAvailable.toNat ≤ GasConstants.Gcallstipend then
           if debugMode then
             dbg_trace s!"Exceptional halting: attempted SSTORE with gas ≤ Gcallstipend"
-          .error .OutOfGass
+          .error <| .ExecutionException .OutOfGass
 
         if
           w.isCreate ∧ evmState.stack.getD 2 ⟨0⟩ > ⟨49152⟩
         then
-          .error .OutOfGass
+          .error <| .ExecutionException .OutOfGass
 
         pure (evmState, cost₂)
 
@@ -685,7 +685,7 @@ def Ξ -- Type `Ξ` using `\GX` or `\Xi`
     (ExecutionResult (Batteries.RBSet AccountAddress compare × AccountMap × UInt256 × Substate))
 := do
   match fuel with
-    | 0 => .error .OutOfFuel
+    | 0 => .error <| .ExecutionException .OutOfFuel
     | .succ f =>
       let defState : EVM.State := default
       let freshEvmState : EVM.State :=
@@ -741,12 +741,11 @@ def Lambda
     )
 :=
   match fuel with
-    | 0 => dbg_trace "nofuel"; .error .OutOfFuel
+    | 0 => dbg_trace "nofuel"; .error <| .ExecutionException .OutOfFuel
     | .succ f => do
 
   -- EIP-3860 (includes EIP-170)
   -- https://eips.ethereum.org/EIPS/eip-3860
-  let MAX_CODE_SIZE := 24576
 
   let n : UInt256 := (σ.find? s |>.option ⟨0⟩ Account.nonce) - ⟨1⟩
   -- dbg_trace s!"s: {toHex (BE s)}, n:{n}, ζ:{ζ},\n i:{toHex i}"
@@ -785,10 +784,10 @@ def Lambda
         balance := v + existentAccount.balance
     }
 
-  -- TODO: (100) What if the sender account does not exist but `v` is non-zero?
+  -- If `v` ≠ 0 then the sender must have passed the `INSUFFICIENT_ACCOUNT_FUNDS` check
   let σStar :=
     match σ.find? s with
-      | none => σ
+      | none =>  σ
       | some ac =>
         σ.insert s {ac with balance := ac.balance - v}
           |>.insert a newAccount -- (99)
@@ -828,6 +827,7 @@ def Lambda
         let F₂ : Bool := gStarStar.toNat < c
         if debugMode ∧ F₂ then
           dbg_trace s!"Contract creation failed: g** < c (size = {returnedData.size})"
+        let MAX_CODE_SIZE := 24576
         let F₃ : Bool := returnedData.size > MAX_CODE_SIZE
         if debugMode ∧ F₃ then
           dbg_trace "Contract creation failed: code computed for the new account > 24576"
@@ -906,7 +906,7 @@ def Θ (debugMode : Bool)
 :=
   -- dbg_trace s!"Θ receiver: {repr r}"
   match fuel with
-    | 0 => .error .OutOfFuel
+    | 0 => .error <| .ExecutionException .OutOfFuel
     | fuel + 1 => do
 
   -- (124) (125) (126)
@@ -920,16 +920,12 @@ def Θ (debugMode : Bool)
       | some acc =>
         σ.insert r { acc with balance := acc.balance + v}
 
-  -- (121) (122) (123)
-  let σ₁ ←
+  -- If `v` ≠ 0 then the sender must have passed the `INSUFFICIENT_ACCOUNT_FUNDS` check
+  let σ₁ :=
     match σ'₁.find? s with
-      | none =>
-        if v == ⟨0⟩ then
-          pure σ'₁
-        else
-          .error .SenderMustExist
+      | none => σ'₁
       | some acc =>
-        pure <| σ'₁.insert s { acc with balance := acc.balance - v}
+        σ'₁.insert s { acc with balance := acc.balance - v}
 
   let I : ExecutionEnv :=
     {
@@ -992,218 +988,15 @@ end
 
 open Batteries (RBMap RBSet)
 
-def checkTransactionGetSender (σ : AccountMap) (chainId H_f : ℕ) (T : Transaction) (expectedSender : AccountAddress)
-  : Except EVM.Exception (AccountAddress × ℕ)
-:= do
-  if T.base.nonce.toNat ≥ 2^64-1 then
-    .error <| .TransactionException .NONCE_IS_MAX
-  let some T_RLP := RLP (← (L_X T)) | .error <| .TransactionException .IllFormedRLP
-
-  let g₀ : ℕ := -- (64)
-    let g₀_data :=
-      T.base.data.foldl
-        (λ acc b ↦
-          acc +
-            if b == 0 then
-              GasConstants.Gtxdatazero
-            else GasConstants.Gtxdatanonzero
-        )
-        0
-    let g₀_create : ℕ :=
-      if T.base.recipient == none then
-        GasConstants.Gtxcreate + R (T.base.data.size)
-      else 0
-
-    let g₀_accessList : ℕ :=
-      T.getAccessList.foldl
-        (λ acc (_, s) ↦
-          acc + GasConstants.Gaccesslistaddress + s.size * GasConstants.Gaccessliststorage
-        )
-        0
-    g₀_data + g₀_create + GasConstants.Gtransaction + g₀_accessList
-
-  if T.base.gasLimit.toNat < g₀ then
-    .error <| .TransactionException .INTRINSIC_GAS_TOO_LOW
-
-  let r : ℕ := fromBytesBigEndian T.base.r.data.data
-  let s : ℕ := fromBytesBigEndian T.base.s.data.data
-  if 0 ≥ r ∨ r ≥ secp256k1n then .error <| .TransactionException .InvalidSignature
-  if 0 ≥ s ∨ s > secp256k1n / 2 then .error <| .TransactionException .InvalidSignature
-  let v : ℕ := -- (324)
-    match T with
-      | .legacy t =>
-        let w := t.w.toNat
-        if w ∈ [27, 28] then
-          w - 27
-        else
-          if w = 35 + chainId * 2 ∨ w = 36 + chainId * 2 then
-            (w - 35) % 2 -- `chainId` not subtracted in the Yellow paper but in the EEL spec
-          else
-            w
-      | .access t | .dynamic t | .blob t => t.yParity.toNat
-  if v ∉ [0, 1] then .error <| .TransactionException .InvalidSignature
-
-  let h_T := -- (318)
-    match T with
-      | .legacy _ => KEC T_RLP
-      | _ => KEC <| ByteArray.mk #[T.type] ++ T_RLP
-
-  let (S_T : AccountAddress) ← -- (323)
-    match ECDSARECOVER h_T (ByteArray.mk #[.ofNat v]) T.base.r T.base.s with
-      | .ok s =>
-        pure <| Fin.ofNat <| fromBytesBigEndian <|
-          ((KEC s).extract 12 32 /- 160 bits = 20 bytes -/ ).data.data
-      | .error s => .error <| .SenderRecoverError s
-  if S_T != expectedSender then
-    .error <| .SenderRecoverError s!"Recovered sender ({toHex S_T.toByteArray}) ≠ expected sender ({toHex expectedSender.toByteArray})"
-  -- dbg_trace s!"Looking for S_T: {S_T} in: σ: {repr σ}"
-
-  -- "Also, with a slight abuse of notation ... "
-  let (senderCode, senderNonce, senderBalance) :=
-    match σ.find? S_T with
-      | some sender => (sender.code, sender.nonce, sender.balance)
-      | none =>
-        dbg_trace s!"could not find sender {toHex S_T.toByteArray}"
-        (.empty, ⟨0⟩, ⟨0⟩)
-
-
-  if senderCode ≠ .empty then .error <| .TransactionException .SenderCodeNotEmpty
-  if senderNonce ≠ T.base.nonce then .error <| .TransactionException .InvalidSenderNonce
-  let v₀ :=
-    match T with
-      | .legacy t | .access t => t.gasLimit * t.gasPrice + t.value
-      | .dynamic t => t.gasLimit * t.maxFeePerGas + t.value
-      | .blob t    => t.gasLimit * t.maxFeePerGas + t.value + (UInt256.ofNat <| (getTotalBlobGas T).getD 0) * t.maxFeePerBlobGas
-  -- dbg_trace s!"v₀: {v₀}, senderBalance: {senderBalance}"
-  if v₀ > senderBalance then .error <| .TransactionException .INSUFFICIENT_ACCOUNT_FUNDS
-
-  if H_f >
-    match T with
-      | .dynamic t | .blob t => t.maxFeePerGas.toNat
-      | .legacy t | .access t => t.gasPrice.toNat
-    then .error <| .TransactionException .BaseFeeTooHigh
-
-  let n :=
-    match T.base.recipient with
-      | some _ => T.base.data.size
-      | none => 0
-  if n > 49152 then .error <| .TransactionException .InitCodeDataGreaterThan49152
-
-  match T with
-    | .dynamic t =>
-      if t.maxPriorityFeePerGas > t.maxFeePerGas then .error <| .TransactionException .InconsistentFees
-      pure (S_T, g₀)
-    | _ => pure (S_T, g₀)
-
- where
-  L_X (T : Transaction) : Except EVM.Exception 𝕋 := -- (317)
-    let accessEntryRLP : AccountAddress × Array UInt256 → 𝕋
-      | ⟨a, s⟩ => .𝕃 [.𝔹 (AccountAddress.toByteArray a), .𝕃 (s.map (𝕋.𝔹 ∘ UInt256.toByteArray)).toList]
-    let accessEntriesRLP (aEs : List (AccountAddress × Array UInt256)) : 𝕋 :=
-      .𝕃 (aEs.map accessEntryRLP)
-    match T with
-      | /- 0 -/ .legacy t =>
-        if t.w.toNat ∈ [27, 28] then
-          .ok ∘ .𝕃 ∘ List.map .𝔹 <|
-            [ BE t.nonce.toNat -- Tₙ
-            , BE t.gasPrice.toNat -- Tₚ
-            , BE t.gasLimit.toNat -- T_g
-            , -- If Tₜ is ∅ it becomes the RLP empty byte sequence and thus the member of 𝔹₀
-              t.recipient.option .empty AccountAddress.toByteArray -- Tₜ
-            , BE t.value.toNat -- Tᵥ
-            , t.data
-            ]
-        else
-          if t.w = .ofNat (35 + chainId * 2) ∨ t.w = .ofNat (36 + chainId * 2) then
-            .ok ∘ .𝕃 ∘ List.map .𝔹 <|
-              [ BE t.nonce.toNat -- Tₙ
-              , BE t.gasPrice.toNat -- Tₚ
-              , BE t.gasLimit.toNat -- T_g
-              , -- If Tₜ is ∅ it becomes the RLP empty byte sequence and thus the member of 𝔹₀
-                t.recipient.option .empty AccountAddress.toByteArray -- Tₜ
-              , BE t.value.toNat -- Tᵥ
-              , t.data -- p
-              , BE chainId
-              , .empty
-              , .empty
-              ]
-          else
-            dbg_trace "IllFormedRLP legacy transacion: Tw = {t.w}; chainId = {chainId}"
-            .error <| .TransactionException .IllFormedRLP
-
-      | /- 1 -/ .access t =>
-        .ok ∘ .𝕃 <|
-          [ .𝔹 (BE t.chainId.toNat) -- T_c
-          , .𝔹 (BE t.nonce.toNat) -- Tₙ
-          , .𝔹 (BE t.gasPrice.toNat) -- Tₚ
-          , .𝔹 (BE t.gasLimit.toNat) -- T_g
-          , -- If Tₜ is ∅ it becomes the RLP empty byte sequence and thus the member of 𝔹₀
-            .𝔹 (t.recipient.option .empty AccountAddress.toByteArray) -- Tₜ
-          , .𝔹 (BE t.value.toNat) -- T_v
-          , .𝔹 t.data  -- p
-          , accessEntriesRLP <| RBSet.toList t.accessList -- T_A
-          ]
-      | /- 2 -/ .dynamic t =>
-        .ok ∘ .𝕃 <|
-          [ .𝔹 (BE t.chainId.toNat) -- T_c
-          , .𝔹 (BE t.nonce.toNat) -- Tₙ
-          , .𝔹 (BE t.maxPriorityFeePerGas.toNat) -- T_f
-          , .𝔹 (BE t.maxFeePerGas.toNat) -- Tₘ
-          , .𝔹 (BE t.gasLimit.toNat) -- T_g
-          , -- If Tₜ is ∅ it becomes the RLP empty byte sequence and thus the member of 𝔹₀
-            .𝔹 (t.recipient.option .empty AccountAddress.toByteArray) -- Tₜ
-          , .𝔹 (BE t.value.toNat) -- Tᵥ
-          , .𝔹 t.data -- p
-          , accessEntriesRLP <| RBSet.toList t.accessList -- T_A
-          ]
-      | /- 3 -/ .blob t =>
-        .ok ∘ .𝕃 <|
-          [ .𝔹 (BE t.chainId.toNat) -- T_c
-          , .𝔹 (BE t.nonce.toNat) -- Tₙ
-          , .𝔹 (BE t.maxPriorityFeePerGas.toNat) -- T_f
-          , .𝔹 (BE t.maxFeePerGas.toNat) -- Tₘ
-          , .𝔹 (BE t.gasLimit.toNat) -- T_g
-          , -- If Tₜ is ∅ it becomes the RLP empty byte sequence and thus the member of 𝔹₀
-            .𝔹 (t.recipient.option .empty AccountAddress.toByteArray) -- Tₜ
-          , .𝔹 (BE t.value.toNat) -- Tᵥ
-          , .𝔹 t.data -- p
-          , accessEntriesRLP <| RBSet.toList t.accessList -- T_A
-          , .𝔹 (BE t.maxFeePerBlobGas.toNat)
-          , .𝕃 (t.blobVersionedHashes.map .𝔹)
-          ]
-
 
 -- Type Υ using \Upsilon or \GU
 def Υ (debugMode : Bool) (fuel : ℕ) (σ : AccountMap) (chainId H_f : ℕ) (H : BlockHeader) (genesisBlockHeader : BlockHeader) (blocks : Blocks) (T : Transaction) (expectedSender : AccountAddress)
   : Except EVM.Exception (AccountMap × Substate × Bool)
 := do
-  let (S_T, g₀) ← checkTransactionGetSender σ chainId H_f T expectedSender
+  -- let (S_T, g₀) ← checkTransactionGetSender σ chainId H_f T expectedSender
+  let g₀ : ℕ := EVM.intrinsicGas T
+  let S_T := T.base.expectedSender
   -- "here can be no invalid transactions from this point"
-  -- let g₀ : ℕ := -- (64)
-  --   let g₀_data :=
-  --     T.base.data.foldl
-  --       (λ acc b ↦
-  --         acc +
-  --           if b == 0 then
-  --             GasConstants.Gtxdatazero
-  --           else GasConstants.Gtxdatanonzero
-  --       )
-  --       0
-  --   let g₀_create : ℕ :=
-  --     if T.base.recipient == none then
-  --       GasConstants.Gtxcreate + R (T.base.data.size)
-  --     else 0
-  --   -- dbg_trace s!"T.getAccessList : {T.getAccessList}"
-  --   let g₀_accessList : ℕ :=
-  --     T.getAccessList.foldl
-  --       (λ acc (_, s) ↦
-  --         acc + GasConstants.Gaccesslistaddress + s.size * GasConstants.Gaccessliststorage
-  --       )
-  --       0
-  --   g₀_data + g₀_create + GasConstants.Gtransaction + g₀_accessList
-  -- -- dbg_trace s!"g₀: ({g₀})"
-  -- if T.base.gasLimit.toNat < g₀ then
-  --   .error <| .TransactionException .INTRINSIC_GAS_TOO_LOW
   let senderAccount := (σ.find? S_T).get!
   -- The priority fee (67)
   let f :=
@@ -1249,16 +1042,8 @@ def Υ (debugMode : Bool) (fuel : ℕ) (σ : AccountMap) (chainId H_f : ℕ) (H 
   let (/- provisional state -/ σ_P, g', A, z) ← -- (76)
     match T.base.recipient with
       | none => do
-        let MAX_CODE_SIZE := 24576
-        let MAX_INITCODE_SIZE := 2 * MAX_CODE_SIZE
-        if T.base.data.size > MAX_INITCODE_SIZE then
-          dbg_trace s!"Contract creation failed: MAX_INITCODE_SIZE exceeded"
-          .error <| .TransactionException .INITCODE_SIZE_EXCEEDED
-
         let (_, _, σ_P, g', A, z, _) ←
           Lambda debugMode fuel T.blobVersionedHashes createdAccounts genesisBlockHeader blocks σ₀ AStar S_T S_T g p T.base.value T.base.data ⟨0⟩ none H true
-            -- | .none => dbg_trace "Lambda returned none; this should probably not be happening; test semantics will be off."; default
-            -- | .some x => x
         pure (σ_P, g', A, z)
       | some t =>
         -- Proposition (71) suggests the recipient can be inexistent

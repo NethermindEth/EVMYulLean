@@ -191,6 +191,29 @@ def Ccall (t r : AccountAddress) (val g : UInt256) (σ : AccountMap) (μ : Machi
 -/
 def R (x : ℕ) : ℕ := Ginitcodeword * ((x + 31) / 32)
 
+def intrinsicGas (T : Transaction) : ℕ :=
+  let g₀_data :=
+    T.base.data.foldl
+      (λ acc b ↦
+        acc +
+          if b == 0 then
+            GasConstants.Gtxdatazero
+          else GasConstants.Gtxdatanonzero
+      )
+      0
+  let g₀_create : ℕ :=
+    if T.base.recipient == none then
+      GasConstants.Gtxcreate + R (T.base.data.size)
+    else 0
+
+  let g₀_accessList : ℕ :=
+    T.getAccessList.foldl
+      (λ acc (_, s) ↦
+        acc + GasConstants.Gaccesslistaddress + s.size * GasConstants.Gaccessliststorage
+      )
+      0
+  g₀_data + g₀_create + GasConstants.Gtransaction + g₀_accessList
+
 /--
 H.1. Gas Cost - the third summand.
 
