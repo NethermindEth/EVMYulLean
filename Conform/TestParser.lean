@@ -184,7 +184,7 @@ instance : FromJson Transaction where
             | .error _ =>
               pure <| .dynamic dynamic
             | .ok maxFeePerBlobGas =>
-              dbg_trace "Constructing a BLOB transaction."
+              -- dbg_trace "Constructing a BLOB transaction."
               pure <|
                 .blob
                   ⟨ dynamic

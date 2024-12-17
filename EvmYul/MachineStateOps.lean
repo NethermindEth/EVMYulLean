@@ -38,7 +38,6 @@ def writeBytes (self : MachineState) (source : ByteArray) (addr : UInt256) (size
           source
           addr
           size
-      activeWords := .ofNat <| M self.activeWords.toNat addr.toNat size
   }
 
 def writeWord (self : MachineState) (addr val : UInt256) : MachineState :=
@@ -68,8 +67,7 @@ def readBytes (self : MachineState) (addr : UInt256) (size : ℕ) : ByteArray ×
       panic! s!"Can not handle reading byte arrays larger than 2^35 ({2^35})"
     else size
   let bytes := self.memory.readMemory addr.toNat size
-  let newMachineState := { self with activeWords := .ofNat <| M self.activeWords.toNat addr.toNat size}
-  (bytes, newMachineState)
+  (bytes, self)
 
 /--
 TODO - Currently a debug version.
@@ -77,10 +75,10 @@ TODO - Currently a debug version.
 -- Failing at least `sha3_d0g0v0_Cancun` in
 -- `EthereumTests/BlockchainTests/GeneralStateTests/VMTests/vmTests/sha3.json`.
 -/
-def lookupMemory (self : MachineState) (addr : UInt256) : UInt256 × MachineState :=
-  let (bytes, newMachineState) := self.readBytes addr 32
+def lookupMemory (self : MachineState) (addr : UInt256) : UInt256 :=
+  let (bytes, _) := self.readBytes addr 32
   let val := fromBytesBigEndian bytes.data.data
-  (.ofNat val, newMachineState)
+  .ofNat val
 
 -- /--
 -- TODO - Currently a debug version.
@@ -114,17 +112,32 @@ def msize (self : MachineState) : UInt256 :=
   self.activeWords * ⟨32⟩
 
 def mload (self : MachineState) (spos : UInt256) : UInt256 × MachineState :=
-  self.lookupMemory spos
+  let val := self.lookupMemory spos
+  let self :=
+    { self with
+      activeWords := .ofNat (MachineState.M self.activeWords.toNat spos.toNat 32)
+    }
+  (val, self)
 
 def mstore (self : MachineState) (spos sval : UInt256) : MachineState :=
-  self.writeWord spos sval
+  let self := self.writeWord spos sval
+  { self with
+    activeWords := .ofNat (MachineState.M self.activeWords.toNat spos.toNat 32)
+  }
 
 def mstore8 (self : MachineState) (spos sval : UInt256) : MachineState :=
-  self.writeBytes ⟨#[UInt8.ofNat sval.toNat]⟩ spos 1
+  let self := self.writeBytes ⟨#[UInt8.ofNat sval.toNat]⟩ spos 1
+  { self with
+    activeWords := .ofNat (MachineState.M self.activeWords.toNat spos.toNat 1)
+  }
 
 def mcopy (self : MachineState) (mstart datastart s : UInt256) : MachineState :=
-  let (arr, newMachineState) := self.readBytes datastart s.toNat
-  newMachineState.writeBytes arr mstart s.toNat
+  let (arr, _) := self.readBytes datastart s.toNat
+  let self := self.writeBytes arr mstart s.toNat
+  { self with
+    activeWords :=
+      .ofNat (MachineState.M self.activeWords.toNat (max mstart.toNat datastart.toNat) s.toNat)
+  }
 
 def gas (self : MachineState) : UInt256 :=
   self.gasAvailable
@@ -152,23 +165,38 @@ def returndatacopy (self : MachineState) (mstart rstart size : UInt256) : Machin
   -- if UInt256.size ≤ pos || self.returndatasize.toNat < pos then .none
   -- else
   let rdata := self.returnData.readBytes rstart.toNat size.toNat
-  self.writeBytes rdata mstart size.toNat
+  let self := self.writeBytes rdata mstart size.toNat
+  { self with
+    activeWords :=
+      .ofNat (MachineState.M self.activeWords.toNat mstart.toNat size.toNat)
+  }
+
 
 def evmReturn (self : MachineState) (mstart s : UInt256) : MachineState := Id.run do
-  let (bytes, newMachineState) := self.readBytes mstart s.toNat
-  newMachineState.setHReturn bytes
+  let (bytes, _) := self.readBytes mstart s.toNat
+  let self := self.setHReturn bytes
+  { self with
+    activeWords :=
+      .ofNat <| MachineState.M self.activeWords.toNat mstart.toNat s.toNat
+  }
 
 def evmRevert (self : MachineState) (mstart s : UInt256) : MachineState :=
-  self.evmReturn mstart s
+  let self := self.evmReturn mstart s
+  { self with
+    activeWords :=
+      .ofNat <| MachineState.M self.activeWords.toNat mstart.toNat s.toNat
+  }
 
 end ReturnData
 
 def keccak256 (self : MachineState) (mstart s : UInt256) : UInt256 × MachineState :=
   -- dbg_trace s!"called keccak256; going to be looking up a lot of vals; s: {s}"
-  let (bytes, newMachineState) := self.readBytes mstart s.toNat
+  let (bytes, _) := self.readBytes mstart s.toNat
   -- dbg_trace s!"got vals {vals}"
   let kec := KEC bytes
   -- dbg_trace s!"got kec {kec}"
+  let newMachineState :=
+    { self with activeWords := .ofNat (M self.activeWords.toNat mstart.toNat s.toNat) }
   (.ofNat (fromBytesBigEndian kec.data.data), newMachineState)
 
 section Gas

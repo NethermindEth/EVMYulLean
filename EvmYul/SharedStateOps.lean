@@ -1,6 +1,7 @@
 import EvmYul.SharedState
 import EvmYul.StateOps
 import EvmYul.MachineStateOps
+import EvmYul.MachineState
 import EvmYul.Operations
 import Mathlib.Data.List.Intervals
 
@@ -37,12 +38,20 @@ def writeBytes (self : SharedState) (source : ByteArray) (s n : Nat) : SharedSta
 def calldatacopy (self : SharedState) (mstart datastart size : UInt256) : SharedState :=
   let arr := self.toState.executionEnv.inputData.readBytes datastart.toNat size.toNat
   -- dbg_trace s!"{arr}"
-  self.writeBytes arr mstart.toNat size.toNat
+  let self := self.writeBytes arr mstart.toNat size.toNat
+  { self with
+    activeWords :=
+      .ofNat (MachineState.M self.activeWords.toNat mstart.toNat size.toNat)
+  }
 
 def codeCopy (self : SharedState) (mstart cstart size : UInt256) : SharedState :=
   let Ib := self.toState.executionEnv.code.readBytes cstart.toNat size.toNat -- TODO(double check, changed in a fast-and-loose manner)
   -- dbg_trace s!"code: {toHex Ib}"
-  self.writeBytes Ib mstart.toNat size.toNat
+  let self := self.writeBytes Ib mstart.toNat size.toNat
+  { self with
+    activeWords :=
+      .ofNat (MachineState.M self.activeWords.toNat mstart.toNat size.toNat)
+  }
 
 -- def extCodeCopy (self : SharedState) (acc mstart cstart s : UInt256) : SharedState :=
 --   dbg_trace s!"mstart: {mstart} cstart: {cstart} s: {s}"
@@ -68,17 +77,24 @@ def extCodeCopy' (self : SharedState) (acc mstart cstart size : UInt256) : Share
   let b : ByteArray := self.toState.lookupAccount addr |>.option .empty Account.code
   let b : ByteArray := b.readBytes cstart size
   -- dbg_trace s!"extCodeCopy: {toHex b}"
-  let sState' := (self.writeBytes b mstart size)
-  {sState' with toState.substate := .addAccessedAccount self.toState.substate addr}
+  let self := self.writeBytes b mstart size
+  let self := {self with toState.substate := .addAccessedAccount self.toState.substate addr}
+  { self with
+    activeWords :=
+      .ofNat (MachineState.M self.activeWords.toNat mstart size)
+  }
+
 
 end Memory
 
 def logOp (μ₀ μ₁ : UInt256) (t : List UInt256) (sState : SharedState) : SharedState :=
-    let Iₐ := sState.executionEnv.codeOwner
-    let ⟨evmState, mState⟩ := sState
-    let (mem, newMState) := mState.readBytes μ₀ μ₁.toNat
-    let logSeries' := evmState.substate.logSeries.push (Iₐ, t, mem)
-    {sState with substate.logSeries := logSeries', toMachineState := newMState}
+  let Iₐ := sState.executionEnv.codeOwner
+  let (mem, _) := sState.readBytes μ₀ μ₁.toNat
+  let logSeries' := sState.substate.logSeries.push (Iₐ, t, mem)
+  let sState := {sState with substate.logSeries := logSeries'}
+  { sState with
+    activeWords := .ofNat (MachineState.M sState.activeWords.toNat μ₀.toNat μ₁.toNat)
+  }
 
 end SharedState
 

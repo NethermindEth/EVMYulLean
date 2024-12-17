@@ -28,6 +28,7 @@ import EvmYul.Semantics
 import EvmYul.Wheels
 import EvmYul.EllipticCurves
 import EvmYul.UInt256
+import EvmYul.MachineState
 
 import Conform.Wheels
 
@@ -335,7 +336,7 @@ def step (debugMode : Bool) (fuel : ℕ) (gasCost : ℕ) (instr : Option (Operat
           | some ⟨stack, μ₀, μ₁, μ₂⟩ => do
             if debugMode then
               dbg_trace s!"called with μ₀: {μ₀} μ₁: {μ₁} μ₂: {μ₂}"
-            let (i, newMachineState) := evmState.toMachineState.readBytes μ₁ μ₂.toNat
+            let (i, _) := evmState.toMachineState.readBytes μ₁ μ₂.toNat
             let ζ := none
             let I := evmState.executionEnv
             let Iₐ := evmState.executionEnv.codeOwner
@@ -394,13 +395,11 @@ def step (debugMode : Bool) (fuel : ℕ) (gasCost : ℕ) (instr : Option (Operat
               .error .OutOfGass
             -- dbg_trace s!"gasAvailable at the end of CREATE: {evmState'.gasAvailable.toNat - L (evmState'.gasAvailable.toNat) + g'.toNat}"
             let evmState' :=
-              {evmState' with
-                toMachineState :=
-                  { newMachineState with
-                      returnData := newReturnData
-                      gasAvailable :=
-                        .ofNat <| evmState.gasAvailable.toNat - L (evmState.gasAvailable.toNat) + g'.toNat
-                  }
+              { evmState' with
+                  activeWords := .ofNat <| MachineState.M evmState.activeWords.toNat μ₁.toNat μ₂.toNat
+                  returnData := newReturnData
+                  gasAvailable :=
+                    .ofNat <| evmState.gasAvailable.toNat - L (evmState.gasAvailable.toNat) + g'.toNat
               }
             .ok <| evmState'.replaceStackAndIncrPC (stack.push x)
           | _ =>
@@ -412,7 +411,7 @@ def step (debugMode : Bool) (fuel : ℕ) (gasCost : ℕ) (instr : Option (Operat
           | some ⟨stack, μ₀, μ₁, μ₂, μ₃⟩ => do
             if debugMode then
               dbg_trace s!"called with μ₀: {μ₀} μ₁: {μ₁} μ₂: {μ₂} μ₃: {μ₃}"
-            let (i, newMachineState) := evmState.toMachineState.readBytes μ₁ μ₂.toNat
+            let (i, _) := evmState.toMachineState.readBytes μ₁ μ₂.toNat
             let ζ := EvmYul.UInt256.toByteArray μ₃
             let I := evmState.executionEnv
             let Iₐ := evmState.executionEnv.codeOwner
@@ -458,12 +457,10 @@ def step (debugMode : Bool) (fuel : ℕ) (gasCost : ℕ) (instr : Option (Operat
               .error .OutOfGass
             -- dbg_trace s!"g' in CREATE2 = {g'}"
             let evmState' :=
-              {evmState' with
-                toMachineState :=
-                  { newMachineState with
-                      returnData := newReturnData
-                      gasAvailable := .ofNat <| evmState.gasAvailable.toNat - L (evmState.gasAvailable.toNat) + g'.toNat
-                  }
+              { evmState' with
+                activeWords := .ofNat <| MachineState.M evmState.activeWords.toNat μ₁.toNat μ₂.toNat
+                returnData := newReturnData
+                gasAvailable := .ofNat <| evmState.gasAvailable.toNat - L (evmState.gasAvailable.toNat) + g'.toNat
               }
             .ok <| evmState'.replaceStackAndIncrPC (stack.push x)
           | _ =>
