@@ -340,25 +340,27 @@ def ByteArray.write
   -- (maxAddress := dest.size)
   : ByteArray
 :=
-  if sourceAddr ≥ source.size then
-    let len := min len (dest.size - destAddr)
-    let destAddr := min destAddr dest.size
-    (ByteArray.zeroes ⟨len⟩).copySlice 0 dest destAddr len
-  else
-    let practicalLen := min len (source.size - sourceAddr)
-    -- dbg_trace s!"practicalLen = {practicalLen}"
-    let endPaddingAddr := min dest.size (destAddr + len)
-    -- dbg_trace s!"endPaddingAddr = {endPaddingAddr}"
-    let sourcePaddingLength : ℕ := endPaddingAddr - (destAddr + practicalLen)
-    -- dbg_trace s!"sourcePaddingLength = {sourcePaddingLength}"
-    let sourcePadding := ByteArray.zeroes ⟨sourcePaddingLength⟩
-    -- dbg_trace sourcePaddingLength
-    let destPaddingLength : ℕ := destAddr - dest.size
-    let destPadding := ByteArray.zeroes ⟨destPaddingLength⟩
-    (source ++ sourcePadding).copySlice sourceAddr
-      (dest ++ destPadding)
-      destAddr
-      (practicalLen + sourcePaddingLength)
+  -- dbg_trace s!"ByteArray.write: source.size = {source.size}, len = {len}"
+  if len = 0 then dest else
+    if sourceAddr ≥ source.size then
+      let len := min len (dest.size - destAddr)
+      let destAddr := min destAddr dest.size
+      (ByteArray.zeroes ⟨len⟩).copySlice 0 dest destAddr len
+    else
+      let practicalLen := min len (source.size - sourceAddr)
+      -- dbg_trace s!"practicalLen = {practicalLen}"
+      let endPaddingAddr := min dest.size (destAddr + len)
+      -- dbg_trace s!"endPaddingAddr = {endPaddingAddr}"
+      let sourcePaddingLength : ℕ := endPaddingAddr - (destAddr + practicalLen)
+      -- dbg_trace s!"sourcePaddingLength = {sourcePaddingLength}"
+      let sourcePadding := ByteArray.zeroes ⟨sourcePaddingLength⟩
+      -- dbg_trace sourcePaddingLength
+      let destPaddingLength : ℕ := destAddr - dest.size
+      let destPadding := ByteArray.zeroes ⟨destPaddingLength⟩
+      (source ++ sourcePadding).copySlice sourceAddr
+        (dest ++ destPadding)
+        destAddr
+        (practicalLen + sourcePaddingLength)
 
 example : ByteArray.empty.write inf myByteArray 5 inf = myByteArray := by native_decide
 example : ByteArray.empty.write inf myByteArray 1 inf = ⟨#[1, 0, 0]⟩ := by native_decide
