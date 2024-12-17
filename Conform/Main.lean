@@ -212,7 +212,7 @@ GeneralStateTests:
     Succeeded: 14
     Success rate of: 100.000000
 
-  stMemoryStressTest                    2m46
+  stMemoryStressTest                    1m32
     Total tests: 82
     The post was NOT equal to the resulting state: 0
     Succeeded: 82
@@ -220,9 +220,9 @@ GeneralStateTests:
 
   stMemoryTest                          10m29
     Total tests: 578
-    The post was NOT equal to the resulting state: 11
-    Succeeded: 567
-    Success rate of: 98.096886
+    The post was NOT equal to the resulting state: 6
+    Succeeded: 572
+    Success rate of: 98.961938
 
   stNonZeroCallsTest                    0m38
     Total tests: 24
@@ -270,15 +270,15 @@ GeneralStateTests:
 
   stReturnDataTest                      4m56
     Total tests: 273
-    The post was NOT equal to the resulting state: 19
-    Succeeded: 254
-    Success rate of: 93.040293
+    The post was NOT equal to the resulting state: 0
+    Succeeded: 273
+    Success rate of: 100.000000
 
   stRevertTest                          4m44
     Total tests: 271
-    The post was NOT equal to the resulting state: 4
-    Succeeded: 267
-    Success rate of: 98.523985
+    The post was NOT equal to the resulting state: 3
+    Succeeded: 268
+    Success rate of: 98.892989
 
   stSelfBalance                         0m58
     Total tests: 42

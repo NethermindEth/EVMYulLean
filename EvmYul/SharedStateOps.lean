@@ -32,23 +32,25 @@ section Memory
 def writeWord (self : SharedState) (addr v : UInt256) : SharedState :=
   { self with toMachineState := self.toMachineState.writeWord addr v }
 
-def writeBytes (self : SharedState) (source : ByteArray) (s n : Nat) : SharedState :=
-  { self with toMachineState := self.toMachineState.writeBytes source (.ofNat s) n }
+-- def writeBytes (self : SharedState) (source : ByteArray) (s n : Nat) : SharedState :=
+--   { self with toMachineState := self.toMachineState.writeBytes source (.ofNat s) n }
 
 def calldatacopy (self : SharedState) (mstart datastart size : UInt256) : SharedState :=
-  let arr := self.toState.executionEnv.inputData.readBytes datastart.toNat size.toNat
+  -- let arr := self.toState.executionEnv.inputData.readBytes datastart.toNat size.toNat
   -- dbg_trace s!"{arr}"
-  let self := self.writeBytes arr mstart.toNat size.toNat
+  -- let self := self.writeBytes self.executionEnv.inputData datastart.toNat mstart.toNat size.toNat
   { self with
+    memory := self.executionEnv.inputData.write datastart.toNat self.memory mstart.toNat size.toNat
     activeWords :=
       .ofNat (MachineState.M self.activeWords.toNat mstart.toNat size.toNat)
   }
 
 def codeCopy (self : SharedState) (mstart cstart size : UInt256) : SharedState :=
-  let Ib := self.toState.executionEnv.code.readBytes cstart.toNat size.toNat -- TODO(double check, changed in a fast-and-loose manner)
+  -- let Ib := self.toState.executionEnv.code.readBytes cstart.toNat size.toNat -- TODO(double check, changed in a fast-and-loose manner)
   -- dbg_trace s!"code: {toHex Ib}"
-  let self := self.writeBytes Ib mstart.toNat size.toNat
+  -- let self := self.writeBytes Ib mstart.toNat size.toNat
   { self with
+    memory := self.executionEnv.code.write cstart.toNat self.memory mstart.toNat size.toNat
     activeWords :=
       .ofNat (MachineState.M self.activeWords.toNat mstart.toNat size.toNat)
   }
@@ -75,11 +77,13 @@ def extCodeCopy' (self : SharedState) (acc mstart cstart size : UInt256) : Share
   if 2^16 < size then dbg_trace s!"TODO - extCodeCopy called on a state which does _not_ recognise the address {acc.toNat} and with too big size: {size}; currently, this fails silently"; self else
   let addr := AccountAddress.ofUInt256 acc
   let b : ByteArray := self.toState.lookupAccount addr |>.option .empty Account.code
-  let b : ByteArray := b.readBytes cstart size
+  -- let b : ByteArray := b.readBytes cstart size
   -- dbg_trace s!"extCodeCopy: {toHex b}"
-  let self := self.writeBytes b mstart size
-  let self := {self with toState.substate := .addAccessedAccount self.toState.substate addr}
+  -- let self := self.writeBytes b mstart size
+  -- let self := {self with toState.substate := .addAccessedAccount self.toState.substate addr}
   { self with
+    memory := b.write cstart self.memory mstart size
+    substate := .addAccessedAccount self.toState.substate addr
     activeWords :=
       .ofNat (MachineState.M self.activeWords.toNat mstart size)
   }
@@ -89,10 +93,11 @@ end Memory
 
 def logOp (μ₀ μ₁ : UInt256) (t : List UInt256) (sState : SharedState) : SharedState :=
   let Iₐ := sState.executionEnv.codeOwner
-  let (mem, _) := sState.readBytes μ₀ μ₁.toNat
-  let logSeries' := sState.substate.logSeries.push (Iₐ, t, mem)
-  let sState := {sState with substate.logSeries := logSeries'}
+  let mem := sState.memory.readWithPadding μ₀.toNat μ₁.toNat
+  -- let logSeries' :=
+  -- let sState := {sState with substate.logSeries := logSeries'}
   { sState with
+    substate.logSeries := sState.substate.logSeries.push (Iₐ, t, mem)
     activeWords := .ofNat (MachineState.M sState.activeWords.toNat μ₀.toNat μ₁.toNat)
   }
 

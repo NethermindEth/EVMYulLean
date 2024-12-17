@@ -357,7 +357,7 @@ def step {τ : OperationType} (debugMode : Bool) (op : Operation τ) : Transform
                 let addr : AccountAddress :=
                   (KEC L_A).extract 12 32 /- 160 bits = 20 bytes -/
                     |>.data.data |> fromBytesBigEndian |> Fin.ofNat
-                let (code, _) := yulState.toMachineState.readBytes poz len.toNat
+                let code := yulState.toMachineState.memory.readWithPadding poz.toNat len.toNat
                 match yulState.toState.accountMap.find? Iₐ with
                   | none => .ok <| (yulState, some ⟨0⟩)
                   | some ac_Iₐ =>
@@ -512,7 +512,7 @@ def step {τ : OperationType} (debugMode : Bool) (op : Operation τ) : Transform
             let Iₐ := yulState.executionEnv.codeOwner
             let this₀ := toBytesBigEndian Iₐ.val
             let this : List UInt8 := List.replicate (20 - this₀.length) 0 ++ this₀
-            let (code, _) := yulState.toMachineState.readBytes poz len.toNat
+            let code := yulState.toMachineState.memory.readWithPadding poz.toNat len.toNat
             let s : List UInt8 := toBytesBigEndian ζ.toNat
             let a₀ : List UInt8 := [0xff]
             let addr₀ := KEC <| ⟨⟨a₀ ++ this ++ s⟩⟩ ++ KEC code

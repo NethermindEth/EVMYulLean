@@ -175,7 +175,7 @@ def call (debugMode : Bool) (fuel : Nat)
       -- dbg_trace s!"gas available: {evmState.gasAvailable}"
       let evmState := {evmState with gasAvailable := evmState.gasAvailable - UInt256.ofNat gasCost}
       -- m[μs[3] . . . (μs[3] + μs[4] − 1)]
-      let (i, newMachineState) := evmState.toMachineState.readBytes inOffset inSize.toNat
+      let i := evmState.memory.readWithPadding inOffset.toNat inSize.toNat
       let A' := evmState.addAccessedAccount t |>.substate
       let (cA, σ', g', A', z, o) ← do
         -- TODO - Refactor condition and possibly share with CREATE
@@ -210,7 +210,7 @@ def call (debugMode : Bool) (fuel : Nat)
       let n : UInt256 := min outSize (.ofNat o.size)
 
       -- TODO - Check what happens when `o = .none`.
-      let μ'ₘ := newMachineState.writeBytes o outOffset n.toNat -- μ′_m[μs[5]  ... (μs[5] + n − 1)] = o[0 ... (n − 1)]
+      let μ'ₘ := writeBytes o 0 evmState.toMachineState outOffset.toNat n.toNat -- μ′_m[μs[5]  ... (μs[5] + n − 1)] = o[0 ... (n − 1)]
       let μ'ₒ := o -- μ′o = o
       let μ'_g := μ'ₘ.gasAvailable + g' -- Ccall is subtracted in X as part of C
       -- dbg_trace s!"μ'_g = {μ'ₘ.gasAvailable} + {g'}"
@@ -336,7 +336,7 @@ def step (debugMode : Bool) (fuel : ℕ) (gasCost : ℕ) (instr : Option (Operat
           | some ⟨stack, μ₀, μ₁, μ₂⟩ => do
             if debugMode then
               dbg_trace s!"called with μ₀: {μ₀} μ₁: {μ₁} μ₂: {μ₂}"
-            let (i, _) := evmState.toMachineState.readBytes μ₁ μ₂.toNat
+            let i := evmState.memory.readWithPadding μ₁.toNat μ₂.toNat
             let ζ := none
             let I := evmState.executionEnv
             let Iₐ := evmState.executionEnv.codeOwner
@@ -411,7 +411,7 @@ def step (debugMode : Bool) (fuel : ℕ) (gasCost : ℕ) (instr : Option (Operat
           | some ⟨stack, μ₀, μ₁, μ₂, μ₃⟩ => do
             if debugMode then
               dbg_trace s!"called with μ₀: {μ₀} μ₁: {μ₁} μ₂: {μ₂} μ₃: {μ₃}"
-            let (i, _) := evmState.toMachineState.readBytes μ₁ μ₂.toNat
+            let i := evmState.memory.readWithPadding μ₁.toNat μ₂.toNat
             let ζ := EvmYul.UInt256.toByteArray μ₃
             let I := evmState.executionEnv
             let Iₐ := evmState.executionEnv.codeOwner

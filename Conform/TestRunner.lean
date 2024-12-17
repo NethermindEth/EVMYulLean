@@ -108,7 +108,7 @@ private def almostBEqButNotQuite (s₁ s₂ : AddrMap AccountEntry) : Except Str
 end
 
 def executeTransaction (transaction : Transaction) (s : EVM.State) (header : BlockHeader) : Except EVM.Exception EVM.State := do
-  let _TODOfuel := 2^13
+  let _TODOfuel := 2^14
 
   let (ypState, substate, z) ← EVM.Υ (debugMode := false) _TODOfuel s.accountMap header.chainId.toNat header.baseFeePerGas header s.genesisBlockHeader s.blocks transaction transaction.base.expectedSender
 
@@ -366,7 +366,7 @@ def processBlocks (s₀ : EVM.State) : Except EVM.Exception EVM.State := do
             | none => pure (false, ts, s₀, ws)
             | some roots =>
               let beaconRootsAddressCode := roots.code
-              let _TODOfuel := 2^13
+              let _TODOfuel := 2^14
               -- the call does not count against the block’s gas limit
               let beaconCallResult :=
                 EVM.Θ (debugMode := false) _TODOfuel

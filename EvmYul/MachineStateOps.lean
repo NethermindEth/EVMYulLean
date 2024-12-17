@@ -8,9 +8,19 @@ import EvmYul.SpongeHash.Keccak256
 
 namespace EvmYul
 
-namespace MachineState
+def writeBytes
+  (source : ByteArray)
+  (sourceAddr : ℕ)
+  (self : MachineState)
+  (destAddr len : ℕ)
+ : MachineState :=
+  -- dbg_trace "writeBytes"
+  -- dbg_trace s!"current mem: {self.memory} source: {source} s: {s} n: {n}"
+  { self with
+      memory := source.write sourceAddr self.memory destAddr len
+  }
 
-section Memory
+namespace MachineState
 
 open Batteries (RBMap)
 
@@ -29,21 +39,10 @@ def M (s f l : ℕ) : ℕ :=
 def x : ByteArray := "hello".toUTF8
 def y : ByteArray := "kokusho".toUTF8
 
-def writeBytes (self : MachineState) (source : ByteArray) (addr : UInt256) (size : ℕ) : MachineState :=
-  -- dbg_trace "writeBytes"
-  -- dbg_trace s!"current mem: {self.memory} source: {source} s: {s} n: {n}"
-  { self with
-      memory :=
-        self.memory.writeMemory
-          source
-          addr
-          size
-  }
-
 def writeWord (self : MachineState) (addr val : UInt256) : MachineState :=
   let numOctets := 32
   let source : ByteArray := val.toByteArray
-  self.writeBytes source addr numOctets
+  writeBytes source 0 self addr.toNat numOctets
 
 -- /--
 -- TODO - Currently a debug version.
@@ -61,13 +60,13 @@ def writeWord (self : MachineState) (addr val : UInt256) : MachineState :=
 --       | .none => dbg_trace "lookup failed; addr: {addr} - returning 0"; 0
 --       | .some val => val
 
-def readBytes (self : MachineState) (addr : UInt256) (size : ℕ) : ByteArray × MachineState := -- dbg_trace s!"readBytes addr: {addr} size: {size}"
-  let size :=
-    if size > 2^35 then
-      panic! s!"Can not handle reading byte arrays larger than 2^35 ({2^35})"
-    else size
-  let bytes := self.memory.readMemory addr.toNat size
-  (bytes, self)
+-- def readBytes (self : MachineState) (addr : UInt256) (size : ℕ) : ByteArray × MachineState := -- dbg_trace s!"readBytes addr: {addr} size: {size}"
+--   let size :=
+--     if size > 2^35 then
+--       panic! s!"Can not handle reading byte arrays larger than 2^35 ({2^35})"
+--     else size
+--   let bytes := self.memory.readMemory addr.toNat size
+--   (bytes, self)
 
 /--
 TODO - Currently a debug version.
@@ -76,9 +75,10 @@ TODO - Currently a debug version.
 -- `EthereumTests/BlockchainTests/GeneralStateTests/VMTests/vmTests/sha3.json`.
 -/
 def lookupMemory (self : MachineState) (addr : UInt256) : UInt256 :=
-  let (bytes, _) := self.readBytes addr 32
-  let val := fromBytesBigEndian bytes.data.data
-  .ofNat val
+  if addr.toNat ≥ self.memory.size ∨ addr ≥ self.activeWords * ⟨32⟩ then ⟨0⟩ else
+    let bytes := self.memory.readWithPadding addr.toNat 32
+    let val := fromBytesBigEndian bytes.data.data
+    .ofNat val
 
 -- /--
 -- TODO - Currently a debug version.
@@ -126,23 +126,21 @@ def mstore (self : MachineState) (spos sval : UInt256) : MachineState :=
   }
 
 def mstore8 (self : MachineState) (spos sval : UInt256) : MachineState :=
-  let self := self.writeBytes ⟨#[UInt8.ofNat sval.toNat]⟩ spos 1
+  let self := writeBytes ⟨#[UInt8.ofNat sval.toNat]⟩ 0 self spos.toNat 1
   { self with
     activeWords := .ofNat (MachineState.M self.activeWords.toNat spos.toNat 1)
   }
 
-def mcopy (self : MachineState) (mstart datastart s : UInt256) : MachineState :=
-  let (arr, _) := self.readBytes datastart s.toNat
-  let self := self.writeBytes arr mstart s.toNat
+def mcopy (self : MachineState) (writeStart readStart s : UInt256) : MachineState :=
+  -- let (arr, _) := self.readBytes readStart s.toNat
+  let self := writeBytes self.memory readStart.toNat self writeStart.toNat s.toNat
   { self with
     activeWords :=
-      .ofNat (MachineState.M self.activeWords.toNat (max mstart.toNat datastart.toNat) s.toNat)
+      .ofNat (MachineState.M self.activeWords.toNat (max writeStart.toNat readStart.toNat) s.toNat)
   }
 
 def gas (self : MachineState) : UInt256 :=
   self.gasAvailable
-
-end Memory
 
 section ReturnData
 
@@ -159,23 +157,24 @@ def returndataat (self : MachineState) (pos : UInt256) : UInt8 :=
   self.returnData.data.getD pos.toNat 0
 
 def returndatacopy (self : MachineState) (mstart rstart size : UInt256) : MachineState :=
-  let pos := rstart.toNat + size.toNat
+  -- let pos := rstart.toNat + size.toNat
   -- TODO:
   -- "The additions in μₛ[1]+i are not subject to the 2^256 modulo"
   -- if UInt256.size ≤ pos || self.returndatasize.toNat < pos then .none
   -- else
-  let rdata := self.returnData.readBytes rstart.toNat size.toNat
-  let self := self.writeBytes rdata mstart size.toNat
+  -- let rdata := self.returnData.readBytes rstart.toNat size.toNat
+  let self := writeBytes self.returnData rstart.toNat self mstart.toNat size.toNat
   { self with
     activeWords :=
       .ofNat (MachineState.M self.activeWords.toNat mstart.toNat size.toNat)
   }
 
 
-def evmReturn (self : MachineState) (mstart s : UInt256) : MachineState := Id.run do
-  let (bytes, _) := self.readBytes mstart s.toNat
-  let self := self.setHReturn bytes
+def evmReturn (self : MachineState) (mstart s : UInt256) : MachineState :=
+  -- let (bytes, _) := self.readBytes mstart s.toNat
+  -- let self := self.setHReturn bytes
   { self with
+    H_return := self.memory.readWithPadding mstart.toNat s.toNat
     activeWords :=
       .ofNat <| MachineState.M self.activeWords.toNat mstart.toNat s.toNat
   }
@@ -191,7 +190,7 @@ end ReturnData
 
 def keccak256 (self : MachineState) (mstart s : UInt256) : UInt256 × MachineState :=
   -- dbg_trace s!"called keccak256; going to be looking up a lot of vals; s: {s}"
-  let (bytes, _) := self.readBytes mstart s.toNat
+  let bytes := self.memory.readWithPadding mstart.toNat s.toNat
   -- dbg_trace s!"got vals {vals}"
   let kec := KEC bytes
   -- dbg_trace s!"got kec {kec}"
