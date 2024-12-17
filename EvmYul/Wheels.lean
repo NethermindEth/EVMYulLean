@@ -315,3 +315,53 @@ private def willFail₂ : 𝕋 :=
     , .𝔹 (BE 255)
     , .𝕃 [.𝔹 ⟨how⟩, .𝕃 [.𝔹 ⟨are⟩, .𝕃 [.𝔹 ⟨you⟩, .𝔹 (BE 123)]]]
     ]
+
+def myByteArray : ByteArray := ⟨#[1, 2, 3]⟩
+
+def ByteArray.readWithoutPadding (source : ByteArray) (addr len : ℕ) : ByteArray :=
+  if addr ≥ source.size then .empty else
+    let len := min len source.size
+    source.extract addr (addr + len)
+
+private def inf := 2^66
+
+def ByteArray.readWithPadding (source : ByteArray) (addr len : ℕ) : ByteArray :=
+  if len ≥ 2^64 then
+    panic! s!"ByteArray.readWithPadding: can not handle byte arrays of length {len}"
+  else
+    let read := source.readWithoutPadding addr len
+    read ++ ByteArray.zeroes ⟨len - read.size⟩
+
+def ByteArray.write
+  (source : ByteArray)
+  (sourceAddr : ℕ)
+  (dest : ByteArray)
+  (destAddr len : ℕ)
+  -- (maxAddress := dest.size)
+  : ByteArray
+:=
+  if sourceAddr ≥ source.size then
+    let len := min len (dest.size - destAddr)
+    let destAddr := min destAddr dest.size
+    (ByteArray.zeroes ⟨len⟩).copySlice 0 dest destAddr len
+  else
+    let practicalLen := min len (source.size - sourceAddr)
+    -- dbg_trace s!"practicalLen = {practicalLen}"
+    let endPaddingAddr := min dest.size (destAddr + len)
+    -- dbg_trace s!"endPaddingAddr = {endPaddingAddr}"
+    let sourcePaddingLength : ℕ := endPaddingAddr - (destAddr + practicalLen)
+    -- dbg_trace s!"sourcePaddingLength = {sourcePaddingLength}"
+    let sourcePadding := ByteArray.zeroes ⟨sourcePaddingLength⟩
+    -- dbg_trace sourcePaddingLength
+    let destPaddingLength : ℕ := destAddr - dest.size
+    let destPadding := ByteArray.zeroes ⟨destPaddingLength⟩
+    (source ++ sourcePadding).copySlice sourceAddr
+      (dest ++ destPadding)
+      destAddr
+      (practicalLen + sourcePaddingLength)
+
+example : ByteArray.empty.write inf myByteArray 5 inf = myByteArray := by native_decide
+example : ByteArray.empty.write inf myByteArray 1 inf = ⟨#[1, 0, 0]⟩ := by native_decide
+example : myByteArray.write 2 myByteArray 0 inf = ⟨#[3, 0, 0]⟩ := by native_decide
+example : myByteArray.write inf myByteArray 0 inf = ⟨#[0, 0, 0]⟩ := by native_decide
+example : myByteArray.write 0 myByteArray 1 1 = ⟨#[1, 1, 3]⟩ := by native_decide
