@@ -161,7 +161,7 @@ def call (debugMode : Bool) (fuel : Nat)
   Except EVM.ExecutionException (UInt256 × State)
 := do
   match fuel with
-    | 0 => dbg_trace "nofuel"; .ok (⟨1⟩, evmState)
+    | 0 => .error .OutOfFuel
     | .succ f =>
       -- t ≡ μs[1] mod 2^160
       let t : AccountAddress := AccountAddress.ofUInt256 t
@@ -241,7 +241,7 @@ def step (debugMode : Bool) (fuel : ℕ) (gasCost : ℕ) (instr : Option (Operat
   : EVM.Transformer
 :=
   match fuel with
-    | 0 => .ok
+    | 0 => λ _ ↦ .error .OutOfFuel
     | .succ f =>
     λ (evmState : EVM.State) ↦ do
     -- This will normally be called from `Ξ` (or `X`) with `fetchInstr` already having been called.
@@ -639,7 +639,9 @@ def X (debugMode : Bool) (fuel : ℕ) (evmState : State)
           else none
 
       match Z evmState with
-        | .error e => .error e
+        | .error e =>
+          dbg_trace s!"X: {evmState.execLength} primops before exceptional halting"
+          .error e
         | some (evmState, cost₂) =>
           let evmState' ← step debugMode f cost₂ instr evmState
           -- if evmState.accountMap == ∅ then .ok <| ({evmState' with accountMap := ∅}, none) else
@@ -657,8 +659,10 @@ def X (debugMode : Bool) (fuel : ℕ) (evmState : State)
                 -- EthereumTests/BlockchainTests/GeneralStateTests/stReturnDataTest/returndatacopy_after_revert_in_staticcall.json
                 -- And the EEL spec does so too.
                 -- dbg_trace s!"Output data after REVERT: {toHex o}"
+                dbg_trace s!"X: {evmState'.execLength} primops before revert"
                 .ok <| .revert evmState'.gasAvailable o
               else
+                dbg_trace s!"X: {evmState'.execLength} primops before success"
                 .ok <| .success evmState' o
  where
   belongs (o : Option UInt256) (l : List UInt256) : Bool :=
@@ -742,7 +746,7 @@ def Lambda
     )
 :=
   match fuel with
-    | 0 => dbg_trace "nofuel"; .error .OutOfFuel
+    | 0 => .error .OutOfFuel
     | .succ f => do
 
   -- EIP-3860 (includes EIP-170)
@@ -809,12 +813,13 @@ def Lambda
   -- dbg_trace "Calling Ξ"
   match Ξ debugMode f createdAccounts genesisBlockHeader blocks σStar g AStar exEnv with -- TODO - Gas model.
     | .error e =>
-      if debugMode then
-        dbg_trace s!"Execution failed in Λ: {repr e}"
+      if debugMode then dbg_trace s!"Execution failed in Λ: {repr e}"
       .ok (a, .empty, σ, ⟨0⟩, A, false, .empty)
-    | .ok (.revert g' o) => .ok (a, .empty, σ, g', A, false, o)
+    | .ok (.revert g' o) =>
+      if debugMode then dbg_trace s!"Execution reverted in Λ"
+      .ok (a, .empty, σ, g', A, false, o)
     | .ok (.success (createdAccounts', σStarStar, gStarStar, AStarStar) returnedData) =>
-
+      if debugMode then dbg_trace s!"Execution succeeded in Λ"
       -- The code-deposit cost (113)
       let c := GasConstants.Gcodedeposit * returnedData.size
 
@@ -973,8 +978,12 @@ def Θ (debugMode : Bool)
           | .error e =>
             dbg_trace s!"Execution failed in Θ: {repr e}"
             pure (.empty, false, σ, ⟨0⟩, A, .empty)
-          | .ok (.revert g' o) => pure (.empty, false, σ, g', A, o)
-          | .ok (.success (a, b, c, d) o) => pure (a, true, b, c, d, o)
+          | .ok (.revert g' o) =>
+            dbg_trace s!"Execution reverted in Θ"
+            pure (.empty, false, σ, g', A, o)
+          | .ok (.success (a, b, c, d) o) =>
+            dbg_trace s!"Execution succeeded in Θ"
+            pure (a, true, b, c, d, o)
 
   -- Equation (127)
   let σ' := if σ'' == ∅ then σ else σ''

@@ -108,7 +108,7 @@ private def almostBEqButNotQuite (s₁ s₂ : AddrMap AccountEntry) : Except Str
 end
 
 def executeTransaction (transaction : Transaction) (s : EVM.State) (header : BlockHeader) : Except EVM.Exception EVM.State := do
-  let _TODOfuel := 2^14
+  let _TODOfuel := 2^15
 
   let (ypState, substate, z) ← EVM.Υ (debugMode := false) _TODOfuel s.accountMap header.chainId.toNat header.baseFeePerGas header s.genesisBlockHeader s.blocks transaction transaction.base.expectedSender
 

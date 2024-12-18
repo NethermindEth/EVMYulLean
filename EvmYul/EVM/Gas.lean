@@ -245,10 +245,10 @@ def C' (s : State) (instr : Operation .EVM) : ℕ :=
       not what happens to be on the stack at index 2. Therefore it is 0 for
       `DELEGATECALL` and `STATICCALL`.
     -/
-    | .CALL => Ccall (AccountAddress.ofUInt256 μₛ[1]!) (AccountAddress.ofUInt256 μₛ[1]!) μₛ[2]! μₛ[0]! σ μ A
-    | .CALLCODE => Ccall (AccountAddress.ofUInt256 μₛ[1]!) s.executionEnv.codeOwner μₛ[2]! μₛ[0]! σ μ A
-    | .DELEGATECALL => Ccall (AccountAddress.ofUInt256 μₛ[1]!) s.executionEnv.codeOwner ⟨0⟩ μₛ[0]! σ μ A
-    | .STATICCALL   => Ccall (AccountAddress.ofUInt256 μₛ[1]!) (AccountAddress.ofUInt256 μₛ[1]!) ⟨0⟩ μₛ[0]! σ μ A
+    | .CALL =>         Ccall (AccountAddress.ofUInt256 μₛ[1]!) (AccountAddress.ofUInt256 μₛ[1]!) μₛ[2]! μₛ[0]! σ μ A
+    | .CALLCODE =>     Ccall (AccountAddress.ofUInt256 μₛ[1]!)          s.executionEnv.codeOwner μₛ[2]! μₛ[0]! σ μ A
+    | .DELEGATECALL => Ccall (AccountAddress.ofUInt256 μₛ[1]!)          s.executionEnv.codeOwner    ⟨0⟩ μₛ[0]! σ μ A
+    | .STATICCALL =>   Ccall (AccountAddress.ofUInt256 μₛ[1]!) (AccountAddress.ofUInt256 μₛ[1]!)    ⟨0⟩ μₛ[0]! σ μ A
     | .BLOBHASH => HASH_OPCODE_GAS
     | w =>
       if w ∈ Wcopy then Gverylow + Gcopy * ((μₛ[2]!.toNat + 31) / 32) else
@@ -291,7 +291,7 @@ def memoryExpansionCost (s : EVM.State) (instr : Operation .EVM) : ℕ :=
         .ofNat <| MachineState.M s.toMachineState.activeWords.toNat s.stack[0]!.toNat s.stack[1]!.toNat
       | .CREATE | .CREATE2 => .ofNat <| MachineState.M s.toMachineState.activeWords.toNat s.stack[1]!.toNat s.stack[2]!.toNat
       | .CALL | .CALLCODE =>
-        let m : ℕ:= MachineState.M s.toMachineState.activeWords.toNat s.stack[3]!.toNat s.stack[4]!.toNat
+        let m : ℕ := MachineState.M s.toMachineState.activeWords.toNat s.stack[3]!.toNat s.stack[4]!.toNat
         .ofNat <| MachineState.M m s.stack[5]!.toNat s.stack[6]!.toNat
       | .DELEGATECALL | .STATICCALL =>
         let m : ℕ:= MachineState.M s.toMachineState.activeWords.toNat s.stack[2]!.toNat s.stack[3]!.toNat
