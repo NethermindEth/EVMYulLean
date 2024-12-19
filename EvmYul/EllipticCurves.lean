@@ -33,8 +33,9 @@ def ECDSASIGN (e pᵣ : ByteArray) : Except String (ByteArray × ByteArray × By
   .ok (v, r, s)
 
 def ECDSARECOVER (e v r s : ByteArray) : Except String ByteArray :=
-  ByteArray.ofBlob <| padLeft 128 /- 128 characters means 64 bytes -/ <|
-    blobECDSARECOVER (toHex e) (toHex v) (toHex r) (toHex s)
+  match blobECDSARECOVER (toHex e) (toHex v) (toHex r) (toHex s) with
+    | "error" => .error "ECDSARECOVER failed"
+    | s => ByteArray.ofBlob <| padLeft 128 s /- 128 characters means 64 bytes -/
 
 /-- Example of private key -/
 private def pᵣ : ByteArray :=

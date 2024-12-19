@@ -15,7 +15,11 @@ v : U256 = Uint.from_bytes(bytes.fromhex(sys.argv[2]), "big")
 r : U256 = Uint.from_bytes(bytes.fromhex(sys.argv[3]), "big")
 s : U256 = Uint.from_bytes(bytes.fromhex(sys.argv[4]), "big")
 
-sender = secp256k1_recover(r, s, v, msg_hash)
+try:
+    sender = secp256k1_recover(r, s, v, msg_hash)
+    print(bytes.hex(sender), end = '')
+except ValueError:
+    # unable to extract public key
+    print('error', end = '')
 
-print(bytes.hex(sender), end = '')
 

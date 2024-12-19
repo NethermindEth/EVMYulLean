@@ -41,16 +41,15 @@ def Ξ_ECREC
       if v' < 27 || 28 < v' || r' = 0 || r' >= secp256k1n || s' = 0 || s' >= secp256k1n then
         .empty
       else
-        match ECDSARECOVER h (BE (v' - 27)) r s with
+        match ECDSARECOVER h ⟨#[.ofNat v' - 27]⟩ r s with
           | .ok s =>
               ByteArray.zeroes ⟨12⟩ ++ (KEC s).extract 12 32
           | .error e =>
             dbg_trace s!"Ξ_ECREC failed: {e}"
-        .empty
+            .empty
     (true, σ, g - .ofNat gᵣ, A, o)
 
 def longInput := "Lean 4 is a reimplementation of the Lean theorem prover in Lean itself. The new compiler produces C code, and users can now implement efficient proof automation in Lean, compile it into efficient C code, and load it as a plugin. In Lean 4, users can access all internal data structures used to implement Lean by merely importing the Lean package."
-
 -- Example taken from EllipticCurves.lean
 private def ecrecOutput :=
   let (_, _, _, _, o) :=
