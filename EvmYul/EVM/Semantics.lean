@@ -809,10 +809,10 @@ def Lambda
   match Ξ debugMode f createdAccounts genesisBlockHeader blocks σStar g AStar exEnv with -- TODO - Gas model.
     | .error e =>
       if debugMode then dbg_trace s!"Execution failed in Λ: {repr e}"
-      .ok (a, createdAccounts, σ, ⟨0⟩, A, false, .empty)
+      .ok (a, createdAccounts, σ, ⟨0⟩, AStar, false, .empty)
     | .ok (.revert g' o) =>
       if debugMode then dbg_trace s!"Execution reverted in Λ"
-      .ok (a, createdAccounts, σ, g', A, false, o)
+      .ok (a, createdAccounts, σ, g', AStar, false, o)
     | .ok (.success (createdAccounts', σStarStar, gStarStar, AStarStar) returnedData) =>
       if debugMode then dbg_trace s!"Execution succeeded in Λ"
       -- The code-deposit cost (113)
