@@ -754,9 +754,9 @@ def Lambda
     (KEC lₐ).extract 12 32 /- 160 bits = 20 bytes -/
       |>.data.data |> fromBytesBigEndian |> Fin.ofNat
 
-  -- dbg_trace s!"New address: {toHex a.toByteArray}"
 
   let createdAccounts := createdAccounts.insert a
+  -- dbg_trace s!"New address: {toHex a.toByteArray} added to createdAccounts"
 
   -- A* (97)
   let AStar := A.addAccessedAccount a
@@ -809,10 +809,10 @@ def Lambda
   match Ξ debugMode f createdAccounts genesisBlockHeader blocks σStar g AStar exEnv with -- TODO - Gas model.
     | .error e =>
       if debugMode then dbg_trace s!"Execution failed in Λ: {repr e}"
-      .ok (a, .empty, σ, ⟨0⟩, A, false, .empty)
+      .ok (a, createdAccounts, σ, ⟨0⟩, A, false, .empty)
     | .ok (.revert g' o) =>
       if debugMode then dbg_trace s!"Execution reverted in Λ"
-      .ok (a, .empty, σ, g', A, false, o)
+      .ok (a, createdAccounts, σ, g', A, false, o)
     | .ok (.success (createdAccounts', σStarStar, gStarStar, AStarStar) returnedData) =>
       if debugMode then dbg_trace s!"Execution succeeded in Λ"
       -- The code-deposit cost (113)
@@ -972,10 +972,10 @@ def Θ (debugMode : Bool)
         match Ξ debugMode fuel createdAccounts genesisBlockHeader blocks σ₁ g A I with
           | .error e =>
             dbg_trace s!"Execution failed in Θ: {repr e}"
-            pure (.empty, false, σ, ⟨0⟩, A, .empty)
+            pure (createdAccounts, false, σ, ⟨0⟩, A, .empty)
           | .ok (.revert g' o) =>
             dbg_trace s!"Execution reverted in Θ"
-            pure (.empty, false, σ, g', A, o)
+            pure (createdAccounts, false, σ, g', A, o)
           | .ok (.success (a, b, c, d) o) =>
             dbg_trace s!"Execution succeeded in Θ"
             pure (a, true, b, c, d, o)
