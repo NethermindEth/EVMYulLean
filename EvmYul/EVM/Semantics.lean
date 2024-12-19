@@ -282,12 +282,7 @@ def step (debugMode : Bool) (fuel : ℕ) (gasCost : ℕ) (instr : Option (Operat
           | some ⟨stack , μ₀, μ₁⟩ =>
             if debugMode then
               dbg_trace s!"called with μ₀: {μ₀} μ₁: {μ₁}"
-            let newPc :=
-            if μ₁ != ⟨0⟩ then
-              -- dbg_trace s!"jumped to {μ₀}"
-              μ₀
-            else
-              evmState.pc + ⟨1⟩
+            let newPc := if μ₁ != ⟨0⟩ then μ₀ else evmState.pc + ⟨1⟩
             .ok <| {evmState with pc := newPc, stack := stack}
           | _ => .error .StackUnderflow
       | .PC =>
@@ -607,7 +602,7 @@ def X (debugMode : Bool) (fuel : ℕ) (evmState : State)
             dbg_trace s!"Exceptional halting: not enough output data for RETURNDATACOPY"
           .error .InvalidMemoryAccess
 
-        if evmState.stack.length - (δ w).getD 0 - (α w).getD 0 > 1024 then
+        if evmState.stack.length - (δ w).getD 0 + (α w).getD 0 > 1024 then
           if debugMode then
             dbg_trace s!"Exceptional halting: {w.pretty} would result in stack larger than 1024 elements"
           .error .StackOverflow
