@@ -103,9 +103,11 @@ def Csstore (s : EVM.State) : ℕ :=
   let v := σ.findD storeAddr ⟨0⟩
   let v' := μₛ[1]!
   let loadComponent :=
-    if s.substate.accessedStorageKeys.contains (Iₐ, storeAddr) then
+    if s.substate.accessedStorageKeys.toList.contains (Iₐ, storeAddr) then
       0
-    else Gcoldsload
+    else
+      -- dbg_trace s!"({Iₐ}, {storeAddr}) not in {s.substate.accessedStorageKeys.toList}"
+      Gcoldsload
   let storeComponent := if v = v' || v₀ ≠ v           then Gwarmaccess else
                         if v ≠ v' && v₀ = v && v₀ = ⟨0⟩ then Gsset else
                         /- v ≠ v' ∧ v₀ = v ∧ v₀ ≠ 0 -/     Gsreset

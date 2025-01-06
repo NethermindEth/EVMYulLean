@@ -7,7 +7,7 @@ def SimpleFile := "EthereumTests/BlockchainTests/GeneralStateTests/VMTests/vmAri
 -- def BuggyFile := "EthereumTests/BlockchainTests/GeneralStateTests/VMTests/vmArithmeticTest/exp.json"
 def BuggyFile := "Conform/testfile.json"
 -- def BuggyFile := "EthereumTests/BlockchainTests/GeneralStateTests/VMTests/vmTests/calldatacopy.json"
-def SpecificFile := "EthereumTests/BlockchainTests/GeneralStateTests/stCreate2/RevertOpcodeInCreateReturnsCreate2.json"
+def SpecificFile := "EthereumTests/BlockchainTests/GeneralStateTests/stTimeConsuming/sstore_combinations_initial11_Paris.json"
 
 def TestsSubdir := "BlockchainTests"
 def isTestFile (file : System.FilePath  ) : Bool := file.extension.option false (· == "json")
@@ -442,7 +442,7 @@ def main : IO Unit := do
     let res ←
       ExceptT.run <|
         EvmYul.Conform.processTestsOfFile
-          -- (whitelist := #["sstore_0to0_d8g1v0_Cancun"])
+          (whitelist := #["sstore_combinations_initial11_Paris_d171g0v0_Cancun"])
 
           testFile
     match res with

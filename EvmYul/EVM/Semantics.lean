@@ -252,8 +252,11 @@ def step (debugMode : Bool) (fuel : ℕ) (gasCost : ℕ) (instr : Option (Operat
         | .some (instr, arg) => pure (instr, arg)
     if
       debugMode &&
-        (instr.isPush || instr.isJump || instr.isPC || instr.isJumpdest || instr.isDup || instr.isSwap || instr.isCreate || instr.isCall)
+        (instr.isPush || instr.isJump || instr.isPC || instr.isJumpdest || instr.isDup || instr.isSwap || instr.isCreate || instr.isCall || instr == .STOP)
     then
+        -- dbg_trace s!"Code owner: {evmState.toState.executionEnv.codeOwner}"
+        -- dbg_trace s!"Storage: {evmState.accountMap.find! (evmState.toState.executionEnv.codeOwner)}"
+        -- dbg_trace s!"Accessed: {(evmState.substate.accessedStorageKeys.toList.filter (fun (addr, _) => addr == evmState.toState.executionEnv.codeOwner)).unzip.snd}"
         dbg_trace instr.pretty
     let evmState := { evmState with execLength := evmState.execLength + 1 }
     match instr with
@@ -559,7 +562,7 @@ def X (debugMode : Bool) (fuel : ℕ) (evmState : State)
       -- Exceptional halting (158)
       let Z (evmState : State) : Except EVM.ExecutionException (State × ℕ) := do
         let cost₁ := memoryExpansionCost evmState w
-        -- dbg_trace s!"gasAvailable: {evmState.gasAvailable.toNat}"
+        dbg_trace s!"gasAvailable: {evmState.gasAvailable.toNat}"
         -- dbg_trace s!"cost₁: {cost₁}"
 
         if evmState.gasAvailable.toNat < cost₁ then
@@ -1006,14 +1009,22 @@ def Υ (debugMode : Bool) (fuel : ℕ) (σ : AccountMap) (chainId H_f : ℕ) (H 
   -- The priority fee (67)
   let f :=
     match T with
-      | .legacy t | .access t => t.gasPrice - .ofNat H_f
-      | .dynamic t | .blob t => min t.maxPriorityFeePerGas (t.maxFeePerGas - .ofNat H_f)
+      | .legacy t | .access t =>
+            dbg_trace s!"f: legacy or access: gas price: {t.gasPrice} base fee: {H_f}"
+            t.gasPrice - .ofNat H_f
+      | .dynamic t | .blob t =>
+            dbg_trace s!"f: dynamic or blob: {min t.maxPriorityFeePerGas (t.maxFeePerGas - .ofNat H_f)}"
+            min t.maxPriorityFeePerGas (t.maxFeePerGas - .ofNat H_f)
   -- The effective gas price
   let p := -- (66)
     match T with
-      | .legacy t | .access t => t.gasPrice
-      | .dynamic _ | .blob _ => f + .ofNat H_f
-  -- dbg_trace s!"TYPE: {T.type}, calcBlobFee: {calcBlobFee H T}"
+      | .legacy t | .access t =>
+          dbg_trace s!"p: legacy or access: gas price: {t.gasPrice}"
+          t.gasPrice
+      | .dynamic _ | .blob _ =>
+            dbg_trace s!"p: dynamic or blob: {f + .ofNat H_f}"
+            f + .ofNat H_f
+  dbg_trace s!"TYPE: {T.type}, calcBlobFee: {calcBlobFee H T}"
   let senderAccount :=
     { senderAccount with
         /-
@@ -1057,13 +1068,18 @@ def Υ (debugMode : Bool) (fuel : ℕ) (σ : AccountMap) (chainId H_f : ℕ) (H 
           | .error e => .error <| .ExecutionException e
   -- The amount to be refunded (82)
   let gStar := g' + min ((T.base.gasLimit - g') / ⟨5⟩) A.refundBalance
-  -- dbg_trace s!"refundBalance = {A.refundBalance}"
-  -- dbg_trace s!"g* = {gStar}"
+  dbg_trace s!"g' = {g'}"
+  dbg_trace s!"refundBalance = {A.refundBalance}"
+  dbg_trace s!"g* = {gStar}"
+  dbg_trace s!"p = {p}"
   -- The pre-final state (83)
+  dbg_trace s!"Before increase: {(σ_P.find! S_T).balance}"
   let σStar :=
     σ_P.increaseBalance S_T (gStar * p)
+  dbg_trace s!"After increase: {(σStar.find! S_T).balance}"
 
   let beneficiaryFee := (T.base.gasLimit - gStar) * f
+  dbg_trace s!"beneficiaryFee: {beneficiaryFee}"
   let σStar' :=
     if beneficiaryFee != ⟨0⟩ then
       σStar.increaseBalance H.beneficiary beneficiaryFee
