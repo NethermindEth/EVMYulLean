@@ -29,11 +29,7 @@ The current goal is to make sure that the model is executable and conformance-te
 before we make it easy to reason about.
 -/
 def Substate.storageKeysCmp (sk₁ sk₂ : AccountAddress × UInt256) : Ordering :=
-  have : DecidableRel (λ (x : AccountAddress × UInt256) y ↦ x < y) := by
-    unfold LT.lt Preorder.toLT Prod.instPreorder
-    simp
-    exact inferInstance
-  compareOfLessAndBEq sk₁ sk₂
+  lexOrd.compare sk₁ sk₂
 
 /--
 The `Substate` `A`. Section 6.1.
