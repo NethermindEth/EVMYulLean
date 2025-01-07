@@ -442,7 +442,7 @@ def main : IO Unit := do
     let res ←
       ExceptT.run <|
         EvmYul.Conform.processTestsOfFile
-          (whitelist := #["sstore_combinations_initial11_Paris_d171g0v0_Cancun"])
+          -- (whitelist := #["sstore_combinations_initial11_Paris_d171g0v0_Cancun"])
 
           testFile
     match res with
