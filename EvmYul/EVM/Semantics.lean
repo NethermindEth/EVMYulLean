@@ -812,6 +812,7 @@ def Lambda
   match Ξ debugMode f createdAccounts genesisBlockHeader blocks σStar g AStar exEnv with -- TODO - Gas model.
     | .error e =>
       if debugMode then dbg_trace s!"Execution failed in Λ: {repr e}"
+      if e == .OutOfFuel then throw .OutOfFuel
       .ok (a, createdAccounts, σ, ⟨0⟩, AStar, false, .empty)
     | .ok (.revert g' o) =>
       if debugMode then dbg_trace s!"Execution reverted in Λ"
@@ -975,6 +976,7 @@ def Θ (debugMode : Bool)
         match Ξ debugMode fuel createdAccounts genesisBlockHeader blocks σ₁ g A I with
           | .error e =>
             dbg_trace s!"Execution failed in Θ: {repr e}"
+            if e == .OutOfFuel then throw .OutOfFuel
             pure (createdAccounts, false, σ, ⟨0⟩, A, .empty)
           | .ok (.revert g' o) =>
             dbg_trace s!"Execution reverted in Θ"

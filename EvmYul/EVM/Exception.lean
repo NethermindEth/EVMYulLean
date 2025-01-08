@@ -16,6 +16,7 @@ inductive ExecutionException where
   | StaticModeViolation
   -- | PRECOMPILE_FAILURE
   -- | NONCE_EXCEEDED
+deriving BEq
 
 instance : Repr ExecutionException where
   reprPrec s _ :=
