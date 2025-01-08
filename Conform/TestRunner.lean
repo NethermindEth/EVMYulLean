@@ -107,10 +107,24 @@ private def almostBEqButNotQuite (s₁ s₂ : AddrMap AccountEntry) : Except Str
 
 end
 
-def executeTransaction (transaction : Transaction) (s : EVM.State) (header : BlockHeader) : Except EVM.Exception EVM.State := do
+def executeTransaction
+  (transaction : Transaction)
+  (sender : AccountAddress)
+  (s : EVM.State)
+  (header : BlockHeader)
+  : Except EVM.Exception EVM.State
+:= do
   let _TODOfuel := 2^17
 
-  let (ypState, substate, z) ← EVM.Υ (debugMode := false) _TODOfuel s.accountMap header.chainId.toNat header.baseFeePerGas header s.genesisBlockHeader s.blocks transaction transaction.base.expectedSender
+  let (ypState, _, _) ←
+    EVM.Υ (debugMode := false) _TODOfuel
+      s.accountMap
+      header.baseFeePerGas
+      header
+      s.genesisBlockHeader
+      s.blocks
+      transaction
+      sender
 
   -- as EIP 4788 (https://eips.ethereum.org/EIPS/eip-4788).
 
@@ -128,9 +142,9 @@ def validateTransaction
   (σ : AccountMap)
   (chainId : ℕ)
   (header : BlockHeader)
-  (expectedSender : AccountAddress)
+  -- (expectedSender : AccountAddress)
   (T : Transaction)
-  : Except EVM.Exception Unit
+  : Except EVM.Exception AccountAddress
 := do
   if T.base.nonce.toNat ≥ 2^64-1 then
     .error <| .TransactionException .NONCE_IS_MAX
@@ -196,8 +210,8 @@ def validateTransaction
         pure <| Fin.ofNat <| fromBytesBigEndian <|
           ((KEC s).extract 12 32 /- 160 bits = 20 bytes -/ ).data.data
       | .error s => .error <| .SenderRecoverError s
-  if S_T != expectedSender then
-    dbg_trace s!"Recovered sender ({EvmYul.toHex S_T.toByteArray}) ≠ expected sender ({EvmYul.toHex expectedSender.toByteArray})"
+  -- if S_T != expectedSender then
+  --   dbg_trace s!"Recovered sender ({EvmYul.toHex S_T.toByteArray}) ≠ expected sender ({EvmYul.toHex expectedSender.toByteArray})"
   -- dbg_trace s!"Looking for S_T: {S_T} in: σ: {repr σ}"
 
   -- "Also, with a slight abuse of notation ... "
@@ -231,6 +245,7 @@ def validateTransaction
       | some _ => T.base.data.size
       | none => 0
   if n > 49152 then .error <| .TransactionException .INITCODE_SIZE_EXCEEDED
+  pure S_T
 
  where
   L_X (T : Transaction) : Except EVM.Exception 𝕋 := -- (317)
@@ -407,8 +422,8 @@ def processBlocks (s₀ : EVM.State) : Except EVM.Exception EVM.State := do
         let s ←
           transactions.foldlM
             (λ s' trans ↦ do
-              validateTransaction s'.accountMap block.blockHeader.chainId.toNat block.blockHeader trans.base.expectedSender trans
-              executeTransaction trans s' block.blockHeader
+              let S_T ← validateTransaction s'.accountMap block.blockHeader.chainId.toNat block.blockHeader trans
+              executeTransaction trans S_T s' block.blockHeader
             )
             s
         let σ := applyWithdrawals s.accountMap withdrawals

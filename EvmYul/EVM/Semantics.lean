@@ -998,12 +998,18 @@ open Batteries (RBMap RBSet)
 
 
 -- Type Υ using \Upsilon or \GU
-def Υ (debugMode : Bool) (fuel : ℕ) (σ : AccountMap) (chainId H_f : ℕ) (H : BlockHeader) (genesisBlockHeader : BlockHeader) (blocks : Blocks) (T : Transaction) (expectedSender : AccountAddress)
+def Υ (debugMode : Bool) (fuel : ℕ)
+  (σ : AccountMap)
+  (H_f : ℕ)
+  (H : BlockHeader)
+  (genesisBlockHeader : BlockHeader)
+  (blocks : Blocks)
+  (T : Transaction)
+  (S_T : AccountAddress)
   : Except EVM.Exception (AccountMap × Substate × Bool)
 := do
   -- let (S_T, g₀) ← checkTransactionGetSender σ chainId H_f T expectedSender
   let g₀ : ℕ := EVM.intrinsicGas T
-  let S_T := T.base.expectedSender
   -- "here can be no invalid transactions from this point"
   let senderAccount := (σ.find? S_T).get!
   -- The priority fee (67)

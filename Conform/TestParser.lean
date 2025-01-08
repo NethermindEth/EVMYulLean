@@ -154,7 +154,7 @@ instance : FromJson Transaction where
       r              := ← json.getObjValAsD! ByteArray      "r"
       s              := ← json.getObjValAsD! ByteArray      "s"
       data           := ← json.getObjValAsD! ByteArray      "data"
-      expectedSender := ← json.getObjValAsD! AccountAddress "sender"
+      -- expectedSender := ← json.getObjValAsD! AccountAddress "sender"
     }
 
     match json.getObjVal? "accessList" with
