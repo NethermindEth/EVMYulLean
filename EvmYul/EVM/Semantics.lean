@@ -202,7 +202,7 @@ def call (debugMode : Bool) (fuel : Nat)
               (H := evmState.executionEnv.header)
               (w  := permission)                    -- I_w in Θ(.., I_W)
           pure resultOfΘ
-          else
+        else
           -- otherwise (σ, CCALLGAS(σ, μ, A), A, 0, ())
           .ok
             (evmState.createdAccounts, evmState.toState.accountMap, .ofNat callgas, A', false, .empty)

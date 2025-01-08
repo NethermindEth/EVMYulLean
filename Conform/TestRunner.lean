@@ -117,8 +117,8 @@ def executeTransaction (transaction : Transaction) (s : EVM.State) (header : Blo
   -- TODO - I think we do this tuple → EVM.State conversion reasonably often, factor out?
   let result : EVM.State := {
     s with accountMap := ypState
-           substate := substate
-           executionEnv.perm := z -- TODO - that's probably not this :)
+          --  substate := substate
+          --  executionEnv.perm := z -- TODO - that's probably not this :)
            -- returnData := TODO?
   }
   pure result
@@ -395,9 +395,9 @@ def processBlocks (s₀ : EVM.State) : Except EVM.Exception EVM.State := do
                   | .error e => .error <| .ExecutionException e
               let s :=
                 {s₀ with
-                  createdAccounts := createdAccounts
+                  -- createdAccounts := createdAccounts
                   accountMap := σ
-                  substate := substate
+                  -- substate := substate
                 }
               pure (false, ts, s, ws)
 
