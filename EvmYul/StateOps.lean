@@ -48,7 +48,7 @@ def updateSelfAccount! (self : State) : (Account → Account) → State :=
 
 def balance (self : State) (k : UInt256) : State × UInt256 :=
   let addr := AccountAddress.ofUInt256 k
-  (self.addAccessedAccount addr, self.accountMap.find? addr |>.elim ⟨0⟩ Account.balance)
+  (self.addAccessedAccount addr, self.accountMap.find? addr |>.elim ⟨0⟩ (·.balance))
 
 -- def transferBalance (sender : AccountAddress) (recipient : AccountAddress) (balance : UInt256) (self : State) : Option State :=
 --   if sender == recipient then .some self -- NB this check renders `balance` validity irrelevant
@@ -86,7 +86,7 @@ section CodeCopy
 
 def extCodeSize (self : State) (a : UInt256) : State × UInt256 :=
   let addr := AccountAddress.ofUInt256 a
-  let s := self.lookupAccount addr |>.option ⟨0⟩ (.ofNat ∘ ByteArray.size ∘ Account.code)
+  let s := self.lookupAccount addr |>.option ⟨0⟩ (.ofNat ∘ ByteArray.size ∘ (·.code))
   (self.addAccessedAccount addr, s)
 
 def extCodeHash (self : State) (v : UInt256) : State × UInt256 :=
@@ -129,7 +129,7 @@ def chainId (self : State) : UInt256 :=
   self.executionEnv.header.chainId
 
 def selfbalance (self : State) : UInt256 :=
-  Batteries.RBMap.find? self.accountMap self.executionEnv.codeOwner |>.elim ⟨0⟩ Account.balance
+  Batteries.RBMap.find? self.accountMap self.executionEnv.codeOwner |>.elim ⟨0⟩ (·.balance)
 
 /--
 TODO: `Account` also has `code`. Recheck.

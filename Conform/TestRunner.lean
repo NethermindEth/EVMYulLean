@@ -83,12 +83,12 @@ This section exists for debugging / testing mostly. It's somewhat ad-hoc.
 
 notation "TODO" => default
 
-private def almostBEqButNotQuiteEvmYulState (s₁ s₂ : AddrMap AccountEntry) : Except String Bool := do
+private def almostBEqButNotQuiteEvmYulState (s₁ s₂ : AddrMap PersistentAccountState) : Except String Bool := do
   -- let s₁ := bashState s₁
   -- let s₂ := bashState s₂
   if s₁ == s₂ then .ok true else throw "state mismatch"
 --  where
---   bashState (s : AddrMap AccountEntry) : AddrMap AccountEntry :=
+--   bashState (s : AddrMap PersistentAccountState) : AddrMap PersistentAccountState :=
 --     s.map
 --       λ (addr, acc) ↦ (addr, { acc with balance := TODO })
 /--
@@ -97,7 +97,7 @@ NB it is ever so slightly more convenient to be in `Except String Bool` here rat
 This is morally `s₁ == s₂` except we get a convenient way to both tune what is being compared
 as well as report fine grained errors.
 -/
-private def almostBEqButNotQuite (s₁ s₂ : AddrMap AccountEntry) : Except String Bool := do
+private def almostBEqButNotQuite (s₁ s₂ : AddrMap PersistentAccountState) : Except String Bool := do
   discard <| almostBEqButNotQuiteEvmYulState s₁ s₂
   pure true -- Yes, we never return false, because we throw along the way. Yes, this is `Option`.
 
@@ -443,9 +443,9 @@ NB we can throw away the final state if it coincided with the expected one, henc
 -/
 def preImpliesPost (pre : Pre) (post : Post) (genesisBlockHeader : BlockHeader) (blocks : Blocks) : Except EVM.Exception (Option AccountMap) := do
     let resultState ← processBlocks {pre.toEVMState with blocks := blocks, genesisBlockHeader := genesisBlockHeader}
-    let result : AddrMap AccountEntry :=
+    let result : AddrMap PersistentAccountState :=
       resultState.toState.accountMap.foldl
-        (λ r addr ⟨nonce, balance, storage, _, _, code⟩ ↦ r.insert addr ⟨nonce, balance, storage, code⟩) default
+        (λ r addr ⟨⟨nonce, balance, storage, code⟩, _, _⟩ ↦ r.insert addr ⟨nonce, balance, storage, code⟩) default
     match almostBEqButNotQuite post result with
       | .error e =>
         dbg_trace e

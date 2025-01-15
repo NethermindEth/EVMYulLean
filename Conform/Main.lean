@@ -7,7 +7,7 @@ def SimpleFile := "EthereumTests/BlockchainTests/GeneralStateTests/VMTests/vmAri
 -- def BuggyFile := "EthereumTests/BlockchainTests/GeneralStateTests/VMTests/vmArithmeticTest/exp.json"
 def BuggyFile := "Conform/testfile.json"
 -- def BuggyFile := "EthereumTests/BlockchainTests/GeneralStateTests/VMTests/vmTests/calldatacopy.json"
-def SpecificFile := "EthereumTests/BlockchainTests/GeneralStateTests/stTimeConsuming/static_Call50000_sha256.json"
+def SpecificFile := "EthereumTests/BlockchainTests/GeneralStateTests/VMTests/vmTests/sha3.json"
 
 def TestsSubdir := "BlockchainTests"
 def isTestFile (file : System.FilePath  ) : Bool := file.extension.option false (· == "json")
@@ -182,7 +182,7 @@ def main : IO Unit := do
   let mut discardedFiles := #[]
   -- let testFiles := #[SimpleFile]
   -- let testFiles := #[BuggyFile]
-  -- let testFiles := #[SpecificFile]
+  let testFiles := #[SpecificFile]
 
   let mut numFailedTest := 0
   let mut numSuccess := 0
@@ -194,7 +194,7 @@ def main : IO Unit := do
     let res ←
       ExceptT.run <|
         EvmYul.Conform.processTestsOfFile
-          -- (whitelist :=
+          (whitelist := #["sha3_d3g0v0_Cancun"])
           --   #[
           --     "21_tstoreCannotBeDosdOOO_d0g0v0_Cancun"
           --   , "15_tstoreCannotBeDosd_d0g0v0_Cancun"

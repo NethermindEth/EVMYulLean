@@ -138,7 +138,7 @@ def Cselfdestruct (s : EVM.State) : ℕ :=
   let { substate.accessedAccounts := Aₐ, accountMap := σ, executionEnv.codeOwner := Iₐ, .. } := s
   let c_cold := if Aₐ.contains r then 0 else Gcoldaccountaccess
   let c_new :=
-    if State.dead σ r ∧ (σ.find? Iₐ |>.option ⟨0⟩ Account.balance) ≠ ⟨0⟩ then
+    if State.dead σ r ∧ (σ.find? Iₐ |>.option ⟨0⟩ (·.balance)) ≠ ⟨0⟩ then
       Gnewaccount
     else 0
   Gselfdestruct + c_cold + c_new

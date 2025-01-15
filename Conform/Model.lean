@@ -22,13 +22,6 @@ section Model
 open Lean
 
 abbrev AddrMap (α : Type) [Inhabited α] := Batteries.RBMap AccountAddress α compare
-abbrev Storage := Batteries.RBMap UInt256 UInt256 compare
-
-def Storage.toFinmap (self : Storage) : Finmap (λ _ : UInt256 ↦ UInt256) :=
-  self.foldl (init := ∅) λ acc k v ↦ acc.insert (UInt256.ofNat k.1) v
-
-def Storage.toEvmYulStorage (self : Storage) : EvmYul.Storage :=
-  self.foldl (init := ∅) λ acc k v ↦ acc.insert (UInt256.ofNat k.1) v
 
 def AddrMap.keys {α : Type} [Inhabited α] (self : AddrMap α) : Multiset AccountAddress :=
   .ofList <| self.toList.map Prod.fst
@@ -70,16 +63,9 @@ instance : DecidableRel (α := (_ : UInt256) × UInt256) (· ≤ ·) :=
 
 abbrev Code := ByteArray
 
-structure AccountEntry :=
-  nonce   : UInt256
-  balance : UInt256
-  storage : Storage
-  code    : ByteArray
-  deriving Inhabited, Repr, BEq
+abbrev Pre := AddrMap PersistentAccountState
 
-abbrev Pre := AddrMap AccountEntry
-
-abbrev PostEntry := AccountEntry
+abbrev PostEntry := PersistentAccountState
 
 abbrev Post := AddrMap PostEntry
 

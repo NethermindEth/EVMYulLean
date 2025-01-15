@@ -73,7 +73,7 @@ This is also applicable for `FromJson Code`, as this is an abbrev for `ByteArray
 -/
 instance : FromJson ByteArray := fromBlobString (ByteArray.ofBlob)
 
-instance : FromJson AccountEntry where
+instance : FromJson PersistentAccountState where
   fromJson? json := do
     pure {
       balance := ← json.getObjValAs? UInt256 "balance"
@@ -83,7 +83,7 @@ instance : FromJson AccountEntry where
     }
 
 instance : FromJson Pre where
-  fromJson? json := json.getObjVals? AccountAddress AccountEntry
+  fromJson? json := json.getObjVals? AccountAddress PersistentAccountState
 
 instance : FromJson Post where
   fromJson? json := json.getObjVals? AccountAddress PostEntry
@@ -254,7 +254,7 @@ end Test
 
 section PrettyPrinter
 
-instance : ToString AccountEntry := ⟨ToString.toString ∘ repr⟩
+instance : ToString PersistentAccountState := ⟨ToString.toString ∘ repr⟩
 
 instance : ToString Pre := ⟨ToString.toString ∘ repr⟩
 

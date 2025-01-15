@@ -347,7 +347,7 @@ def step {τ : OperationType} (debugMode : Bool) (op : Operation τ) : Transform
         match lits with
           | [v, poz, len] =>
             let Iₐ := yulState.executionEnv.codeOwner
-            let nonce' : UInt256 := yulState.toState.accountMap.find? Iₐ |>.option ⟨0⟩ Account.nonce
+            let nonce' : UInt256 := yulState.toState.accountMap.find? Iₐ |>.option ⟨0⟩ (·.nonce)
             let s : 𝕋 := .𝔹 (toBytesBigEndian Iₐ.val).toByteArray
             let n : 𝕋 := .𝔹 (toBytesBigEndian nonce'.toNat).toByteArray
             let L_A := RLP <| .𝕃 [s, n]

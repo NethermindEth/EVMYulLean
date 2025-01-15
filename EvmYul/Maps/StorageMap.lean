@@ -28,6 +28,12 @@ section RemoveLater
 
 abbrev Storage : Type := Batteries.RBMap UInt256 UInt256 compare
 
+def Storage.toFinmap (self : Storage) : Finmap (λ _ : UInt256 ↦ UInt256) :=
+  self.foldl (init := ∅) λ acc k v ↦ acc.insert (UInt256.ofNat k.1) v
+
+def Storage.toEvmYulStorage (self : Storage) : EvmYul.Storage :=
+  self.foldl (init := ∅) λ acc k v ↦ acc.insert (UInt256.ofNat k.1) v
+
 /--
 It does _not_ matter how this is implemented at all, this is used _exclusively_ for convenience.
 -/

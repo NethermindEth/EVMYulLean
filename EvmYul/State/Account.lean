@@ -13,6 +13,13 @@ def π : Batteries.RBSet AccountAddress compare := Batteries.RBSet.ofList ((List
 
 inductive ToExecute := | Code (code : ByteArray) | Precompiled (precompiled : AccountAddress)
 
+structure PersistentAccountState :=
+  nonce    : UInt256
+  balance  : UInt256
+  storage  : Storage
+  code     : ByteArray
+deriving BEq, Inhabited, Repr
+
 /--
 The `Account` data. Section 4.1.
 
@@ -32,13 +39,9 @@ For now, we assume no global map `GM` with which `GM[code_hash] ≡ code`.
 
 - `ostorage` holds `σ₀`, not a part of the YP
 -/
-structure Account :=
-  nonce    : UInt256
-  balance  : UInt256
-  storage  : Storage
+structure Account extends PersistentAccountState where
   ostorage : Storage
   tstorage : Storage
-  code     : ByteArray
 deriving BEq, Inhabited, Repr
 
 def Account.codeHash (self : Account) : UInt256 :=

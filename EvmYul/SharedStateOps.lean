@@ -76,7 +76,7 @@ def extCodeCopy' (self : SharedState) (acc mstart cstart size : UInt256) : Share
   let size := size.toNat
   if 2^16 < size then dbg_trace s!"TODO - extCodeCopy called on a state which does _not_ recognise the address {acc.toNat} and with too big size: {size}; currently, this fails silently"; self else
   let addr := AccountAddress.ofUInt256 acc
-  let b : ByteArray := self.toState.lookupAccount addr |>.option .empty Account.code
+  let b : ByteArray := self.toState.lookupAccount addr |>.option .empty (·.code)
   -- let b : ByteArray := b.readBytes cstart size
   -- dbg_trace s!"extCodeCopy: {toHex b}"
   -- let self := self.writeBytes b mstart size
