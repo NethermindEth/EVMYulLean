@@ -7,7 +7,7 @@ def SimpleFile := "EthereumTests/BlockchainTests/GeneralStateTests/VMTests/vmAri
 -- def BuggyFile := "EthereumTests/BlockchainTests/GeneralStateTests/VMTests/vmArithmeticTest/exp.json"
 def BuggyFile := "Conform/testfile.json"
 -- def BuggyFile := "EthereumTests/BlockchainTests/GeneralStateTests/VMTests/vmTests/calldatacopy.json"
-def SpecificFile := "EthereumTests/BlockchainTests/GeneralStateTests/stTimeConsuming/static_Call50000_sha256.json"
+def SpecificFile := "EthereumTests/BlockchainTests/GeneralStateTests/stQuadraticComplexityTest/Call50000_sha256.json"
 
 def TestsSubdir := "BlockchainTests"
 def isTestFile (file : System.FilePath  ) : Bool := file.extension.option false (· == "json")
@@ -172,6 +172,8 @@ def directoryBlacklist : List System.FilePath := []
 
 def fileBlacklist : List System.FilePath := []
 
+#check 0xffffffffffffffffffffffffffffffff
+
 def main : IO Unit := do
   let testFiles ←
     Array.filter isTestFile <$>
@@ -182,7 +184,7 @@ def main : IO Unit := do
   let mut discardedFiles := #[]
   -- let testFiles := #[SimpleFile]
   -- let testFiles := #[BuggyFile]
-  -- let testFiles := #[SpecificFile]
+  let testFiles := #[SpecificFile]
 
   let mut numFailedTest := 0
   let mut numSuccess := 0
@@ -194,49 +196,51 @@ def main : IO Unit := do
     let res ←
       ExceptT.run <|
         EvmYul.Conform.processTestsOfFile
-          -- (whitelist :=
-          --   #[
-          --     "21_tstoreCannotBeDosdOOO_d0g0v0_Cancun"
-          --   , "15_tstoreCannotBeDosd_d0g0v0_Cancun"
-          --   , "ContractCreationSpam_d0g0v0_Cancun"
-          --   , "static_Return50000_2_d0g0v0_Cancun"
-          --   , "static_Call50000_identity_d0g0v0_Cancun"
-          --   , "static_Call50000_identity_d1g0v0_Cancun"
-          --   , "static_Call50000_ecrec_d0g0v0_Cancun"
-          --   , "static_Call50000_ecrec_d0g0v0_Cancun"
-          --   , "static_Call50000_identity2_d0g0v0_Cancun"
-          --   , "static_Call50000_identity2_d1g0v0_Cancun"
-          --   , "static_LoopCallsThenRevert_d0g0v0_Cancun"
-          --   , "static_LoopCallsThenRevert_d0g1v0_Cancun"
-          --   , "static_Call50000_d0g0v0_Cancun"
-          --   , "static_Call50000_d1g0v0_Cancun"
-          --   , "static_Call50000_rip160_d0g0v0_Cancun"
-          --   , "static_Call50000_rip160_d1g0v0_Cancun"
-          --   , "loopMul_d0g0v0_Cancun" -- OOF
-          --   , "loopMul_d1g0v0_Cancun" -- OOF
-          --   , "loopMul_d2g0v0_Cancun" -- OOF
-          --   , "performanceTester_d1g0v0_Cancun"
-          --   , "performanceTester_d4g0v0_Cancun"
-          --   , "loopExp_d10g0v0_Cancun" -- OOF
-          --   , "loopExp_d11g0v0_Cancun" -- OOF
-          --   , "loopExp_d12g0v0_Cancun" -- OOF
-          --   , "loopExp_d13g0v0_Cancun"
-          --   , "loopExp_d14g0v0_Cancun" -- OOF
-          --   , "loopExp_d8g0v0_Cancun" -- OOF
-          --   , "loopExp_d9g0v0_Cancun" -- OOF
-          --   , "Return50000_2_d0g0v0_Cancun"
-          --   , "Call50000_identity2_d0g1v0_Cancun"
-          --   , "Call50000_ecrec_d0g1v0_Cancun"
-          --   , "Return50000_d0g1v0_Cancun"
-          --   -- , "Call50000_sha256_d0g1v0_Cancun"
-          --   , "Call50000_d0g1v0_Cancun"
-          --   , "Callcode50000_d0g1v0_Cancun"
-          --   , "Call50000_identity_d0g1v0_Cancun"
-          --   , "QuadraticComplexitySolidity_CallDataCopy_d0g1v0_Cancun"
-          --   , "static_Call50000_sha256_d0g0v0_Cancun"
-          --   , "static_Call50000_sha256_d1g0v0_Cancun"
-          --   ]
-          -- )
+          -- (whitelist := #["sha3_d3g0v0_Cancun"])
+          (whitelist :=
+            #[
+            --   "21_tstoreCannotBeDosdOOO_d0g0v0_Cancun"
+            -- , "15_tstoreCannotBeDosd_d0g0v0_Cancun"
+            -- , "ContractCreationSpam_d0g0v0_Cancun"
+            -- , "static_Return50000_2_d0g0v0_Cancun"
+            -- , "static_Call50000_identity_d0g0v0_Cancun"
+            -- , "static_Call50000_identity_d1g0v0_Cancun"
+            -- , "static_Call50000_ecrec_d0g0v0_Cancun"
+            -- , "static_Call50000_ecrec_d0g0v0_Cancun"
+            -- , "static_Call50000_identity2_d0g0v0_Cancun"
+            -- , "static_Call50000_identity2_d1g0v0_Cancun"
+            -- , "static_LoopCallsThenRevert_d0g0v0_Cancun"
+            -- , "static_LoopCallsThenRevert_d0g1v0_Cancun"
+            -- , "static_Call50000_d0g0v0_Cancun"
+            -- , "static_Call50000_d1g0v0_Cancun"
+            -- , "static_Call50000_rip160_d0g0v0_Cancun"
+            -- , "static_Call50000_rip160_d1g0v0_Cancun"
+            -- , "loopMul_d0g0v0_Cancun" -- OOF
+            -- , "loopMul_d1g0v0_Cancun" -- OOF
+            -- , "loopMul_d2g0v0_Cancun" -- OOF
+            -- , "performanceTester_d1g0v0_Cancun"
+            -- , "performanceTester_d4g0v0_Cancun"
+            -- , "loopExp_d10g0v0_Cancun" -- OOF
+            -- , "loopExp_d11g0v0_Cancun" -- OOF
+            -- , "loopExp_d12g0v0_Cancun" -- OOF
+            -- , "loopExp_d13g0v0_Cancun"
+            -- , "loopExp_d14g0v0_Cancun" -- OOF
+            -- , "loopExp_d8g0v0_Cancun" -- OOF
+            -- , "loopExp_d9g0v0_Cancun" -- OOF
+            -- , "Return50000_2_d0g0v0_Cancun"
+            -- , "Call50000_identity2_d0g1v0_Cancun"
+            -- , "Call50000_ecrec_d0g1v0_Cancun"
+            -- , "Return50000_d0g1v0_Cancun"
+            -- ,
+            "Call50000_sha256_d0g1v0_Cancun"
+            -- , "Call50000_d0g1v0_Cancun"
+            -- , "Callcode50000_d0g1v0_Cancun"
+            -- , "Call50000_identity_d0g1v0_Cancun"
+            -- , "QuadraticComplexitySolidity_CallDataCopy_d0g1v0_Cancun"
+            -- , "static_Call50000_sha256_d0g0v0_Cancun"
+            -- , "static_Call50000_sha256_d1g0v0_Cancun"
+            ]
+          )
 
           testFile
     match res with
