@@ -3,6 +3,8 @@ import Mathlib.Tactic
 import EvmYul.SpongeHash.Wheels
 
 import EvmYul.Wheels
+import EvmYul.PerformIO
+import Conform.Wheels
 
 open BigOperators
 open Vector
@@ -83,7 +85,7 @@ def keccakF (state : SHA3SR) : SHA3SR :=
 def bytesOfList (l : List (Fin 2)) : List UInt8 :=
   l.toChunks 8 |>.map λ bits ↦ bits.zip (List.iota 8 |>.map Nat.pred) |>.foldl (init := 0)
     λ acc (bit, exp) ↦ acc + (UInt8.ofNat <| bit.val * 2^exp)
-    
+
 namespace Absorb
 
 /--
@@ -91,7 +93,7 @@ TODO - slow.
 -/
 partial def unfoldr {α β} (f : β → Option (α × β)) (b0 : β) : Array α :=
   build λ c n ↦
-    let rec go i b := -- dbg_trace s!"i: {i}" -- TODO - dbg_trace s!"i: {i}", `i` is unnecessary in go here 
+    let rec go i b := -- dbg_trace s!"i: {i}" -- TODO - dbg_trace s!"i: {i}", `i` is unnecessary in go here
     match f b with
       | .some (a, new_b) => c a <| go i.succ new_b
       | .none            => n
@@ -130,7 +132,7 @@ partial def absorbBlock (rate : Nat) (state : Array UInt64) (input : Array UInt6
                                                  else el) state
 
 -- def absorb (rate : Nat) : ByteArray → Array UInt64 := absorbBlock rate ⟨List.replicate 25 0⟩ ∘ toBlocks
-def absorb (rate : Nat) (ba : ByteArray) : Array UInt64 := 
+def absorb (rate : Nat) (ba : ByteArray) : Array UInt64 :=
   -- dbg_trace s!"ba size: {ba.size}"
   absorbBlock rate ⟨List.replicate 25 0⟩ ∘ toBlocks <| ba
 end Absorb
@@ -200,7 +202,26 @@ def hashFunction (paddingFunction : Nat → ByteArray → SHA3SR) (rate : Nat) (
   squeeze' rate outputBytes ∘ Absorb.absorb rate ∘ byteArrayOfSHA3SR ∘ paddingFunction (rate / 8) $ inp
   where outputBytes := (1600 - rate) / 16
 
-def KEC : ByteArray → ByteArray := hashFunction paddingKeccak 1088
+def blobKeccak (data : String) : String :=
+  totallySafePerformIO do
+    IO.FS.withFile "EvmYul/EllipticCurvesPy/keccakInput.txt" .write λ h ↦ h.putStrLn data
+    let result ← IO.Process.run (pythonCommandOfInput "keccacInput.txt")
+    IO.FS.removeFile "EvmYul/EllipticCurvesPy/keccakInput.txt"
+    pure result
+  where pythonCommandOfInput (fileName : String) : IO.Process.SpawnArgs := {
+    cmd := "python3",
+    args := #["EvmYul/EllipticCurvesPy/keccak.py", fileName]
+  }
+
+def Keccak (data : ByteArray) : ByteArray :=
+  -- dbg_trace "Trying to hash"
+  -- dbg_trace s!"{toHex data}"
+  match ByteArray.ofBlob (blobKeccak (toHex data)) with
+    | .error _ => panic! "Error in keccak"
+    | .ok s => s
+
+def KEC : ByteArray → ByteArray := Keccak
+-- def KEC : ByteArray → ByteArray := hashFunction paddingKeccak 1088
 
 instance : Coe UInt8 (Fin (2^8)) := ⟨(·.val)⟩
 instance : Coe (Fin (2^8)) UInt8 := ⟨(⟨·⟩)⟩

@@ -20,11 +20,7 @@ namespace EvmYul
 namespace Conform
 
 def VerySlowTests : Array String :=
-  #[
-    -- TODO: Is https://eips.ethereum.org/EIPS/eip-7623 relevant?
-    "sha3_d3g0v0_Cancun" -- ~6MB getting keccak256'd, estimated time on my PC: ~1 hour, best guess: unfoldr.go in keccak256.lean
-  , "CALLBlake2f_MaxRounds_d0g0v0_Cancun"
-  ]
+  #["CALLBlake2f_MaxRounds_d0g0v0_Cancun"]
 
 def GlobalBlacklist : Array String := VerySlowTests
 
