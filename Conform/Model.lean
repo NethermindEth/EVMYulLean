@@ -21,8 +21,6 @@ section Model
 
 open Lean
 
-abbrev AddrMap (α : Type) [Inhabited α] := Batteries.RBMap AccountAddress α compare
-
 def AddrMap.keys {α : Type} [Inhabited α] (self : AddrMap α) : Multiset AccountAddress :=
   .ofList <| self.toList.map Prod.fst
 
@@ -97,6 +95,12 @@ This would be ever so slightly cleaner, but before we understand the exact corre
 between all of the test file entires and the states, we sometimes keep a 'parsing model' *and*
 an EVM model and write translations between them where convenient.
 -/
+
+inductive PostState :=
+  | Hash : ByteArray → PostState
+  | Map : Post → PostState
+  deriving Inhabited
+
 structure TestEntry :=
   info               : Json := ""
   blocks             : Blocks
@@ -104,7 +108,7 @@ structure TestEntry :=
   genesisRLP         : Json := ""
   lastblockhash      : Json := ""
   network            : String
-  postState          : Post
+  postState          : PostState
   pre                : Pre
   sealEngine         : Json := ""
   deriving Inhabited

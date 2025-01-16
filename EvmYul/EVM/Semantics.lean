@@ -163,6 +163,8 @@ def call (debugMode : Bool) (fuel : Nat)
   match fuel with
     | 0 => .error .OutOfFuel
     | .succ f =>
+      -- dbg_trace s!"fuel left in call: {f}"
+      -- dbg_trace s!"gas left in call: {evmState.gasAvailable}"
       -- t ≡ μs[1] mod 2^160
       let t : AccountAddress := AccountAddress.ofUInt256 t
       let recipient : AccountAddress := AccountAddress.ofUInt256 recipient

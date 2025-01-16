@@ -30,7 +30,11 @@ namespace EvmYul
 
 section RemoveLater
 
-abbrev AccountMap := Batteries.RBMap AccountAddress Account compare
+abbrev AddrMap (α : Type) [Inhabited α] := Batteries.RBMap AccountAddress α compare
+abbrev AccountMap := AddrMap Account
+abbrev PersistentAccountMap := AddrMap PersistentAccountState
+def AccountMap.toPersistentAccountMap (a : AccountMap) : PersistentAccountMap :=
+  a.mapVal (λ _ acc ↦ acc.toPersistentAccountState)
 
 def AccountMap.increaseBalance (σ : AccountMap) (addr : AccountAddress) (amount : UInt256)
   : AccountMap
@@ -46,6 +50,36 @@ def toExecute (σ : AccountMap) (t : AccountAddress) : ToExecute :=
     -- We use the code directly without an indirection a'la `codeMap[t]`.
     let .some tDirect := σ.find? t | ToExecute.Code default
     ToExecute.Code tDirect.code
+
+def L_S (σ : PersistentAccountMap) : Array (ByteArray × ByteArray) :=
+  σ.foldl
+    (λ arr (addr : AccountAddress) acc ↦
+      -- dbg_trace s!"Computing L_S; account {EvmYul.toHex addr.toByteArray}"
+      arr.push (p addr acc)
+    )
+    .empty
+ where
+  p (addr : AccountAddress) (acc : PersistentAccountState) : ByteArray × ByteArray :=
+    (KEC addr.toByteArray, rlp acc)
+  rlp (acc : PersistentAccountState) :=
+    Option.get! <|
+      RLP <|
+        .𝕃
+          [ .𝔹 (BE acc.nonce.toNat)
+          , .𝔹 (BE acc.balance.toNat)
+          , .𝔹 <| (computeTrieRoot acc.storage).getD .empty
+          , .𝔹 acc.codeHash.toByteArray
+          ]
+
+def stateTrieRoot (σ : PersistentAccountMap) : Option ByteArray :=
+  let a := Array.map toBlobPair (L_S σ)
+  (ByteArray.ofBlob (blobComputeTrieRoot a)).toOption
+ where
+  toBlobPair entry : String × String :=
+    -- dbg_trace "serializing L_S element"
+    let b₁ := EvmYul.toHex entry.1
+    let b₂ := EvmYul.toHex entry.2
+    (b₁, b₂)
 
 -- instance : LE ((_ : Address) × Account) where
 --   le lhs rhs := if lhs.1 = rhs.1 then lhs.2 ≤ rhs.2 else lhs.1 ≤ rhs.1

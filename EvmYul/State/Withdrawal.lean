@@ -6,6 +6,8 @@ import EvmYul.Maps.AccountMap
 import Conform.Wheels
 import EvmYul.EVM.Exception
 
+import EvmYul.State.TrieRoot
+
 open EvmYul ByteArray
 
 /--
@@ -35,25 +37,14 @@ def to𝕋 : Withdrawal → 𝕋
 
 end Withdrawal
 
-def blobComputeTrieRoot (ws : Array (String × String)) : String :=
-  totallySafePerformIO ∘ IO.Process.run <|
-    pythonCommandOfInput ws
-  where pythonCommandOfInput (ws : Array (String × String)) : IO.Process.SpawnArgs := {
-    cmd := "python3",
-    args :=
-      #["EvmYul/EllipticCurvesPy/withdrawal.py"]
-        ++ #[ws.size.repr]
-        ++ (ws.map (λ (i, w) ↦ #[i, w])).join
-  }
-
-def toBlobs (w : ℕ × Withdrawal) : Option (String × String) := do
+def Withdrawal.toBlobs (w : ℕ × Withdrawal) : Option (String × String) := do
   let rlpᵢ ← RLP (.𝔹 (BE w.1))
   let rlp ← RLP w.2.to𝕋
   pure (EvmYul.toHex rlpᵢ, EvmYul.toHex rlp)
 
 -- EIP-4895
-def computeTrieRoot (ws : Array Withdrawal) : Option ByteArray := do
-  match Array.mapM toBlobs ((Array.range ws.size).zip ws) with
+def Withdrawal.computeTrieRoot (ws : Array Withdrawal) : Option ByteArray := do
+  match Array.mapM Withdrawal.toBlobs ((Array.range ws.size).zip ws) with
     | none => .none
     | some ws => (ByteArray.ofBlob (blobComputeTrieRoot ws)).toOption
 
@@ -104,7 +95,7 @@ private def withdrawalZeroTrailingRoot : Withdrawal :=
   }
 
 private example :
-  (computeTrieRoot #[])
+  (Withdrawal.computeTrieRoot #[])
     ==
   (ByteArray.ofBlob
     "56e81f171bcc55a6ff8345e692c0f86e5b48e01b996cadc001622fb5e363b421"
@@ -113,7 +104,7 @@ private example :
 
 /- From newly_created_contract.json -/
 private example :
-  (computeTrieRoot #[withdrawal₁])
+  (Withdrawal.computeTrieRoot #[withdrawal₁])
     =
   (ByteArray.ofBlob
     "82cc6fbe74c41496b382fcdf25216c5af7bdbb5a3929e8f2e61bd6445ab66436"
@@ -122,7 +113,7 @@ private example :
 
 /- From beacon_root_contract_deploy.json -/
 private example :
-  (computeTrieRoot #[withdrawal₂, withdrawal₃])
+  (Withdrawal.computeTrieRoot #[withdrawal₂, withdrawal₃])
     =
   (ByteArray.ofBlob
     "2aef4d3e6939af0b4bf4c0e7572a214eb7db9ba52937e1e82ad6c64b52d2e8bb"
@@ -131,7 +122,7 @@ private example :
 
 /- From withdrawing_to_precompiles.json -/
 private example :
-  (computeTrieRoot #[withdrawalZeroTrailingRoot])
+  (Withdrawal.computeTrieRoot #[withdrawalZeroTrailingRoot])
     =
   (ByteArray.ofBlob
     "04cc2e3f94b587ff46b5f4c0787c589db306b7209f7f212f47022a12bc3e6e16"
@@ -160,7 +151,7 @@ private def w₂Index : Withdrawal :=
   }
 
 private example :
-  (computeTrieRoot #[w₀Index, w₂Index, w₁Index, w₂Index])
+  (Withdrawal.computeTrieRoot #[w₀Index, w₂Index, w₁Index, w₂Index])
     =
   (ByteArray.ofBlob
     "a95b9a7b58a6b3cb4001eb0be67951c5517141cb0183a255b5cae027a7b10b36"

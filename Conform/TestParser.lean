@@ -238,7 +238,39 @@ private def blockOfJson (json : Json) : Except String Block := do
 
 instance : FromJson Block := ⟨blockOfJson⟩
 
-deriving instance FromJson for TestEntry
+-- instance : FromJson PostState where
+--   fromJson? json := do
+--     let hash ← json.getObjValAsD! (Option ByteArray) "postStateHash"
+--     match hash with
+--       | some hash =>
+--         dbg_trace s!"Read postStateHash: {hash}"
+--         .ok <| PostState.Hash hash
+--       | none =>
+--         let map ← json.getObjValAsD! Post "postState"
+--         dbg_trace s!"Read post state map of size {map.size}"
+--         .ok <| PostState.Map map
+
+instance : FromJson TestEntry where
+  fromJson? json := do
+    let post : PostState ←
+      match json.getObjVal? "postStateHash" with
+        | .error _ =>
+          dbg_trace s!"Read post state map"
+          .Map <$> json.getObjValAsD! PersistentAccountMap "postState"
+        | .ok postStateHash =>
+          dbg_trace s!"Read postStateHash: {postStateHash}"
+          .Hash <$> FromJson.fromJson? postStateHash
+    pure {
+      info               := ← json.getObjValAs? Json "info"
+      blocks             := ← json.getObjValAs? Blocks "blocks"
+      genesisBlockHeader := ← json.getObjValAs? BlockHeader "genesisBlockHeader"
+      genesisRLP         := ← json.getObjValAs? Json "genesisRLP"
+      lastblockhash      := ← json.getObjValAs? Json "lastblockhash"
+      network            := ← json.getObjValAs? String "network"
+      postState          := post
+      pre                := ← json.getObjValAs? Pre "pre"
+      sealEngine         := ← json.getObjValAs? Json "sealEngine"
+    }
 
 instance : FromJson Test where
   fromJson? json := json.getObjVals? String TestEntry

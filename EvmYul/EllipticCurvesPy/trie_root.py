@@ -6,12 +6,12 @@ from typing import (
 )
 n = int(sys.argv[1])
 
-withdrawals_trie: Trie[Bytes, Optional[Bytes]] = Trie(
+trie: Trie[Bytes, Optional[Bytes]] = Trie(
         secured=False, default=None
     )
 
 for i in range(n):
-    trie_set(withdrawals_trie, bytes.fromhex(sys.argv[2*i+2]), bytes.fromhex(sys.argv[2*i+3]))
-r = root(withdrawals_trie)
+    trie_set(trie, bytes.fromhex(sys.argv[2*i+2]), bytes.fromhex(sys.argv[2*i+3]))
+r = root(trie)
 
 print(bytes.hex(r), end = '')

@@ -24,7 +24,7 @@ def VerySlowTests : Array String :=
 
 def GlobalBlacklist : Array String := VerySlowTests
 
-def Pre.toEVMState (self : Pre) : EVM.State :=
+def PersistentAccountMap.toEVMState (self : PersistentAccountMap) : EVM.State :=
   self.foldl addAccount default
   where addAccount s addr acc :=
     let account : Account :=
@@ -38,9 +38,11 @@ def Pre.toEVMState (self : Pre) : EVM.State :=
       }
     { s with toState := s.setAccount addr account }
 
+def Pre.toEVMState : Pre → EVM.State := PersistentAccountMap.toEVMState
+
 def Test.toTests (self : Test) : List (String × TestEntry) := self.toList
 
-def Post.toEVMState : Post → EVM.State := Pre.toEVMState
+def Post.toEVMState : Post → EVM.State := PersistentAccountMap.toEVMState
 
 local instance : Inhabited EVM.Transformer where
   default := λ _ ↦ default
@@ -55,8 +57,8 @@ TODO - This should be a generic map complement, but we are not trying to write a
 
 Now that this is not a `Finmap`, this is probably defined somewhere in the API, fix later.
 -/
-def storageComplement (m₁ m₂ : AccountMap) : AccountMap := Id.run do
-  let mut result : AccountMap := m₁
+def storageComplement (m₁ m₂ : PersistentAccountMap) : PersistentAccountMap := Id.run do
+  let mut result : PersistentAccountMap := m₁
   for ⟨k₂, v₂⟩ in m₂.toList do
     match m₁.find? k₂ with
     | .none => continue
@@ -72,7 +74,7 @@ Effectively `m₁ / m₂ × m₂ / m₁`.
 
 Now that this is not a `Finmap`, this is probably defined somewhere in the API, fix later.
 -/
-def storageΔ (m₁ m₂ : AccountMap) : AccountMap × AccountMap :=
+def storageΔ (m₁ m₂ : PersistentAccountMap) : PersistentAccountMap × PersistentAccountMap :=
   (storageComplement m₁ m₂, storageComplement m₂ m₁)
 
 section
@@ -83,12 +85,12 @@ This section exists for debugging / testing mostly. It's somewhat ad-hoc.
 
 notation "TODO" => default
 
-private def almostBEqButNotQuiteEvmYulState (s₁ s₂ : AddrMap PersistentAccountState) : Except String Bool := do
+private def almostBEqButNotQuiteEvmYulState (s₁ s₂ : PersistentAccountMap) : Except String Bool := do
   -- let s₁ := bashState s₁
   -- let s₂ := bashState s₂
   if s₁ == s₂ then .ok true else throw "state mismatch"
 --  where
---   bashState (s : AddrMap PersistentAccountState) : AddrMap PersistentAccountState :=
+--   bashState (s : PersistentAccountMap) : PersistentAccountMap :=
 --     s.map
 --       λ (addr, acc) ↦ (addr, { acc with balance := TODO })
 /--
@@ -97,7 +99,7 @@ NB it is ever so slightly more convenient to be in `Except String Bool` here rat
 This is morally `s₁ == s₂` except we get a convenient way to both tune what is being compared
 as well as report fine grained errors.
 -/
-private def almostBEqButNotQuite (s₁ s₂ : AddrMap PersistentAccountState) : Except String Bool := do
+private def almostBEqButNotQuite (s₁ s₂ : PersistentAccountMap) : Except String Bool := do
   discard <| almostBEqButNotQuiteEvmYulState s₁ s₂
   pure true -- Yes, we never return false, because we throw along the way. Yes, this is `Option`.
 
@@ -344,7 +346,7 @@ def validateBlock (parentHeader : BlockHeader) (block : Block)
   if blobGasUsed > MAX_BLOB_GAS_PER_BLOCK then
     throw <| .BlockException .BLOB_GAS_USED_ABOVE_LIMIT
 
-  if block.blockHeader.withdrawalsRoot.isSome && computeTrieRoot block.withdrawals ≠ block.blockHeader.withdrawalsRoot then
+  if block.blockHeader.withdrawalsRoot.isSome && Withdrawal.computeTrieRoot block.withdrawals ≠ block.blockHeader.withdrawalsRoot then
     throw <| .BlockException .INVALID_WITHDRAWALS_ROOT
 
   -- dbg_trace "BLOCK VALID"
@@ -441,23 +443,32 @@ def processBlocks (s₀ : EVM.State) : Except EVM.Exception EVM.State := do
 
 NB we can throw away the final state if it coincided with the expected one, hence `.none`.
 -/
-def preImpliesPost (pre : Pre) (post : Post) (genesisBlockHeader : BlockHeader) (blocks : Blocks) : Except EVM.Exception (Option AccountMap) := do
+def preImpliesPost (pre : Pre) (post : PostState) (genesisBlockHeader : BlockHeader) (blocks : Blocks) : Except EVM.Exception (Option PersistentAccountMap) := do
     let resultState ← processBlocks {pre.toEVMState with blocks := blocks, genesisBlockHeader := genesisBlockHeader}
-    let result : AddrMap PersistentAccountState :=
+    let result : PersistentAccountMap :=
       resultState.toState.accountMap.foldl
         (λ r addr ⟨⟨nonce, balance, storage, code⟩, _, _⟩ ↦ r.insert addr ⟨nonce, balance, storage, code⟩) default
-    match almostBEqButNotQuite post result with
-      | .error e =>
-        dbg_trace e
-        pure (.some resultState.accountMap) -- Feel free to inspect this error from `almostBEqButNotQuite`.
-      | .ok _ => pure .none
+    let persistentAccountMap := resultState.accountMap.toPersistentAccountMap
+    match post with
+      | .Map post =>
+        match almostBEqButNotQuite post result with
+          | .error e =>
+            dbg_trace e
+            pure (.some persistentAccountMap) -- Feel free to inspect this error from `almostBEqButNotQuite`.
+          | .ok _ => pure .none
+      | .Hash h =>
+        if stateTrieRoot persistentAccountMap ≠ h then
+          dbg_trace "state hash mismatch"
+          pure (.some persistentAccountMap)
+        else
+          pure .none
 
 -- local instance : MonadLift (Except EVM.Exception) (Except Conform.Exception) := ⟨Except.mapError .EVMError⟩
 -- vvvvvvvvvvvvvv DO NOT DELETE PLEASE vvvvvvvvvvvvvvvvvv
 def DONOTDELETEMEFORNOW : AccountMap := Batteries.RBMap.ofList [(1, { dflt with storage := Batteries.RBMap.ofList [(⟨44⟩, ⟨45⟩), (⟨46⟩, ⟨47⟩)] compare }), (3, default)] compare
   where dflt : Account := default
 
-instance (priority := high) : Repr AccountMap := ⟨λ m _ ↦
+instance (priority := high) : Repr PersistentAccountMap := ⟨λ m _ ↦
   Id.run do
     let mut result := ""
     for (k, v) in m do
@@ -473,10 +484,14 @@ def processTest (entry : TestEntry) (verbose : Bool := true) : TestResult := do
     | .error err => .mkFailed s!"{repr err}"
     | .ok result => errorF <$> result
 
-  where discardError : AccountMap → String := λ _ ↦ "ERROR."
-        verboseError : AccountMap → String := λ σ ↦
-          let (postSubActual, actualSubPost) := storageΔ entry.postState.toEVMState.accountMap σ
-          s!"\npost / actual: {repr postSubActual} \nactual / post: {repr actualSubPost}"
+  where discardError : PersistentAccountMap → String := λ _ ↦ "ERROR."
+        verboseError : PersistentAccountMap → String := λ σ ↦
+          match entry.postState with
+            | .Map post =>
+              let (postSubActual, actualSubPost) := storageΔ post σ
+              s!"\npost / actual: {repr postSubActual} \nactual / post: {repr actualSubPost}"
+            | .Hash h =>
+              s!"\npost: {EvmYul.toHex h} \nactual: {EvmYul.toHex <$> stateTrieRoot σ}"
         errorF := if verbose then verboseError else discardError
 
 local instance : MonadLift (Except String) (Except Conform.Exception) := ⟨Except.mapError .CannotParse⟩

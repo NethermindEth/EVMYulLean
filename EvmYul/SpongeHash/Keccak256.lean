@@ -4,6 +4,7 @@ import EvmYul.SpongeHash.Wheels
 
 import EvmYul.Wheels
 import EvmYul.PerformIO
+import EvmYul.UInt256
 import Conform.Wheels
 
 open BigOperators
@@ -205,7 +206,9 @@ def hashFunction (paddingFunction : Nat → ByteArray → SHA3SR) (rate : Nat) (
 def blobKeccak (data : String) : String :=
   totallySafePerformIO do
     IO.FS.withFile "EvmYul/EllipticCurvesPy/keccakInput.txt" .write λ h ↦ h.putStrLn data
-    let result ← IO.Process.run (pythonCommandOfInput "keccacInput.txt")
+    -- dbg_trace s!"before IO.Process.run"
+    let result ← IO.Process.run (pythonCommandOfInput "EvmYul/EllipticCurvesPy/keccakInput.txt")
+    -- dbg_trace s!"after IO.Process.run"
     IO.FS.removeFile "EvmYul/EllipticCurvesPy/keccakInput.txt"
     pure result
   where pythonCommandOfInput (fileName : String) : IO.Process.SpawnArgs := {
@@ -213,15 +216,20 @@ def blobKeccak (data : String) : String :=
     args := #["EvmYul/EllipticCurvesPy/keccak.py", fileName]
   }
 
-def Keccak (data : ByteArray) : ByteArray :=
-  -- dbg_trace "Trying to hash"
+private def Keccak (data : ByteArray) : ByteArray :=
+  let data := toHex data
   -- dbg_trace s!"{toHex data}"
-  match ByteArray.ofBlob (blobKeccak (toHex data)) with
+  match ByteArray.ofBlob (blobKeccak data) with
     | .error _ => panic! "Error in keccak"
     | .ok s => s
 
-def KEC : ByteArray → ByteArray := Keccak
--- def KEC : ByteArray → ByteArray := hashFunction paddingKeccak 1088
+def KEC (data : ByteArray) : ByteArray :=
+  if data.size < 100 then
+    -- dbg_trace s!"Lean Kec called for {data.size} bytes"
+    hashFunction paddingKeccak 1088 data
+  else
+    -- dbg_trace s!"Python Kec called for {data.size} bytes"
+    Keccak data
 
 instance : Coe UInt8 (Fin (2^8)) := ⟨(·.val)⟩
 instance : Coe (Fin (2^8)) UInt8 := ⟨(⟨·⟩)⟩

@@ -44,7 +44,10 @@ structure Account extends PersistentAccountState where
   tstorage : Storage
 deriving BEq, Inhabited, Repr
 
-def Account.codeHash (self : Account) : UInt256 :=
+def PersistentAccountState.codeHash (self : PersistentAccountState) : UInt256 :=
   .ofNat <| fromBytesBigEndian (KEC self.code).data.data
+
+def Account.codeHash (self : Account) : UInt256 :=
+  self.toPersistentAccountState.codeHash
 
 end EvmYul

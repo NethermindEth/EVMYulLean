@@ -45,6 +45,7 @@ import EvmYul.State.SubstateOps
 import EvmYul.State.Transaction
 import EvmYul.State.Withdrawal
 import EvmYul.State.TransactionOps
+import EvmYul.State.TrieRoot
 
 import EvmYul.Yul.Ast
 import EvmYul.Yul.Exception
