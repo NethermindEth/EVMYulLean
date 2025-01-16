@@ -255,10 +255,10 @@ instance : FromJson TestEntry where
     let post : PostState ←
       match json.getObjVal? "postStateHash" with
         | .error _ =>
-          dbg_trace s!"Read post state map"
+          -- dbg_trace s!"Read post state map"
           .Map <$> json.getObjValAsD! PersistentAccountMap "postState"
         | .ok postStateHash =>
-          dbg_trace s!"Read postStateHash: {postStateHash}"
+          -- dbg_trace s!"Read postStateHash: {postStateHash}"
           .Hash <$> FromJson.fromJson? postStateHash
     pure {
       info               := ← json.getObjValAs? Json "info"
