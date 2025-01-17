@@ -97,7 +97,7 @@ instance : FromJson BlockHeader where
       pure {
         hash          := ← json.getObjValAsD! UInt256   "hash"
         parentHash    := ← json.getObjValAsD! UInt256   "parentHash"
-        ommersHash    := TODO -- TODO - Set to whatever the KEC(RLP()) evaluates to.
+        ommersHash    := ← json.getObjValAsD! UInt256   "uncleHash"
         beneficiary   := ← json.getObjValAsD! AccountAddress   "coinbase"
         stateRoot     := ← json.getObjValAsD! UInt256   "stateRoot"
         transRoot     := TODO -- TODO - Does not seem to be used in Υ?

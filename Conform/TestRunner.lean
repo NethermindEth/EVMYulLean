@@ -112,7 +112,7 @@ def executeTransaction
   (header : BlockHeader)
   : Except EVM.Exception EVM.State
 := do
-  let _TODOfuel : ℕ := s.accountMap.find? sender |>.elim ⟨0⟩ (·.balance) |>.toNat
+  let _TODOfuel : ℕ := 2^17
 
   let (ypState, _, _) ←
     EVM.Υ (debugMode := false) _TODOfuel
@@ -326,6 +326,11 @@ def validateBlock (parentHeader : BlockHeader) (block : Block)
   : Except EVM.Exception (Transactions × Withdrawals)
 := do
   -- dbg_trace "VALIDATING BLOCK"
+
+  -- KEC (RLP []) = 0x1dcc4de8dec75d7aab85b567b6ccd41ad312451b948a7413f0a142fd40d49347
+  if 0x1dcc4de8dec75d7aab85b567b6ccd41ad312451b948a7413f0a142fd40d49347 != block.blockHeader.ommersHash.toNat then
+    throw <| .BlockException .IMPORT_IMPOSSIBLE_UNCLES_OVER_PARIS
+
   if calcExcessBlobGas parentHeader != block.blockHeader.excessBlobGas then
     throw <| .BlockException .INCORRECT_EXCESS_BLOB_GAS
 
@@ -358,7 +363,6 @@ def processBlocks (s₀ : EVM.State) : Except EVM.Exception EVM.State := do
   let blocks := s₀.blocks
   let parentHeaders := #[s₀.genesisBlockHeader] ++ blocks.map Block.blockHeader
   let withParentHeaders := parentHeaders.zip blocks
-
   withParentHeaders.foldlM processBlock s₀
  where
   processBlock (s₀ : EVM.State) (withParentHeader : BlockHeader × Block) : Except EVM.Exception EVM.State := do
