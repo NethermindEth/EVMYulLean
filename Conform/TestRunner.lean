@@ -112,7 +112,7 @@ def executeTransaction
   (header : BlockHeader)
   : Except EVM.Exception EVM.State
 := do
-  let _TODOfuel : ℕ := 2^17
+  let _TODOfuel : ℕ := s.accountMap.find? sender |>.elim ⟨0⟩ (·.balance) |>.toNat
 
   let (ypState, _, _) ←
     EVM.Υ (debugMode := false) _TODOfuel
