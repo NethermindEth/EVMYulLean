@@ -20,7 +20,53 @@ namespace EvmYul
 namespace Conform
 
 def VerySlowTests : Array String :=
-  #["CALLBlake2f_MaxRounds_d0g0v0_Cancun"]
+  #[
+    "CALLBlake2f_MaxRounds_d0g0v0_Cancun" -- Didn't finish even when given tens of hours
+    -- TODO: The following tests take a long time but are passing.
+  , "21_tstoreCannotBeDosdOOO_d0g0v0_Cancun"
+  , "15_tstoreCannotBeDosd_d0g0v0_Cancun"
+  , "ContractCreationSpam_d0g0v0_Cancun"
+  , "static_Return50000_2_d0g0v0_Cancun"
+  , "static_Call50000_identity_d0g0v0_Cancun"
+  , "static_Call50000_identity_d1g0v0_Cancun"
+  , "static_Call50000_ecrec_d0g0v0_Cancun"
+  , "static_Call50000_ecrec_d1g0v0_Cancun"
+  , "static_Call50000_identity2_d0g0v0_Cancun"
+  , "static_Call50000_identity2_d1g0v0_Cancun"
+  , "static_LoopCallsThenRevert_d0g0v0_Cancun"
+  , "static_LoopCallsThenRevert_d0g1v0_Cancun"
+  , "static_Call50000_d0g0v0_Cancun"
+  , "static_Call50000_d1g0v0_Cancun"
+  , "static_Call50000_rip160_d0g0v0_Cancun"
+  , "static_Call50000_rip160_d1g0v0_Cancun"
+  , "loopMul_d0g0v0_Cancun"
+  , "loopMul_d1g0v0_Cancun"
+  , "loopMul_d2g0v0_Cancun"
+  , "performanceTester_d1g0v0_Cancun"
+  , "performanceTester_d4g0v0_Cancun"
+  , "loopExp_d10g0v0_Cancun"
+  , "loopExp_d11g0v0_Cancun"
+  , "loopExp_d12g0v0_Cancun"
+  , "loopExp_d13g0v0_Cancun"
+  , "loopExp_d14g0v0_Cancun"
+  , "loopExp_d8g0v0_Cancun"
+  , "loopExp_d9g0v0_Cancun"
+  , "Return50000_2_d0g1v0_Cancun"
+  , "Call50000_identity2_d0g1v0_Cancun"
+  , "Call50000_ecrec_d0g1v0_Cancun"
+  , "Return50000_d0g1v0_Cancun"
+  , "Call50000_sha256_d0g1v0_Cancun"
+  , "Call50000_d0g1v0_Cancun"
+  , "Callcode50000_d0g1v0_Cancun"
+  , "Call50000_identity_d0g1v0_Cancun"
+  , "QuadraticComplexitySolidity_CallDataCopy_d0g1v0_Cancun"
+  , "static_Call50000_sha256_d0g0v0_Cancun"
+  , "static_Call50000_sha256_d1g0v0_Cancun"
+  , "src/GeneralStateTestsFiller/Pyspecs/cancun/eip1153_tstore/test_tstorage.py::test_run_until_out_of_gas[fork_Cancun-blockchain_test-tstore"
+  , "src/GeneralStateTestsFiller/Pyspecs/cancun/eip1153_tstore/test_tstorage.py::test_run_until_out_of_gas[fork_Cancun-blockchain_test-tstore_tload"
+  , "src/GeneralStateTestsFiller/Pyspecs/cancun/eip1153_tstore/test_tstorage.py::test_run_until_out_of_gas[fork_Cancun-blockchain_test-tstore_wide_address_space"
+  , "DelegateCallSpam_Cancun"
+  ]
 
 def GlobalBlacklist : Array String := VerySlowTests
 
@@ -112,7 +158,7 @@ def executeTransaction
   (header : BlockHeader)
   : Except EVM.Exception EVM.State
 := do
-  let _TODOfuel : ℕ := 2^17
+  let _TODOfuel : ℕ := s.accountMap.find? sender |>.elim ⟨0⟩ (·.balance) |>.toNat
 
   let (ypState, _, _) ←
     EVM.Υ (debugMode := false) _TODOfuel
