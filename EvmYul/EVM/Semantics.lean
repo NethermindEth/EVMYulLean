@@ -640,7 +640,7 @@ def X (debugMode : Bool) (fuel : ℕ) (evmState : State)
 
       match Z evmState with
         | .error e =>
-          dbg_trace s!"X: {evmState.execLength} primops before exceptional halting"
+          -- dbg_trace s!"X: {evmState.execLength} primops before exceptional halting"
           .error e
         | some (evmState, cost₂) =>
           let evmState' ← step debugMode f cost₂ instr evmState
@@ -659,10 +659,10 @@ def X (debugMode : Bool) (fuel : ℕ) (evmState : State)
                 -- EthereumTests/BlockchainTests/GeneralStateTests/stReturnDataTest/returndatacopy_after_revert_in_staticcall.json
                 -- And the EEL spec does so too.
                 -- dbg_trace s!"Output data after REVERT: {toHex o}"
-                dbg_trace s!"X: {evmState'.execLength} primops before revert"
+                -- dbg_trace s!"X: {evmState'.execLength} primops before revert"
                 .ok <| .revert evmState'.gasAvailable o
               else
-                dbg_trace s!"X: {evmState'.execLength} primops before success"
+                -- dbg_trace s!"X: {evmState'.execLength} primops before success"
                 .ok <| .success evmState' o
  where
   belongs (o : Option UInt256) (l : List UInt256) : Bool :=
@@ -806,7 +806,7 @@ def Lambda
     , code      := i
     , gasPrice  := p.toNat
     , header    := H
-    , depth     := e.toNat + 1
+    , depth     := e.toNat
     , perm      := w
     , blobVersionedHashes := blobVersionedHashes
     }
@@ -977,14 +977,14 @@ def Θ (debugMode : Bool)
       | ToExecute.Code _ =>
         match Ξ debugMode fuel createdAccounts genesisBlockHeader blocks σ₁ g A I with
           | .error e =>
-            dbg_trace s!"Execution failed in Θ: {repr e}"
+            if debugMode then dbg_trace s!"Execution failed in Θ: {repr e}"
             if e == .OutOfFuel then throw .OutOfFuel
             pure (createdAccounts, false, σ, ⟨0⟩, A, .empty)
           | .ok (.revert g' o) =>
-            dbg_trace s!"Execution reverted in Θ"
+            if debugMode then dbg_trace s!"Execution reverted in Θ"
             pure (createdAccounts, false, σ, g', A, o)
           | .ok (.success (a, b, c, d) o) =>
-            dbg_trace s!"Execution succeeded in Θ"
+            if debugMode then dbg_trace s!"Execution succeeded in Θ"
             pure (a, true, b, c, d, o)
 
   -- Equation (127)
