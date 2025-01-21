@@ -37,6 +37,10 @@ y = Bytes32(data[64:96])
 commitment = KZGCommitment(data[96:144])
 proof = Bytes48(data[144:192])
 
+if kzg_commitment_to_versioned_hash(commitment) != versioned_hash:
+    print('error', end = '')
+    sys.exit()
+
 # Verify KZG proof with z and y in big endian format
 try:
     kzg_proof_verification = verify_kzg_proof(commitment, z, y, proof)
