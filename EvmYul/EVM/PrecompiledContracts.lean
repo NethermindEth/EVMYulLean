@@ -198,18 +198,9 @@ def nat_of_slice
   (start: ℕ)
   (width: ℕ) : ℕ
 :=
-  if (B.size ≤ start) then
-    0
-  else
-  if (B.size < start + width) then
-    let aux_slice := B.readBytes start (B.size - start) |>.data.data |> fromBytesBigEndian
-    if aux_slice = 0 then
-      0
-    else
-      let byte_shift := 2 <<< ( 8 * ( start + width - B.size ) )
-      aux_slice * byte_shift
-  else
-    B.readBytes start width |>.data.data |> fromBytesBigEndian
+  let slice := B.readWithoutPadding start width
+  let padding := width - slice.size
+  fromBytesBigEndian slice.data.data <<< (8 * padding)
 
 def expModAux (m : ℕ) (a : ℕ) (c : ℕ) : ℕ → ℕ
   | 0 => a % m
