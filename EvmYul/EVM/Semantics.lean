@@ -760,7 +760,6 @@ def Lambda
       |>.data.data |> fromBytesBigEndian |> Fin.ofNat
 
 
-  let createdAccounts := createdAccounts.insert a
   -- dbg_trace s!"New address: {toHex a.toByteArray} added to createdAccounts"
 
   -- A* (97)
@@ -774,14 +773,14 @@ def Lambda
   -- and the destination address already has either a nonzero nonce,
   -- a nonzero code length, or non-empty storage, then the creation MUST throw
   -- as if the first byte in the init code were an invalid opcode.
-  let i :=
+  let (i, createdAccounts) :=
     if
       existentAccount.nonce ≠ ⟨0⟩
         || existentAccount.code.size ≠ 0
         || existentAccount.storage != default
     then
-      ⟨#[0xfe]⟩
-    else i
+      (⟨#[0xfe]⟩, createdAccounts)
+    else (i, createdAccounts.insert a)
 
   let newAccount : Account :=
     { existentAccount with
