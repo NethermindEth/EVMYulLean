@@ -373,7 +373,6 @@ def step {τ : OperationType} (debugMode : Bool) (op : Operation τ) : Transform
                       , code := code
                       , storage := default
                       , tstorage := default
-                      , ostorage := default
                       }
                     let yulState' :=
                       yulState.setState <|
@@ -532,7 +531,6 @@ def step {τ : OperationType} (debugMode : Bool) (op : Operation τ) : Transform
                   , code := code
                   , storage := default
                   , tstorage := default
-                  , ostorage := default
                   }
                 let yulState' :=
                   yulState.setState <|

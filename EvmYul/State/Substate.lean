@@ -15,19 +15,6 @@ without the requirement of ordering.
 The current goal is to make sure that the model is executable and conformance-testable
 before we make it easy to reason about.
 -/
-def Substate.accountCmp (acc₁ acc₂ : Account) : Ordering :=
-  compareOfLessAndBEq acc₁.storage acc₂.storage
-
-/--
-Not important for reasoning about Substate, this is currently done to get some nice performance properties
-of the `Batteries.RBMap`.
-
-TODO - to reason about the model, we will be better off with `Finset` or some such -
-without the requirement of ordering.
-
-The current goal is to make sure that the model is executable and conformance-testable
-before we make it easy to reason about.
--/
 def Substate.storageKeysCmp (sk₁ sk₂ : AccountAddress × UInt256) : Ordering :=
   lexOrd.compare sk₁ sk₂
 

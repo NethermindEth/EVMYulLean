@@ -95,12 +95,13 @@ with the definition of `C_<>` functions that are described inline along with the
 It would be worth restructing everything to obtain cleaner separation of concerns.
 -/
 def Csstore (s : EVM.State) : ℕ :=
-  let { stack := μₛ, accountMap := σ, executionEnv.codeOwner := Iₐ, .. } := s
+  let { stack := μₛ, accountMap := σ, σ₀ := σ₀, executionEnv.codeOwner := Iₐ, .. } := s
   -- SSTORE should handle missing Iₐ
-  let { storage := σ, ostorage := σ₀, .. } := σ.find! Iₐ
+  let { storage := σ_Iₐ, .. } := σ.find! Iₐ
+  let { storage := σ₀_Iₐ, .. } := σ₀.find! Iₐ
   let storeAddr := μₛ[0]!
-  let v₀ := σ₀.findD storeAddr ⟨0⟩
-  let v := σ.findD storeAddr ⟨0⟩
+  let v₀ := σ₀_Iₐ.findD storeAddr ⟨0⟩
+  let v := σ_Iₐ.findD storeAddr ⟨0⟩
   let v' := μₛ[1]!
   let loadComponent :=
     if s.substate.accessedStorageKeys.contains (Iₐ, storeAddr) then

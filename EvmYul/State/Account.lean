@@ -40,7 +40,6 @@ For now, we assume no global map `GM` with which `GM[code_hash] ≡ code`.
 - `ostorage` holds `σ₀`, not a part of the YP
 -/
 structure Account extends PersistentAccountState where
-  ostorage : Storage
   tstorage : Storage
 deriving BEq, Inhabited, Repr
 

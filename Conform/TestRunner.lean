@@ -80,7 +80,6 @@ def PersistentAccountMap.toEVMState (self : PersistentAccountMap) : EVM.State :=
         balance  := acc.balance
         code     := acc.code
         storage  := acc.storage.toEvmYulStorage
-        ostorage := acc.storage.toEvmYulStorage -- Remember the original storage.
       }
     { s with toState := s.setAccount addr account }
 
@@ -437,6 +436,7 @@ def processBlocks (s₀ : EVM.State) : Except EVM.Exception EVM.State := do
                   .empty
                   s₀.genesisBlockHeader
                   s₀.blocks
+                  s₀.accountMap
                   s₀.accountMap
                   default
                   SYSTEM_ADDRESS

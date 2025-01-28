@@ -23,6 +23,7 @@ The `State`. Section 9.3.
 -/
 structure State where
   accountMap    : AccountMap
+  σ₀            : AccountMap
   remainingGas  : ℕ
   substate      : Substate
   executionEnv  : ExecutionEnv
