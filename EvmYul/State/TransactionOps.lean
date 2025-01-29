@@ -14,10 +14,10 @@ def Transaction.data : Transaction → ByteArray
 def GAS_PER_BLOB := 2^17
 def VERSIONED_HASH_VERSION_KZG : UInt8 := 1
 
-def getTotalBlobGas (t : Transaction) : Option ℕ :=
+def getTotalBlobGas (t : Transaction) : ℕ :=
   match t with
   | .blob t => GAS_PER_BLOB * t.blobVersionedHashes.length
-  | _ => none
+  | _ => 0
 
 def Transaction.blobVersionedHashes (t : Transaction) : List ByteArray :=
   match t with
@@ -25,7 +25,7 @@ def Transaction.blobVersionedHashes (t : Transaction) : List ByteArray :=
   | _ => []
 
 def calcBlobFee (header: BlockHeader) (t : Transaction) : ℕ :=
-  let totalBlobGas := getTotalBlobGas t |>.getD 0
+  let totalBlobGas := getTotalBlobGas t
   totalBlobGas * header.getBlobGasprice
 
 end EvmYul

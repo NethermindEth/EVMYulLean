@@ -273,7 +273,10 @@ def validateTransaction
     match T with
       | .legacy t | .access t => t.gasLimit * t.gasPrice + t.value
       | .dynamic t => t.gasLimit * t.maxFeePerGas + t.value
-      | .blob t    => t.gasLimit * t.maxFeePerGas + t.value + (UInt256.ofNat <| (getTotalBlobGas T).getD 0) * t.maxFeePerBlobGas
+      | .blob t =>
+        t.gasLimit * t.maxFeePerGas
+          + t.value
+          + (UInt256.ofNat (getTotalBlobGas T)) * t.maxFeePerBlobGas
   -- dbg_trace s!"v₀: {v₀}, senderBalance: {senderBalance}"
   if v₀ > senderBalance then .error <| .TransactionException .INSUFFICIENT_ACCOUNT_FUNDS
 
@@ -384,7 +387,12 @@ def validateBlock (parentHeader : BlockHeader) (block : Block)
     throw <| .BlockException .INCORRECT_BLOCK_FORMAT
   | _, _ => pure ()
 
-  let blobGasUsed := List.sum <| Array.data <| block.transactions.map ((Option.getD · 0) ∘  getTotalBlobGas)
+  let MAX_BLOB_GAS_PER_BLOCK := 786432
+  let blobGasUsed ← block.transactions.foldlM (init := 0) λ sum t ↦ do
+    let sum := sum + getTotalBlobGas t
+    if sum > MAX_BLOB_GAS_PER_BLOCK then
+      throw <| .TransactionException .TYPE_3_TX_MAX_BLOB_GAS_ALLOWANCE_EXCEEDED
+    pure sum
 
   match block.blockHeader.blobGasUsed with
     | none => pure ()
@@ -392,7 +400,6 @@ def validateBlock (parentHeader : BlockHeader) (block : Block)
       if blobGasUsed != bGU.toNat then
         throw <| .BlockException .INCORRECT_BLOB_GAS_USED
 
-  let MAX_BLOB_GAS_PER_BLOCK := 786432
   if blobGasUsed > MAX_BLOB_GAS_PER_BLOCK then
     throw <| .BlockException .BLOB_GAS_USED_ABOVE_LIMIT
 

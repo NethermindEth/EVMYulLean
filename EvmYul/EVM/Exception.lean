@@ -100,6 +100,7 @@ inductive TransactionException where
   | NONCE_IS_MAX
   | TYPE_3_TX_BLOB_COUNT_EXCEEDED
   | GAS_ALLOWANCE_EXCEEDED -- TODO: What is this
+  | TYPE_3_TX_MAX_BLOB_GAS_ALLOWANCE_EXCEEDED
 
 /-
   TODO
@@ -109,7 +110,6 @@ inductive TransactionException where
     RLP_INVALID_VALUE
     TYPE_3_TX_CONTRACT_CREATION
     TYPE_3_TX_INVALID_BLOB_VERSIONED_HASH
-    TYPE_3_TX_MAX_BLOB_GAS_ALLOWANCE_EXCEEDED
     TYPE_NOT_SUPPORTED
 -/
 instance : Repr TransactionException where
@@ -132,6 +132,7 @@ instance : Repr TransactionException where
       | .NONCE_IS_MAX => "NONCE_IS_MAX"
       | .TYPE_3_TX_BLOB_COUNT_EXCEEDED => "TYPE_3_TX_BLOB_COUNT_EXCEEDED"
       | .GAS_ALLOWANCE_EXCEEDED => "GAS_ALLOWANCE_EXCEEDED"
+      | .TYPE_3_TX_MAX_BLOB_GAS_ALLOWANCE_EXCEEDED => "TYPE_3_TX_MAX_BLOB_GAS_ALLOWANCE_EXCEEDED"
 
 -- TODO - fix / cleanup.
 inductive Exception where
