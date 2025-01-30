@@ -115,10 +115,7 @@ structure TestEntry :=
 
 abbrev Test := Batteries.RBMap String TestEntry compare
 
-structure AccessListEntry :=
-  address     : AccountAddress
-  storageKeys : Array UInt256
-  deriving Inhabited, Repr
+abbrev AccessListEntry := AccountAddress × Array UInt256
 
 abbrev AccessList := Array AccessListEntry
 

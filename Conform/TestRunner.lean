@@ -296,7 +296,7 @@ def validateTransaction
  where
   L_X (T : Transaction) : Except EVM.Exception 𝕋 := -- (317)
     let accessEntryRLP : AccountAddress × Array UInt256 → 𝕋
-      | ⟨a, s⟩ => .𝕃 [.𝔹 (AccountAddress.toByteArray a), .𝕃 (s.map (𝕋.𝔹 ∘ UInt256.toByteArray)).toList]
+      | ⟨a, s⟩ => .𝕃 [.𝔹 a.toByteArray, .𝕃 (s.map (.𝔹 ∘ UInt256.toByteArray)).toList]
     let accessEntriesRLP (aEs : List (AccountAddress × Array UInt256)) : 𝕋 :=
       .𝕃 (aEs.map accessEntryRLP)
     match T with
@@ -339,7 +339,7 @@ def validateTransaction
             .𝔹 (t.recipient.option .empty AccountAddress.toByteArray) -- Tₜ
           , .𝔹 (BE t.value.toNat) -- T_v
           , .𝔹 t.data  -- p
-          , accessEntriesRLP <| Batteries.RBSet.toList t.accessList -- T_A
+          , accessEntriesRLP t.accessList -- T_A
           ]
       | /- 2 -/ .dynamic t =>
         .ok ∘ .𝕃 <|
@@ -352,7 +352,7 @@ def validateTransaction
             .𝔹 (t.recipient.option .empty AccountAddress.toByteArray) -- Tₜ
           , .𝔹 (BE t.value.toNat) -- Tᵥ
           , .𝔹 t.data -- p
-          , accessEntriesRLP <| Batteries.RBSet.toList t.accessList -- T_A
+          , accessEntriesRLP t.accessList -- T_A
           ]
       | /- 3 -/ .blob t =>
         .ok ∘ .𝕃 <|
@@ -365,7 +365,7 @@ def validateTransaction
             .𝔹 (t.recipient.option .empty AccountAddress.toByteArray) -- Tₜ
           , .𝔹 (BE t.value.toNat) -- Tᵥ
           , .𝔹 t.data -- p
-          , accessEntriesRLP <| Batteries.RBSet.toList t.accessList -- T_A
+          , accessEntriesRLP t.accessList -- T_A
           , .𝔹 (BE t.maxFeePerBlobGas.toNat)
           , .𝕃 (t.blobVersionedHashes.map .𝔹)
           ]

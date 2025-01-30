@@ -124,10 +124,9 @@ instance : FromJson BlockHeader where
 
 instance : FromJson AccessListEntry where
   fromJson? json := do
-    pure {
-      address     := ← json.getObjValAs? AccountAddress         "address"
-      storageKeys := ← json.getObjValAs? (Array UInt256) "storageKeys"
-    }
+    let address     := ← json.getObjValAs? AccountAddress "address"
+    let storageKeys := ← json.getObjValAs? (Array UInt256) "storageKeys"
+    pure (address, storageKeys)
 
 instance : FromJson Withdrawal where
   fromJson? json := do
@@ -165,7 +164,7 @@ instance : FromJson Transaction where
         let accessListTransaction : Transaction.WithAccessList :=
           {
             chainId    := ← json.getObjValAsD UInt256 "chainId" ⟨1⟩
-            accessList := ← FromJson.fromJson? accessList <&> accessListToRBMap
+            accessList := ← FromJson.fromJson? accessList
             yParity    := ← json.getObjValAsD! UInt256 "v"
           }
 
@@ -193,8 +192,6 @@ instance : FromJson Transaction where
                   ⟩
 
 
-  where accessListToRBMap (this : AccessList) : Batteries.RBMap AccountAddress (Array UInt256) compare :=
-    this.foldl (init := ∅) λ m ⟨addr, list⟩ ↦ m.insert addr list
 
 -- #eval DebuggingAndProfiling.testJsonParser Transaction r#"
 --                     {

@@ -1056,11 +1056,13 @@ def Υ (debugMode : Bool) (fuel : ℕ)
   let σ₀ := σ.insert S_T senderAccount
   let accessList := T.getAccessList
   let AStar_K : List (AccountAddress × UInt256) := do -- (78)
-    let ⟨Eₐ, Eₛ⟩ ← accessList.toList
+    let ⟨Eₐ, Eₛ⟩ ← accessList
     let eₛ ← Eₛ.toList
     pure (Eₐ, eₛ)
   let a := -- (80)
-    A0.accessedAccounts.insert S_T |>.insert H.beneficiary |>.union <| Batteries.RBSet.ofList (accessList.map Prod.fst).toList compare
+    A0.accessedAccounts.insert S_T
+      |>.insert H.beneficiary
+      |>.union <| Batteries.RBSet.ofList (accessList.map Prod.fst) compare
   -- (81)
   let g := .ofNat <| T.base.gasLimit.toNat - g₀
   let AStarₐ := -- (79)
