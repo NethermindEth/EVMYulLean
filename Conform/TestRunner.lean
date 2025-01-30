@@ -190,16 +190,16 @@ def validateTransaction
   : Except EVM.Exception AccountAddress
 := do
   if T.base.nonce.toNat ≥ 2^64-1 then
-    .error <| .TransactionException .NONCE_IS_MAX
+    throw <| .TransactionException .NONCE_IS_MAX
 
   let g₀ : ℕ := EVM.intrinsicGas T
   if T.base.gasLimit.toNat < g₀ then
-    .error <| .TransactionException .INTRINSIC_GAS_TOO_LOW
+    throw <| .TransactionException .INTRINSIC_GAS_TOO_LOW
 
   match T with
     | .dynamic t =>
       if t.maxPriorityFeePerGas > t.maxFeePerGas then
-        .error <| .TransactionException .PRIORITY_GREATER_THAN_MAX_FEE_PER_GAS
+        throw <| .TransactionException .PRIORITY_GREATER_THAN_MAX_FEE_PER_GAS
     | _ => pure ()
 
   match T.base.recipient with
@@ -207,21 +207,21 @@ def validateTransaction
       let MAX_CODE_SIZE := 24576
       let MAX_INITCODE_SIZE := 2 * MAX_CODE_SIZE
       if T.base.data.size > MAX_INITCODE_SIZE then
-        .error <| .TransactionException .INITCODE_SIZE_EXCEEDED
+        throw <| .TransactionException .INITCODE_SIZE_EXCEEDED
     | some _ => pure ()
 
   let H_f := header.baseFeePerGas
-  let some T_RLP := RLP (← (L_X T)) | .error <| .TransactionException .IllFormedRLP
+  let some T_RLP := RLP (← (L_X T)) | throw <| .TransactionException .IllFormedRLP
 
   -- let g₀ : ℕ := EVM.intrinsicGas T
 
   -- if T.base.gasLimit.toNat < g₀ then
-  --   .error <| .TransactionException .INTRINSIC_GAS_TOO_LOW
+  --   throw <| .TransactionException .INTRINSIC_GAS_TOO_LOW
 
   let r : ℕ := fromBytesBigEndian T.base.r.data.data
   let s : ℕ := fromBytesBigEndian T.base.s.data.data
-  if 0 ≥ r ∨ r ≥ secp256k1n then .error <| .TransactionException .InvalidSignature
-  if 0 ≥ s ∨ s > secp256k1n / 2 then .error <| .TransactionException .InvalidSignature
+  if 0 ≥ r ∨ r ≥ secp256k1n then throw <| .TransactionException .InvalidSignature
+  if 0 ≥ s ∨ s > secp256k1n / 2 then throw <| .TransactionException .InvalidSignature
   let v : ℕ := -- (324)
     match T with
       | .legacy t =>
@@ -234,7 +234,7 @@ def validateTransaction
           else
             w
       | .access t | .dynamic t | .blob t => t.yParity.toNat
-  if v ∉ [0, 1] then .error <| .TransactionException .InvalidSignature
+  if v ∉ [0, 1] then throw <| .TransactionException .InvalidSignature
 
   let h_T := -- (318)
     match T with
@@ -246,7 +246,7 @@ def validateTransaction
       | .ok s =>
         pure <| Fin.ofNat <| fromBytesBigEndian <|
           ((KEC s).extract 12 32 /- 160 bits = 20 bytes -/ ).data.data
-      | .error s => .error <| .SenderRecoverError s
+      | .error s => throw <| .SenderRecoverError s
   -- if S_T != expectedSender then
   --   dbg_trace s!"Recovered sender ({EvmYul.toHex S_T.toByteArray}) ≠ expected sender ({EvmYul.toHex expectedSender.toByteArray})"
   -- dbg_trace s!"Looking for S_T: {S_T} in: σ: {repr σ}"
@@ -260,19 +260,26 @@ def validateTransaction
         (.empty, ⟨0⟩, ⟨0⟩)
 
 
-  if senderCode ≠ .empty then .error <| .TransactionException .SENDER_NOT_EOA
-  if T.base.nonce < senderNonce  then .error <| .TransactionException .NONCE_MISMATCH_TOO_LOW
-  if T.base.nonce > senderNonce then .error <| .TransactionException .NONCE_MISMATCH_TOO_HIGH
-  let v₀ :=
+  if senderCode ≠ .empty then throw <| .TransactionException .SENDER_NOT_EOA
+  if T.base.nonce < senderNonce then
+    throw <| .TransactionException .NONCE_MISMATCH_TOO_LOW
+  if T.base.nonce > senderNonce then
+    throw <| .TransactionException .NONCE_MISMATCH_TOO_HIGH
+  let v₀ ← do
     match T with
-      | .legacy t | .access t => t.gasLimit * t.gasPrice + t.value
-      | .dynamic t => t.gasLimit * t.maxFeePerGas + t.value
+      | .legacy t | .access t =>
+        if t.gasLimit.toNat * t.gasPrice.toNat > 2^256 then
+          throw <| .TransactionException .GASLIMIT_PRICE_PRODUCT_OVERFLOW
+        pure <| t.gasLimit * t.gasPrice + t.value
+      | .dynamic t => pure <|  t.gasLimit * t.maxFeePerGas + t.value
       | .blob t =>
-        t.gasLimit * t.maxFeePerGas
+        pure <|
+          t.gasLimit * t.maxFeePerGas
           + t.value
           + (UInt256.ofNat (getTotalBlobGas T)) * t.maxFeePerBlobGas
   -- dbg_trace s!"v₀: {v₀}, senderBalance: {senderBalance}"
-  if v₀ > senderBalance then .error <| .TransactionException .INSUFFICIENT_ACCOUNT_FUNDS
+  if v₀ > senderBalance then
+    throw <| .TransactionException .INSUFFICIENT_ACCOUNT_FUNDS
 
   let maxFeePerGas :=
     /-
@@ -291,7 +298,7 @@ def validateTransaction
     match T.base.recipient with
       | some _ => T.base.data.size
       | none => 0
-  if n > 49152 then .error <| .TransactionException .INITCODE_SIZE_EXCEEDED
+  if n > 49152 then throw <| .TransactionException .INITCODE_SIZE_EXCEEDED
   pure S_T
 
  where
@@ -328,7 +335,7 @@ def validateTransaction
               ]
           else
             dbg_trace "IllFormedRLP legacy transacion: Tw = {t.w}; chainId = {chainId}"
-            .error <| .TransactionException .IllFormedRLP
+            throw <| .TransactionException .IllFormedRLP
 
       | /- 1 -/ .access t =>
         .ok ∘ .𝕃 <|
@@ -390,31 +397,53 @@ def validateBlock (parentHeader : BlockHeader) (block : Block)
 
   -- TODO: Traverse transactions only once
   let MAX_BLOB_GAS_PER_BLOCK := 786432
-  let blobGasUsed ← block.transactions.foldlM (init := 0) λ sum t ↦ do
-    let sum := sum + getTotalBlobGas t
-    if sum > MAX_BLOB_GAS_PER_BLOCK then
-      throw <| .TransactionException .TYPE_3_TX_MAX_BLOB_GAS_ALLOWANCE_EXCEEDED
-    pure sum
+  let (blobGasUsed, _) ← block.transactions.foldlM (init := (0, 0))
+    λ (blobSum, sum) t ↦ do
+      match t with
+        | .blob bt => do
+          if t.base.recipient = none then
+            throw <| .TransactionException .TYPE_3_TX_CONTRACT_CREATION
+          if bt.maxFeePerBlobGas.toNat < block.blockHeader.getBlobGasprice then
+            .error (.TransactionException .INSUFFICIENT_MAX_FEE_PER_BLOB_GAS)
+          if bt.blobVersionedHashes.length > 6 then
+            throw <| .TransactionException .TYPE_3_TX_BLOB_COUNT_EXCEEDED
+          if bt.blobVersionedHashes.length = 0 then
+            throw <| .TransactionException .TYPE_3_TX_ZERO_BLOBS
+          if bt.blobVersionedHashes.any (λ h ↦ h[0]? != .some VERSIONED_HASH_VERSION_KZG) then
+            throw <| .TransactionException .TYPE_3_TX_INVALID_BLOB_VERSIONED_HASH
+        | _ => pure ()
 
-  let _ ← block.transactions.foldlM (init := 0) λ sum t ↦ do
-    let sum := sum + t.base.gasLimit.toNat
-    if sum > block.blockHeader.gasLimit then
-      throw <| .TransactionException .GAS_ALLOWANCE_EXCEEDED
-    pure sum
+      let blobSum := blobSum + getTotalBlobGas t
+      if blobSum > MAX_BLOB_GAS_PER_BLOCK then
+        throw <| .TransactionException .TYPE_3_TX_MAX_BLOB_GAS_ALLOWANCE_EXCEEDED
 
-  let _ ← block.transactions.forM λ t ↦
-    match t with
-      | .blob bt => do
-        if t.base.recipient = none then
-          throw <| .TransactionException .TYPE_3_TX_CONTRACT_CREATION
-        if bt.maxFeePerBlobGas.toNat < block.blockHeader.getBlobGasprice then
-          .error (.TransactionException .INSUFFICIENT_MAX_FEE_PER_BLOB_GAS)
-        match bt.blobVersionedHashes with
-          | [] => throw <| .TransactionException .TYPE_3_TX_ZERO_BLOBS
-          | hs =>
-            if hs.any (λ h ↦ h[0]? != .some VERSIONED_HASH_VERSION_KZG) then
-              throw <| .TransactionException .TYPE_3_TX_INVALID_BLOB_VERSIONED_HASH
-      | _ => pure ()
+      let sum := sum + t.base.gasLimit.toNat
+      if sum > block.blockHeader.gasLimit then
+        throw <| .TransactionException .GAS_ALLOWANCE_EXCEEDED
+
+      pure (blobSum, sum)
+
+  -- let _ ← block.transactions.foldlM (init := 0) λ sum t ↦ do
+  --   let sum := sum + t.base.gasLimit.toNat
+  --   if sum > block.blockHeader.gasLimit then
+  --     throw <| .TransactionException .GAS_ALLOWANCE_EXCEEDED
+  --   pure sum
+
+  -- let _ ← block.transactions.forM λ t ↦
+  --   match t with
+  --     | .blob bt => do
+  --       if t.base.recipient = none then
+  --         throw <| .TransactionException .TYPE_3_TX_CONTRACT_CREATION
+  --       if bt.maxFeePerBlobGas.toNat < block.blockHeader.getBlobGasprice then
+  --         .error (.TransactionException .INSUFFICIENT_MAX_FEE_PER_BLOB_GAS)
+  --       match bt.blobVersionedHashes with
+  --         | [] => throw <| .TransactionException .TYPE_3_TX_ZERO_BLOBS
+  --         | _::_::_::_::_::_::_ =>
+  --           throw <| .TransactionException .TYPE_3_TX_BLOB_COUNT_EXCEEDED
+  --         | hs =>
+  --           if hs.any (λ h ↦ h[0]? != .some VERSIONED_HASH_VERSION_KZG) then
+  --             throw <| .TransactionException .TYPE_3_TX_INVALID_BLOB_VERSIONED_HASH
+  --     | _ => pure ()
 
   match block.blockHeader.blobGasUsed with
     | none => pure ()
@@ -484,7 +513,7 @@ def processBlocks (s₀ : EVM.State) : Except EVM.Exception EVM.State := do
                 match beaconCallResult with
                   | .ok (createdAccounts, σ, _, substate, _ /- can't fail-/, _) =>
                     pure (createdAccounts, σ, substate)
-                  | .error e => .error <| .ExecutionException e
+                  | .error e => throw <| .ExecutionException e
               let s :=
                 {s₀ with
                   -- createdAccounts := createdAccounts
