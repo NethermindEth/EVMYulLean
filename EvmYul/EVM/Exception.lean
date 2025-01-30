@@ -89,7 +89,6 @@ inductive TransactionException where
   | NONCE_MISMATCH_TOO_HIGH
   | SENDER_NOT_EOA
   | INSUFFICIENT_ACCOUNT_FUNDS
-  | BaseFeeTooHigh
   | InconsistentFees
   | TYPE_3_TX_ZERO_BLOBS
   | TYPE_3_TX_PRE_FORK -- TODO: No "Cancun" test needs this
@@ -121,7 +120,6 @@ instance : Repr TransactionException where
       | .NONCE_MISMATCH_TOO_HIGH   => "NONCE_MISMATCH_TOO_HIGH"
       | .SENDER_NOT_EOA   => "SENDER_NOT_EOA"
       | .INSUFFICIENT_ACCOUNT_FUNDS => "INSUFFICIENT_ACCOUNT_FUNDS"
-      | .BaseFeeTooHigh       => "BaseFeeTooHigh"
       | .InconsistentFees     => "InconsistentFees"
       | .TYPE_3_TX_ZERO_BLOBS => "TYPE_3_TX_ZERO_BLOBS"
       | .TYPE_3_TX_PRE_FORK => "TYPE_3_TX_PRE_FORK"
