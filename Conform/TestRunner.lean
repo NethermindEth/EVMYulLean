@@ -405,6 +405,8 @@ def validateBlock (parentHeader : BlockHeader) (block : Block)
   let _ ← block.transactions.forM λ t ↦
     match t with
       | .blob bt => do
+        if t.base.recipient = none then
+          throw <| .TransactionException .TYPE_3_TX_CONTRACT_CREATION
         if bt.maxFeePerBlobGas.toNat < block.blockHeader.getBlobGasprice then
           .error (.TransactionException .INSUFFICIENT_MAX_FEE_PER_BLOB_GAS)
         match bt.blobVersionedHashes with
