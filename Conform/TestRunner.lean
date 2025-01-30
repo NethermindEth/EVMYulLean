@@ -280,11 +280,18 @@ def validateTransaction
   -- dbg_trace s!"v₀: {v₀}, senderBalance: {senderBalance}"
   if v₀ > senderBalance then .error <| .TransactionException .INSUFFICIENT_ACCOUNT_FUNDS
 
-  if H_f >
+  let maxFeePerGas :=
+    /-
+      The test `lowGasPriceOldTypes_d0g0v0_Cancun` expects an
+      `INSUFFICIENT_MAX_FEE_PER_GAS`, but its transaction doesn't have a
+      `maxFeePerGas` field. We use `gasPrice` instead.
+      See the 7th test for intrinsic validity, Yellow Paper, Chapter 7
+    -/
     match T with
-      | .dynamic t | .blob t => t.maxFeePerGas.toNat
-      | .legacy t | .access t => t.gasPrice.toNat
-  then .error <| .TransactionException .BaseFeeTooHigh
+      | .dynamic t | .blob t => t.maxFeePerGas
+      | .legacy t | .access t => t.gasPrice
+  if H_f > maxFeePerGas.toNat then
+    throw <| .TransactionException .INSUFFICIENT_MAX_FEE_PER_GAS
 
   let n :=
     match T.base.recipient with
