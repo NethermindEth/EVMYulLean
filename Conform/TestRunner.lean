@@ -402,6 +402,12 @@ def validateBlock (parentHeader : BlockHeader) (block : Block)
       throw <| .TransactionException .TYPE_3_TX_MAX_BLOB_GAS_ALLOWANCE_EXCEEDED
     pure sum
 
+  let _ ← block.transactions.foldlM (init := 0) λ sum t ↦ do
+    let sum := sum + t.base.gasLimit.toNat
+    if sum > block.blockHeader.gasLimit then
+      throw <| .TransactionException .GAS_ALLOWANCE_EXCEEDED
+    pure sum
+
   match block.blockHeader.blobGasUsed with
     | none => pure ()
     | some bGU =>
