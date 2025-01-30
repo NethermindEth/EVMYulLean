@@ -205,7 +205,8 @@ def validateTransaction
           if hs.any (λ h ↦ h[0]? != .some VERSIONED_HASH_VERSION_KZG) then
             .error (.TransactionException .TYPE_3_TX_ZERO_BLOBS)
     | .dynamic t =>
-      if t.maxPriorityFeePerGas > t.maxFeePerGas then .error <| .TransactionException .InconsistentFees
+      if t.maxPriorityFeePerGas > t.maxFeePerGas then
+        .error <| .TransactionException .PRIORITY_GREATER_THAN_MAX_FEE_PER_GAS
     | _ => pure ()
 
   match T.base.recipient with

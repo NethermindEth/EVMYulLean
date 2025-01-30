@@ -89,7 +89,7 @@ inductive TransactionException where
   | NONCE_MISMATCH_TOO_HIGH
   | SENDER_NOT_EOA
   | INSUFFICIENT_ACCOUNT_FUNDS
-  | InconsistentFees
+  | PRIORITY_GREATER_THAN_MAX_FEE_PER_GAS
   | TYPE_3_TX_ZERO_BLOBS
   | TYPE_3_TX_PRE_FORK -- TODO: No "Cancun" test needs this
   | INTRINSIC_GAS_TOO_LOW
@@ -120,7 +120,7 @@ instance : Repr TransactionException where
       | .NONCE_MISMATCH_TOO_HIGH   => "NONCE_MISMATCH_TOO_HIGH"
       | .SENDER_NOT_EOA   => "SENDER_NOT_EOA"
       | .INSUFFICIENT_ACCOUNT_FUNDS => "INSUFFICIENT_ACCOUNT_FUNDS"
-      | .InconsistentFees     => "InconsistentFees"
+      | .PRIORITY_GREATER_THAN_MAX_FEE_PER_GAS     => "PRIORITY_GREATER_THAN_MAX_FEE_PER_GAS"
       | .TYPE_3_TX_ZERO_BLOBS => "TYPE_3_TX_ZERO_BLOBS"
       | .TYPE_3_TX_PRE_FORK => "TYPE_3_TX_PRE_FORK"
       | .INTRINSIC_GAS_TOO_LOW => "INTRINSIC_GAS_TOO_LOW"
