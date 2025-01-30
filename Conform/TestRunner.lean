@@ -197,13 +197,6 @@ def validateTransaction
     .error <| .TransactionException .INTRINSIC_GAS_TOO_LOW
 
   match T with
-    | .blob t =>
-      if t.maxFeePerBlobGas.toNat < header.getBlobGasprice then .error (.TransactionException .INSUFFICIENT_MAX_FEE_PER_BLOB_GAS)
-      match t.blobVersionedHashes with
-        | [] => .error (.TransactionException .TYPE_3_TX_ZERO_BLOBS)
-        | hs =>
-          if hs.any (λ h ↦ h[0]? != .some VERSIONED_HASH_VERSION_KZG) then
-            .error (.TransactionException .TYPE_3_TX_ZERO_BLOBS)
     | .dynamic t =>
       if t.maxPriorityFeePerGas > t.maxFeePerGas then
         .error <| .TransactionException .PRIORITY_GREATER_THAN_MAX_FEE_PER_GAS
@@ -395,6 +388,7 @@ def validateBlock (parentHeader : BlockHeader) (block : Block)
     throw <| .BlockException .INCORRECT_BLOCK_FORMAT
   | _, _ => pure ()
 
+  -- TODO: Traverse transactions only once
   let MAX_BLOB_GAS_PER_BLOCK := 786432
   let blobGasUsed ← block.transactions.foldlM (init := 0) λ sum t ↦ do
     let sum := sum + getTotalBlobGas t
@@ -407,6 +401,18 @@ def validateBlock (parentHeader : BlockHeader) (block : Block)
     if sum > block.blockHeader.gasLimit then
       throw <| .TransactionException .GAS_ALLOWANCE_EXCEEDED
     pure sum
+
+  let _ ← block.transactions.forM λ t ↦
+    match t with
+      | .blob bt => do
+        if bt.maxFeePerBlobGas.toNat < block.blockHeader.getBlobGasprice then
+          .error (.TransactionException .INSUFFICIENT_MAX_FEE_PER_BLOB_GAS)
+        match bt.blobVersionedHashes with
+          | [] => throw <| .TransactionException .TYPE_3_TX_ZERO_BLOBS
+          | hs =>
+            if hs.any (λ h ↦ h[0]? != .some VERSIONED_HASH_VERSION_KZG) then
+              throw <| .TransactionException .TYPE_3_TX_INVALID_BLOB_VERSIONED_HASH
+      | _ => pure ()
 
   match block.blockHeader.blobGasUsed with
     | none => pure ()
