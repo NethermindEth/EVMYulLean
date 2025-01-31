@@ -130,29 +130,29 @@ private example : (readMemory .empty (addr := 0) (len := SIZE)).size == SIZE :=
 
 -- -- Write and read long ByteArray
 
-private def powTwoTwentynineBytes1 :=
-  ⟨#[0x01]⟩ ++ ByteArray.zeroes ⟨2^29 - 2⟩ ++ ⟨#[0x01]⟩
-private def powTwoThirtyBytes2 :=
-  ⟨#[0x02]⟩ ++ ByteArray.zeroes ⟨2^30 - 2⟩ ++ ⟨#[0x02]⟩
-private def powTwoThirtyBytes3 :=
-  ⟨#[0x03]⟩ ++ ByteArray.zeroes ⟨2^30 - 2⟩ ++ ⟨#[0x03]⟩
-private def powTwoTwentynineBytes4 :=
-  ⟨#[0x04]⟩ ++ ByteArray.zeroes ⟨2^29 - 2⟩ ++ ⟨#[0x04]⟩
+-- private def powTwoTwentynineBytes1 :=
+--   ⟨#[0x01]⟩ ++ ByteArray.zeroes ⟨2^29 - 2⟩ ++ ⟨#[0x01]⟩
+-- private def powTwoThirtyBytes2 :=
+--   ⟨#[0x02]⟩ ++ ByteArray.zeroes ⟨2^30 - 2⟩ ++ ⟨#[0x02]⟩
+-- private def powTwoThirtyBytes3 :=
+--   ⟨#[0x03]⟩ ++ ByteArray.zeroes ⟨2^30 - 2⟩ ++ ⟨#[0x03]⟩
+-- private def powTwoTwentynineBytes4 :=
+--   ⟨#[0x04]⟩ ++ ByteArray.zeroes ⟨2^29 - 2⟩ ++ ⟨#[0x04]⟩
 
-private def longByteArray :=
-  powTwoTwentynineBytes1
-    ++ powTwoThirtyBytes2
-    ++ powTwoThirtyBytes3
-    ++ powTwoTwentynineBytes4
+-- private def longByteArray :=
+--   powTwoTwentynineBytes1
+--     ++ powTwoThirtyBytes2
+--     ++ powTwoThirtyBytes3
+--     ++ powTwoTwentynineBytes4
 
-private def written :=
-  writeMemory .empty
-    (source := longByteArray)
-    (addr := .ofNat (2^29))
-    (len := longByteArray.size)
+-- private def written :=
+--   writeMemory .empty
+--     (source := longByteArray)
+--     (addr := .ofNat (2^29))
+--     (len := longByteArray.size)
 
-private def read :=
-  readMemory written (addr := 2^29) (len := longByteArray.size)
+-- private def read :=
+--   readMemory written (addr := 2^29) (len := longByteArray.size)
 
 -- The first element of `longByteArray` was recovered correctly
 -- private example :

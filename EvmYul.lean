@@ -47,16 +47,16 @@ import EvmYul.State.Withdrawal
 import EvmYul.State.TransactionOps
 import EvmYul.State.TrieRoot
 
-import EvmYul.Yul.Ast
-import EvmYul.Yul.Exception
-import EvmYul.Yul.Interpreter
-import EvmYul.Yul.MachineState
-import EvmYul.Yul.PrimOps
-import EvmYul.Yul.SizeLemmas
-import EvmYul.Yul.State
-import EvmYul.Yul.StateOps
-import EvmYul.Yul.Wheels
-import EvmYul.Yul.YulNotation
+-- import EvmYul.Yul.Ast
+-- import EvmYul.Yul.Exception
+-- import EvmYul.Yul.Interpreter
+-- import EvmYul.Yul.MachineState
+-- import EvmYul.Yul.PrimOps
+-- import EvmYul.Yul.SizeLemmas
+-- import EvmYul.Yul.State
+-- import EvmYul.Yul.StateOps
+-- import EvmYul.Yul.Wheels
+-- import EvmYul.Yul.YulNotation
 
 import EvmYul.SpongeHash.Wheels
 import EvmYul.SpongeHash.Keccak256

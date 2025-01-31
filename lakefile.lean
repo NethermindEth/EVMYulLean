@@ -1,9 +1,8 @@
 import Lake
 open Lake DSL
 
-require mathlib from git
-  "https://github.com/leanprover-community/mathlib4.git"@"f0957a7575317490107578ebaee9efaf8e62a4ab"
-  
+require "leanprover-community" / "mathlib" @ git "v4.16.0-rc2"
+
 package «evmyul» {
   moreLeanArgs := #["-DautoImplicit=false"]
   moreServerOptions := #[⟨`DautoImplicit, false⟩]

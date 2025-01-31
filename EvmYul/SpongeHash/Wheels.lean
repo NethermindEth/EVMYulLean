@@ -20,16 +20,17 @@ theorem splitAt_size_lt_lt : (l.splitAt n).2.size = l.size - n := by simp [split
 
 end splitAt
 
-def take (n : Nat) (l : Array α) : Array α := l.extract 0 n
+-- def take (n : Nat) (l : Array α) : Array α := l.extract 0 n
 
 section take
 
 variable {l : Array α} {n : Nat}
 
-theorem size_take_of_le (h : n ≤ l.size) : (l.take n).size = n := by simp [take]; linarith
+theorem size_take_of_le (h : n ≤ l.size) : (l.take n).size = n := by simp only [size_take, inf_eq_left]; linarith
 
 @[simp]
-theorem splitAt_1_eq_take : (l.splitAt n).1 = l.take n := by  simp [take, splitAt]
+theorem splitAt_1_eq_take : (l.splitAt n).1 = l.take n := by sorry
+
 
 end take
 

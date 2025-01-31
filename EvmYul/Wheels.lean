@@ -1,3 +1,4 @@
+import Batteries.Data.ByteArray
 import EvmYul.UInt256
 import Mathlib.Data.Finmap
 
@@ -105,7 +106,7 @@ def Option.toExceptWith {α β : Type} (dflt : β) (x : Option α) : Except β �
 
 def ByteArray.get? (self : ByteArray) (n : Nat) : Option UInt8 :=
   if h : n < self.size
-  then self.get ⟨n, h⟩
+  then self.get n h
   else .none
 
 partial def Nat.toHex (n : Nat) : String :=
