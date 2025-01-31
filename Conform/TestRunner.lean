@@ -399,6 +399,10 @@ def validateBlock (parentHeader : BlockHeader) (block : Block)
   let MAX_BLOB_GAS_PER_BLOCK := 786432
   let (blobGasUsed, _) ← block.transactions.foldlM (init := (0, 0))
     λ (blobSum, sum) t ↦ do
+      let blobSum := blobSum + getTotalBlobGas t
+      if blobSum > MAX_BLOB_GAS_PER_BLOCK then
+        throw <| .TransactionException .TYPE_3_TX_MAX_BLOB_GAS_ALLOWANCE_EXCEEDED
+
       match t with
         | .blob bt => do
           if t.base.recipient = none then
@@ -412,10 +416,6 @@ def validateBlock (parentHeader : BlockHeader) (block : Block)
           if bt.blobVersionedHashes.any (λ h ↦ h[0]? != .some VERSIONED_HASH_VERSION_KZG) then
             throw <| .TransactionException .TYPE_3_TX_INVALID_BLOB_VERSIONED_HASH
         | _ => pure ()
-
-      let blobSum := blobSum + getTotalBlobGas t
-      if blobSum > MAX_BLOB_GAS_PER_BLOCK then
-        throw <| .TransactionException .TYPE_3_TX_MAX_BLOB_GAS_ALLOWANCE_EXCEEDED
 
       let sum := sum + t.base.gasLimit.toNat
       if sum > block.blockHeader.gasLimit then
