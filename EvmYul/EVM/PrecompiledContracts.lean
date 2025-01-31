@@ -154,10 +154,10 @@ private def ripOutput :=
         inputData := longInput.toUTF8
       }
   o
+
 private example :
   EvmYul.toHex ripOutput = "0000000000000000000000005cff4c1668e5542c74a609a3146427c28e51ff5a"
 := by native_decide
-
 
 def Ξ_ID
   (σ : AccountMap)

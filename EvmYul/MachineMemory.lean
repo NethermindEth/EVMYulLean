@@ -1,5 +1,3 @@
-import FastMemset
-
 import Batteries
 
 import EvmYul.Maps.ByteMap

@@ -1,10 +1,10 @@
-import FastMemset
-
 import EvmYul.UInt256
 import Mathlib.Data.Finmap
 
 -- (195)
 def BE : ℕ → ByteArray := List.toByteArray ∘ EvmYul.toBytesBigEndian
+
+def ByteArray.zeroes (n : USize) := ByteArray.ofFn (λ _ : Fin n.toNat ↦ 0)
 
 namespace EvmYul
 
