@@ -763,7 +763,7 @@ def Lambda
   let lₐ ← L_A s n ζ i
   let a : AccountAddress := -- (94) (95)
     (KEC lₐ).extract 12 32 /- 160 bits = 20 bytes -/
-      |>.data.data |> fromBytesBigEndian |> Fin.ofNat
+      |> fromByteArrayBigEndian |> Fin.ofNat
 
 
   -- dbg_trace s!"New address: {toHex a.toByteArray} added to createdAccounts"

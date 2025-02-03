@@ -77,7 +77,7 @@ TODO - Currently a debug version.
 def lookupMemory (self : MachineState) (addr : UInt256) : UInt256 :=
   if addr.toNat ≥ self.memory.size ∨ addr ≥ self.activeWords * ⟨32⟩ then ⟨0⟩ else
     let bytes := self.memory.readWithPadding addr.toNat 32
-    let val := fromBytesBigEndian bytes.data.data
+    let val := fromByteArrayBigEndian bytes
     .ofNat val
 
 -- /--
@@ -196,7 +196,7 @@ def keccak256 (self : MachineState) (mstart s : UInt256) : UInt256 × MachineSta
   -- dbg_trace s!"got kec {kec}"
   let newMachineState :=
     { self with activeWords := .ofNat (M self.activeWords.toNat mstart.toNat s.toNat) }
-  (.ofNat (fromBytesBigEndian kec.data.data), newMachineState)
+  (.ofNat (fromByteArrayBigEndian kec), newMachineState)
 
 section Gas
 

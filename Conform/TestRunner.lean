@@ -218,8 +218,8 @@ def validateTransaction
   -- if T.base.gasLimit.toNat < g₀ then
   --   throw <| .TransactionException .INTRINSIC_GAS_TOO_LOW
 
-  let r : ℕ := fromBytesBigEndian T.base.r.data.data
-  let s : ℕ := fromBytesBigEndian T.base.s.data.data
+  let r : ℕ := fromByteArrayBigEndian T.base.r
+  let s : ℕ := fromByteArrayBigEndian T.base.s
   if 0 ≥ r ∨ r ≥ secp256k1n then throw <| .TransactionException .InvalidSignature
   if 0 ≥ s ∨ s > secp256k1n / 2 then throw <| .TransactionException .InvalidSignature
   let v : ℕ := -- (324)
@@ -244,8 +244,8 @@ def validateTransaction
   let (S_T : AccountAddress) ← -- (323)
     match ECDSARECOVER h_T (ByteArray.mk #[.ofNat v]) T.base.r T.base.s with
       | .ok s =>
-        pure <| Fin.ofNat <| fromBytesBigEndian <|
-          ((KEC s).extract 12 32 /- 160 bits = 20 bytes -/ ).data.data
+        pure <| Fin.ofNat <| fromByteArrayBigEndian <|
+          (KEC s).extract 12 32 /- 160 bits = 20 bytes -/
       | .error s => throw <| .SenderRecoverError s
   -- if S_T != expectedSender then
   --   dbg_trace s!"Recovered sender ({EvmYul.toHex S_T.toByteArray}) ≠ expected sender ({EvmYul.toHex expectedSender.toByteArray})"

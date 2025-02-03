@@ -34,9 +34,9 @@ def Ξ_ECREC
     let v := d.readBytes 32 32
     let r := d.readBytes 64 32
     let s := d.readBytes 96 32
-    let v' : ℕ := fromBytesBigEndian v.data.data
-    let r' : ℕ := fromBytesBigEndian r.data.data
-    let s' : ℕ := fromBytesBigEndian s.data.data
+    let v' : ℕ := fromByteArrayBigEndian v
+    let r' : ℕ := fromByteArrayBigEndian r
+    let s' : ℕ := fromByteArrayBigEndian s
     let o :=
       if v' < 27 || 28 < v' || r' = 0 || r' >= secp256k1n || s' = 0 || s' >= secp256k1n then
         .empty
@@ -200,7 +200,7 @@ def nat_of_slice
 :=
   let slice := B.readWithoutPadding start width
   let padding := width - slice.size
-  fromBytesBigEndian slice.data.data <<< (8 * padding)
+  fromByteArrayBigEndian slice <<< (8 * padding)
 
 def expModAux (m : ℕ) (a : ℕ) (c : ℕ) : ℕ → ℕ
   | 0 => a % m
@@ -427,7 +427,7 @@ private def snarkvOutput :=
   y : ByteArray := UInt256.toByteArray ⟨2⟩
 
 private example :
-  snarkvOutput.size = 32 ∧ (fromBytesBigEndian snarkvOutput.data.data) ∈ [0, 1]
+  snarkvOutput.size = 32 ∧ (fromByteArrayBigEndian snarkvOutput) ∈ [0, 1]
 := by native_decide
 
 def Ξ_BLAKE2_F
@@ -439,7 +439,7 @@ def Ξ_BLAKE2_F
   (Bool × AccountMap × UInt256 × Substate × ByteArray)
 :=
   let d := I.inputData
-  let gᵣ : ℕ := fromBytesBigEndian (d.extract 0 4).data.data
+  let gᵣ : ℕ := fromByteArrayBigEndian (d.extract 0 4)
 
   if g.toNat < gᵣ then
     (false, ∅, ⟨0⟩, A, .empty)

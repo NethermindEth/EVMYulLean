@@ -42,6 +42,6 @@ def ExecutionEnv.getBlobGasprice (e : ExecutionEnv) : UInt256 :=
 
 def blobhash (e : ExecutionEnv) (i : UInt256) : UInt256 :=
   e.blobVersionedHashes[i.toNat]?.option ⟨0⟩
-    (.ofNat ∘ fromBytesBigEndian ∘ Array.data ∘ ByteArray.data)
+    (.ofNat ∘ fromByteArrayBigEndian)
 
 end EvmYul

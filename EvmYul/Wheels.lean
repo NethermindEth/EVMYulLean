@@ -197,8 +197,8 @@ partial def deserializeRLP₀ (rlp : ByteArray) : Option (ℕ × 𝕋) :=
         let lenOfStrLen := rlp₀.toNat - 0xb7
         if rlp₀ ≤ 0xbf ∧ len > lenOfStrLen + strLen then
           let strLen :=
-            EvmYul.fromBytesBigEndian
-              (rlp.readWithoutPadding 1 lenOfStrLen).data.data
+            EvmYul.fromByteArrayBigEndian
+              (rlp.readWithoutPadding 1 lenOfStrLen)
           let data := .𝔹 (rlp.readWithoutPadding (1 + lenOfStrLen) strLen)
           some (1 + lenOfStrLen + strLen, data)
         else
@@ -209,8 +209,8 @@ partial def deserializeRLP₀ (rlp : ByteArray) : Option (ℕ × 𝕋) :=
           else
             let lenOfListLen := rlp₀.toNat - 0xf7
             let listLen :=
-              EvmYul.fromBytesBigEndian
-                (rlp.readWithoutPadding 1 lenOfListLen).data.data
+              EvmYul.fromByteArrayBigEndian
+                (rlp.readWithoutPadding 1 lenOfListLen)
             if len > lenOfListLen + listLen then do
               let list ← deserializeListRLP (rlp.readWithoutPadding (1 + lenOfListLen) listLen)
               some (1 + lenOfListLen + listLen, .𝕃 list)
