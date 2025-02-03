@@ -156,8 +156,10 @@ def sload (self : State) (spos : UInt256) : State × UInt256 :=
 def sstore (self : State) (spos sval : UInt256) : State :=
   let Iₐ := self.executionEnv.codeOwner
   let { storage := σ_Iₐ, .. } := self.accountMap.find! Iₐ
-  let { storage := σ₀_Iₐ, .. } := self.σ₀.find! Iₐ
-  let v₀ := σ₀_Iₐ.findD spos ⟨0⟩
+  let v₀ :=
+    match self.σ₀.find? Iₐ with
+      | none => ⟨0⟩
+      | some acc => acc.storage.findD spos ⟨0⟩
   let v := σ_Iₐ.findD spos ⟨0⟩
   let v' := sval
 
