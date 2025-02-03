@@ -33,4 +33,60 @@ attribute [deprecated] Block.ommers
 
 abbrev Blocks := Array Block
 
+def deserializeBlock (rlp : ByteArray) : Option Block :=
+  match deserializeRLP rlp with
+    | some (.𝕃 [header, transactions, _, withdrawals]) => do
+      let header ← parseHeader header
+      pure ⟨header, sorry, sorry, sorry, sorry, sorry⟩
+    | _ => none
+ where
+  parseHeader : 𝕋 → Option BlockHeader
+    | .𝕃
+      [ .𝔹 parentHash
+      , .𝔹 uncleHash
+      , .𝔹 coinbase
+      , .𝔹 stateRoot
+      , .𝔹 transactionsTrie
+      , .𝔹 receiptTrie
+      , .𝔹 bloom
+      , .𝔹 difficulty
+      , .𝔹 number
+      , .𝔹 gasLimit
+      , .𝔹 gasUsed
+      , .𝔹 timestamp
+      , .𝔹 extraData
+      , .𝔹 mixHash
+      , .𝔹 nonce
+      , .𝔹 baseFeePerGas
+      , .𝔹 withdrawalsRoot
+      , .𝔹 blobGasUsed
+      , .𝔹 excessBlobGas
+      , .𝔹 parentBeaconBlockRoot
+      ]
+      => some <|
+        BlockHeader.mk
+          sorry
+          (.ofNat <| fromByteArrayBigEndian parentHash)
+          (.ofNat <| fromByteArrayBigEndian uncleHash)
+          (.ofNat <| fromByteArrayBigEndian coinbase)
+          (.ofNat <| fromByteArrayBigEndian stateRoot)
+          (.ofNat <| fromByteArrayBigEndian transactionsTrie)
+          (.ofNat <| fromByteArrayBigEndian receiptTrie)
+          bloom
+          (fromByteArrayBigEndian difficulty)
+          (fromByteArrayBigEndian number)
+          (fromByteArrayBigEndian gasLimit)
+          (fromByteArrayBigEndian gasUsed)
+          (fromByteArrayBigEndian timestamp)
+          extraData
+          sorry
+          (.ofNat <| fromByteArrayBigEndian nonce)
+          (.ofNat <| fromByteArrayBigEndian mixHash)
+          (fromByteArrayBigEndian baseFeePerGas)
+          parentBeaconBlockRoot
+          (some withdrawalsRoot)
+          (some <| .ofNat <| fromByteArrayBigEndian blobGasUsed)
+          (some <| .ofNat <| fromByteArrayBigEndian excessBlobGas)
+    | _ => none
+
 end EvmYul

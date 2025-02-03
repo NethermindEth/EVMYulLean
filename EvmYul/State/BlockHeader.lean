@@ -19,7 +19,6 @@ namespace EvmYul
 `gasUsed`       `g`
 `timestamp`     `s`
 `extraData`     `x`
-`minHash`       `m`
 `chainId`       `n` TODO ????
 `nonce`         `n` [deprecated]
 `baseFeePerGas` `f`
@@ -41,7 +40,6 @@ structure BlockHeader where
   gasUsed       : ℕ
   timestamp     : ℕ
   extraData     : ByteArray
-  minHash       : UInt256
   chainId       : UInt256 -- TODO(Why is this here?)
   nonce         : UInt64
   prevRandao    : UInt256

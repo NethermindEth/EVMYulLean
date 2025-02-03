@@ -287,6 +287,7 @@ def fromBytes' : List UInt8 → ℕ
 | b :: bs => b.val.val + 2^8 * fromBytes' bs
 
 def fromBytesBigEndian : List UInt8 → ℕ := fromBytes' ∘ List.reverse
+def fromByteArrayBigEndian (b : ByteArray) : ℕ := fromBytesBigEndian b.data.data
 
 variable {bs : List UInt8}
          {n : ℕ}

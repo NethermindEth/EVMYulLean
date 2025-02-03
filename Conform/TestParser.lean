@@ -109,7 +109,6 @@ instance : FromJson BlockHeader where
         gasUsed       := ← json.getObjValAsD! ℕ         "gasUsed"
         timestamp     := ← json.getObjValAsD! ℕ         "timestamp"
         extraData     := ← json.getObjValAsD! ByteArray "extraData"
-        minHash       := TODO -- TODO - Does not seem to be used in Υ?
         chainId       := ← json.getObjValAsD UInt256 "chainId" ⟨1⟩ -- (5)
         nonce         := 0 -- [deprecated] 0.
         baseFeePerGas := ← json.getObjValAsD! ℕ         "baseFeePerGas"
