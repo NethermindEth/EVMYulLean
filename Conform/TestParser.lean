@@ -99,8 +99,8 @@ instance : FromJson BlockHeader where
         ommersHash    := ← json.getObjValAsD! UInt256   "uncleHash"
         beneficiary   := ← json.getObjValAsD! AccountAddress   "coinbase"
         stateRoot     := ← json.getObjValAsD! UInt256   "stateRoot"
-        transRoot     := TODO -- TODO - Does not seem to be used in Υ?
-        receiptRoot   := TODO -- TODO - Does not seem to be used in Υ?
+        transRoot     := ← json.getObjValAsD! UInt256   "transactionsTrie"
+        receiptRoot   := ← json.getObjValAsD! UInt256   "receiptTrie"
         logsBloom     := ← json.getObjValAsD! ByteArray "bloom"
         difficulty    := 0  -- [deprecated] 0.
         number        := ← json.getObjValAsD! ℕ         "number"
@@ -214,22 +214,50 @@ TODO -
 private def blockOfJson (json : Json) : Except String Block := do
   -- The exception, if exists, is always in the outermost object regardless of the `<Format>` (see this function's docs).
   let exception ← json.getObjValAsD! String "expectException"
+  let rlp  ← json.getObjValAsD! ByteArray "rlp"
   -- Descend to `rlp_decoded` - Format₁ if exists, Format₀ otherwise.
   let json ← json.getObjValAsD Json "rlp_decoded" json
-  let rlp  ← json.getObjValAsD! ByteArray "rlp"
-  let some blockHeader := deserializeBlock rlp
-    | throw "RLP deserialization"
+  let (blockHeader, transactions, withdrawals) :=
+    match deserializeBlock rlp with
+      | some res => res
+      | none =>
+        dbg_trace "RLP error: deserializeBlock returned none"
+        default
   let blockHeader ←
     match json.getObjVal? "blockHeader" with
       | .error _ => pure blockHeader
-      | .ok val => FromJson.fromJson? val
-  dbg_trace s!"Parsed block header. Parent hash = {EvmYul.toHex blockHeader.parentHash.toByteArray}"
+      | .ok val => do
+        let b ← FromJson.fromJson? val
+        if b != blockHeader then
+          dbg_trace s!"RLP error: RLP decoded block header is different"
+        pure b
+  let transactions ←
+    match json.getObjVal? "transactions" with
+      | .error _ => pure transactions
+      | .ok val => do
+        let ts ← FromJson.fromJson? val
+        if ts != transactions then
+          dbg_trace "RLP error: RLP decoded transactions are different"
+          -- let _ ← transactions.forM λ t ↦ do
+          --   dbg_trace repr t
+          -- dbg_trace "from the json parsed ones"
+          -- let _ ← ts.forM λ t ↦ do
+          --   dbg_trace repr t
+        pure ts
+  let withdrawals ←
+    match json.getObjVal? "withdrawals" with
+      | .error _ => pure withdrawals
+      | .ok val => do
+        let ws ← FromJson.fromJson? val
+        if ws != withdrawals then
+          dbg_trace "RLP error: RLP decoded withdrawals are different"
+        pure ws
   pure {
     blockHeader
     rlp
-    transactions := ← json.getObjValAsD! Transactions "transactions"
+    transactions
     ommers       := ← json.getObjValAsD! (Array BlockHeader) "uncleHeaders"
-    withdrawals  := ← json.getObjValAsD! Withdrawals "withdrawals"
+    withdrawals
     -- The block's number should be in the header.
     -- blocknumber  := ← json.getObjValAsD  _ "blocknumber" "1" >>= tryParseBlocknumber
     exception    := exception

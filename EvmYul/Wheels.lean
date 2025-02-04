@@ -184,7 +184,9 @@ partial def deserializeListRLP (rlp : ByteArray) : Option (List 𝕋) := do
 
 partial def deserializeRLP₀ (rlp : ByteArray) : Option (ℕ × 𝕋) :=
   let len := rlp.size
-  if len = 0 then none
+  if len = 0 then
+    dbg_trace "RLP error: length = 0"
+    none
   else
     let rlp₀ := rlp.get! 0
     if rlp₀ ≤ 0x7f then
@@ -216,7 +218,9 @@ partial def deserializeRLP₀ (rlp : ByteArray) : Option (ℕ × 𝕋) :=
             if len > lenOfListLen + listLen then do
               let list ← deserializeListRLP (rlp.readWithoutPadding (1 + lenOfListLen) listLen)
               some (1 + lenOfListLen + listLen, .𝕃 list)
-            else none
+            else
+              dbg_trace "RLP error: no decoding"
+              none
 
 end
 
