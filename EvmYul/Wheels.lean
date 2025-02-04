@@ -8,6 +8,8 @@ def BE : ℕ → ByteArray := List.toByteArray ∘ EvmYul.toBytesBigEndian
 
 namespace EvmYul
 
+def chainId : ℕ := 1
+
 def UInt256.toByteArray (val : UInt256) : ByteArray :=
   let b := BE val.toNat
   ByteArray.zeroes ⟨32 - b.size⟩ ++ b

@@ -79,7 +79,6 @@ def deserializeBlock (rlp : ByteArray) : Option Block :=
           (fromByteArrayBigEndian gasUsed)
           (fromByteArrayBigEndian timestamp)
           extraData
-          sorry
           (.ofNat <| fromByteArrayBigEndian nonce)
           (.ofNat <| fromByteArrayBigEndian mixHash)
           (fromByteArrayBigEndian baseFeePerGas)

@@ -40,7 +40,6 @@ structure BlockHeader where
   gasUsed       : ℕ
   timestamp     : ℕ
   extraData     : ByteArray
-  chainId       : UInt256 -- TODO(Why is this here?)
   nonce         : UInt64
   prevRandao    : UInt256
   baseFeePerGas : ℕ

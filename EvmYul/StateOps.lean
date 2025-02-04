@@ -4,6 +4,7 @@ import EvmYul.State.AccountOps
 import EvmYul.Maps.AccountMap
 
 import EvmYul.State
+import EvmYul.Wheels
 import EvmYul.EVM.GasConstants
 
 namespace EvmYul
@@ -125,8 +126,7 @@ def difficulty (self : State) : UInt256 :=
 def gasLimit (self : State) : UInt256 :=
   .ofNat self.executionEnv.header.gasLimit
 
-def chainId (self : State) : UInt256 :=
-  self.executionEnv.header.chainId
+def chainId (_ : State) : UInt256 := .ofNat EvmYul.chainId
 
 def selfbalance (self : State) : UInt256 :=
   Batteries.RBMap.find? self.accountMap self.executionEnv.codeOwner |>.elim ⟨0⟩ (·.balance)

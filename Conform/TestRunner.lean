@@ -529,7 +529,7 @@ def processBlocks (s₀ : EVM.State) : Except EVM.Exception EVM.State := do
         let s ←
           transactions.foldlM
             (λ s' trans ↦ do
-              let S_T ← validateTransaction s'.accountMap block.blockHeader.chainId.toNat block.blockHeader trans
+              let S_T ← validateTransaction s'.accountMap chainId block.blockHeader trans
               executeTransaction trans S_T s' block.blockHeader
             )
             s
