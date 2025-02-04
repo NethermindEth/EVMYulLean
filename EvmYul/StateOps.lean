@@ -106,8 +106,7 @@ def blockHash (self : State) (blockNumber : UInt256) : UInt256 :=
   let v := self.executionEnv.header.number
   if v ≤ blockNumber.toNat || blockNumber.toNat + 256 < v then ⟨0⟩
   else
-    let hashes :=
-      #[self.genesisBlockHeader.hash] ++ self.blocks.map (BlockHeader.hash ∘ Block.blockHeader)
+    let hashes := self.blocks.map (BlockHeader.parentHash ∘ Block.blockHeader)
     hashes.getD blockNumber.toNat ⟨0⟩
 
 def coinBase (self : State) : AccountAddress :=

@@ -26,7 +26,6 @@ namespace EvmYul
 `parentBeaconBlockRoot` (EIP-4877)
 -/
 structure BlockHeader where
-  hash          : UInt256
   parentHash    : UInt256
   ommersHash    : UInt256
   beneficiary   : AccountAddress

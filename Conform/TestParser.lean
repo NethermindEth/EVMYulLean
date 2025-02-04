@@ -95,7 +95,6 @@ instance : FromJson BlockHeader where
   fromJson? json := do
     try
       pure {
-        hash          := ← json.getObjValAsD! UInt256   "hash"
         parentHash    := ← json.getObjValAsD! UInt256   "parentHash"
         ommersHash    := ← json.getObjValAsD! UInt256   "uncleHash"
         beneficiary   := ← json.getObjValAsD! AccountAddress   "coinbase"
@@ -217,9 +216,17 @@ private def blockOfJson (json : Json) : Except String Block := do
   let exception ← json.getObjValAsD! String "expectException"
   -- Descend to `rlp_decoded` - Format₁ if exists, Format₀ otherwise.
   let json ← json.getObjValAsD Json "rlp_decoded" json
+  let rlp  ← json.getObjValAsD! ByteArray "rlp"
+  let some blockHeader := deserializeBlock rlp
+    | throw "RLP deserialization"
+  let blockHeader ←
+    match json.getObjVal? "blockHeader" with
+      | .error _ => pure blockHeader
+      | .ok val => FromJson.fromJson? val
+  dbg_trace s!"Parsed block header. Parent hash = {EvmYul.toHex blockHeader.parentHash.toByteArray}"
   pure {
-    blockHeader  := ← json.getObjValAsD! BlockHeader "blockHeader"
-    rlp          := ← json.getObjValAsD! ByteArray "rlp"
+    blockHeader
+    rlp
     transactions := ← json.getObjValAsD! Transactions "transactions"
     ommers       := ← json.getObjValAsD! (Array BlockHeader) "uncleHeaders"
     withdrawals  := ← json.getObjValAsD! Withdrawals "withdrawals"

@@ -33,11 +33,11 @@ attribute [deprecated] Block.ommers
 
 abbrev Blocks := Array Block
 
-def deserializeBlock (rlp : ByteArray) : Option Block :=
+def deserializeBlock (rlp : ByteArray) : Option BlockHeader :=
   match deserializeRLP rlp with
     | some (.𝕃 [header, transactions, _, withdrawals]) => do
       let header ← parseHeader header
-      pure ⟨header, sorry, sorry, sorry, sorry, sorry⟩
+      pure header
     | _ => none
  where
   parseHeader : 𝕋 → Option BlockHeader
@@ -65,7 +65,6 @@ def deserializeBlock (rlp : ByteArray) : Option Block :=
       ]
       => some <|
         BlockHeader.mk
-          sorry
           (.ofNat <| fromByteArrayBigEndian parentHash)
           (.ofNat <| fromByteArrayBigEndian uncleHash)
           (.ofNat <| fromByteArrayBigEndian coinbase)
