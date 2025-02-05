@@ -12,21 +12,25 @@ abbrev Transactions := Array Transaction
 
 abbrev Withdrawals := Array Withdrawal
 
-/--
-`Block`. `B<x>`. Section 4.3.
-`blockHeader`  `H`
-`transactions` `T`
-`ommers`       `U` [deprecated]
--/
-structure Block where
-  blockHeader  : BlockHeader
+structure RawBlock where
   rlp          : ByteArray
+  exception    : String
+  -- Not always present, we can only rely on the RLP deserialization
+  blockHeader  : Option BlockHeader
+  transactions : Option Transactions
+  withdrawals  : Option Withdrawals
+deriving BEq, Inhabited, Repr
+
+abbrev RawBlocks := Array RawBlock
+
+structure DeserializedBlock where
+  blockHeader  : BlockHeader
   transactions : Transactions
   withdrawals  : Withdrawals
   exception    : String
 deriving BEq, Inhabited, Repr
 
-abbrev Blocks := Array Block
+abbrev DeserializedBlocks := Array DeserializedBlock
 
 def deserializeBlock (rlp : ByteArray) : Option (BlockHeader × Transactions × Withdrawals) :=
   match deserializeRLP rlp with

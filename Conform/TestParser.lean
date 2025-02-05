@@ -207,63 +207,24 @@ instance : FromJson Transaction where
 /--
 - Format₀: `EthereumTests/BlockchainTests/GeneralStateTests/VMTests/vmArithmeticTest/add.json`
 - Format₁: `EthereumTests/BlockchainTests/GeneralStateTests/Pyspecs/cancun/eip4844_blobs/invalid_static_excess_blob_gas.json`
-
-TODO -
-- `EthereumTests/BlockchainTests/GeneralStateTests/Pyspecs/cancun/eip4844_blobs/invalid_blob_tx_contract_creation.json` - ?????
 -/
-private def blockOfJson (json : Json) : Except String Block := do
+private def blockOfJson (json : Json) : Except String RawBlock := do
   -- The exception, if exists, is always in the outermost object regardless of the `<Format>` (see this function's docs).
   let exception ← json.getObjValAsD! String "expectException"
-  let rlp  ← json.getObjValAsD! ByteArray "rlp"
   -- Descend to `rlp_decoded` - Format₁ if exists, Format₀ otherwise.
   let json ← json.getObjValAsD Json "rlp_decoded" json
-  let (blockHeader, transactions, withdrawals) :=
-    match deserializeBlock rlp with
-      | some res => res
-      | none =>
-        dbg_trace "RLP error: deserializeBlock returned none"
-        default
-  let blockHeader ←
-    match json.getObjVal? "blockHeader" with
-      | .error _ => pure blockHeader
-      | .ok val => do
-        let b ← FromJson.fromJson? val
-        if b != blockHeader then
-          dbg_trace s!"RLP error: RLP decoded block header is different"
-        pure b
-  let transactions ←
-    match json.getObjVal? "transactions" with
-      | .error _ => pure transactions
-      | .ok val => do
-        let ts ← FromJson.fromJson? val
-        if ts != transactions then
-          dbg_trace "RLP error: RLP decoded transactions are different"
-          -- let _ ← transactions.forM λ t ↦ do
-          --   dbg_trace repr t
-          -- dbg_trace "from the json parsed ones"
-          -- let _ ← ts.forM λ t ↦ do
-          --   dbg_trace repr t
-        pure ts
-  let withdrawals ←
-    match json.getObjVal? "withdrawals" with
-      | .error _ => pure withdrawals
-      | .ok val => do
-        let ws ← FromJson.fromJson? val
-        if ws != withdrawals then
-          dbg_trace "RLP error: RLP decoded withdrawals are different"
-        pure ws
   pure {
-    blockHeader
-    rlp
-    transactions
-    withdrawals
-    exception
+    blockHeader  := ← json.getObjValAsD! (Option BlockHeader) "blockHeader"
+    rlp          := ← json.getObjValAsD! ByteArray "rlp"
+    transactions := ← json.getObjValAsD! (Option Transactions) "transactions"
+    withdrawals  := ← json.getObjValAsD! (Option Withdrawals) "withdrawals"
+    exception    := exception
   }
   where
     tryParseBlocknumber (s : String) : Except String Nat :=
       s.toNat?.elim (.error "Cannot parse `blocknumber`.") .ok
 
-instance : FromJson Block := ⟨blockOfJson⟩
+instance : FromJson RawBlock := ⟨blockOfJson⟩
 
 -- instance : FromJson PostState where
 --   fromJson? json := do
@@ -277,7 +238,7 @@ instance : FromJson Block := ⟨blockOfJson⟩
 --         dbg_trace s!"Read post state map of size {map.size}"
 --         .ok <| PostState.Map map
 
-instance : FromJson TestEntry where
+instance : FromJson RawTestEntry where
   fromJson? json := do
     let post : PostState ←
       match json.getObjVal? "postStateHash" with
@@ -289,7 +250,7 @@ instance : FromJson TestEntry where
           .Hash <$> FromJson.fromJson? postStateHash
     pure {
       info               := ← json.getObjValAs? Json "info"
-      blocks             := ← json.getObjValAs? Blocks "blocks"
+      blocks             := ← json.getObjValAs? RawBlocks "blocks"
       genesisBlockHeader := ← json.getObjValAs? BlockHeader "genesisBlockHeader"
       genesisRLP         := ← json.getObjValAs? Json "genesisRLP"
       lastblockhash      := ← json.getObjValAs? Json "lastblockhash"
@@ -299,8 +260,8 @@ instance : FromJson TestEntry where
       sealEngine         := ← json.getObjValAs? Json "sealEngine"
     }
 
-instance : FromJson TestMap where
-  fromJson? json := json.getObjVals? String TestEntry
+instance : FromJson RawTestMap where
+  fromJson? json := json.getObjVals? String RawTestEntry
 
 end FromJson
 

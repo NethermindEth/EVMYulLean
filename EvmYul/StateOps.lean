@@ -102,11 +102,12 @@ end CodeCopy
 section Blocks
 
 def blockHash (self : State) (blockNumber : UInt256) : UInt256 :=
-  -- TODO: Not 100% sure
+  -- TODO: Don't keep the whole blocks, just the hashes
   let v := self.executionEnv.header.number
   if v ≤ blockNumber.toNat || blockNumber.toNat + 256 < v then ⟨0⟩
   else
-    let hashes := self.blocks.map (BlockHeader.parentHash ∘ Block.blockHeader)
+    let hashes :=
+      self.blocks.map (BlockHeader.parentHash ∘ DeserializedBlock.blockHeader)
     hashes.getD blockNumber.toNat ⟨0⟩
 
 def coinBase (self : State) : AccountAddress :=

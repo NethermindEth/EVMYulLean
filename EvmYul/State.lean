@@ -29,7 +29,7 @@ structure State where
   executionEnv  : ExecutionEnv
 
   -- Instead of keeping a map from `parentHash` to `Block`, we instead store the blocks we need.
-  blocks        : Blocks
+  blocks        : DeserializedBlocks
   genesisBlockHeader : BlockHeader
 
   -- TODO(Keccak Stuff + I guess this will be gone so no need to nuke the `Finmap` just now

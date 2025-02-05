@@ -85,7 +85,7 @@ def PersistentAccountMap.toEVMState (self : PersistentAccountMap) : EVM.State :=
 
 def Pre.toEVMState : Pre → EVM.State := PersistentAccountMap.toEVMState
 
-def TestMap.toTests (self : TestMap) : List (String × TestEntry) := self.toList
+def RawTestMap.toTests (self : RawTestMap) : List (String × RawTestEntry) := self.toList
 
 def Post.toEVMState : Post → EVM.State := PersistentAccountMap.toEVMState
 
@@ -378,7 +378,7 @@ def validateTransaction
           , .𝕃 (t.blobVersionedHashes.map .𝔹)
           ]
 
-def validateBlock (parentHeader : BlockHeader) (block : Block)
+def validateBlock (parentHeader : BlockHeader) (block : DeserializedBlock)
   : Except EVM.Exception (Transactions × Withdrawals)
 := do
   -- dbg_trace "VALIDATING BLOCK"
@@ -424,28 +424,6 @@ def validateBlock (parentHeader : BlockHeader) (block : Block)
 
       pure (blobSum, sum)
 
-  -- let _ ← block.transactions.foldlM (init := 0) λ sum t ↦ do
-  --   let sum := sum + t.base.gasLimit.toNat
-  --   if sum > block.blockHeader.gasLimit then
-  --     throw <| .TransactionException .GAS_ALLOWANCE_EXCEEDED
-  --   pure sum
-
-  -- let _ ← block.transactions.forM λ t ↦
-  --   match t with
-  --     | .blob bt => do
-  --       if t.base.recipient = none then
-  --         throw <| .TransactionException .TYPE_3_TX_CONTRACT_CREATION
-  --       if bt.maxFeePerBlobGas.toNat < block.blockHeader.getBlobGasprice then
-  --         .error (.TransactionException .INSUFFICIENT_MAX_FEE_PER_BLOB_GAS)
-  --       match bt.blobVersionedHashes with
-  --         | [] => throw <| .TransactionException .TYPE_3_TX_ZERO_BLOBS
-  --         | _::_::_::_::_::_::_ =>
-  --           throw <| .TransactionException .TYPE_3_TX_BLOB_COUNT_EXCEEDED
-  --         | hs =>
-  --           if hs.any (λ h ↦ h[0]? != .some VERSIONED_HASH_VERSION_KZG) then
-  --             throw <| .TransactionException .TYPE_3_TX_INVALID_BLOB_VERSIONED_HASH
-  --     | _ => pure ()
-
   match block.blockHeader.blobGasUsed with
     | none => pure ()
     | some bGU =>
@@ -458,18 +436,60 @@ def validateBlock (parentHeader : BlockHeader) (block : Block)
   if block.blockHeader.withdrawalsRoot.isSome && Withdrawal.computeTrieRoot block.withdrawals ≠ block.blockHeader.withdrawalsRoot then
     throw <| .BlockException .INVALID_WITHDRAWALS_ROOT
 
-  -- dbg_trace "BLOCK VALID"
   pure (block.transactions, block.withdrawals)
+
+def deserialiseBlock (rawBlock : RawBlock)
+  : Except EVM.Exception DeserializedBlock
+:= do
+  let some (blockHeader, transactions, withdrawals) := deserializeBlock rawBlock.rlp
+    | throw <| .BlockException .RLP_STRUCTURES_ENCODING
+  pure <| .mk blockHeader transactions withdrawals rawBlock.exception
+
 /--
 This assumes that the `transactions` are ordered, as they should be in the test suit.
 -/
-def processBlocks (s₀ : EVM.State) : Except EVM.Exception EVM.State := do
-  let blocks := s₀.blocks
-  let parentHeaders := #[s₀.genesisBlockHeader] ++ blocks.map Block.blockHeader
+def processBlocks
+  (pre : Pre)
+  (blocks : RawBlocks)
+  (genesisBlockHeader : BlockHeader)
+  : Except EVM.Exception EVM.State
+:= do
+  let blocks ← blocks.foldlM (init := #[]) λ result block ↦
+    match deserialiseBlock block with
+      | .error e => do
+        if block.exception.containsSubstr (repr e).pretty then
+          dbg_trace s!"Expected exception: {block.exception}; got exception: {repr e}"
+          pure result
+        else
+          dbg_trace s!"Unexpected RLP exception: {repr e}. Not thrown further for now as we still rely on user readable fields."
+          let header₀ := block.blockHeader.getD default
+          let transactions₀ := block.transactions.getD default
+          let withdrawals₀ := block.withdrawals.getD default
+          pure <| #[⟨header₀, transactions₀, withdrawals₀, block.exception⟩] ++ result
+      | .ok ⟨header, transactions, withdrawals, _⟩ => do
+        let header₀ := block.blockHeader.getD header
+        let transactions₀ := block.transactions.getD transactions
+        let withdrawals₀ := block.withdrawals.getD withdrawals
+        if header != header₀ then
+          dbg_trace s!"RLP error: RLP decoded block header is different. Using the original one."
+        if transactions != transactions₀ then
+          dbg_trace "RLP error: RLP decoded transactions are different. Using the original ones."
+        if withdrawals != withdrawals₀ then
+          dbg_trace "RLP error: RLP decoded withdrawals are different. Using the original ones."
+        pure <| #[⟨header₀, transactions₀, withdrawals₀, block.exception⟩] ++ result
+
+  let parentHeaders :=
+    #[genesisBlockHeader] ++ blocks.map DeserializedBlock.blockHeader
   let withParentHeaders := parentHeaders.zip blocks
-  withParentHeaders.foldlM processBlock s₀
+  withParentHeaders.foldlM
+    processBlock
+    {pre.toEVMState with blocks := blocks, genesisBlockHeader := genesisBlockHeader}
  where
-  processBlock (s₀ : EVM.State) (withParentHeader : BlockHeader × Block) : Except EVM.Exception EVM.State := do
+  processBlock
+    (s₀ : EVM.State)
+    (withParentHeader : BlockHeader × DeserializedBlock)
+    : Except EVM.Exception EVM.State
+  := do
     let (parentHeader, block) := withParentHeader
     let (encounteredBlockException, transactions, s, withdrawals) ←
       match validateBlock parentHeader block with
@@ -552,8 +572,14 @@ def processBlocks (s₀ : EVM.State) : Except EVM.Exception EVM.State := do
 
 NB we can throw away the final state if it coincided with the expected one, hence `.none`.
 -/
-def preImpliesPost (pre : Pre) (post : PostState) (genesisBlockHeader : BlockHeader) (blocks : Blocks) : Except EVM.Exception (Option PersistentAccountMap) := do
-    let resultState ← processBlocks {pre.toEVMState with blocks := blocks, genesisBlockHeader := genesisBlockHeader}
+def preImpliesPost
+  (pre : Pre)
+  (post : PostState)
+  (genesisBlockHeader : BlockHeader)
+  (blocks : RawBlocks)
+  : Except EVM.Exception (Option PersistentAccountMap)
+:= do
+    let resultState ← processBlocks pre blocks genesisBlockHeader
     let result : PersistentAccountMap :=
       resultState.toState.accountMap.foldl
         (λ r addr ⟨⟨nonce, balance, storage, code⟩, _, _⟩ ↦ r.insert addr ⟨nonce, balance, storage, code⟩) default
@@ -587,8 +613,9 @@ instance (priority := high) : Repr PersistentAccountMap := ⟨λ m _ ↦
         result := result ++ s!"{sk} → {sv}\n"
     return result⟩
 
-def processTest (entry : TestEntry) (verbose : Bool := true) : TestResult := do
-  let result := preImpliesPost entry.pre entry.postState entry.genesisBlockHeader entry.blocks
+def processTest (entry : RawTestEntry) (verbose : Bool := true) : TestResult := do
+  let result :=
+    preImpliesPost entry.pre entry.postState entry.genesisBlockHeader entry.blocks
   match result with
     | .error err => .mkFailed s!"{repr err}"
     | .ok result => errorF <$> result
@@ -611,7 +638,7 @@ def processTestsOfFile (file : System.FilePath)
                        ExceptT Exception IO (Batteries.RBMap String TestResult compare) := do
   let path := file
   let file ← Lean.Json.fromFile file
-  let testMap ← Lean.FromJson.fromJson? (α := TestMap) file
+  let testMap ← Lean.FromJson.fromJson? (α := RawTestMap) file
   let tests := testMap.toTests
   let cancunTests := guardCancun tests
 
@@ -631,11 +658,11 @@ def processTestsOfFile (file : System.FilePath)
     -- --       | e => throw e -- hard error, stop executing the tests; malformed input, logic error, etc.
     -- --                      -- This should not happen but makes cause analysis easier if it does.
   where
-    guardWhitelist (tests : List (String × TestEntry)) :=
+    guardWhitelist (tests : List (String × RawTestEntry)) :=
       if whitelist.isEmpty then tests else tests.filter (λ (name, _) ↦ name ∈ whitelist)
-    guardBlacklist (tests : List (String × TestEntry)) :=
+    guardBlacklist (tests : List (String × RawTestEntry)) :=
       tests.filter (λ (name, _) ↦ name ∉ GlobalBlacklist ++ blacklist)
-    guardCancun (tests : List (String × TestEntry)) :=
+    guardCancun (tests : List (String × RawTestEntry)) :=
       tests.filter (λ (_, test) ↦ test.network.take 6 == "Cancun")
 
 end Conform

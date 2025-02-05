@@ -101,9 +101,9 @@ inductive PostState :=
   | Map : Post → PostState
   deriving Inhabited
 
-structure TestEntry :=
+structure RawTestEntry :=
   info               : Json := ""
-  blocks             : Blocks
+  blocks             : RawBlocks
   genesisBlockHeader : BlockHeader
   genesisRLP         : Json := ""
   lastblockhash      : Json := ""
@@ -113,7 +113,19 @@ structure TestEntry :=
   sealEngine         : Json := ""
   deriving Inhabited
 
-abbrev TestMap := Batteries.RBMap String TestEntry compare
+abbrev RawTestMap := Batteries.RBMap String RawTestEntry compare
+
+structure DeserializedTestEntry :=
+  info               : Json := ""
+  blocks             : DeserializedBlocks
+  genesisBlockHeader : BlockHeader
+  genesisRLP         : Json := ""
+  network            : String
+  postState          : PostState
+  pre                : Pre
+  deriving Inhabited
+
+abbrev DeserializedTestMap := Batteries.RBMap String DeserializedTestEntry compare
 
 abbrev AccessListEntry := AccountAddress × Array UInt256
 
