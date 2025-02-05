@@ -85,7 +85,7 @@ def PersistentAccountMap.toEVMState (self : PersistentAccountMap) : EVM.State :=
 
 def Pre.toEVMState : Pre → EVM.State := PersistentAccountMap.toEVMState
 
-def Test.toTests (self : Test) : List (String × TestEntry) := self.toList
+def TestMap.toTests (self : TestMap) : List (String × TestEntry) := self.toList
 
 def Post.toEVMState : Post → EVM.State := PersistentAccountMap.toEVMState
 
@@ -611,9 +611,10 @@ def processTestsOfFile (file : System.FilePath)
                        ExceptT Exception IO (Batteries.RBMap String TestResult compare) := do
   let path := file
   let file ← Lean.Json.fromFile file
-  let test ← Lean.FromJson.fromJson? (α := Test) file
-  let tests := test.toTests
-  let cancunTests := guardCancum tests
+  let testMap ← Lean.FromJson.fromJson? (α := TestMap) file
+  let tests := testMap.toTests
+  let cancunTests := guardCancun tests
+
   -- dbg_trace s!"Non Cancun tests ignored: {tests.length - cancunTests.length}"
   let tests := guardBlacklist ∘ guardWhitelist <| cancunTests
   -- dbg_trace s!"tests after guard: {tests.map Prod.fst}"
@@ -634,7 +635,7 @@ def processTestsOfFile (file : System.FilePath)
       if whitelist.isEmpty then tests else tests.filter (λ (name, _) ↦ name ∈ whitelist)
     guardBlacklist (tests : List (String × TestEntry)) :=
       tests.filter (λ (name, _) ↦ name ∉ GlobalBlacklist ++ blacklist)
-    guardCancum (tests : List (String × TestEntry)) :=
+    guardCancun (tests : List (String × TestEntry)) :=
       tests.filter (λ (_, test) ↦ test.network.take 6 == "Cancun")
 
 end Conform

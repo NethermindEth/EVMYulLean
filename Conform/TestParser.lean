@@ -299,17 +299,13 @@ instance : FromJson TestEntry where
       sealEngine         := ← json.getObjValAs? Json "sealEngine"
     }
 
-instance : FromJson Test where
+instance : FromJson TestMap where
   fromJson? json := json.getObjVals? String TestEntry
 
 end FromJson
 
 def testNamesOfTest (test : Lean.Json) : Except String (Array String) :=
   test.getObj? <&> (·.toArray.map Sigma.fst)
-
-namespace Test
-
-end Test
 
 section PrettyPrinter
 
