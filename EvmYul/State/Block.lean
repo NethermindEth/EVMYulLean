@@ -24,12 +24,7 @@ structure Block where
   transactions : Transactions
   withdrawals  : Withdrawals
   exception    : String
-  -- An empty array which was previously reserved for ommer block headers,
-  ommers       : Array BlockHeader := ∅
-  -- blocknumber  : Nat
-  deriving BEq, Inhabited, Repr
-
-attribute [deprecated] Block.ommers
+deriving BEq, Inhabited, Repr
 
 abbrev Blocks := Array Block
 

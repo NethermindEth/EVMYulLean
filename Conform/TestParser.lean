@@ -256,11 +256,8 @@ private def blockOfJson (json : Json) : Except String Block := do
     blockHeader
     rlp
     transactions
-    ommers       := ← json.getObjValAsD! (Array BlockHeader) "uncleHeaders"
     withdrawals
-    -- The block's number should be in the header.
-    -- blocknumber  := ← json.getObjValAsD  _ "blocknumber" "1" >>= tryParseBlocknumber
-    exception    := exception
+    exception
   }
   where
     tryParseBlocknumber (s : String) : Except String Nat :=
