@@ -381,7 +381,8 @@ def validateTransaction
 def validateBlock (parentHeader : BlockHeader) (block : DeserializedBlock)
   : Except EVM.Exception (Transactions × Withdrawals)
 := do
-  -- dbg_trace "VALIDATING BLOCK"
+  if block.blockHeader.difficulty != 0 then
+    throw <| .BlockException .IMPORT_IMPOSSIBLE_DIFFICULTY_OVER_PARIS
 
   -- KEC (RLP []) = 0x1dcc4de8dec75d7aab85b567b6ccd41ad312451b948a7413f0a142fd40d49347
   if 0x1dcc4de8dec75d7aab85b567b6ccd41ad312451b948a7413f0a142fd40d49347 != block.blockHeader.ommersHash.toNat then
@@ -390,6 +391,7 @@ def validateBlock (parentHeader : BlockHeader) (block : DeserializedBlock)
   if calcExcessBlobGas parentHeader != block.blockHeader.excessBlobGas then
     throw <| .BlockException .INCORRECT_EXCESS_BLOB_GAS
 
+  -- TODO: Not needed in Cancun. Make `blobGasUsed` and `excessBlobGas` `UInt64`s, not `Option`s.
   match block.blockHeader.blobGasUsed, block.blockHeader.excessBlobGas with
   | some _, none | none, some _ =>
     throw <| .BlockException .INCORRECT_BLOCK_FORMAT

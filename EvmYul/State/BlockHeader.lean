@@ -33,6 +33,7 @@ structure BlockHeader where
   transRoot     : UInt256
   receiptRoot   : UInt256
   logsBloom     : ByteArray
+  -- Officially deprecated, but checked in `wrongDifficulty_Cancun`
   difficulty    : ℕ
   number        : ℕ
   gasLimit      : ℕ
@@ -105,7 +106,6 @@ def BlockHeader.getBlobGasprice (h : BlockHeader) : ℕ :=
     (h.excessBlobGas.getD ⟨0⟩).toNat
     BLOB_BASE_FEE_UPDATE_FRACTION
 
-attribute [deprecated] BlockHeader.difficulty
 attribute [deprecated] BlockHeader.nonce
 
 end EvmYul
