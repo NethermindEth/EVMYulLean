@@ -294,11 +294,6 @@ def validateTransaction
   if H_f > maxFeePerGas.toNat then
     throw <| .TransactionException .INSUFFICIENT_MAX_FEE_PER_GAS
 
-  let n :=
-    match T.base.recipient with
-      | some _ => T.base.data.size
-      | none => 0
-  if n > 49152 then throw <| .TransactionException .INITCODE_SIZE_EXCEEDED
   pure S_T
 
  where
