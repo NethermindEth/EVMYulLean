@@ -122,16 +122,24 @@ def deserializeBlock (rlp : ByteArray) : Option (BlockHeader × Transactions × 
                 (.ofNat <| fromByteArrayBigEndian chainId)
                 accessList
                 (.ofNat <| fromByteArrayBigEndian y)
-            let maxPriorityFeePerGas := .ofNat <| fromByteArrayBigEndian maxPriorityFeePerGas
+            let maxPriorityFeePerGas :=
+              .ofNat <| fromByteArrayBigEndian maxPriorityFeePerGas
             let maxFeePerGas := .ofNat <| fromByteArrayBigEndian maxFeePerGas
-            let maxFeePerBlobGas := .ofNat <| fromByteArrayBigEndian maxFeePerBlobGas
-            let blobVersionedHashes ← blobVersionedHashes.mapM parseBlobVersionHash
+            let maxFeePerBlobGas :=
+              .ofNat <| fromByteArrayBigEndian maxFeePerBlobGas
+            let blobVersionedHashes ←
+              blobVersionedHashes.mapM parseBlobVersionHash
             -- dbg_trace s!" blobVersionedHashes"
             -- _ ← blobVersionedHashes.forM λ bvh ↦
             --   dbg_trace s!"{EvmYul.toHex bvh}"
             --   pure ()
-            let dynamicFeeTransaction : DynamicFeeTransaction := .mk base withAccessList maxFeePerGas maxPriorityFeePerGas
-            some <| .blob <| BlobTransaction.mk dynamicFeeTransaction maxFeePerBlobGas blobVersionedHashes
+            let dynamicFeeTransaction : DynamicFeeTransaction :=
+              .mk base withAccessList maxFeePerGas maxPriorityFeePerGas
+            some <| .blob <|
+              BlobTransaction.mk
+                dynamicFeeTransaction
+                  maxFeePerBlobGas
+                  blobVersionedHashes
         | some -- Type 2 transactions
           (.𝕃
             [ .𝔹 chainId
@@ -179,9 +187,15 @@ def deserializeBlock (rlp : ByteArray) : Option (BlockHeader × Transactions × 
                 (.ofNat <| fromByteArrayBigEndian chainId)
                 accessList
                 (.ofNat <| fromByteArrayBigEndian y)
-            let maxPriorityFeePerGas := .ofNat <| fromByteArrayBigEndian maxPriorityFeePerGas
-            let maxFeePerGas := .ofNat <| fromByteArrayBigEndian maxFeePerGas
-            some <| .dynamic <| DynamicFeeTransaction.mk base withAccessList maxPriorityFeePerGas maxFeePerGas
+            let maxPriorityFeePerGas :=
+              .ofNat <| fromByteArrayBigEndian maxPriorityFeePerGas
+            let maxFeePerGas :=
+              .ofNat <| fromByteArrayBigEndian maxFeePerGas
+            some <| .dynamic <|
+              DynamicFeeTransaction.mk
+                base
+                withAccessList
+                maxFeePerGas maxPriorityFeePerGas
         | some -- Type 1 transactions
           (.𝕃
             [ .𝔹 chainId

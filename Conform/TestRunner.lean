@@ -473,7 +473,7 @@ def processBlocks
         let transactions₀ := block.transactions.getD transactions
         let withdrawals₀ := block.withdrawals.getD withdrawals
         if header != header₀ then
-          dbg_trace s!"RLP error: RLP decoded block header is different. Using the original one."
+          dbg_trace "RLP error: RLP decoded block header is different. Using the original one."
         if transactions != transactions₀ then
           dbg_trace "RLP error: RLP decoded transactions are different. Using the original ones."
         if withdrawals != withdrawals₀ then
