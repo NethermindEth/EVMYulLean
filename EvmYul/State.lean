@@ -19,12 +19,12 @@ The `State`. Section 9.3.
 - `accountMap`   `σ`
 - `substate`     `A`
 - `executionEnv` `I`
-- `remainingGas` `g`
+- `totalGasUsedInBlock` `Υᵍ`
 -/
 structure State where
   accountMap    : AccountMap
   σ₀            : AccountMap
-  remainingGas  : ℕ
+  totalGasUsedInBlock  : ℕ
   substate      : Substate
   executionEnv  : ExecutionEnv
 

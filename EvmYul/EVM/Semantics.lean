@@ -1016,7 +1016,7 @@ def Υ (debugMode : Bool) (fuel : ℕ)
   (blocks : DeserializedBlocks)
   (T : Transaction)
   (S_T : AccountAddress)
-  : Except EVM.Exception (AccountMap × Substate × Bool)
+  : Except EVM.Exception (AccountMap × Substate × Bool × UInt256)
 := do
   -- let (S_T, g₀) ← checkTransactionGetSender σ chainId H_f T expectedSender
   let g₀ : ℕ := EVM.intrinsicGas T
@@ -1103,7 +1103,7 @@ def Υ (debugMode : Bool) (fuel : ℕ)
   let deadAccounts := A.touchedAccounts.filter (State.dead σStar' ·)
   let σ' := deadAccounts.foldl Batteries.RBMap.erase σ' -- (88)
   let σ' := σ'.map λ (addr, acc) ↦ (addr, { acc with tstorage := .empty})
-  .ok (σ', A, z)
+  .ok (σ', A, z, T.base.gasLimit - gStar)
 end EVM
 
 end EvmYul

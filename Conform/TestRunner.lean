@@ -159,7 +159,7 @@ def executeTransaction
 := do
   let _TODOfuel : ℕ := s.accountMap.find? sender |>.elim ⟨0⟩ (·.balance) |>.toNat
 
-  let (ypState, _, _) ←
+  let (ypState, _, _, totalGasUsed) ←
     EVM.Υ (debugMode := false) _TODOfuel
       s.accountMap
       header.baseFeePerGas
@@ -172,12 +172,14 @@ def executeTransaction
   -- as EIP 4788 (https://eips.ethereum.org/EIPS/eip-4788).
 
   -- TODO - I think we do this tuple → EVM.State conversion reasonably often, factor out?
-  let result : EVM.State := {
-    s with accountMap := ypState
+  let result : EVM.State :=
+    { s with
+      accountMap := ypState
+      totalGasUsedInBlock := s.totalGasUsedInBlock + totalGasUsed.toNat
           --  substate := substate
           --  executionEnv.perm := z -- TODO - that's probably not this :)
            -- returnData := TODO?
-  }
+    }
   pure result
 
 
@@ -185,10 +187,15 @@ def validateTransaction
   (σ : AccountMap)
   (chainId : ℕ)
   (header : BlockHeader)
+  (totalGasUsedInBlock : ℕ)
   -- (expectedSender : AccountAddress)
   (T : Transaction)
   : Except EVM.Exception AccountAddress
 := do
+
+  if T.base.gasLimit.toNat + totalGasUsedInBlock > header.gasLimit then
+    throw <| .TransactionException .GAS_ALLOWANCE_EXCEEDED
+
   if T.base.nonce.toNat ≥ 2^64-1 then
     throw <| .TransactionException .NONCE_IS_MAX
 
@@ -415,10 +422,6 @@ def validateBlock (parentHeader : BlockHeader) (block : DeserializedBlock)
       if blobSum > MAX_BLOB_GAS_PER_BLOCK then
         throw <| .TransactionException .TYPE_3_TX_MAX_BLOB_GAS_ALLOWANCE_EXCEEDED
 
-      let sum := sum + t.base.gasLimit.toNat
-      if sum > block.blockHeader.gasLimit then
-        throw <| .TransactionException .GAS_ALLOWANCE_EXCEEDED
-
       pure (blobSum, sum)
 
   match block.blockHeader.blobGasUsed with
@@ -480,7 +483,10 @@ def processBlocks
   let withParentHeaders := parentHeaders.zip blocks
   withParentHeaders.foldlM
     processBlock
-    {pre.toEVMState with blocks := blocks, genesisBlockHeader := genesisBlockHeader}
+    { pre.toEVMState with
+        blocks := blocks
+        genesisBlockHeader := genesisBlockHeader
+    }
  where
   processBlock
     (s₀ : EVM.State)
@@ -546,10 +552,16 @@ def processBlocks
         let s ←
           transactions.foldlM
             (λ s' trans ↦ do
-              let S_T ← validateTransaction s'.accountMap chainId block.blockHeader trans
+              let S_T ←
+                validateTransaction
+                  s'.accountMap
+                  chainId
+                  block.blockHeader
+                  s'.totalGasUsedInBlock
+                  trans
               executeTransaction trans S_T s' block.blockHeader
             )
-            s
+            {s with totalGasUsedInBlock := 0}
         let σ := applyWithdrawals s.accountMap withdrawals
         pure <| (false, { s with accountMap := σ })
       catch e =>
