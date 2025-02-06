@@ -102,7 +102,7 @@ instance : FromJson BlockHeader where
         transRoot     := ← json.getObjValAsD! UInt256   "transactionsTrie"
         receiptRoot   := ← json.getObjValAsD! UInt256   "receiptTrie"
         logsBloom     := ← json.getObjValAsD! ByteArray "bloom"
-        difficulty    := 0  -- [deprecated] 0.
+        difficulty    := ← json.getObjValAsD! ℕ         "difficulty"
         number        := ← json.getObjValAsD! ℕ         "number"
         gasLimit      := ← json.getObjValAsD! ℕ         "gasLimit"
         gasUsed       := ← json.getObjValAsD! ℕ         "gasUsed"
@@ -211,15 +211,26 @@ instance : FromJson Transaction where
 private def blockOfJson (json : Json) : Except String RawBlock := do
   -- The exception, if exists, is always in the outermost object regardless of the `<Format>` (see this function's docs).
   let exception ← json.getObjValAsD! String "expectException"
-  let rlp          := ← json.getObjValAsD! ByteArray "rlp"
+  let rlp ← json.getObjValAsD! ByteArray "rlp"
   -- Descend to `rlp_decoded` - Format₁ if exists, Format₀ otherwise.
   let json ← json.getObjValAsD Json "rlp_decoded" json
+  let blockHeader  ← json.getObjValAsD! (Option BlockHeader) "blockHeader"
+  let transactions ← json.getObjValAsD! (Option Transactions) "transactions"
+  let withdrawals  ← json.getObjValAsD! (Option Withdrawals) "withdrawals"
+
+  if blockHeader == none then
+    dbg_trace "blockHeader is none"
+  if transactions == none then
+    dbg_trace "transactions is none"
+  if withdrawals == none then
+    dbg_trace "withdrawals is none"
+
   pure {
     rlp
-    blockHeader  := ← json.getObjValAsD! (Option BlockHeader) "blockHeader"
-    transactions := ← json.getObjValAsD! (Option Transactions) "transactions"
-    withdrawals  := ← json.getObjValAsD! (Option Withdrawals) "withdrawals"
-    exception    := exception
+    blockHeader -- := ← json.getObjValAsD! (Option BlockHeader) "blockHeader"
+    transactions -- := ← json.getObjValAsD! (Option Transactions) "transactions"
+    withdrawals --  := ← json.getObjValAsD! (Option Withdrawals) "withdrawals"
+    exception --    := exception
   }
   where
     tryParseBlocknumber (s : String) : Except String Nat :=
