@@ -465,7 +465,7 @@ def processBlocks
           let header₀ := block.blockHeader.getD default
           let transactions₀ := block.transactions.getD default
           let withdrawals₀ := block.withdrawals.getD default
-          pure <| #[⟨header₀, transactions₀, withdrawals₀, block.exception⟩] ++ result
+          pure <| result.push ⟨header₀, transactions₀, withdrawals₀, block.exception⟩
       | .ok ⟨header, transactions, withdrawals, _⟩ => do
         let header₀ := block.blockHeader.getD header
         let transactions₀ := block.transactions.getD transactions
@@ -476,7 +476,7 @@ def processBlocks
           dbg_trace "RLP error: RLP decoded transactions are different. Using the original ones."
         if withdrawals != withdrawals₀ then
           dbg_trace "RLP error: RLP decoded withdrawals are different. Using the original ones."
-        pure <| #[⟨header₀, transactions₀, withdrawals₀, block.exception⟩] ++ result
+        pure <| result.push ⟨header₀, transactions₀, withdrawals₀, block.exception⟩
 
   let parentHeaders :=
     #[genesisBlockHeader] ++ blocks.map DeserializedBlock.blockHeader
