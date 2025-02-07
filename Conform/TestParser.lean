@@ -213,23 +213,23 @@ private def blockOfJson (json : Json) : Except String RawBlock := do
   let exception ← json.getObjValAsD! String "expectException"
   let rlp ← json.getObjValAsD! ByteArray "rlp"
   -- Descend to `rlp_decoded` - Format₁ if exists, Format₀ otherwise.
-  let json ← json.getObjValAsD Json "rlp_decoded" json
-  let blockHeader  ← json.getObjValAsD! (Option BlockHeader) "blockHeader"
-  let transactions ← json.getObjValAsD! (Option Transactions) "transactions"
-  let withdrawals  ← json.getObjValAsD! (Option Withdrawals) "withdrawals"
+  -- let json ← json.getObjValAsD Json "rlp_decoded" json
+  -- let blockHeader  ← json.getObjValAsD! (Option BlockHeader) "blockHeader"
+  -- let transactions ← json.getObjValAsD! (Option Transactions) "transactions"
+  -- let withdrawals  ← json.getObjValAsD! (Option Withdrawals) "withdrawals"
 
-  if blockHeader == none then
-    dbg_trace "blockHeader is none"
-  if transactions == none then
-    dbg_trace "transactions is none"
-  if withdrawals == none then
-    dbg_trace "withdrawals is none"
+  -- if blockHeader == none then
+  --   dbg_trace "blockHeader is none"
+  -- if transactions == none then
+  --   dbg_trace "transactions is none"
+  -- if withdrawals == none then
+  --   dbg_trace "withdrawals is none"
 
   pure {
     rlp
-    blockHeader -- := ← json.getObjValAsD! (Option BlockHeader) "blockHeader"
-    transactions -- := ← json.getObjValAsD! (Option Transactions) "transactions"
-    withdrawals --  := ← json.getObjValAsD! (Option Withdrawals) "withdrawals"
+    blockHeader := none -- := ← json.getObjValAsD! (Option BlockHeader) "blockHeader"
+    transactions := none -- := ← json.getObjValAsD! (Option Transactions) "transactions"
+    withdrawals := none --  := ← json.getObjValAsD! (Option Withdrawals) "withdrawals"
     exception --    := exception
   }
   where

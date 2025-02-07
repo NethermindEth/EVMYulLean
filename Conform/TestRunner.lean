@@ -441,8 +441,7 @@ def validateBlock (parentHeader : BlockHeader) (block : DeserializedBlock)
 def deserialiseBlock (rawBlock : RawBlock)
   : Except EVM.Exception DeserializedBlock
 := do
-  let some (blockHeader, transactions, withdrawals) := deserializeBlock rawBlock.rlp
-    | throw <| .BlockException .RLP_STRUCTURES_ENCODING
+  let (blockHeader, transactions, withdrawals) ← deserializeBlock rawBlock.rlp
   pure <| .mk blockHeader transactions withdrawals rawBlock.exception
 
 /--

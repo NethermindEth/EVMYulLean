@@ -32,7 +32,33 @@ deriving BEq, Inhabited, Repr
 
 abbrev DeserializedBlocks := Array DeserializedBlock
 
-def deserializeBlock (rlp : ByteArray) : Option (BlockHeader × Transactions × Withdrawals) :=
+def validateUInt256
+  (b : ByteArray)
+  (e : EVM.Exception)
+  : Except EVM.Exception UInt256
+:= do
+  let b := fromByteArrayBigEndian b
+  if b ≥ UInt256.size then throw e
+  pure (.ofNat b)
+
+def validateUInt64
+  (b : ByteArray)
+  (e : EVM.Exception)
+  : Except EVM.Exception UInt64
+:= do
+  let b := fromByteArrayBigEndian b
+  if b ≥ UInt64.size then throw e
+  pure (.ofNat b)
+
+def validateAccountAddress
+  (a : ByteArray)
+  (e : EVM.Exception)
+  : Except EVM.Exception AccountAddress
+:= do
+  if a.size ≠ 20 then throw e
+  pure (.ofNat (fromByteArrayBigEndian a))
+
+def deserializeBlock (rlp : ByteArray) : Except EVM.Exception (BlockHeader × Transactions × Withdrawals) :=
   match deserializeRLP rlp with
     | some (.𝕃 [header, transactions, _, withdrawals]) => do
       let header ← parseHeader header
@@ -41,48 +67,50 @@ def deserializeBlock (rlp : ByteArray) : Option (BlockHeader × Transactions × 
       pure (header, Array.mk transactions, Array.mk withdrawals)
     | none =>
       dbg_trace "RLP error: deserializeRLP returned none"
-      none
+      throw <| .BlockException .RLP_STRUCTURES_ENCODING
     | _ =>
       dbg_trace "RLP error: deserializeRLP returned wrong rlp structure"
-      none
+      throw <| .BlockException .RLP_STRUCTURES_ENCODING
  where
-  parseWithdrawal : 𝕋 → Option Withdrawal
-    | .𝕃 [.𝔹 globalIndex, .𝔹 validatorIndex, .𝔹 recipient, .𝔹 amount] =>
+  parseWithdrawal : 𝕋 → Except EVM.Exception Withdrawal
+    | .𝕃 [.𝔹 globalIndex, .𝔹 validatorIndex, .𝔹 recipient, .𝔹 amount] => do
       pure <|
         .mk
-          (.ofNat <| fromByteArrayBigEndian globalIndex)
-          (.ofNat <| fromByteArrayBigEndian validatorIndex)
-          (.ofNat <| fromByteArrayBigEndian recipient)
-          (.ofNat <| fromByteArrayBigEndian amount)
+          (← validateUInt64 globalIndex (.BlockException .RLP_INVALID_FIELD_OVERFLOW_64))
+          (← validateUInt64 validatorIndex (.BlockException .RLP_INVALID_FIELD_OVERFLOW_64))
+          (← validateAccountAddress recipient (.BlockException .RLP_INVALID_ADDRESS))
+          (← validateUInt64 amount (.BlockException .RLP_INVALID_FIELD_OVERFLOW_64))
     | _ =>
-      dbg_trace "RLP error: parseWithdrawal returns none"
-      none
-  parseWithdrawals : 𝕋 → Option (List Withdrawal)
+      dbg_trace "RLP error: parseWithdrawal"
+      throw <| .BlockException .RLP_STRUCTURES_ENCODING
+  parseWithdrawals : 𝕋 → Except EVM.Exception (List Withdrawal)
     | .𝕃 withdrawals => withdrawals.mapM parseWithdrawal
-    | .𝔹 ⟨#[]⟩ => some []
+    | .𝔹 ⟨#[]⟩ => pure []
     | _ =>
-      dbg_trace "RLP error: parseWithdrawals returns none"
-      none
+      dbg_trace "RLP error: parseWithdrawals"
+      throw <| .BlockException .RLP_STRUCTURES_ENCODING
 
-  parseStorageKey : 𝕋 → Option UInt256
-    | .𝔹 key => some <| .ofNat <| fromByteArrayBigEndian key
+  parseStorageKey : 𝕋 → Except EVM.Exception UInt256
+    | .𝔹 key => pure <| .ofNat <| fromByteArrayBigEndian key
     | _ =>
-      dbg_trace "RLP error: parseStorageKey returns none"
-      none
-  parseAccessListEntry : 𝕋 → Option (AccountAddress × Array UInt256)
+      dbg_trace "RLP error: parseStorageKey"
+      throw <| .BlockException .RLP_STRUCTURES_ENCODING
+  parseAccessListEntry : 𝕋 → Except EVM.Exception (AccountAddress × Array UInt256)
     | .𝕃 [.𝔹 accountAddress, .𝕃 storageKeys] => do
       let storageKeys ← storageKeys.mapM parseStorageKey
       let accountAddress : AccountAddress := .ofNat <| fromByteArrayBigEndian accountAddress
       pure (accountAddress, Array.mk storageKeys)
     | _ =>
-      dbg_trace "RLP error: parseAccessListEntry returns none"
-      none
-  parseBlobVersionHash : 𝕋 → Option ByteArray
-    | .𝔹 hash => some hash
+      dbg_trace "RLP error: parseAccessListEntry"
+      throw <| .BlockException .RLP_STRUCTURES_ENCODING
+
+  parseBlobVersionHash : 𝕋 → Except EVM.Exception ByteArray
+    | .𝔹 hash => pure hash
     | _ =>
-      dbg_trace "RLP error: parseBlobVersionHash returns none"
-      none
-  parseTransaction : 𝕋 → Option Transaction
+      dbg_trace "RLP error: parseBlobVersionHash"
+      throw <| .BlockException .RLP_STRUCTURES_ENCODING
+
+  parseTransaction : 𝕋 → Except EVM.Exception Transaction
     | .𝔹 typePlusPayload => -- Transaction type > 0
       match deserializeRLP (typePlusPayload.extract 1 typePlusPayload.size) with
         | some -- Type 3 transactions
@@ -113,7 +141,7 @@ def deserializeBlock (rlp : ByteArray) : Option (BlockHeader × Transactions × 
                 (.ofNat <| fromByteArrayBigEndian nonce)
                 (.ofNat <| fromByteArrayBigEndian gasLimit)
                 recipient
-                (.ofNat <| fromByteArrayBigEndian value)
+                (← validateUInt256 value (.TransactionException .RLP_INVALID_VALUE))
                 r
                 s
                 p
@@ -129,13 +157,9 @@ def deserializeBlock (rlp : ByteArray) : Option (BlockHeader × Transactions × 
               .ofNat <| fromByteArrayBigEndian maxFeePerBlobGas
             let blobVersionedHashes ←
               blobVersionedHashes.mapM parseBlobVersionHash
-            -- dbg_trace s!" blobVersionedHashes"
-            -- _ ← blobVersionedHashes.forM λ bvh ↦
-            --   dbg_trace s!"{EvmYul.toHex bvh}"
-            --   pure ()
             let dynamicFeeTransaction : DynamicFeeTransaction :=
               .mk base withAccessList maxFeePerGas maxPriorityFeePerGas
-            some <| .blob <|
+            pure <| .blob <|
               BlobTransaction.mk
                 dynamicFeeTransaction
                   maxFeePerBlobGas
@@ -160,25 +184,13 @@ def deserializeBlock (rlp : ByteArray) : Option (BlockHeader × Transactions × 
               if recipient.isEmpty then none
               else some <| .ofNat <| fromByteArrayBigEndian recipient
             let accessList ← accessList.mapM parseAccessListEntry
-            -- dbg_trace s!" chainId  = {EvmYul.toHex chainId}"
-            -- dbg_trace s!" nonce    = {EvmYul.toHex nonce}"
-            -- dbg_trace s!" maxPriorityFeePerGas = {EvmYul.toHex maxPriorityFeePerGas}"
-            -- dbg_trace s!" maxFeePerGas = {EvmYul.toHex maxFeePerGas}"
-            -- dbg_trace s!" gasLimit = {EvmYul.toHex gasLimit}"
-            -- dbg_trace s!" recipient: {recipient.map (EvmYul.toHex ∘ BE)}"
-            -- dbg_trace s!" value = {EvmYul.toHex value}"
-            -- dbg_trace s!" data = {EvmYul.toHex p}"
-            -- dbg_trace s!" accestList = {accessList}"
-            -- dbg_trace s!" v = {EvmYul.toHex y}"
-            -- dbg_trace s!" r: {EvmYul.toHex r}"
-            -- dbg_trace s!" s: {EvmYul.toHex s}"
 
             let base : Transaction.Base :=
               .mk
                 (.ofNat <| fromByteArrayBigEndian nonce)
                 (.ofNat <| fromByteArrayBigEndian gasLimit)
                 recipient
-                (.ofNat <| fromByteArrayBigEndian value)
+                (← validateUInt256 value (.TransactionException .RLP_INVALID_VALUE))
                 r
                 s
                 p
@@ -191,7 +203,7 @@ def deserializeBlock (rlp : ByteArray) : Option (BlockHeader × Transactions × 
               .ofNat <| fromByteArrayBigEndian maxPriorityFeePerGas
             let maxFeePerGas :=
               .ofNat <| fromByteArrayBigEndian maxFeePerGas
-            some <| .dynamic <|
+            pure <| .dynamic <|
               DynamicFeeTransaction.mk
                 base
                 withAccessList
@@ -215,24 +227,13 @@ def deserializeBlock (rlp : ByteArray) : Option (BlockHeader × Transactions × 
               if recipient.isEmpty then none
               else some <| .ofNat <| fromByteArrayBigEndian recipient
             let accessList ← accessList.mapM parseAccessListEntry
-            -- dbg_trace s!" chainId  = {EvmYul.toHex chainId}"
-            -- dbg_trace s!" nonce    = {EvmYul.toHex nonce}"
-            -- dbg_trace s!" gasPrice = {EvmYul.toHex gasPrice}"
-            -- dbg_trace s!" gasLimit = {EvmYul.toHex gasLimit}"
-            -- dbg_trace s!" recipient: {recipient.map (EvmYul.toHex ∘ BE)}"
-            -- dbg_trace s!" value = {EvmYul.toHex value}"
-            -- dbg_trace s!" data = {EvmYul.toHex p}"
-            -- dbg_trace s!" accestList = {accessList}"
-            -- dbg_trace s!" v = {EvmYul.toHex y}"
-            -- dbg_trace s!" r: {EvmYul.toHex r}"
-            -- dbg_trace s!" s: {EvmYul.toHex s}"
 
             let base : Transaction.Base :=
               .mk
                 (.ofNat <| fromByteArrayBigEndian nonce)
                 (.ofNat <| fromByteArrayBigEndian gasLimit)
                 recipient
-                (.ofNat <| fromByteArrayBigEndian value)
+                (← validateUInt256 value (.TransactionException .RLP_INVALID_VALUE))
                 r
                 s
                 p
@@ -242,10 +243,10 @@ def deserializeBlock (rlp : ByteArray) : Option (BlockHeader × Transactions × 
                 accessList
                 (.ofNat <| fromByteArrayBigEndian y)
             let gasPrice := .ofNat <| fromByteArrayBigEndian gasPrice
-            some <| .access <| AccessListTransaction.mk base withAccessList ⟨gasPrice⟩
+            pure <| .access <| AccessListTransaction.mk base withAccessList ⟨gasPrice⟩
         | _ =>
           dbg_trace "RLP error: deserializeRLP could not parse non-legacy transaction"
-          none
+          throw <| .BlockException .RLP_STRUCTURES_ENCODING
     | .𝕃
       [ .𝔹 nonce
       , .𝔹 gasPrice
@@ -256,42 +257,33 @@ def deserializeBlock (rlp : ByteArray) : Option (BlockHeader × Transactions × 
       , .𝔹 w
       , .𝔹 r
       , .𝔹 s
-      ] =>
+      ] => do
         let recipient : Option AccountAddress:=
           if recipient.isEmpty then none
           else some <| .ofNat <| fromByteArrayBigEndian recipient
-        -- dbg_trace s!"Deserialized legacy transaction"
-        -- dbg_trace s!" nonce: {EvmYul.toHex nonce}"
-        -- dbg_trace s!" gasPrice: {EvmYul.toHex gasPrice}"
-        -- dbg_trace s!" gasLimit: {EvmYul.toHex gasLimit}"
-        -- dbg_trace s!" recipient: {recipient.map (EvmYul.toHex ∘ BE)}"
-        -- dbg_trace s!" value: {EvmYul.toHex value}"
-        -- dbg_trace s!" data: {EvmYul.toHex p}"
-        -- dbg_trace s!" w: {EvmYul.toHex w}"
-        -- dbg_trace s!" r: {EvmYul.toHex r}"
-        -- dbg_trace s!" s: {EvmYul.toHex s}"
+
         let base : Transaction.Base :=
           Transaction.Base.mk
             (.ofNat <| fromByteArrayBigEndian nonce)
             (.ofNat <| fromByteArrayBigEndian gasLimit)
             recipient
-            (.ofNat <| fromByteArrayBigEndian value)
+            (← validateUInt256 value (.TransactionException .RLP_INVALID_VALUE))
             r
             s
             p
         let gasPrice := .ofNat <| fromByteArrayBigEndian gasPrice
         let w := .ofNat <| fromByteArrayBigEndian w
-        some <| .legacy <| LegacyTransaction.mk base ⟨gasPrice⟩ w
+        pure <| .legacy <| LegacyTransaction.mk base ⟨gasPrice⟩ w
     | _ =>
-      dbg_trace "RLP error: parseTransaction returns none"
-      none
-  parseTransactions : 𝕋 → Option (List Transaction)
+      dbg_trace "RLP error: parseTransaction"
+      throw <| .BlockException .RLP_STRUCTURES_ENCODING
+  parseTransactions : 𝕋 → Except EVM.Exception (List Transaction)
     | .𝕃 transactions => transactions.mapM parseTransaction
-    | .𝔹 ⟨#[]⟩ => some []
+    | .𝔹 ⟨#[]⟩ => pure []
     | _ =>
-      dbg_trace "RLP error: parseTransactionS returns none"
-      none
-  parseHeader : 𝕋 → Option BlockHeader
+      dbg_trace "RLP error: parseTransactions"
+      throw <| .BlockException .RLP_STRUCTURES_ENCODING
+  parseHeader : 𝕋 → Except EVM.Exception BlockHeader
     | .𝕃
       [ .𝔹 parentHash
       , .𝔹 uncleHash
@@ -314,7 +306,7 @@ def deserializeBlock (rlp : ByteArray) : Option (BlockHeader × Transactions × 
       , .𝔹 excessBlobGas
       , .𝔹 parentBeaconBlockRoot
       ]
-      => some <|
+      => pure <|
         BlockHeader.mk
           (.ofNat <| fromByteArrayBigEndian parentHash)
           (.ofNat <| fromByteArrayBigEndian uncleHash)
@@ -338,6 +330,6 @@ def deserializeBlock (rlp : ByteArray) : Option (BlockHeader × Transactions × 
           (some <| .ofNat <| fromByteArrayBigEndian excessBlobGas)
     | _ =>
       dbg_trace "Block header has wrong RLP structure"
-      none
+      throw <| .BlockException .RLP_STRUCTURES_ENCODING
 
 end EvmYul
