@@ -383,6 +383,9 @@ def validateTransaction
 def validateBlock (parentHeader : BlockHeader) (block : DeserializedBlock)
   : Except EVM.Exception (Transactions × Withdrawals)
 := do
+  if block.blockHeader.gasLimit > 0x7fffffffffffffff then
+    throw <| .BlockException .GASLIMIT_TOO_BIG
+
   if block.blockHeader.difficulty != 0 then
     throw <| .BlockException .IMPORT_IMPOSSIBLE_DIFFICULTY_OVER_PARIS
 
