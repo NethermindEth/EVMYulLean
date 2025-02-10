@@ -43,6 +43,7 @@ inductive BlockException where
   | RLP_INVALID_ADDRESS
   | GASLIMIT_TOO_BIG
   | INVALID_GAS_USED
+  | UNKNOWN_PARENT_ZERO
 
 /-
   TODO
@@ -68,7 +69,6 @@ inductive BlockException where
     RLP_WITHDRAWALS_NOT_READ
     UNCLE_PARENT_INCORRECT
     UNKNOWN_PARENT
-    UNKNOWN_PARENT_ZERO
 -/
 
 instance : Repr BlockException where
@@ -86,6 +86,7 @@ instance : Repr BlockException where
       | .RLP_INVALID_ADDRESS => "RLP_INVALID_ADDRESS"
       | .GASLIMIT_TOO_BIG => "GASLIMIT_TOO_BIG"
       | .INVALID_GAS_USED => "INVALID_GAS_USED"
+      | .UNKNOWN_PARENT_ZERO => "UNKNOWN_PARENT_ZERO"
 
 inductive TransactionException where
   | IllFormedRLP
