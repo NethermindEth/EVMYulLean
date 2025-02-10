@@ -383,6 +383,8 @@ def validateTransaction
 def validateBlock (parentHeader : BlockHeader) (block : DeserializedBlock)
   : Except EVM.Exception Unit
 := do
+  if block.blockHeader.number ≠ parentHeader.number + 1 then
+    throw <| .BlockException .INVALID_BLOCK_NUMBER
   if block.blockHeader.extraData.size > 32 then
     throw <| .BlockException .EXTRA_DATA_TOO_BIG
   if block.blockHeader.parentHash = ⟨0⟩ then
