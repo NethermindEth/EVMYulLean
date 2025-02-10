@@ -42,6 +42,7 @@ inductive BlockException where
   | RLP_INVALID_FIELD_OVERFLOW_64
   | RLP_INVALID_ADDRESS
   | GASLIMIT_TOO_BIG
+  | INVALID_GAS_USED
 
 /-
   TODO
@@ -60,7 +61,6 @@ inductive BlockException where
     INVALID_BLOCK_TIMESTAMP_OLDER_THAN_PARENT
     INVALID_DIFFICULTY
     INVALID_GASLIMIT
-    INVALID_GAS_USED
     INVALID_LOG_BLOOM
     INVALID_RECEIPTS_ROOT
     INVALID_STATE_ROOT
@@ -85,6 +85,7 @@ instance : Repr BlockException where
       | .RLP_INVALID_FIELD_OVERFLOW_64 => "RLP_INVALID_FIELD_OVERFLOW_64"
       | .RLP_INVALID_ADDRESS => "RLP_INVALID_ADDRESS"
       | .GASLIMIT_TOO_BIG => "GASLIMIT_TOO_BIG"
+      | .INVALID_GAS_USED => "INVALID_GAS_USED"
 
 inductive TransactionException where
   | IllFormedRLP
@@ -196,7 +197,7 @@ instance : Repr Exception where
       -- | .ExpectedException _               => s!"Expected exception"
       | .SenderRecoverError s =>        "SenderRecoverError." ++ s
       | .BlockException be =>           "BlockException." ++ repr be
-      | .MissedExpectedException mee => "Missed expected exception" ++ mee
+      | .MissedExpectedException mee => "Missed expected exception: " ++ mee
 
 #eval repr (Exception.BlockException .INCORRECT_EXCESS_BLOB_GAS)
 

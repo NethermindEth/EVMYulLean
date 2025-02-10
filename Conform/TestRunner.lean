@@ -496,7 +496,7 @@ def processBlocks
     : Except EVM.Exception EVM.State
   := do
     let (parentHeader, block) := withParentHeader
-    let (encounteredBlockException, transactions, s, withdrawals) ←
+    let (encounteredException₁, transactions, s, withdrawals) ←
       match validateBlock parentHeader block with
         | .error e =>
           if block.exception.containsSubstr (repr e).pretty then
@@ -549,7 +549,7 @@ def processBlocks
               pure (false, ts, s, ws)
 
     -- dbg_trace "\nStarting transactions"
-    let (encounteredTransactionException, s) ←
+    let (encounteredException₂, s) ←
       try
         let s ←
           transactions.foldlM
@@ -565,6 +565,10 @@ def processBlocks
             )
             {s with totalGasUsedInBlock := 0}
         let σ := applyWithdrawals s.accountMap withdrawals
+
+        if s.totalGasUsedInBlock ≠ block.blockHeader.gasUsed then
+          throw <| .BlockException .INVALID_GAS_USED
+
         pure <| (false, { s with accountMap := σ })
       catch e =>
         if block.exception.containsSubstr (repr e).pretty then
@@ -572,7 +576,7 @@ def processBlocks
           pure (true, s₀)
         else throw e
 
-    if ¬encounteredBlockException && ¬encounteredTransactionException && ¬block.exception.isEmpty then
+    if ¬encounteredException₁ && ¬encounteredException₂ && ¬block.exception.isEmpty then
       throw <| .MissedExpectedException block.exception
     pure s
 
