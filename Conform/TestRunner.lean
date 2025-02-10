@@ -383,19 +383,17 @@ def validateTransaction
 def validateBlock (parentHeader : BlockHeader) (block : DeserializedBlock)
   : Except EVM.Exception Unit
 := do
+  if block.blockHeader.extraData.size > 32 then
+    throw <| .BlockException .EXTRA_DATA_TOO_BIG
   if block.blockHeader.parentHash = ⟨0⟩ then
     throw <| .BlockException .UNKNOWN_PARENT_ZERO
-
   if block.blockHeader.gasLimit > 0x7fffffffffffffff then
     throw <| .BlockException .GASLIMIT_TOO_BIG
-
   if block.blockHeader.difficulty != 0 then
     throw <| .BlockException .IMPORT_IMPOSSIBLE_DIFFICULTY_OVER_PARIS
-
   -- KEC (RLP []) = 0x1dcc4de8dec75d7aab85b567b6ccd41ad312451b948a7413f0a142fd40d49347
   if 0x1dcc4de8dec75d7aab85b567b6ccd41ad312451b948a7413f0a142fd40d49347 != block.blockHeader.ommersHash.toNat then
     throw <| .BlockException .IMPORT_IMPOSSIBLE_UNCLES_OVER_PARIS
-
   if calcExcessBlobGas parentHeader != block.blockHeader.excessBlobGas then
     throw <| .BlockException .INCORRECT_EXCESS_BLOB_GAS
 
