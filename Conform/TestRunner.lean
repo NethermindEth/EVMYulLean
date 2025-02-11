@@ -388,6 +388,12 @@ def validateBlock
   (block : DeserializedBlock)
   : Except EVM.Exception Unit
 := do
+  if
+    block.blockHeader.gasLimit < 5000
+      ∨ block.blockHeader.gasLimit ≥ parentHeader.gasLimit + parentHeader.gasLimit / 1024
+      ∨ block.blockHeader.gasLimit ≤ parentHeader.gasLimit - parentHeader.gasLimit / 1024
+  then
+    throw <| .BlockException .INVALID_GASLIMIT
   if totalGasUsedInBlock ≠ block.blockHeader.gasUsed then
     throw <| .BlockException .INVALID_GAS_USED
   if block.blockHeader.timestamp ≤ parentHeader.timestamp then
