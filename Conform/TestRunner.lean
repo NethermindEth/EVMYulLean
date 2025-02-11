@@ -383,8 +383,10 @@ def validateTransaction
 def validateBlock (parentHeader : BlockHeader) (block : DeserializedBlock)
   : Except EVM.Exception Unit
 := do
-  if block.blockHeader.number ≠ parentHeader.number + 1 then
-    throw <| .BlockException .INVALID_BLOCK_NUMBER
+  -- if block.blockHeader.timestamp ≤ parentHeader.timestamp then
+  --   throw <| .BlockException .INVALID_BLOCK_TIMESTAMP_OLDER_THAN_PARENT
+  -- if block.blockHeader.number ≠ parentHeader.number + 1 then
+  --   throw <| .BlockException .INVALID_BLOCK_NUMBER
   if block.blockHeader.extraData.size > 32 then
     throw <| .BlockException .EXTRA_DATA_TOO_BIG
   if block.blockHeader.parentHash = ⟨0⟩ then
@@ -394,7 +396,10 @@ def validateBlock (parentHeader : BlockHeader) (block : DeserializedBlock)
   if block.blockHeader.difficulty != 0 then
     throw <| .BlockException .IMPORT_IMPOSSIBLE_DIFFICULTY_OVER_PARIS
   -- KEC (RLP []) = 0x1dcc4de8dec75d7aab85b567b6ccd41ad312451b948a7413f0a142fd40d49347
-  if 0x1dcc4de8dec75d7aab85b567b6ccd41ad312451b948a7413f0a142fd40d49347 != block.blockHeader.ommersHash.toNat then
+  if
+    0x1dcc4de8dec75d7aab85b567b6ccd41ad312451b948a7413f0a142fd40d49347
+      != block.blockHeader.ommersHash.toNat
+    then
     throw <| .BlockException .IMPORT_IMPOSSIBLE_UNCLES_OVER_PARIS
   if calcExcessBlobGas parentHeader != block.blockHeader.excessBlobGas then
     throw <| .BlockException .INCORRECT_EXCESS_BLOB_GAS
@@ -409,7 +414,6 @@ def validateBlock (parentHeader : BlockHeader) (block : DeserializedBlock)
   let MAX_BLOB_GAS_PER_BLOCK := 786432
   let (blobGasUsed, _) ← block.transactions.foldlM (init := (0, 0))
     λ (blobSum, sum) t ↦ do
-
       match t with
         | .blob bt => do
           if t.base.recipient = none then
@@ -439,7 +443,11 @@ def validateBlock (parentHeader : BlockHeader) (block : DeserializedBlock)
   if blobGasUsed > MAX_BLOB_GAS_PER_BLOCK then
     throw <| .BlockException .BLOB_GAS_USED_ABOVE_LIMIT
 
-  if block.blockHeader.withdrawalsRoot.isSome && Withdrawal.computeTrieRoot block.withdrawals ≠ block.blockHeader.withdrawalsRoot then
+  if
+    block.blockHeader.withdrawalsRoot.isSome
+      && Withdrawal.computeTrieRoot block.withdrawals
+          ≠ block.blockHeader.withdrawalsRoot
+  then
     throw <| .BlockException .INVALID_WITHDRAWALS_ROOT
 
   pure ()
@@ -459,48 +467,35 @@ def processBlocks
   (genesisBlockHeader : BlockHeader)
   : Except EVM.Exception EVM.State
 := do
-  let blocks ← blocks.foldlM (init := #[]) λ result block ↦
-    match deserialiseBlock block with
-      | .error e => do
-        if block.exception.containsSubstr (repr e).pretty then
-          dbg_trace s!"Expected exception: {block.exception}; got exception: {repr e}"
-          pure result
+  let (blocks, _) ←
+    blocks.foldlM (init := (#[], genesisBlockHeader)) λ (result, lastHeader) rawBlock ↦ do
+      try
+        let block ← deserialiseBlock rawBlock
+        validateBlock lastHeader block
+        pure <| (result.push block, block.blockHeader)
+      catch e =>
+        if rawBlock.exception.containsSubstr (repr e).pretty then
+          dbg_trace s!"Expected exception: {rawBlock.exception}; got exception: {repr e}"
+          pure (result, lastHeader)
         else
-          dbg_trace s!"Unexpected RLP exception: {repr e}. Not thrown further for now as we still rely on user readable fields."
-          let header₀ := block.blockHeader.getD default
-          let transactions₀ := block.transactions.getD default
-          let withdrawals₀ := block.withdrawals.getD default
-          pure <| result.push ⟨header₀, transactions₀, withdrawals₀, block.exception⟩
-      | .ok ⟨header, transactions, withdrawals, _⟩ => do
-        let header₀ := block.blockHeader.getD header
-        let transactions₀ := block.transactions.getD transactions
-        let withdrawals₀ := block.withdrawals.getD withdrawals
-        if header != header₀ then
-          dbg_trace "RLP error: RLP decoded block header is different. Using the original one."
-        if transactions != transactions₀ then
-          dbg_trace "RLP error: RLP decoded transactions are different. Using the original ones."
-        if withdrawals != withdrawals₀ then
-          dbg_trace "RLP error: RLP decoded withdrawals are different. Using the original ones."
-        pure <| result.push ⟨header₀, transactions₀, withdrawals₀, block.exception⟩
+          throw e
 
-  let parentHeaders :=
-    #[genesisBlockHeader] ++ blocks.map DeserializedBlock.blockHeader
-  let withParentHeaders := parentHeaders.zip blocks
-  withParentHeaders.foldlM
+  blocks.foldlM
     processBlock
     { pre.toEVMState with
         blocks := blocks
         genesisBlockHeader := genesisBlockHeader
     }
+  -- blocks.forM λ b ↦ do
+  --   if ¬b.exception.isEmpty then
+  --     throw <| .MissedExpectedException b.exception
  where
   processBlock
     (s₀ : EVM.State)
-    (withParentHeader : BlockHeader × DeserializedBlock)
+    (block : DeserializedBlock)
     : Except EVM.Exception EVM.State
   := do
-    let (parentHeader, block) := withParentHeader
     let (encounteredException, s) ← try
-      validateBlock parentHeader block
       -- Beacon call
       let s ← do
         let BEACON_ROOTS_ADDRESS : AccountAddress := 0x000F3df6D732807Ef1319fB7B8bB8522d0Beac02
