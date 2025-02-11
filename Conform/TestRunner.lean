@@ -388,10 +388,27 @@ def validateBlock
   (block : DeserializedBlock)
   : Except EVM.Exception Unit
 := do
+  let P_Hₗ := parentHeader.gasLimit
+
+  let ρ := 2; let τ := P_Hₗ / ρ; let ε := 8
+  let νStar :=
+    if parentHeader.gasUsed < τ then
+      (parentHeader.baseFeePerGas * (τ - parentHeader.gasUsed)) / τ
+    else
+      (parentHeader.baseFeePerGas * (parentHeader.gasUsed - τ)) / τ
+  let ν :=
+    if parentHeader.gasUsed < τ then νStar / ε else max (νStar / ε) 1
+  let expectedBaseFeePerGas :=
+    if parentHeader.gasUsed = τ then parentHeader.baseFeePerGas else
+    if parentHeader.gasUsed < τ then parentHeader.baseFeePerGas - ν else
+      parentHeader.baseFeePerGas + ν
+
+  if block.blockHeader.baseFeePerGas ≠ expectedBaseFeePerGas then
+    throw <| .BlockException .INVALID_BASEFEE_PER_GAS
   if
     block.blockHeader.gasLimit < 5000
-      ∨ block.blockHeader.gasLimit ≥ parentHeader.gasLimit + parentHeader.gasLimit / 1024
-      ∨ block.blockHeader.gasLimit ≤ parentHeader.gasLimit - parentHeader.gasLimit / 1024
+      ∨ block.blockHeader.gasLimit ≥ P_Hₗ + P_Hₗ / 1024
+      ∨ block.blockHeader.gasLimit ≤ P_Hₗ - P_Hₗ / 1024
   then
     throw <| .BlockException .INVALID_GASLIMIT
   if totalGasUsedInBlock ≠ block.blockHeader.gasUsed then
