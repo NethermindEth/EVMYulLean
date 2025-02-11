@@ -192,10 +192,25 @@ def validateTransaction
   (T : Transaction)
   : Except EVM.Exception AccountAddress
 := do
+  let H_f := header.baseFeePerGas
   if T.base.gasLimit.toNat + totalGasUsedInBlock > header.gasLimit then
     throw <| .TransactionException .GAS_ALLOWANCE_EXCEEDED
   if T.base.nonce.toNat ≥ 2^64-1 then
     throw <| .TransactionException .NONCE_IS_MAX
+
+  let maxFeePerGas :=
+    /-
+      The test `lowGasPriceOldTypes_d0g0v0_Cancun` expects an
+      `INSUFFICIENT_MAX_FEE_PER_GAS`, but its transaction doesn't have a
+      `maxFeePerGas` field. We use `gasPrice` instead.
+      See the 7th test for intrinsic validity, Yellow Paper, Chapter 7
+    -/
+    match T with
+      | .dynamic t | .blob t => t.maxFeePerGas
+      | .legacy t | .access t => t.gasPrice
+  if H_f > maxFeePerGas.toNat then
+    throw <| .TransactionException .INSUFFICIENT_MAX_FEE_PER_GAS
+
   let g₀ : ℕ := EVM.intrinsicGas T
   if T.base.gasLimit.toNat < g₀ then
     throw <| .TransactionException .INTRINSIC_GAS_TOO_LOW
@@ -224,7 +239,6 @@ def validateTransaction
         throw <| .TransactionException .INITCODE_SIZE_EXCEEDED
     | some _ => pure ()
 
-  let H_f := header.baseFeePerGas
   let some T_RLP := RLP (← (L_X T)) | throw <| .TransactionException .IllFormedRLP
 
   let r : ℕ := fromByteArrayBigEndian T.base.r
@@ -289,19 +303,6 @@ def validateTransaction
   -- dbg_trace s!"v₀: {v₀}, senderBalance: {senderBalance}"
   if v₀ > senderBalance then
     throw <| .TransactionException .INSUFFICIENT_ACCOUNT_FUNDS
-
-  let maxFeePerGas :=
-    /-
-      The test `lowGasPriceOldTypes_d0g0v0_Cancun` expects an
-      `INSUFFICIENT_MAX_FEE_PER_GAS`, but its transaction doesn't have a
-      `maxFeePerGas` field. We use `gasPrice` instead.
-      See the 7th test for intrinsic validity, Yellow Paper, Chapter 7
-    -/
-    match T with
-      | .dynamic t | .blob t => t.maxFeePerGas
-      | .legacy t | .access t => t.gasPrice
-  if H_f > maxFeePerGas.toNat then
-    throw <| .TransactionException .INSUFFICIENT_MAX_FEE_PER_GAS
 
   pure S_T
 
