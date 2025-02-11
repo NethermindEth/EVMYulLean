@@ -265,7 +265,7 @@ def C' (s : State) (instr : Operation .EVM) : ℕ :=
       if w ∈ Wlow then Glow else
       if w ∈ Wmid then Gmid else
       if w ∈ Whigh then Ghigh else
-      dbg_trace s!"TODO - C called with an unknown instruction: {w.pretty}"; 0
+        0
 
 /--
 H.1. Gas Cost
