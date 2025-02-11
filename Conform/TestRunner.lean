@@ -380,13 +380,15 @@ def validateTransaction
           , .𝕃 (t.blobVersionedHashes.map .𝔹)
           ]
 
-def validateBlock (parentHeader : BlockHeader) (block : DeserializedBlock)
+def validateBlock (totalGasUsedInBlock : ℕ) (parentHeader : BlockHeader) (block : DeserializedBlock)
   : Except EVM.Exception Unit
 := do
-  -- if block.blockHeader.timestamp ≤ parentHeader.timestamp then
-  --   throw <| .BlockException .INVALID_BLOCK_TIMESTAMP_OLDER_THAN_PARENT
-  -- if block.blockHeader.number ≠ parentHeader.number + 1 then
-  --   throw <| .BlockException .INVALID_BLOCK_NUMBER
+  if totalGasUsedInBlock ≠ block.blockHeader.gasUsed then
+    throw <| .BlockException .INVALID_GAS_USED
+  if block.blockHeader.timestamp ≤ parentHeader.timestamp then
+    throw <| .BlockException .INVALID_BLOCK_TIMESTAMP_OLDER_THAN_PARENT
+  if block.blockHeader.number ≠ parentHeader.number + 1 then
+    throw <| .BlockException .INVALID_BLOCK_NUMBER
   if block.blockHeader.extraData.size > 32 then
     throw <| .BlockException .EXTRA_DATA_TOO_BIG
   if block.blockHeader.parentHash = ⟨0⟩ then
@@ -467,104 +469,95 @@ def processBlocks
   (genesisBlockHeader : BlockHeader)
   : Except EVM.Exception EVM.State
 := do
-  let (blocks, _) ←
-    blocks.foldlM (init := (#[], genesisBlockHeader)) λ (result, lastHeader) rawBlock ↦ do
-      try
-        let block ← deserialiseBlock rawBlock
-        validateBlock lastHeader block
-        pure <| (result.push block, block.blockHeader)
-      catch e =>
-        if rawBlock.exception.containsSubstr (repr e).pretty then
-          dbg_trace s!"Expected exception: {rawBlock.exception}; got exception: {repr e}"
-          pure (result, lastHeader)
-        else
-          throw e
+  let state₀ := { pre.toEVMState with genesisBlockHeader := genesisBlockHeader }
+  let (state, _) ←
+    blocks.foldlM (init := (state₀, genesisBlockHeader))
+      λ (accState, lastHeader) rawBlock ↦ do
+        try
+          let block ← deserialiseBlock rawBlock
+          let accState ← processBlock accState block
+          validateBlock accState.totalGasUsedInBlock lastHeader block
+          pure
+            ( {accState with blocks := accState.blocks.push block}
+            , block.blockHeader
+            )
+        catch e =>
+          if rawBlock.exception.containsSubstr (repr e).pretty then
+            dbg_trace
+              s!"Expected exception: {rawBlock.exception}; got exception: {repr e}"
+            pure (accState, lastHeader)
+          else
+            throw e
 
-  blocks.foldlM
-    processBlock
-    { pre.toEVMState with
-        blocks := blocks
-        genesisBlockHeader := genesisBlockHeader
-    }
-  -- blocks.forM λ b ↦ do
-  --   if ¬b.exception.isEmpty then
-  --     throw <| .MissedExpectedException b.exception
+  state.blocks.forM λ b ↦ do
+    if ¬b.exception.isEmpty then
+      throw <| .MissedExpectedException b.exception
+  pure state
  where
   processBlock
     (s₀ : EVM.State)
     (block : DeserializedBlock)
     : Except EVM.Exception EVM.State
   := do
-    let (encounteredException, s) ← try
-      -- Beacon call
-      let s ← do
-        let BEACON_ROOTS_ADDRESS : AccountAddress := 0x000F3df6D732807Ef1319fB7B8bB8522d0Beac02
-        let SYSTEM_ADDRESS : AccountAddress := 0xfffffffffffffffffffffffffffffffffffffffe
-        match s₀.accountMap.find? BEACON_ROOTS_ADDRESS with
-          | none => pure s₀
-          | some roots =>
-            let beaconRootsAddressCode := roots.code
-            let _TODOfuel := 2^14
-            -- the call does not count against the block’s gas limit
-            let beaconCallResult :=
-              EVM.Θ (debugMode := false) _TODOfuel
-                []
-                .empty
-                s₀.genesisBlockHeader
-                s₀.blocks
-                s₀.accountMap
-                s₀.accountMap
-                default
-                SYSTEM_ADDRESS
-                SYSTEM_ADDRESS
-                BEACON_ROOTS_ADDRESS
-                (.Code beaconRootsAddressCode)
-                ⟨30000000⟩
-                ⟨0xe8d4a51000⟩
-                ⟨0⟩
-                ⟨0⟩
-                block.blockHeader.parentBeaconBlockRoot
-                0
-                block.blockHeader
-                true
-            let σ ←
-              match beaconCallResult with
-                | .ok (_, σ, _, _, _ /- can't fail-/, _) => pure σ
-                | .error e => throw <| .ExecutionException e
-            let s := {s₀ with accountMap := σ}
-            pure s
+    -- Beacon call
+    let s ← do
+      let BEACON_ROOTS_ADDRESS : AccountAddress :=
+        0x000F3df6D732807Ef1319fB7B8bB8522d0Beac02
+      let SYSTEM_ADDRESS : AccountAddress :=
+        0xfffffffffffffffffffffffffffffffffffffffe
+      match s₀.accountMap.find? BEACON_ROOTS_ADDRESS with
+        | none => pure s₀
+        | some roots =>
+          let beaconRootsAddressCode := roots.code
+          let _TODOfuel := 2^14
+          -- the call does not count against the block’s gas limit
+          let beaconCallResult :=
+            EVM.Θ (debugMode := false) _TODOfuel
+              []
+              .empty
+              s₀.genesisBlockHeader
+              s₀.blocks
+              s₀.accountMap
+              s₀.accountMap
+              default
+              SYSTEM_ADDRESS
+              SYSTEM_ADDRESS
+              BEACON_ROOTS_ADDRESS
+              (.Code beaconRootsAddressCode)
+              ⟨30000000⟩
+              ⟨0xe8d4a51000⟩
+              ⟨0⟩
+              ⟨0⟩
+              block.blockHeader.parentBeaconBlockRoot
+              0
+              block.blockHeader
+              true
+          let σ ←
+            match beaconCallResult with
+              | .ok (_, σ, _, _, _ /- can't fail-/, _) => pure σ
+              | .error e => throw <| .ExecutionException e
+          let s := {s₀ with accountMap := σ}
+          pure s
 
-      -- Transactions execution
-      let s ←
-        block.transactions.foldlM
-          (λ s' trans ↦ do
-            let S_T ←
-              validateTransaction
-                s'.accountMap
-                chainId
-                block.blockHeader
-                s'.totalGasUsedInBlock
-                trans
-            executeTransaction trans S_T s' block.blockHeader
-          )
-          {s with totalGasUsedInBlock := 0}
-      if s.totalGasUsedInBlock ≠ block.blockHeader.gasUsed then
-        throw <| .BlockException .INVALID_GAS_USED
+    -- Transactions execution
+    let s ←
+      block.transactions.foldlM
+        (λ s' trans ↦ do
+          let S_T ←
+            validateTransaction
+              s'.accountMap
+              chainId
+              block.blockHeader
+              s'.totalGasUsedInBlock
+              trans
+          executeTransaction trans S_T s' block.blockHeader
+        )
+        {s with totalGasUsedInBlock := 0}
 
-      -- Withdrawals execution
-      let σ := applyWithdrawals s.accountMap block.withdrawals
+    -- Withdrawals execution
+    let σ := applyWithdrawals s.accountMap block.withdrawals
 
-      pure <| (false, { s with accountMap := σ })
-    catch e =>
-      if block.exception.containsSubstr (repr e).pretty then
-        dbg_trace s!"Expected exception: {block.exception}; got exception: {repr e}"
-        pure (true, s₀)
-      else throw e
-
-    if ¬encounteredException && ¬block.exception.isEmpty then
-      throw <| .MissedExpectedException block.exception
-    pure s
-
+    pure { s with accountMap := σ }
 
 /--
 - `.none` on success
