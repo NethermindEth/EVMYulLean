@@ -27,9 +27,7 @@ structure State where
   totalGasUsedInBlock  : ℕ
   substate      : Substate
   executionEnv  : ExecutionEnv
-
-  -- Instead of keeping a map from `parentHash` to `Block`, we instead store the blocks we need.
-  blocks        : DeserializedBlocks
+  blockHashes        : Array UInt256
   genesisBlockHeader : BlockHeader
 
   -- TODO(Keccak Stuff + I guess this will be gone so no need to nuke the `Finmap` just now

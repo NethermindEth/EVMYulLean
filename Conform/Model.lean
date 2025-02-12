@@ -104,8 +104,7 @@ inductive PostState :=
 structure RawTestEntry :=
   info               : Json := ""
   blocks             : RawBlocks
-  genesisBlockHeader : BlockHeader
-  genesisRLP         : Json := ""
+  genesisRLP         : ByteArray
   lastblockhash      : Json := ""
   network            : String
   postState          : PostState
@@ -118,8 +117,7 @@ abbrev RawTestMap := Batteries.RBMap String RawTestEntry compare
 structure DeserializedTestEntry :=
   info               : Json := ""
   blocks             : DeserializedBlocks
-  genesisBlockHeader : BlockHeader
-  genesisRLP         : Json := ""
+  genesisRLP         : ByteArray
   network            : String
   postState          : PostState
   pre                : Pre

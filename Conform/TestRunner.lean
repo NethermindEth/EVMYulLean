@@ -165,7 +165,7 @@ def executeTransaction
       header.baseFeePerGas
       header
       s.genesisBlockHeader
-      s.blocks
+      s.blockHashes
       transaction
       sender
 
@@ -466,7 +466,7 @@ def validateBlock
 
   pure ()
 
-def deserialiseBlock (rawBlock : RawBlock)
+def deserializeRawBlock (rawBlock : RawBlock)
   : Except EVM.Exception DeserializedBlock
 := do
   let (blockHash, blockHeader, transactions, withdrawals) ← deserializeBlock rawBlock.rlp
@@ -478,32 +478,38 @@ This assumes that the `transactions` are ordered, as they should be in the test 
 def processBlocks
   (pre : Pre)
   (blocks : RawBlocks)
-  (genesisBlockHeader : BlockHeader)
+  (genesisRLP : ByteArray)
   : Except EVM.Exception EVM.State
 := do
-  let state₀ := { pre.toEVMState with genesisBlockHeader := genesisBlockHeader }
+  let (genesisHash, genesisBlockHeader, _) ← deserializeBlock genesisRLP
+  let state₀ :=
+    { pre.toEVMState with
+        genesisBlockHeader := genesisBlockHeader
+        blockHashes := #[genesisHash]
+    }
   let (state, _) ←
     blocks.foldlM (init := (state₀, genesisBlockHeader))
       λ (accState, lastHeader) rawBlock ↦ do
         try
-          let block ← deserialiseBlock rawBlock
+          let block ← deserializeRawBlock rawBlock
           let accState ← processBlock accState block
           validateBlock accState.totalGasUsedInBlock lastHeader block
+          if ¬block.exception.isEmpty then
+            throw <| .MissedExpectedException block.exception
           pure
-            ( {accState with blocks := accState.blocks.push block}
+            ( {accState with blockHashes := accState.blockHashes.push block.hash}
             , block.blockHeader
             )
         catch e =>
-          if rawBlock.exception.containsSubstr (repr e).pretty then
-            dbg_trace
-              s!"Expected exception: {rawBlock.exception}; got exception: {repr e}"
-            pure (accState, lastHeader)
-          else
-            throw e
-
-  state.blocks.forM λ b ↦ do
-    if ¬b.exception.isEmpty then
-      throw <| .MissedExpectedException b.exception
+          match e with
+            | .MissedExpectedException _  => throw e
+            | _ =>
+              if rawBlock.exception.containsSubstr (repr e).pretty then
+                dbg_trace
+                  s!"Expected exception: {rawBlock.exception}; got exception: {repr e}"
+                pure (accState, lastHeader)
+              else
+                throw e
   pure state
  where
   processBlock
@@ -528,7 +534,7 @@ def processBlocks
               []
               .empty
               s₀.genesisBlockHeader
-              s₀.blocks
+              s₀.blockHashes
               s₀.accountMap
               s₀.accountMap
               default
@@ -580,11 +586,11 @@ NB we can throw away the final state if it coincided with the expected one, henc
 def preImpliesPost
   (pre : Pre)
   (post : PostState)
-  (genesisBlockHeader : BlockHeader)
+  (genesisRLP : ByteArray)
   (blocks : RawBlocks)
   : Except EVM.Exception (Option PersistentAccountMap)
 := do
-    let resultState ← processBlocks pre blocks genesisBlockHeader
+    let resultState ← processBlocks pre blocks genesisRLP
     let result : PersistentAccountMap :=
       resultState.toState.accountMap.foldl
         (λ r addr ⟨⟨nonce, balance, storage, code⟩, _, _⟩ ↦ r.insert addr ⟨nonce, balance, storage, code⟩) default
@@ -620,7 +626,7 @@ instance (priority := high) : Repr PersistentAccountMap := ⟨λ m _ ↦
 
 def processTest (entry : RawTestEntry) (verbose : Bool := true) : TestResult := do
   let result :=
-    preImpliesPost entry.pre entry.postState entry.genesisBlockHeader entry.blocks
+    preImpliesPost entry.pre entry.postState entry.genesisRLP entry.blocks
   match result with
     | .error err => .mkFailed s!"{repr err}"
     | .ok result => errorF <$> result

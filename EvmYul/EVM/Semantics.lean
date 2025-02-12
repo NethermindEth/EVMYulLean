@@ -188,7 +188,7 @@ def call (debugMode : Bool) (fuel : Nat)
               blobVersionedHashes
               (createdAccounts := evmState.createdAccounts)
               (genesisBlockHeader := evmState.genesisBlockHeader)
-              (blocks := evmState.blocks)
+              (blockHashes := evmState.blockHashes)
               (σ  := σ)                             -- σ in  Θ(σ, ..)
               (σ₀ := evmState.σ₀)
               (A  := A')                            -- A* in Θ(.., A*, ..)
@@ -358,7 +358,7 @@ def step (debugMode : Bool) (fuel : ℕ) (gasCost : ℕ) (instr : Option (Operat
                     evmState.executionEnv.blobVersionedHashes
                     evmState.createdAccounts
                     evmState.genesisBlockHeader
-                    evmState.blocks
+                    evmState.blockHashes
                     σStar
                     evmState.σ₀
                     evmState.toState.substate
@@ -430,7 +430,7 @@ def step (debugMode : Bool) (fuel : ℕ) (gasCost : ℕ) (instr : Option (Operat
                     evmState.executionEnv.blobVersionedHashes
                     evmState.createdAccounts
                     evmState.genesisBlockHeader
-                    evmState.blocks
+                    evmState.blockHashes
                     σStar
                     evmState.σ₀
                     evmState.toState.substate
@@ -682,7 +682,7 @@ def Ξ -- Type `Ξ` using `\GX` or `\Xi`
   (fuel : ℕ)
   (createdAccounts : Batteries.RBSet AccountAddress compare)
   (genesisBlockHeader : BlockHeader)
-  (blocks : DeserializedBlocks)
+  (blockHashes : Array UInt256)
   (σ : AccountMap)
   (σ₀ : AccountMap)
   (g : UInt256)
@@ -705,7 +705,7 @@ def Ξ -- Type `Ξ` using `\GX` or `\Xi`
             substate := A
             createdAccounts := createdAccounts
             gasAvailable := g
-            blocks := blocks
+            blockHashes := blockHashes
             genesisBlockHeader := genesisBlockHeader
         }
       let result ← X debugMode f freshEvmState
@@ -726,7 +726,7 @@ def Lambda
   (blobVersionedHashes : List ByteArray)
   (createdAccounts : Batteries.RBSet AccountAddress compare) -- needed for EIP-6780
   (genesisBlockHeader : BlockHeader)
-  (blocks : DeserializedBlocks)
+  (blockHashes : Array UInt256)
   (σ : AccountMap)
   (σ₀ : AccountMap)
   (A : Substate)
@@ -816,7 +816,7 @@ def Lambda
     , blobVersionedHashes := blobVersionedHashes
     }
   -- dbg_trace "Calling Ξ"
-  match Ξ debugMode f createdAccounts genesisBlockHeader blocks σStar σ₀ g AStar exEnv with -- TODO - Gas model.
+  match Ξ debugMode f createdAccounts genesisBlockHeader blockHashes σStar σ₀ g AStar exEnv with
     | .error e =>
       if debugMode then dbg_trace s!"Execution failed in Λ: {repr e}"
       if e == .OutOfFuel then throw .OutOfFuel
@@ -898,7 +898,7 @@ def Θ (debugMode : Bool)
       (blobVersionedHashes : List ByteArray)
       (createdAccounts : Batteries.RBSet AccountAddress compare)
       (genesisBlockHeader : BlockHeader)
-      (blocks : DeserializedBlocks)
+      (blockHashes : Array UInt256)
       (σ  : AccountMap)
       (σ₀  : AccountMap)
       (A  : Substate)
@@ -981,7 +981,7 @@ def Θ (debugMode : Bool)
           | 10 => .ok <| (∅, Ξ_PointEval σ₁ g A I)
           | _ => default
       | ToExecute.Code _ =>
-        match Ξ debugMode fuel createdAccounts genesisBlockHeader blocks σ₁ σ₀ g A I with
+        match Ξ debugMode fuel createdAccounts genesisBlockHeader blockHashes σ₁ σ₀ g A I with
           | .error e =>
             if debugMode then dbg_trace s!"Execution failed in Θ: {repr e}"
             if e == .OutOfFuel then throw .OutOfFuel
@@ -1013,7 +1013,7 @@ def Υ (debugMode : Bool) (fuel : ℕ)
   (H_f : ℕ)
   (H : BlockHeader)
   (genesisBlockHeader : BlockHeader)
-  (blocks : DeserializedBlocks)
+  (blockHashes : Array UInt256)
   (T : Transaction)
   (S_T : AccountAddress)
   : Except EVM.Exception (AccountMap × Substate × Bool × UInt256)
@@ -1075,12 +1075,52 @@ def Υ (debugMode : Bool) (fuel : ℕ)
   let (/- provisional state -/ σ_P, g', A, z) ← -- (76)
     match T.base.recipient with
       | none => do
-        match Lambda debugMode fuel T.blobVersionedHashes createdAccounts genesisBlockHeader blocks σ₀ σ₀ AStar S_T S_T g p T.base.value T.base.data ⟨0⟩ none H true with
+        match
+          Lambda debugMode fuel
+            T.blobVersionedHashes
+            createdAccounts
+            genesisBlockHeader
+            blockHashes
+            σ₀
+            σ₀
+            AStar
+            S_T
+            S_T
+            g
+            p
+            T.base.value
+            T.base.data
+            ⟨0⟩
+            none
+            H
+            true
+        with
           | .ok (_, _, σ_P, g', A, z, _) => pure (σ_P, g', A, z)
           | .error e => .error <| .ExecutionException e
       | some t =>
         -- Proposition (71) suggests the recipient can be inexistent
-        match Θ debugMode fuel T.blobVersionedHashes createdAccounts genesisBlockHeader blocks σ₀ σ₀ AStar S_T S_T t (toExecute σ₀ t) g p T.base.value T.base.value T.base.data 0 H true with
+        match
+          Θ debugMode fuel
+            T.blobVersionedHashes
+            createdAccounts
+            genesisBlockHeader
+            blockHashes
+            σ₀
+            σ₀
+            AStar
+            S_T
+            S_T
+            t
+            (toExecute σ₀ t)
+            g
+            p
+            T.base.value
+            T.base.value
+            T.base.data
+            0
+            H
+            true
+        with
           | .ok (_, σ_P, g',  A, z, _) => pure (σ_P, g', A, z)
           | .error e => .error <| .ExecutionException e
   -- The amount to be refunded (82)

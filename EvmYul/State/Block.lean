@@ -68,7 +68,7 @@ def deserializeBlock
       -- TODO: Use partial result from deserialization instead of reserializing the final result
       let hash :=
         .ofNat <| fromByteArrayBigEndian <| KEC <| (RLP header).getD .empty
-      dbg_trace s!"Block hash: {toHex (KEC <| (RLP header).getD .empty)}"
+      -- dbg_trace s!"Block hash: {toHex (KEC <| (RLP header).getD .empty)}"
       let header ← parseHeader header
       let transactions ← parseTransactions transactions
       let withdrawals ← parseWithdrawals withdrawals

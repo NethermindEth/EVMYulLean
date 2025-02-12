@@ -263,8 +263,7 @@ instance : FromJson RawTestEntry where
     pure {
       info               := ← json.getObjValAs? Json "info"
       blocks             := ← json.getObjValAs? RawBlocks "blocks"
-      genesisBlockHeader := ← json.getObjValAs? BlockHeader "genesisBlockHeader"
-      genesisRLP         := ← json.getObjValAs? Json "genesisRLP"
+      genesisRLP         := ← json.getObjValAs? ByteArray "genesisRLP"
       lastblockhash      := ← json.getObjValAs? Json "lastblockhash"
       network            := ← json.getObjValAs? String "network"
       postState          := post
