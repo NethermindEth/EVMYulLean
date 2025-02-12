@@ -210,7 +210,7 @@ instance : FromJson Transaction where
 -/
 private def blockOfJson (json : Json) : Except String RawBlock := do
   -- The exception, if exists, is always in the outermost object regardless of the `<Format>` (see this function's docs).
-  let exception ← json.getObjValAsD! String "expectException"
+  let exception ← json.getObjValAsD! (Option String) "expectException"
   let rlp ← json.getObjValAsD! ByteArray "rlp"
   -- Descend to `rlp_decoded` - Format₁ if exists, Format₀ otherwise.
   -- let json ← json.getObjValAsD Json "rlp_decoded" json
@@ -230,7 +230,7 @@ private def blockOfJson (json : Json) : Except String RawBlock := do
     blockHeader := none -- := ← json.getObjValAsD! (Option BlockHeader) "blockHeader"
     transactions := none -- := ← json.getObjValAsD! (Option Transactions) "transactions"
     withdrawals := none --  := ← json.getObjValAsD! (Option Withdrawals) "withdrawals"
-    exception --    := exception
+    exception := exception.option [] (·.splitOn "|")
   }
   where
     tryParseBlocknumber (s : String) : Except String Nat :=

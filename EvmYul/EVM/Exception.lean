@@ -11,11 +11,8 @@ inductive ExecutionException where
   | BadJumpDestination
   | StackOverflow
   | StackUnderflow
-  -- | CALL_DEPTH_EXCEEDED
   | InvalidMemoryAccess
   | StaticModeViolation
-  -- | PRECOMPILE_FAILURE
-  -- | NONCE_EXCEEDED
 deriving BEq
 
 instance : Repr ExecutionException where
@@ -62,7 +59,6 @@ inductive BlockException where
     not IMPORT_IMPOSSIBLE_PARIS_WRONG_POS
     not IMPORT_IMPOSSIBLE_PARIS_WRONG_POW
     not IMPORT_IMPOSSIBLE_SHANGHAI
-    INVALID_BLOCK_TIMESTAMP_OLDER_THAN_PARENT
     INVALID_DIFFICULTY
     INVALID_LOG_BLOOM
     INVALID_RECEIPTS_ROOT
@@ -151,63 +147,23 @@ instance : Repr TransactionException where
 
 -- TODO - fix / cleanup.
 inductive Exception where
-  -- | OutOfFuel :                                   Exception
-  -- | InvalidInstruction :                          Exception
-  -- | OutOfGass :                                   Exception
-  -- | BadJumpDestination :                          Exception
-  -- | StackOverflow :                               Exception
-  -- | StackUnderflow :                              Exception
-  -- | InvalidMemoryAccess :                         Exception
-  -- | StaticModeViolation :                         Exception
   | ExecutionException :     ExecutionException → Exception
-  -- | InvalidPC                                   : Exception
-  -- | OutOfBounds                                 : Exception
   | NotEncodableRLP :                             Exception
-  -- | SenderMustExist                             : Exception
-  -- | ReceiverMustExistWithNonZeroValue           : Exception
-  -- | Underflow                                   : Exception
-  -- | Overflow                                    : Exception
-  -- | StopInvoked (s : EVM.State)                 : Exception
   | TransactionException : TransactionException → Exception
-  -- | ReceiverNotInAccounts (a : AccountAddress)  : Exception
-  -- | InvalidWithdrawal (s : String) : Exception
-  -- | BogusExceptionToBeReplaced (s : String) : Exception
-  -- | ExpectedException (post : AccountMap)   : Exception
   | SenderRecoverError :                 String → Exception
   | BlockException :             BlockException → Exception
-  | MissedExpectedException :            String → Exception
+  | MissedExpectedException :       List String → Exception
 
 instance : Repr Exception where
   reprPrec s _ :=
     match s with
       | .ExecutionException ee =>       "Execution exception: " ++ repr ee
-      -- | .StaticModeViolation =>         "StaticModeViolation"
-      -- | .BadJumpDestination =>          "BadJumpDestination"
-      -- | .InvalidMemoryAccess =>         "InvalidMemoryAccess"
-      -- | .StackUnderflow =>              "StackUnderflow"
-      -- | .StackOverflow =>               "StackOverflow"
-      -- | .InvalidPC                         => "InvalidPC"
-      -- | .OutOfBounds                       => "OutOfBounds"
       | .NotEncodableRLP =>             "NotEncodableRLP"
-      -- | .InvalidInstruction =>          "InvalidInstruction"
-      -- | .SenderMustExist                   => "SenderMustExist"
-      -- | .ReceiverMustExistWithNonZeroValue => "ReceiverMustExistWithNonZeroValue"
-      -- | .Underflow                         => "Underflow"
-      -- | .Overflow                          => "Overflow"
-      -- | .StopInvoked _                     => "Execution halted by STOP."
-      -- | .OutOfFuel =>                   "OutOfFuel"
-      -- | .OutOfGass =>                   "OutOfGass"
       | .TransactionException e =>      "TransactionException." ++ repr e
-      -- | .ReceiverNotInAccounts
-      --     (a : AccountAddress)             => s!"ReceiverNotInAccounts: {a}"
-      -- | .InvalidWithdrawal s               => s!"InvalidWithdrawal: {s}"
-      -- | .BogusExceptionToBeReplaced s      => s!"BogusExceptionToBeReplaced: {s}"
-      -- | .ExpectedException _               => s!"Expected exception"
       | .SenderRecoverError s =>        "SenderRecoverError." ++ s
       | .BlockException be =>           "BlockException." ++ repr be
-      | .MissedExpectedException mee => "Missed expected exception: " ++ mee
-
-#eval repr (Exception.BlockException .INCORRECT_EXCESS_BLOB_GAS)
+      | .MissedExpectedException mee =>
+        "Missed expected exception: " ++ String.intercalate "|" mee
 
 end EVM
 

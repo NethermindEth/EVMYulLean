@@ -14,7 +14,7 @@ abbrev Withdrawals := Array Withdrawal
 
 structure RawBlock where
   rlp          : ByteArray
-  exception    : String
+  exception    : List String
   -- Not always present, we can only rely on the RLP deserialization
   blockHeader  : Option BlockHeader
   transactions : Option Transactions
@@ -28,7 +28,7 @@ structure DeserializedBlock where
   blockHeader  : BlockHeader
   transactions : Transactions
   withdrawals  : Withdrawals
-  exception    : String
+  exception    : List String
 deriving BEq, Inhabited, Repr
 
 abbrev DeserializedBlocks := Array DeserializedBlock

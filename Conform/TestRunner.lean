@@ -392,9 +392,6 @@ def validateBlock
 := do
   let P_Hₗ := parentHeader.gasLimit
 
-  if ¬ blockHashes.contains block.blockHeader.parentHash then
-    throw <| .BlockException .UNKNOWN_PARENT
-
   let ρ := 2; let τ := P_Hₗ / ρ; let ε := 8
   let νStar :=
     if parentHeader.gasUsed < τ then
@@ -426,6 +423,8 @@ def validateBlock
     throw <| .BlockException .EXTRA_DATA_TOO_BIG
   if block.blockHeader.parentHash = ⟨0⟩ then
     throw <| .BlockException .UNKNOWN_PARENT_ZERO
+  if ¬ blockHashes.contains block.blockHeader.parentHash then
+    throw <| .BlockException .UNKNOWN_PARENT
   if block.blockHeader.gasLimit > 0x7fffffffffffffff then
     throw <| .BlockException .GASLIMIT_TOO_BIG
   if block.blockHeader.difficulty != 0 then
@@ -508,9 +507,9 @@ def processBlocks
           match e with
             | .MissedExpectedException _  => throw e
             | _ =>
-              if rawBlock.exception.containsSubstr (repr e).pretty then
+              if rawBlock.exception.contains (repr e).pretty then
                 dbg_trace
-                  s!"Expected exception: {rawBlock.exception}; got exception: {repr e}"
+                  s!"Expected exception: {String.intercalate "|" rawBlock.exception}; got exception: {repr e}"
                 pure (accState, lastHeader)
               else
                 throw e
