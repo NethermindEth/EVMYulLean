@@ -384,12 +384,16 @@ def validateTransaction
           ]
 
 def validateBlock
+  (blockHashes : Array UInt256)
   (totalGasUsedInBlock : ℕ)
   (parentHeader : BlockHeader)
   (block : DeserializedBlock)
   : Except EVM.Exception Unit
 := do
   let P_Hₗ := parentHeader.gasLimit
+
+  if ¬ blockHashes.contains block.blockHeader.parentHash then
+    throw <| .BlockException .UNKNOWN_PARENT
 
   let ρ := 2; let τ := P_Hₗ / ρ; let ε := 8
   let νStar :=
@@ -493,7 +497,7 @@ def processBlocks
         try
           let block ← deserializeRawBlock rawBlock
           let accState ← processBlock accState block
-          validateBlock accState.totalGasUsedInBlock lastHeader block
+          validateBlock accState.blockHashes accState.totalGasUsedInBlock lastHeader block
           if ¬block.exception.isEmpty then
             throw <| .MissedExpectedException block.exception
           pure

@@ -49,6 +49,7 @@ inductive BlockException where
   | INVALID_BLOCK_TIMESTAMP_OLDER_THAN_PARENT
   | INVALID_GASLIMIT
   | INVALID_BASEFEE_PER_GAS
+  | UNKNOWN_PARENT
 
 /-
   TODO
@@ -69,7 +70,6 @@ inductive BlockException where
     INVALID_TRANSACTIONS_ROOT
     RLP_WITHDRAWALS_NOT_READ
     UNCLE_PARENT_INCORRECT
-    UNKNOWN_PARENT
 -/
 
 instance : Repr BlockException where
@@ -93,6 +93,7 @@ instance : Repr BlockException where
       | .INVALID_BLOCK_TIMESTAMP_OLDER_THAN_PARENT => "INVALID_BLOCK_TIMESTAMP_OLDER_THAN_PARENT"
       | .INVALID_GASLIMIT => "INVALID_GASLIMIT"
       | .INVALID_BASEFEE_PER_GAS => "INVALID_BASEFEE_PER_GAS"
+      | .UNKNOWN_PARENT => "UNKNOWN_PARENT"
 
 inductive TransactionException where
   | IllFormedRLP
