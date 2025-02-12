@@ -182,6 +182,40 @@ def executeTransaction
     }
   pure result
 
+/-
+  `baseFeePerGas`, `gasLimit` and `excessBlobGas` are used in transaction
+  validation, so have to validated before.
+-/
+def validateHeaderBeforeTransactions
+  (parentHeader : BlockHeader)
+  (header : BlockHeader)
+  : Except EVM.Exception Unit
+:= do
+  let P_Hₗ := parentHeader.gasLimit
+
+  let ρ := 2; let τ := P_Hₗ / ρ; let ε := 8
+  let νStar :=
+    if parentHeader.gasUsed < τ then
+      (parentHeader.baseFeePerGas * (τ - parentHeader.gasUsed)) / τ
+    else
+      (parentHeader.baseFeePerGas * (parentHeader.gasUsed - τ)) / τ
+  let ν :=
+    if parentHeader.gasUsed < τ then νStar / ε else max (νStar / ε) 1
+  let expectedBaseFeePerGas :=
+    if parentHeader.gasUsed = τ then parentHeader.baseFeePerGas else
+    if parentHeader.gasUsed < τ then parentHeader.baseFeePerGas - ν else
+      parentHeader.baseFeePerGas + ν
+  if
+    header.gasLimit < 5000
+      ∨ header.gasLimit ≥ P_Hₗ + P_Hₗ / 1024
+      ∨ header.gasLimit ≤ P_Hₗ - P_Hₗ / 1024
+  then
+    throw <| .BlockException .INVALID_GASLIMIT
+  if header.baseFeePerGas ≠ expectedBaseFeePerGas then
+    throw <| .BlockException .INVALID_BASEFEE_PER_GAS
+  if calcExcessBlobGas parentHeader != header.excessBlobGas then
+    throw <| .BlockException .INCORRECT_EXCESS_BLOB_GAS
+    pure ()
 
 def validateTransaction
   (σ : AccountMap)
@@ -281,7 +315,6 @@ def validateTransaction
       | none =>
         dbg_trace s!"could not find sender {EvmYul.toHex S_T.toByteArray}"
         (.empty, ⟨0⟩, ⟨0⟩)
-
 
   if senderCode ≠ .empty then throw <| .TransactionException .SENDER_NOT_EOA
   if T.base.nonce < senderNonce then
@@ -390,29 +423,37 @@ def validateBlock
   (block : DeserializedBlock)
   : Except EVM.Exception Unit
 := do
-  let P_Hₗ := parentHeader.gasLimit
 
-  let ρ := 2; let τ := P_Hₗ / ρ; let ε := 8
-  let νStar :=
-    if parentHeader.gasUsed < τ then
-      (parentHeader.baseFeePerGas * (τ - parentHeader.gasUsed)) / τ
-    else
-      (parentHeader.baseFeePerGas * (parentHeader.gasUsed - τ)) / τ
-  let ν :=
-    if parentHeader.gasUsed < τ then νStar / ε else max (νStar / ε) 1
-  let expectedBaseFeePerGas :=
-    if parentHeader.gasUsed = τ then parentHeader.baseFeePerGas else
-    if parentHeader.gasUsed < τ then parentHeader.baseFeePerGas - ν else
-      parentHeader.baseFeePerGas + ν
+  let MAX_BLOB_GAS_PER_BLOCK := 786432
+  -- TODO: Move to `validateTransaction`?
+  let blobGasUsed ← block.transactions.foldlM (init := 0) λ blobSum t ↦ do
+    let blobSum := blobSum + getTotalBlobGas t
+    if blobSum > MAX_BLOB_GAS_PER_BLOCK then
+      throw <| .TransactionException .TYPE_3_TX_MAX_BLOB_GAS_ALLOWANCE_EXCEEDED
+    pure blobSum
 
-  if block.blockHeader.baseFeePerGas ≠ expectedBaseFeePerGas then
-    throw <| .BlockException .INVALID_BASEFEE_PER_GAS
-  if
-    block.blockHeader.gasLimit < 5000
-      ∨ block.blockHeader.gasLimit ≥ P_Hₗ + P_Hₗ / 1024
-      ∨ block.blockHeader.gasLimit ≤ P_Hₗ - P_Hₗ / 1024
-  then
-    throw <| .BlockException .INVALID_GASLIMIT
+  -- let P_Hₗ := parentHeader.gasLimit
+  -- let ρ := 2; let τ := P_Hₗ / ρ; let ε := 8
+  -- let νStar :=
+  --   if parentHeader.gasUsed < τ then
+  --     (parentHeader.baseFeePerGas * (τ - parentHeader.gasUsed)) / τ
+  --   else
+  --     (parentHeader.baseFeePerGas * (parentHeader.gasUsed - τ)) / τ
+  -- let ν :=
+  --   if parentHeader.gasUsed < τ then νStar / ε else max (νStar / ε) 1
+  -- let expectedBaseFeePerGas :=
+  --   if parentHeader.gasUsed = τ then parentHeader.baseFeePerGas else
+  --   if parentHeader.gasUsed < τ then parentHeader.baseFeePerGas - ν else
+  --     parentHeader.baseFeePerGas + ν
+
+  -- if block.blockHeader.baseFeePerGas ≠ expectedBaseFeePerGas then
+  --   throw <| .BlockException .INVALID_BASEFEE_PER_GAS
+  -- if
+  --   block.blockHeader.gasLimit < 5000
+  --     ∨ block.blockHeader.gasLimit ≥ P_Hₗ + P_Hₗ / 1024
+  --     ∨ block.blockHeader.gasLimit ≤ P_Hₗ - P_Hₗ / 1024
+  -- then
+  --   throw <| .BlockException .INVALID_GASLIMIT
   if totalGasUsedInBlock ≠ block.blockHeader.gasUsed then
     throw <| .BlockException .INVALID_GAS_USED
   if block.blockHeader.timestamp ≤ parentHeader.timestamp then
@@ -435,21 +476,14 @@ def validateBlock
       != block.blockHeader.ommersHash.toNat
     then
     throw <| .BlockException .IMPORT_IMPOSSIBLE_UNCLES_OVER_PARIS
-  if calcExcessBlobGas parentHeader != block.blockHeader.excessBlobGas then
-    throw <| .BlockException .INCORRECT_EXCESS_BLOB_GAS
+  -- if calcExcessBlobGas parentHeader != block.blockHeader.excessBlobGas then
+  --   throw <| .BlockException .INCORRECT_EXCESS_BLOB_GAS
 
   -- TODO: Not needed in Cancun. Make `blobGasUsed` and `excessBlobGas` `UInt64`s, not `Option`s.
   match block.blockHeader.blobGasUsed, block.blockHeader.excessBlobGas with
   | some _, none | none, some _ =>
     throw <| .BlockException .INCORRECT_BLOCK_FORMAT
   | _, _ => pure ()
-
-  let MAX_BLOB_GAS_PER_BLOCK := 786432
-  let blobGasUsed ← block.transactions.foldlM (init := 0) λ blobSum t ↦ do
-    let blobSum := blobSum + getTotalBlobGas t
-    if blobSum > MAX_BLOB_GAS_PER_BLOCK then
-      throw <| .TransactionException .TYPE_3_TX_MAX_BLOB_GAS_ALLOWANCE_EXCEEDED
-    pure blobSum
 
   match block.blockHeader.blobGasUsed with
     | none => pure ()
@@ -495,6 +529,7 @@ def processBlocks
       λ (accState, lastHeader) rawBlock ↦ do
         try
           let block ← deserializeRawBlock rawBlock
+          validateHeaderBeforeTransactions lastHeader block.blockHeader
           let accState ← processBlock accState block
           validateBlock accState.blockHashes accState.totalGasUsedInBlock lastHeader block
           if ¬block.exception.isEmpty then
