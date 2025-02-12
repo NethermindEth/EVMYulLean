@@ -88,7 +88,6 @@ def extCodeCopy' (self : SharedState) (acc mstart cstart size : UInt256) : Share
       .ofNat (MachineState.M self.activeWords.toNat mstart size)
   }
 
-
 end Memory
 
 def logOp (μ₀ μ₁ : UInt256) (t : List UInt256) (sState : SharedState) : SharedState :=

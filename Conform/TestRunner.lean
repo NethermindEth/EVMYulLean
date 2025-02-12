@@ -469,8 +469,8 @@ def validateBlock
 def deserialiseBlock (rawBlock : RawBlock)
   : Except EVM.Exception DeserializedBlock
 := do
-  let (blockHeader, transactions, withdrawals) ← deserializeBlock rawBlock.rlp
-  pure <| .mk blockHeader transactions withdrawals rawBlock.exception
+  let (blockHash, blockHeader, transactions, withdrawals) ← deserializeBlock rawBlock.rlp
+  pure <| .mk blockHash blockHeader transactions withdrawals rawBlock.exception
 
 /--
 This assumes that the `transactions` are ordered, as they should be in the test suit.

@@ -24,6 +24,7 @@ deriving BEq, Inhabited, Repr
 abbrev RawBlocks := Array RawBlock
 
 structure DeserializedBlock where
+  hash         : UInt256
   blockHeader  : BlockHeader
   transactions : Transactions
   withdrawals  : Withdrawals
@@ -58,13 +59,20 @@ def validateAccountAddress
   if a.size ≠ 20 then throw e
   pure (.ofNat (fromByteArrayBigEndian a))
 
-def deserializeBlock (rlp : ByteArray) : Except EVM.Exception (BlockHeader × Transactions × Withdrawals) :=
+def deserializeBlock
+  (rlp : ByteArray)
+  : Except EVM.Exception (UInt256 × BlockHeader × Transactions × Withdrawals)
+:=
   match deserializeRLP rlp with
     | some (.𝕃 [header, transactions, _, withdrawals]) => do
+      -- TODO: Use partial result from deserialization instead of reserializing the final result
+      let hash :=
+        .ofNat <| fromByteArrayBigEndian <| KEC <| (RLP header).getD .empty
+      dbg_trace s!"Block hash: {toHex (KEC <| (RLP header).getD .empty)}"
       let header ← parseHeader header
       let transactions ← parseTransactions transactions
       let withdrawals ← parseWithdrawals withdrawals
-      pure (header, Array.mk transactions, Array.mk withdrawals)
+      pure (hash, header, Array.mk transactions, Array.mk withdrawals)
     | none =>
       dbg_trace "RLP error: deserializeRLP returned none"
       throw <| .BlockException .RLP_STRUCTURES_ENCODING
@@ -109,7 +117,7 @@ def deserializeBlock (rlp : ByteArray) : Except EVM.Exception (BlockHeader × Tr
     | _ =>
       dbg_trace "RLP error: parseBlobVersionHash"
       throw <| .BlockException .RLP_STRUCTURES_ENCODING
-
+  -- TODO: factor out `Transaction` parts parsing (e.g. Transaction.Base)
   parseTransaction : 𝕋 → Except EVM.Exception Transaction
     | .𝔹 typePlusPayload => -- Transaction type > 0
       match deserializeRLP (typePlusPayload.extract 1 typePlusPayload.size) with
