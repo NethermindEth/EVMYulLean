@@ -47,6 +47,7 @@ inductive BlockException where
   | INVALID_GASLIMIT
   | INVALID_BASEFEE_PER_GAS
   | UNKNOWN_PARENT
+  | INVALID_STATE_ROOT
 
 /-
   TODO
@@ -90,6 +91,7 @@ instance : Repr BlockException where
       | .INVALID_GASLIMIT => "INVALID_GASLIMIT"
       | .INVALID_BASEFEE_PER_GAS => "INVALID_BASEFEE_PER_GAS"
       | .UNKNOWN_PARENT => "UNKNOWN_PARENT"
+      | .INVALID_STATE_ROOT => "INVALID_STATE_ROOT"
 
 inductive TransactionException where
   | IllFormedRLP

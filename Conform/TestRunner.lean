@@ -417,8 +417,7 @@ def validateTransaction
           ]
 
 def validateBlock
-  (blockHashes : Array UInt256)
-  (totalGasUsedInBlock : ℕ)
+  (state : EVM.State)
   (parentHeader : BlockHeader)
   (block : DeserializedBlock)
   : Except EVM.Exception Unit
@@ -432,29 +431,7 @@ def validateBlock
       throw <| .TransactionException .TYPE_3_TX_MAX_BLOB_GAS_ALLOWANCE_EXCEEDED
     pure blobSum
 
-  -- let P_Hₗ := parentHeader.gasLimit
-  -- let ρ := 2; let τ := P_Hₗ / ρ; let ε := 8
-  -- let νStar :=
-  --   if parentHeader.gasUsed < τ then
-  --     (parentHeader.baseFeePerGas * (τ - parentHeader.gasUsed)) / τ
-  --   else
-  --     (parentHeader.baseFeePerGas * (parentHeader.gasUsed - τ)) / τ
-  -- let ν :=
-  --   if parentHeader.gasUsed < τ then νStar / ε else max (νStar / ε) 1
-  -- let expectedBaseFeePerGas :=
-  --   if parentHeader.gasUsed = τ then parentHeader.baseFeePerGas else
-  --   if parentHeader.gasUsed < τ then parentHeader.baseFeePerGas - ν else
-  --     parentHeader.baseFeePerGas + ν
-
-  -- if block.blockHeader.baseFeePerGas ≠ expectedBaseFeePerGas then
-  --   throw <| .BlockException .INVALID_BASEFEE_PER_GAS
-  -- if
-  --   block.blockHeader.gasLimit < 5000
-  --     ∨ block.blockHeader.gasLimit ≥ P_Hₗ + P_Hₗ / 1024
-  --     ∨ block.blockHeader.gasLimit ≤ P_Hₗ - P_Hₗ / 1024
-  -- then
-  --   throw <| .BlockException .INVALID_GASLIMIT
-  if totalGasUsedInBlock ≠ block.blockHeader.gasUsed then
+  if state.totalGasUsedInBlock ≠ block.blockHeader.gasUsed then
     throw <| .BlockException .INVALID_GAS_USED
   if block.blockHeader.timestamp ≤ parentHeader.timestamp then
     throw <| .BlockException .INVALID_BLOCK_TIMESTAMP_OLDER_THAN_PARENT
@@ -464,7 +441,7 @@ def validateBlock
     throw <| .BlockException .EXTRA_DATA_TOO_BIG
   if block.blockHeader.parentHash = ⟨0⟩ then
     throw <| .BlockException .UNKNOWN_PARENT_ZERO
-  if ¬ blockHashes.contains block.blockHeader.parentHash then
+  if ¬ state.blockHashes.contains block.blockHeader.parentHash then
     throw <| .BlockException .UNKNOWN_PARENT
   if block.blockHeader.gasLimit > 0x7fffffffffffffff then
     throw <| .BlockException .GASLIMIT_TOO_BIG
@@ -474,10 +451,8 @@ def validateBlock
   if
     0x1dcc4de8dec75d7aab85b567b6ccd41ad312451b948a7413f0a142fd40d49347
       != block.blockHeader.ommersHash.toNat
-    then
+  then
     throw <| .BlockException .IMPORT_IMPOSSIBLE_UNCLES_OVER_PARIS
-  -- if calcExcessBlobGas parentHeader != block.blockHeader.excessBlobGas then
-  --   throw <| .BlockException .INCORRECT_EXCESS_BLOB_GAS
 
   -- TODO: Not needed in Cancun. Make `blobGasUsed` and `excessBlobGas` `UInt64`s, not `Option`s.
   match block.blockHeader.blobGasUsed, block.blockHeader.excessBlobGas with
@@ -500,6 +475,14 @@ def validateBlock
           ≠ block.blockHeader.withdrawalsRoot
   then
     throw <| .BlockException .INVALID_WITHDRAWALS_ROOT
+
+  -- TODO: Integrate this with the `postState` comparison.
+  let computedStateHash : UInt256 :=
+    stateTrieRoot state.accountMap.toPersistentAccountMap
+    |>.option 0 fromByteArrayBigEndian
+    |> .ofNat
+  if block.blockHeader.stateRoot ≠ computedStateHash then
+    throw <| .BlockException .INVALID_STATE_ROOT
 
   pure ()
 
@@ -531,7 +514,7 @@ def processBlocks
           let block ← deserializeRawBlock rawBlock
           validateHeaderBeforeTransactions lastHeader block.blockHeader
           let accState ← processBlock accState block
-          validateBlock accState.blockHashes accState.totalGasUsedInBlock lastHeader block
+          validateBlock accState lastHeader block
           if ¬block.exception.isEmpty then
             throw <| .MissedExpectedException block.exception
           pure
