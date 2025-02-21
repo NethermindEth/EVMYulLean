@@ -70,12 +70,25 @@ def VerySlowTests : Array String :=
 
 def GlobalBlacklist : Array String := VerySlowTests
 
+def PersistentAccountMap.toAccountMap (self : PersistentAccountMap) : AccountMap :=
+  self.foldl addAccount default
+  where addAccount s addr acc :=
+    let account : Account :=
+      {
+        tstorage := ∅
+        nonce    := acc.nonce
+        balance  := acc.balance
+        code     := acc.code
+        storage  := acc.storage.toEvmYulStorage
+      }
+    s.insert addr account
+
 def PersistentAccountMap.toEVMState (self : PersistentAccountMap) : EVM.State :=
   self.foldl addAccount default
   where addAccount s addr acc :=
     let account : Account :=
       {
-        tstorage := ∅ -- TODO - Look into transaciton storage.
+        tstorage := ∅
         nonce    := acc.nonce
         balance  := acc.balance
         code     := acc.code
@@ -165,7 +178,7 @@ def executeTransaction
       header.baseFeePerGas
       header
       s.genesisBlockHeader
-      s.blockHashes
+      s.blocks
       transaction
       sender
 
@@ -187,24 +200,32 @@ def executeTransaction
   validation, so have to validated before.
 -/
 def validateHeaderBeforeTransactions
-  (parentHeader : BlockHeader)
+  (blocks : ProcessedBlocks)
   (header : BlockHeader)
-  : Except EVM.Exception Unit
+  : Except EVM.Exception ProcessedBlock
 := do
-  let P_Hₗ := parentHeader.gasLimit
+  if header.parentHash = ⟨0⟩ then
+    throw <| .BlockException .UNKNOWN_PARENT_ZERO
+
+  let (some parent : Option ProcessedBlock) :=
+    -- Usually the parent is the last processed block
+    blocks.findRev? λ b ↦ b.hash = header.parentHash
+    | throw <| .BlockException .UNKNOWN_PARENT
+
+  let P_Hₗ := parent.blockHeader.gasLimit
 
   let ρ := 2; let τ := P_Hₗ / ρ; let ε := 8
   let νStar :=
-    if parentHeader.gasUsed < τ then
-      (parentHeader.baseFeePerGas * (τ - parentHeader.gasUsed)) / τ
+    if parent.blockHeader.gasUsed < τ then
+      (parent.blockHeader.baseFeePerGas * (τ - parent.blockHeader.gasUsed)) / τ
     else
-      (parentHeader.baseFeePerGas * (parentHeader.gasUsed - τ)) / τ
+      (parent.blockHeader.baseFeePerGas * (parent.blockHeader.gasUsed - τ)) / τ
   let ν :=
-    if parentHeader.gasUsed < τ then νStar / ε else max (νStar / ε) 1
+    if parent.blockHeader.gasUsed < τ then νStar / ε else max (νStar / ε) 1
   let expectedBaseFeePerGas :=
-    if parentHeader.gasUsed = τ then parentHeader.baseFeePerGas else
-    if parentHeader.gasUsed < τ then parentHeader.baseFeePerGas - ν else
-      parentHeader.baseFeePerGas + ν
+    if parent.blockHeader.gasUsed = τ then parent.blockHeader.baseFeePerGas else
+    if parent.blockHeader.gasUsed < τ then parent.blockHeader.baseFeePerGas - ν else
+      parent.blockHeader.baseFeePerGas + ν
   if
     header.gasLimit < 5000
       ∨ header.gasLimit ≥ P_Hₗ + P_Hₗ / 1024
@@ -213,9 +234,9 @@ def validateHeaderBeforeTransactions
     throw <| .BlockException .INVALID_GASLIMIT
   if header.baseFeePerGas ≠ expectedBaseFeePerGas then
     throw <| .BlockException .INVALID_BASEFEE_PER_GAS
-  if calcExcessBlobGas parentHeader != header.excessBlobGas then
+  if calcExcessBlobGas parent.blockHeader != header.excessBlobGas then
     throw <| .BlockException .INCORRECT_EXCESS_BLOB_GAS
-    pure ()
+  pure parent
 
 def validateTransaction
   (σ : AccountMap)
@@ -439,10 +460,6 @@ def validateBlock
     throw <| .BlockException .INVALID_BLOCK_NUMBER
   if block.blockHeader.extraData.size > 32 then
     throw <| .BlockException .EXTRA_DATA_TOO_BIG
-  if block.blockHeader.parentHash = ⟨0⟩ then
-    throw <| .BlockException .UNKNOWN_PARENT_ZERO
-  if ¬ state.blockHashes.contains block.blockHeader.parentHash then
-    throw <| .BlockException .UNKNOWN_PARENT
   if block.blockHeader.gasLimit > 0x7fffffffffffffff then
     throw <| .BlockException .GASLIMIT_TOO_BIG
   if block.blockHeader.difficulty != 0 then
@@ -505,22 +522,31 @@ def processBlocks
   let state₀ :=
     { pre.toEVMState with
         genesisBlockHeader := genesisBlockHeader
-        blockHashes := #[genesisHash]
+        blocks :=
+          #[
+            ⟨ genesisHash
+            , genesisBlockHeader
+            , PersistentAccountMap.toAccountMap pre
+            ⟩
+          ]
     }
-  let (state, _) ←
-    blocks.foldlM (init := (state₀, genesisBlockHeader))
-      λ (accState, lastHeader) rawBlock ↦ do
+  let state ←
+    blocks.foldlM (init := state₀)
+      λ accState rawBlock ↦ do
         try
           let block ← deserializeRawBlock rawBlock
-          validateHeaderBeforeTransactions lastHeader block.blockHeader
-          let accState ← processBlock accState block
-          validateBlock accState lastHeader block
+          let parent ←
+            validateHeaderBeforeTransactions accState.blocks block.blockHeader
+          let accState ← processBlock {accState with accountMap := parent.σ} block
+          validateBlock accState parent.blockHeader block
           if ¬block.exception.isEmpty then
             throw <| .MissedExpectedException block.exception
           pure
-            ( {accState with blockHashes := accState.blockHashes.push block.hash}
-            , block.blockHeader
-            )
+            { accState with
+                blocks :=
+                  accState.blocks.push
+                    ⟨block.hash, block.blockHeader, accState.accountMap⟩
+            }
         catch e =>
           match e with
             | .MissedExpectedException _  => throw e
@@ -528,7 +554,7 @@ def processBlocks
               if rawBlock.exception.contains (repr e).pretty then
                 dbg_trace
                   s!"Expected exception: {String.intercalate "|" rawBlock.exception}; got exception: {repr e}"
-                pure (accState, lastHeader)
+                pure accState
               else
                 throw e
   pure state
@@ -555,7 +581,7 @@ def processBlocks
               []
               .empty
               s₀.genesisBlockHeader
-              s₀.blockHashes
+              s₀.blocks
               s₀.accountMap
               s₀.accountMap
               default
@@ -604,19 +630,18 @@ def processBlocks
 
 NB we can throw away the final state if it coincided with the expected one, hence `.none`.
 -/
-def preImpliesPost
-  (pre : Pre)
-  (post : PostState)
-  (genesisRLP : ByteArray)
-  (blocks : RawBlocks)
+def preImpliesPost (entry : RawTestEntry)
   : Except EVM.Exception (Option PersistentAccountMap)
 := do
-    let resultState ← processBlocks pre blocks genesisRLP
+    let resultState ← processBlocks entry.pre entry.blocks entry.genesisRLP
+    let lastAccountMap :=
+      resultState.blocks.findRev? (·.hash == entry.lastblockhash)
+      |>.option resultState.accountMap ProcessedBlock.σ
     let result : PersistentAccountMap :=
-      resultState.toState.accountMap.foldl
+      lastAccountMap.foldl
         (λ r addr ⟨⟨nonce, balance, storage, code⟩, _, _⟩ ↦ r.insert addr ⟨nonce, balance, storage, code⟩) default
     let persistentAccountMap := resultState.accountMap.toPersistentAccountMap
-    match post with
+    match entry.postState with
       | .Map post =>
         match almostBEqButNotQuite post result with
           | .error e =>
@@ -647,7 +672,7 @@ instance (priority := high) : Repr PersistentAccountMap := ⟨λ m _ ↦
 
 def processTest (entry : RawTestEntry) (verbose : Bool := true) : TestResult := do
   let result :=
-    preImpliesPost entry.pre entry.postState entry.genesisRLP entry.blocks
+    preImpliesPost entry
   match result with
     | .error err => .mkFailed s!"{repr err}"
     | .ok result => errorF <$> result

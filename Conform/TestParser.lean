@@ -264,7 +264,7 @@ instance : FromJson RawTestEntry where
       info               := ← json.getObjValAs? Json "info"
       blocks             := ← json.getObjValAs? RawBlocks "blocks"
       genesisRLP         := ← json.getObjValAs? ByteArray "genesisRLP"
-      lastblockhash      := ← json.getObjValAs? Json "lastblockhash"
+      lastblockhash      := ← json.getObjValAs? UInt256 "lastblockhash"
       network            := ← json.getObjValAs? String "network"
       postState          := post
       pre                := ← json.getObjValAs? Pre "pre"

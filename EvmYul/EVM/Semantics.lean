@@ -188,7 +188,7 @@ def call (debugMode : Bool) (fuel : Nat)
               blobVersionedHashes
               (createdAccounts := evmState.createdAccounts)
               (genesisBlockHeader := evmState.genesisBlockHeader)
-              (blockHashes := evmState.blockHashes)
+              (blocks := evmState.blocks)
               (σ  := σ)                             -- σ in  Θ(σ, ..)
               (σ₀ := evmState.σ₀)
               (A  := A')                            -- A* in Θ(.., A*, ..)
@@ -358,7 +358,7 @@ def step (debugMode : Bool) (fuel : ℕ) (gasCost : ℕ) (instr : Option (Operat
                     evmState.executionEnv.blobVersionedHashes
                     evmState.createdAccounts
                     evmState.genesisBlockHeader
-                    evmState.blockHashes
+                    evmState.blocks
                     σStar
                     evmState.σ₀
                     evmState.toState.substate
@@ -430,7 +430,7 @@ def step (debugMode : Bool) (fuel : ℕ) (gasCost : ℕ) (instr : Option (Operat
                     evmState.executionEnv.blobVersionedHashes
                     evmState.createdAccounts
                     evmState.genesisBlockHeader
-                    evmState.blockHashes
+                    evmState.blocks
                     σStar
                     evmState.σ₀
                     evmState.toState.substate
@@ -682,7 +682,7 @@ def Ξ -- Type `Ξ` using `\GX` or `\Xi`
   (fuel : ℕ)
   (createdAccounts : Batteries.RBSet AccountAddress compare)
   (genesisBlockHeader : BlockHeader)
-  (blockHashes : Array UInt256)
+  (blocks : ProcessedBlocks)
   (σ : AccountMap)
   (σ₀ : AccountMap)
   (g : UInt256)
@@ -705,20 +705,18 @@ def Ξ -- Type `Ξ` using `\GX` or `\Xi`
             substate := A
             createdAccounts := createdAccounts
             gasAvailable := g
-            blockHashes := blockHashes
+            blocks := blocks
             genesisBlockHeader := genesisBlockHeader
         }
       let result ← X debugMode f freshEvmState
       match result with
         | .success evmState' o =>
-          let finalGas := evmState'.gasAvailable -- TODO(check): Do we need to compute `C` here one more time?
+          let finalGas := evmState'.gasAvailable
           .ok (ExecutionResult.success (evmState'.createdAccounts, evmState'.accountMap, finalGas, evmState'.substate) o)
         | .revert g' o => .ok (ExecutionResult.revert g' o)
       -- dbg_trace s!"σ = ∅: {evmState'.accountMap == ∅}, o: {o}"
       -- if debugMode then
       -- dbg_trace s!"Ξ executed {evmState'.execLength} primops"
-      -- let finalGas := evmState'.gasAvailable -- TODO(check): Do we need to compute `C` here one more time?
-      -- return (evmState'.createdAccounts, evmState'.accountMap, finalGas, evmState'.substate, o)
 
 def Lambda
   (debugMode : Bool)
@@ -726,7 +724,7 @@ def Lambda
   (blobVersionedHashes : List ByteArray)
   (createdAccounts : Batteries.RBSet AccountAddress compare) -- needed for EIP-6780
   (genesisBlockHeader : BlockHeader)
-  (blockHashes : Array UInt256)
+  (blocks : ProcessedBlocks)
   (σ : AccountMap)
   (σ₀ : AccountMap)
   (A : Substate)
@@ -816,7 +814,7 @@ def Lambda
     , blobVersionedHashes := blobVersionedHashes
     }
   -- dbg_trace "Calling Ξ"
-  match Ξ debugMode f createdAccounts genesisBlockHeader blockHashes σStar σ₀ g AStar exEnv with
+  match Ξ debugMode f createdAccounts genesisBlockHeader blocks σStar σ₀ g AStar exEnv with
     | .error e =>
       if debugMode then dbg_trace s!"Execution failed in Λ: {repr e}"
       if e == .OutOfFuel then throw .OutOfFuel
@@ -898,7 +896,7 @@ def Θ (debugMode : Bool)
       (blobVersionedHashes : List ByteArray)
       (createdAccounts : Batteries.RBSet AccountAddress compare)
       (genesisBlockHeader : BlockHeader)
-      (blockHashes : Array UInt256)
+      (blocks : ProcessedBlocks)
       (σ  : AccountMap)
       (σ₀  : AccountMap)
       (A  : Substate)
@@ -981,7 +979,7 @@ def Θ (debugMode : Bool)
           | 10 => .ok <| (∅, Ξ_PointEval σ₁ g A I)
           | _ => default
       | ToExecute.Code _ =>
-        match Ξ debugMode fuel createdAccounts genesisBlockHeader blockHashes σ₁ σ₀ g A I with
+        match Ξ debugMode fuel createdAccounts genesisBlockHeader blocks σ₁ σ₀ g A I with
           | .error e =>
             if debugMode then dbg_trace s!"Execution failed in Θ: {repr e}"
             if e == .OutOfFuel then throw .OutOfFuel
@@ -1013,7 +1011,7 @@ def Υ (debugMode : Bool) (fuel : ℕ)
   (H_f : ℕ)
   (H : BlockHeader)
   (genesisBlockHeader : BlockHeader)
-  (blockHashes : Array UInt256)
+  (blocks : ProcessedBlocks)
   (T : Transaction)
   (S_T : AccountAddress)
   : Except EVM.Exception (AccountMap × Substate × Bool × UInt256)
@@ -1080,7 +1078,7 @@ def Υ (debugMode : Bool) (fuel : ℕ)
             T.blobVersionedHashes
             createdAccounts
             genesisBlockHeader
-            blockHashes
+            blocks
             σ₀
             σ₀
             AStar
@@ -1104,7 +1102,7 @@ def Υ (debugMode : Bool) (fuel : ℕ)
             T.blobVersionedHashes
             createdAccounts
             genesisBlockHeader
-            blockHashes
+            blocks
             σ₀
             σ₀
             AStar
@@ -1125,14 +1123,9 @@ def Υ (debugMode : Bool) (fuel : ℕ)
           | .error e => .error <| .ExecutionException e
   -- The amount to be refunded (82)
   let gStar := g' + min ((T.base.gasLimit - g') / ⟨5⟩) A.refundBalance
-  -- dbg_trace s!"g' = {g'}"
-  -- dbg_trace s!"g* = {gStar}"
-  -- dbg_trace s!"p = {p}"
   -- The pre-final state (83)
-  -- dbg_trace s!"Before increase: {(σ_P.find! S_T).balance}"
   let σStar :=
     σ_P.increaseBalance S_T (gStar * p)
-  -- dbg_trace s!"After increase: {(σStar.find! S_T).balance}"
 
   let beneficiaryFee := (T.base.gasLimit - gStar) * f
   let σStar' :=

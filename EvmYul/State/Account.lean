@@ -36,8 +36,6 @@ a Merkle Tree. KEVM implemets it as just an key/value map.
 
 For now, we assume no global map `GM` with which `GM[code_hash] ≡ code`.
 - `code`
-
-- `ostorage` holds `σ₀`, not a part of the YP
 -/
 structure Account extends PersistentAccountState where
   tstorage : Storage

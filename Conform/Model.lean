@@ -61,11 +61,11 @@ instance : DecidableRel (α := (_ : UInt256) × UInt256) (· ≤ ·) :=
 
 abbrev Code := ByteArray
 
-abbrev Pre := AddrMap PersistentAccountState
+abbrev Pre := PersistentAccountMap
 
 abbrev PostEntry := PersistentAccountState
 
-abbrev Post := AddrMap PostEntry
+abbrev Post := PersistentAccountMap
 
 abbrev Transactions := Array Transaction
 
@@ -105,7 +105,7 @@ structure RawTestEntry :=
   info               : Json := ""
   blocks             : RawBlocks
   genesisRLP         : ByteArray
-  lastblockhash      : Json := ""
+  lastblockhash      : UInt256
   network            : String
   postState          : PostState
   pre                : Pre
@@ -118,6 +118,7 @@ structure DeserializedTestEntry :=
   info               : Json := ""
   blocks             : DeserializedBlocks
   genesisRLP         : ByteArray
+  lastblockhash      : UInt256
   network            : String
   postState          : PostState
   pre                : Pre

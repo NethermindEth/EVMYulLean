@@ -27,7 +27,7 @@ structure State where
   totalGasUsedInBlock  : ℕ
   substate      : Substate
   executionEnv  : ExecutionEnv
-  blockHashes        : Array UInt256
+  blocks        : ProcessedBlocks
   genesisBlockHeader : BlockHeader
 
   -- TODO(Keccak Stuff + I guess this will be gone so no need to nuke the `Finmap` just now
@@ -38,5 +38,8 @@ structure State where
 
   createdAccounts : Batteries.RBSet AccountAddress compare
 deriving BEq, Inhabited, Repr
+
+def State.blockHashes (self : State) : Array UInt256 :=
+  self.blocks.map ProcessedBlock.hash
 
 end EvmYul

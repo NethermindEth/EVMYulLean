@@ -33,6 +33,14 @@ deriving BEq, Inhabited, Repr
 
 abbrev DeserializedBlocks := Array DeserializedBlock
 
+structure ProcessedBlock where
+  hash        : UInt256
+  blockHeader : BlockHeader
+  σ           : AccountMap
+deriving BEq, Inhabited, Repr
+
+abbrev ProcessedBlocks := Array ProcessedBlock
+
 def validateUInt256
   (b : ByteArray)
   (e : EVM.Exception)
