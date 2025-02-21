@@ -112,7 +112,7 @@ instance : FromJson BlockHeader where
         baseFeePerGas := ← json.getObjValAsD! ℕ         "baseFeePerGas"
         parentBeaconBlockRoot := ← json.getObjValAsD! ByteArray "parentBeaconBlockRoot"
         prevRandao    := ← json.getObjValAsD! UInt256 "mixHash"
-        withdrawalsRoot := ← json.getObjValAsD! (Option ByteArray) "withdrawalsRoot"
+        withdrawalsRoot := ← json.getObjValAsD! ByteArray "withdrawalsRoot"
         blobGasUsed    := ← json.getObjValAsD! UInt64 "blobGasUsed"
         excessBlobGas    := ← json.getObjValAsD! UInt64 "excessBlobGas"
       }

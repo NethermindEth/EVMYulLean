@@ -468,9 +468,8 @@ def validateBlock
     throw <| .BlockException .BLOB_GAS_USED_ABOVE_LIMIT
 
   if
-    block.blockHeader.withdrawalsRoot.isSome
-      && Withdrawal.computeTrieRoot block.withdrawals
-          ≠ block.blockHeader.withdrawalsRoot
+    Withdrawal.computeTrieRoot block.withdrawals
+      ≠ block.blockHeader.withdrawalsRoot
   then
     throw <| .BlockException .INVALID_WITHDRAWALS_ROOT
 

@@ -44,7 +44,7 @@ structure BlockHeader where
   prevRandao    : UInt256
   baseFeePerGas : ℕ
   parentBeaconBlockRoot : ByteArray
-  withdrawalsRoot : Option ByteArray
+  withdrawalsRoot : ByteArray
   blobGasUsed     : UInt64
   excessBlobGas   : UInt64
 deriving DecidableEq, Inhabited, Repr, BEq

@@ -336,7 +336,7 @@ def deserializeBlock
           (.ofNat <| fromByteArrayBigEndian mixHash)
           (fromByteArrayBigEndian baseFeePerGas)
           parentBeaconBlockRoot
-          (some withdrawalsRoot)
+          withdrawalsRoot
           (.ofNat <| fromByteArrayBigEndian blobGasUsed)
           (.ofNat <| fromByteArrayBigEndian excessBlobGas)
     | _ =>
