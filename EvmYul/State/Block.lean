@@ -15,10 +15,6 @@ abbrev Withdrawals := Array Withdrawal
 structure RawBlock where
   rlp          : ByteArray
   exception    : List String
-  -- Not always present, we can only rely on the RLP deserialization
-  blockHeader  : Option BlockHeader
-  transactions : Option Transactions
-  withdrawals  : Option Withdrawals
 deriving BEq, Inhabited, Repr
 
 abbrev RawBlocks := Array RawBlock
@@ -76,7 +72,6 @@ def deserializeBlock
       -- TODO: Use partial result from deserialization instead of reserializing the final result
       let hash :=
         .ofNat <| fromByteArrayBigEndian <| KEC <| (RLP header).getD .empty
-      -- dbg_trace s!"Block hash: {toHex (KEC <| (RLP header).getD .empty)}"
       let header ← parseHeader header
       let transactions ← parseTransactions transactions
       let withdrawals ← parseWithdrawals withdrawals

@@ -54,7 +54,6 @@ def toExecute (σ : AccountMap) (t : AccountAddress) : ToExecute :=
 def L_S (σ : PersistentAccountMap) : Array (ByteArray × ByteArray) :=
   σ.foldl
     (λ arr (addr : AccountAddress) acc ↦
-      -- dbg_trace s!"Computing L_S; account {EvmYul.toHex addr.toByteArray}"
       arr.push (p addr acc)
     )
     .empty
@@ -76,29 +75,9 @@ def stateTrieRoot (σ : PersistentAccountMap) : Option ByteArray :=
   (ByteArray.ofBlob (blobComputeTrieRoot a)).toOption
  where
   toBlobPair entry : String × String :=
-    -- dbg_trace "serializing L_S element"
     let b₁ := EvmYul.toHex entry.1
     let b₂ := EvmYul.toHex entry.2
     (b₁, b₂)
-
--- instance : LE ((_ : Address) × Account) where
---   le lhs rhs := if lhs.1 = rhs.1 then lhs.2 ≤ rhs.2 else lhs.1 ≤ rhs.1
-
--- /-
--- Please note that these are used exclusively for conveninece of printing and computing,
--- i.e. the sorries are safe.
--- -/
-
--- instance : IsTrans ((_ : Address) × Account) (· ≤ ·) := sorry
-
--- instance : IsAntisymm ((_ : Address) × Account) (· ≤ ·) := sorry
-
--- instance : IsTotal ((_ : Address) × Account) (· ≤ ·) := sorry
-
--- instance : DecidableRel (α := (_ : Address) × Account) (· ≤ ·) :=
---   λ lhs rhs ↦ by
---     unfold LE.le instLESigmaAddressAccount
---     exact inferInstance
 
 end RemoveLater
 

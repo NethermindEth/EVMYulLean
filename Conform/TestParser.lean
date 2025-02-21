@@ -150,7 +150,6 @@ instance : FromJson Transaction where
       r              := ← json.getObjValAsD! ByteArray      "r"
       s              := ← json.getObjValAsD! ByteArray      "s"
       data           := ← json.getObjValAsD! ByteArray      "data"
-      -- expectedSender := ← json.getObjValAsD! AccountAddress "sender"
     }
 
     match json.getObjVal? "accessList" with
@@ -167,7 +166,6 @@ instance : FromJson Transaction where
 
         match json.getObjVal? "gasPrice" with
           | .ok gasPrice => do
-            -- dbg_trace "Constructing an access transaction."
             return .access ⟨baseTransaction, accessListTransaction, ⟨← FromJson.fromJson? gasPrice⟩⟩
           | .error _ =>
             let dynamic : DynamicFeeTransaction :=
@@ -180,29 +178,12 @@ instance : FromJson Transaction where
             | .error _ =>
               pure <| .dynamic dynamic
             | .ok maxFeePerBlobGas =>
-              -- dbg_trace "Constructing a BLOB transaction."
               pure <|
                 .blob
                   ⟨ dynamic
                   , ← FromJson.fromJson? maxFeePerBlobGas
                   , ← json.getObjValAsD! (List ByteArray) "blobVersionedHashes"
                   ⟩
-
-
-
--- #eval DebuggingAndProfiling.testJsonParser Transaction r#"
---                     {
---                         "data" : "0x6001600155601080600c6000396000f3006000355415600957005b60203560003555",
---                         "gasLimit" : "0x1314e0",
---                         "gasPrice" : "0x0a",
---                         "nonce" : "0x00",
---                         "r" : "0x519086556db928a3f679b49fc6211c84896a75312c52e7e05a3b5041f59bb49d",
---                         "s" : "0x70c4b1df7933a7aa4717c13ab34cc2b02daae23ca33836652e526a6a61de0681",
---                         "sender" : "0xa94f5374fce5edbc8e2a8697c15331677e6ebf0b",
---                         "to" : "",
---                         "v" : "0x1b",
---                         "value" : "0x0186a0"
---                     }"#
 
 /--
 - Format₀: `EthereumTests/BlockchainTests/GeneralStateTests/VMTests/vmArithmeticTest/add.json`
@@ -212,24 +193,8 @@ private def blockOfJson (json : Json) : Except String RawBlock := do
   -- The exception, if exists, is always in the outermost object regardless of the `<Format>` (see this function's docs).
   let exception ← json.getObjValAsD! (Option String) "expectException"
   let rlp ← json.getObjValAsD! ByteArray "rlp"
-  -- Descend to `rlp_decoded` - Format₁ if exists, Format₀ otherwise.
-  -- let json ← json.getObjValAsD Json "rlp_decoded" json
-  -- let blockHeader  ← json.getObjValAsD! (Option BlockHeader) "blockHeader"
-  -- let transactions ← json.getObjValAsD! (Option Transactions) "transactions"
-  -- let withdrawals  ← json.getObjValAsD! (Option Withdrawals) "withdrawals"
-
-  -- if blockHeader == none then
-  --   dbg_trace "blockHeader is none"
-  -- if transactions == none then
-  --   dbg_trace "transactions is none"
-  -- if withdrawals == none then
-  --   dbg_trace "withdrawals is none"
-
   pure {
     rlp
-    blockHeader := none -- := ← json.getObjValAsD! (Option BlockHeader) "blockHeader"
-    transactions := none -- := ← json.getObjValAsD! (Option Transactions) "transactions"
-    withdrawals := none --  := ← json.getObjValAsD! (Option Withdrawals) "withdrawals"
     exception := exception.option [] (·.splitOn "|")
   }
   where
@@ -238,27 +203,13 @@ private def blockOfJson (json : Json) : Except String RawBlock := do
 
 instance : FromJson RawBlock := ⟨blockOfJson⟩
 
--- instance : FromJson PostState where
---   fromJson? json := do
---     let hash ← json.getObjValAsD! (Option ByteArray) "postStateHash"
---     match hash with
---       | some hash =>
---         dbg_trace s!"Read postStateHash: {hash}"
---         .ok <| PostState.Hash hash
---       | none =>
---         let map ← json.getObjValAsD! Post "postState"
---         dbg_trace s!"Read post state map of size {map.size}"
---         .ok <| PostState.Map map
-
-instance : FromJson RawTestEntry where
+instance : FromJson TestEntry where
   fromJson? json := do
     let post : PostState ←
       match json.getObjVal? "postStateHash" with
         | .error _ =>
-          -- dbg_trace s!"Read post state map"
           .Map <$> json.getObjValAsD! PersistentAccountMap "postState"
         | .ok postStateHash =>
-          -- dbg_trace s!"Read postStateHash: {postStateHash}"
           .Hash <$> FromJson.fromJson? postStateHash
     pure {
       info               := ← json.getObjValAs? Json "info"
@@ -271,8 +222,8 @@ instance : FromJson RawTestEntry where
       sealEngine         := ← json.getObjValAs? Json "sealEngine"
     }
 
-instance : FromJson RawTestMap where
-  fromJson? json := json.getObjVals? String RawTestEntry
+instance : FromJson TestMap where
+  fromJson? json := json.getObjVals? String TestEntry
 
 end FromJson
 

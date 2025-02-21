@@ -84,8 +84,7 @@ open GasConstants InstructionGasGroups
 -/
 def Cₘ (a : UInt256) : ℕ :=
   let a : ℕ := a.toNat
-  Gmemory * a + ((a * a) / QuadraticCeofficient) -- TODO(check) - What is subject to `% 2^256` here?
-                                                                                --               Note that the YP takes an explicit floor, we have division in Nat.
+  Gmemory * a + ((a * a) / QuadraticCeofficient)
   where QuadraticCeofficient : ℕ := 512
 
 /--
@@ -173,10 +172,8 @@ def Cextra (t r : AccountAddress) (val : UInt256) (σ : AccountMap) (A : Substat
 
 def Cgascap (t r : AccountAddress) (val g : UInt256) (σ : AccountMap) (μ : MachineState) (A : Substate) :=
   if μ.gasAvailable.toNat >= Cextra t r val σ A then
-    -- dbg_trace s!"gasAvailable {μ.gasAvailable} >= Cextra {Cextra t val σ A}"
     min (L <| (μ.gasAvailable.toNat - Cextra t r val σ A)) g.toNat
   else
-    -- dbg_trace s!"gasAvailable {μ.gasAvailable} < Cextra {Cextra t val σ A}"
     g.toNat
 
 def Ccallgas (t r : AccountAddress) (val g : UInt256) (σ : AccountMap) (μ : MachineState) (A : Substate) : ℕ :=
@@ -188,7 +185,6 @@ def Ccallgas (t r : AccountAddress) (val g : UInt256) (σ : AccountMap) (μ : Ma
 NB Assumes stack coherence.
 -/
 def Ccall (t r : AccountAddress) (val g : UInt256) (σ : AccountMap) (μ : MachineState) (A : Substate) : ℕ :=
-  -- dbg_trace s!"Ccall: {Cgascap t val g σ μ A} + {Cextra t val σ A}"
   Cgascap t r val g σ μ A + Cextra t r val σ A
 
 /--
@@ -273,14 +269,8 @@ H.1. Gas Cost
 NB this differs ever so slightly from how it is defined in the YP, please refer to
 `EVM/Semantics.lean`, function `X` for further discussion.
 -/
--- def C (s : EVM.State) (μ'ᵢ : UInt256) (instr : Operation .EVM) : Except EVM.Exception ℕ := do
---   let { toMachineState := μ, ..} := s
---   pure <| Cₘ μ'ᵢ - Cₘ μ.activeWords + (← C' s instr)
-
 
 def memoryExpansionCost (s : EVM.State) (instr : Operation .EVM) : ℕ :=
-  -- let { toMachineState := μ, ..} := s
-  -- dbg_trace s!"{Cₘ μᵢ'} - {Cₘ s.toMachineState.activeWords} + {C' s instr}"
   Cₘ μᵢ' - Cₘ s.toMachineState.activeWords
  where
   μᵢ' : UInt256 :=

@@ -7,9 +7,11 @@ import EvmYul.Wheels
 namespace EvmYul
 
 /--
+  Precompiled contract addresses.
   (142) `π ≡ {1, 2, 3, 4, 5, 6, 7, 8, 9, 10}`
 -/
-def π : Batteries.RBSet AccountAddress compare := Batteries.RBSet.ofList ((List.range 11).tail.map Fin.ofNat) compare
+def π : Batteries.RBSet AccountAddress compare :=
+  Batteries.RBSet.ofList ((List.range 11).tail.map Fin.ofNat) compare
 
 inductive ToExecute := | Code (code : ByteArray) | Precompiled (precompiled : AccountAddress)
 
@@ -31,7 +33,7 @@ Suppose `a` is some address.
 In the yellow paper it is supposed to be a 256-bit hash of the root node of
 a Merkle Tree. KEVM implemets it as just an key/value map.
 - `storage`  -- σ[a]_s.
-- `tstorage` -- Added in EIP-1153
+- `tstorage` -- Transiont storage; added in EIP-1153
 - `codeHash` -- σ[a]_c.
 
 For now, we assume no global map `GM` with which `GM[code_hash] ≡ code`.

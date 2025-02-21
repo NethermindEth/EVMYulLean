@@ -56,9 +56,6 @@ instance : DecidableRel (α := (_ : UInt256) × UInt256) (· ≤ ·) :=
     unfold LE.le instLESigmaUInt256_conform; simp
     aesop (config := {warnOnNonterminal := false}) <;> exact inferInstance
 
--- def Storage.ofFinmap (m : EvmYul.Storage) : Storage :=
---   Lean.RBMap.ofList <| m.toList.map λ (k, v) ↦ (k, v)
-
 abbrev Code := ByteArray
 
 abbrev Pre := PersistentAccountMap
@@ -76,18 +73,6 @@ TODO - Temporary.
 -/
 private local instance : Repr Json := ⟨λ s _ ↦ Json.pretty s⟩
 
--- structure BlockEntry :=
---   blockHeader  : BlockHeader
---   rlp          : ByteArray
---   transactions : Transactions
---   ommers       : Array BlockHeader
---   withdrawals  : Withdrawals
---   exception    : String -- TODO - I am guessing there is a closed set of these to turn into a sum.
---   -- blocknumber  : Nat
---   deriving Inhabited, Repr
-
--- abbrev Blocks := Array BlockEntry
-
 /--
 In theory, parts of the TestEntry could deserialise immediately into the underlying `EVM.State`.
 
@@ -101,7 +86,7 @@ inductive PostState :=
   | Map : Post → PostState
   deriving Inhabited
 
-structure RawTestEntry :=
+structure TestEntry :=
   info               : Json := ""
   blocks             : RawBlocks
   genesisRLP         : ByteArray
@@ -112,19 +97,7 @@ structure RawTestEntry :=
   sealEngine         : Json := ""
   deriving Inhabited
 
-abbrev RawTestMap := Batteries.RBMap String RawTestEntry compare
-
-structure DeserializedTestEntry :=
-  info               : Json := ""
-  blocks             : DeserializedBlocks
-  genesisRLP         : ByteArray
-  lastblockhash      : UInt256
-  network            : String
-  postState          : PostState
-  pre                : Pre
-  deriving Inhabited
-
-abbrev DeserializedTestMap := Batteries.RBMap String DeserializedTestEntry compare
+abbrev TestMap := Batteries.RBMap String TestEntry compare
 
 abbrev AccessListEntry := AccountAddress × Array UInt256
 

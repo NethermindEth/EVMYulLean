@@ -98,7 +98,7 @@ def PersistentAccountMap.toEVMState (self : PersistentAccountMap) : EVM.State :=
 
 def Pre.toEVMState : Pre → EVM.State := PersistentAccountMap.toEVMState
 
-def RawTestMap.toTests (self : RawTestMap) : List (String × RawTestEntry) := self.toList
+def TestMap.toTests (self : TestMap) : List (String × TestEntry) := self.toList
 
 def Post.toEVMState : Post → EVM.State := PersistentAccountMap.toEVMState
 
@@ -144,13 +144,8 @@ This section exists for debugging / testing mostly. It's somewhat ad-hoc.
 notation "TODO" => default
 
 private def almostBEqButNotQuiteEvmYulState (s₁ s₂ : PersistentAccountMap) : Except String Bool := do
-  -- let s₁ := bashState s₁
-  -- let s₂ := bashState s₂
   if s₁ == s₂ then .ok true else throw "state mismatch"
---  where
---   bashState (s : PersistentAccountMap) : PersistentAccountMap :=
---     s.map
---       λ (addr, acc) ↦ (addr, { acc with balance := TODO })
+
 /--
 NB it is ever so slightly more convenient to be in `Except String Bool` here rather than `Option String`.
 
@@ -189,9 +184,6 @@ def executeTransaction
     { s with
       accountMap := ypState
       totalGasUsedInBlock := s.totalGasUsedInBlock + totalGasUsed.toNat
-          --  substate := substate
-          --  executionEnv.perm := z -- TODO - that's probably not this :)
-           -- returnData := TODO?
     }
   pure result
 
@@ -243,7 +235,6 @@ def validateTransaction
   (chainId : ℕ)
   (header : BlockHeader)
   (totalGasUsedInBlock : ℕ)
-  -- (expectedSender : AccountAddress)
   (T : Transaction)
   : Except EVM.Exception AccountAddress
 := do
@@ -298,8 +289,8 @@ def validateTransaction
 
   let r : ℕ := fromByteArrayBigEndian T.base.r
   let s : ℕ := fromByteArrayBigEndian T.base.s
-  if 0 ≥ r ∨ r ≥ secp256k1n then throw <| .TransactionException .InvalidSignature
-  if 0 ≥ s ∨ s > secp256k1n / 2 then throw <| .TransactionException .InvalidSignature
+  if 0 ≥ r ∨ r ≥ secp256k1n then throw <| .TransactionException .INVALID_SIGNATURE_VRS
+  if 0 ≥ s ∨ s > secp256k1n / 2 then throw <| .TransactionException .INVALID_SIGNATURE_VRS
   let v : ℕ := -- (324)
     match T with
       | .legacy t =>
@@ -308,11 +299,11 @@ def validateTransaction
           w - 27
         else
           if w = 35 + chainId * 2 ∨ w = 36 + chainId * 2 then
-            (w - 35) % 2 -- `chainId` not subtracted in the Yellow paper but in the EEL spec
+            (w - 35) % 2
           else
             w
       | .access t | .dynamic t | .blob t => t.yParity.toNat
-  if v ∉ [0, 1] then throw <| .TransactionException .InvalidSignature
+  if v ∉ [0, 1] then throw <| .TransactionException .INVALID_SIGNATURE_VRS
 
   let h_T := -- (318)
     match T with
@@ -354,7 +345,6 @@ def validateTransaction
           t.gasLimit * t.maxFeePerGas
           + t.value
           + (UInt256.ofNat (getTotalBlobGas T)) * t.maxFeePerBlobGas
-  -- dbg_trace s!"v₀: {v₀}, senderBalance: {senderBalance}"
   if v₀ > senderBalance then
     throw <| .TransactionException .INSUFFICIENT_ACCOUNT_FUNDS
 
@@ -630,7 +620,7 @@ def processBlocks
 
 NB we can throw away the final state if it coincided with the expected one, hence `.none`.
 -/
-def preImpliesPost (entry : RawTestEntry)
+def preImpliesPost (entry : TestEntry)
   : Except EVM.Exception (Option PersistentAccountMap)
 := do
     let resultState ← processBlocks entry.pre entry.blocks entry.genesisRLP
@@ -670,7 +660,7 @@ instance (priority := high) : Repr PersistentAccountMap := ⟨λ m _ ↦
         result := result ++ s!"{sk} → {sv}\n"
     return result⟩
 
-def processTest (entry : RawTestEntry) (verbose : Bool := true) : TestResult := do
+def processTest (entry : TestEntry) (verbose : Bool := true) : TestResult := do
   let result :=
     preImpliesPost entry
   match result with
@@ -695,31 +685,20 @@ def processTestsOfFile (file : System.FilePath)
                        ExceptT Exception IO (Batteries.RBMap String TestResult compare) := do
   let path := file
   let file ← Lean.Json.fromFile file
-  let testMap ← Lean.FromJson.fromJson? (α := RawTestMap) file
+  let testMap ← Lean.FromJson.fromJson? (α := TestMap) file
   let tests := testMap.toTests
   let cancunTests := guardCancun tests
 
-  -- dbg_trace s!"Non Cancun tests ignored: {tests.length - cancunTests.length}"
   let tests := guardBlacklist ∘ guardWhitelist <| cancunTests
-  -- dbg_trace s!"tests after guard: {tests.map Prod.fst}"
   tests.foldlM (init := ∅) λ acc (testname, test) ↦
     dbg_trace s!"TESTING {testname} FROM {path}"
-    -- dbg_trace s!"network : {test.network}"
     pure <| acc.insert testname (processTest test)
-    -- try
-    --   processTest test >>= pure ∘
-    --   -- TODO currently the soft errors are the ones I am personally unsure about :)
-    -- catch
-    --   | e => pure (acc.insert testname (.mkFailed s!"{repr e}"))
-    -- -- catch | .EVMError e@(.ReceiverNotInAccounts _) => pure (acc.insert testname (.mkFailed s!"{repr e}"))
-    -- --       | e => throw e -- hard error, stop executing the tests; malformed input, logic error, etc.
-    -- --                      -- This should not happen but makes cause analysis easier if it does.
   where
-    guardWhitelist (tests : List (String × RawTestEntry)) :=
+    guardWhitelist (tests : List (String × TestEntry)) :=
       if whitelist.isEmpty then tests else tests.filter (λ (name, _) ↦ name ∈ whitelist)
-    guardBlacklist (tests : List (String × RawTestEntry)) :=
+    guardBlacklist (tests : List (String × TestEntry)) :=
       tests.filter (λ (name, _) ↦ name ∉ GlobalBlacklist ++ blacklist)
-    guardCancun (tests : List (String × RawTestEntry)) :=
+    guardCancun (tests : List (String × TestEntry)) :=
       tests.filter (λ (_, test) ↦ test.network.take 6 == "Cancun")
 
 end Conform

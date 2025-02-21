@@ -76,14 +76,6 @@ def argOnNBytesOfInstr : Operation .EVM → ℕ
 
 def N (pc : UInt256) (instr : Operation .EVM) := pc + ⟨1⟩ + .ofNat (argOnNBytesOfInstr instr)
 
--- /--
--- Computes `μᵢ'`, i.e. the maximum memory touched by `instr`.
--- -/
--- def maxMemoryOfInstr (old : μᵢ) (stack : Stack UInt256) (instr : Operation .EVM) : Except EVM.Exception UInt256 :=
---   match instr with
---     | .KECCAK256 => _ -- YP: M (μi, μs[0], μs[1])
---     | _ => _
-
 /--
 Returns the instruction from `arr` at `pc` assuming it is valid.
 
@@ -91,12 +83,8 @@ The `Push` instruction also returns the argument as an EVM word along with the w
 -/
 def decode (arr : ByteArray) (pc : UInt256) :
   Option (Operation .EVM × Option (UInt256 × Nat)) := do
-  -- dbg_trace s!"DECODING; arr: {arr} pc: {pc}"
-  -- let wagh := arr.get? pc
-  -- dbg_trace s!"wagh is: {wagh}"
   let instr ← arr.get? pc.toNat >>= EvmYul.EVM.parseInstr
   let argWidth := argOnNBytesOfInstr instr
-  -- dbg_trace s!"pc: {pc}; Decoded: {instr.pretty}; argWidth={argWidth}"
   .some (
     instr,
     if argWidth == 0
@@ -163,9 +151,6 @@ def call (debugMode : Bool) (fuel : Nat)
   match fuel with
     | 0 => .error .OutOfFuel
     | .succ f =>
-      -- dbg_trace s!"fuel left in call: {f}"
-      -- dbg_trace s!"gas left in call: {evmState.gasAvailable}"
-      -- t ≡ μs[1] mod 2^160
       let t : AccountAddress := AccountAddress.ofUInt256 t
       let recipient : AccountAddress := AccountAddress.ofUInt256 recipient
       let source : AccountAddress := AccountAddress.ofUInt256 source
@@ -173,8 +158,6 @@ def call (debugMode : Bool) (fuel : Nat)
       let σ := evmState.accountMap
       let Iₑ := evmState.executionEnv.depth
       let callgas := Ccallgas t recipient value gas σ evmState.toMachineState evmState.substate
-      -- dbg_trace s!"callgas: {callgas}"
-      -- dbg_trace s!"gas available: {evmState.gasAvailable}"
       let evmState := {evmState with gasAvailable := evmState.gasAvailable - UInt256.ofNat gasCost}
       -- m[μs[3] . . . (μs[3] + μs[4] − 1)]
       let i := evmState.memory.readWithPadding inOffset.toNat inSize.toNat
@@ -212,11 +195,9 @@ def call (debugMode : Bool) (fuel : Nat)
       -- n ≡ min({μs[6], ‖o‖})
       let n : UInt256 := min outSize (.ofNat o.size)
 
-      -- TODO - Check what happens when `o = .none`.
       let μ'ₘ := writeBytes o 0 evmState.toMachineState outOffset.toNat n.toNat -- μ′_m[μs[5]  ... (μs[5] + n − 1)] = o[0 ... (n − 1)]
       let μ'ₒ := o -- μ′o = o
       let μ'_g := μ'ₘ.gasAvailable + g' -- Ccall is subtracted in X as part of C
-      -- dbg_trace s!"μ'_g = {μ'ₘ.gasAvailable} + {g'}"
 
       let codeExecutionFailed   : Bool := !z
       let notEnoughFunds        : Bool := value > (σ.find? evmState.executionEnv.codeOwner |>.elim ⟨0⟩ (·.balance)) -- TODO - Unify condition with CREATE.
@@ -226,7 +207,7 @@ def call (debugMode : Bool) (fuel : Nat)
       -- NB. `MachineState` here does not contain the `Stack` nor the `PC`, thus incomplete.
       let μ'incomplete : MachineState :=
         { μ'ₘ with
-            returnData   := μ'ₒ -- TODO - Check stuff wrt. .none
+            returnData   := μ'ₒ
             gasAvailable := μ'_g
             activeWords :=
               let m : ℕ:= MachineState.M evmState.toMachineState.activeWords.toNat inOffset.toNat inSize.toNat
@@ -257,10 +238,7 @@ def step (debugMode : Bool) (fuel : ℕ) (gasCost : ℕ) (instr : Option (Operat
       debugMode &&
         (instr.isPush || instr.isJump || instr.isPC || instr.isJumpdest || instr.isDup || instr.isSwap || instr.isCreate || instr.isCall || instr == .STOP)
     then
-        -- dbg_trace s!"Code owner: {evmState.toState.executionEnv.codeOwner}"
-        -- dbg_trace s!"Storage: {evmState.accountMap.find! (evmState.toState.executionEnv.codeOwner)}"
-        -- dbg_trace s!"Accessed: {(evmState.substate.accessedStorageKeys.toList.filter (fun (addr, _) => addr == evmState.toState.executionEnv.codeOwner)).unzip.snd}"
-        dbg_trace instr.pretty
+      dbg_trace instr.pretty
     let evmState := { evmState with execLength := evmState.execLength + 1 }
     match instr with
       | .Push .PUSH0 =>
@@ -450,7 +428,6 @@ def step (debugMode : Bool) (fuel : ℕ) (gasCost : ℕ) (instr : Option (Operat
                   | _ => /- dbg_trace "Lambda not ok"; -/ (0, {evmState with accountMap := ∅}, ⟨0⟩, False, .empty)
               else
                 (0, evmState, .ofNat (L evmState.gasAvailable.toNat), False, .empty)
-            -- dbg_trace s!"After Λ: {toHex o}"
             let x : UInt256 :=
               let balance := σ.find? Iₐ |>.option ⟨0⟩ (·.balance)
                 if z = false ∨ Iₑ = 1024 ∨ μ₀ > balance ∨ i.size > 49152 then ⟨0⟩ else .ofNat a
@@ -458,7 +435,6 @@ def step (debugMode : Bool) (fuel : ℕ) (gasCost : ℕ) (instr : Option (Operat
             -- TODO: Redundant
             if (evmState.gasAvailable + g').toNat < L evmState.gasAvailable.toNat then
               .error .OutOfGass
-            -- dbg_trace s!"g' in CREATE2 = {g'}"
             let evmState' :=
               { evmState' with
                 activeWords := .ofNat <| MachineState.M evmState.activeWords.toNat μ₁.toNat μ₂.toNat
@@ -468,7 +444,6 @@ def step (debugMode : Bool) (fuel : ℕ) (gasCost : ℕ) (instr : Option (Operat
             .ok <| evmState'.replaceStackAndIncrPC (stack.push x)
           | _ =>
           .error .StackUnderflow
-      -- TODO: Factor out the semantics for `CALL`, `CALLCODE`, `DELEGATECALL`, `STATICCALL`
       | .CALL => do
         -- Names are from the YP, these are:
         -- μ₀ - gas
@@ -558,31 +533,23 @@ def X (debugMode : Bool) (fuel : ℕ) (evmState : State)
 
       -- (159)
       let W (w : Operation .EVM) (s : Stack UInt256) : Bool :=
-        -- EIP-1153 says `TSTORE` should result in an exception if called within the context of a `STATICCALL`.
-        -- but we, as KEVM, check if the context is static in general.
-        -- https://eips.ethereum.org/EIPS/eip-1153
         w ∈ [.CREATE, .CREATE2, .SSTORE, .SELFDESTRUCT, .LOG0, .LOG1, .LOG2, .LOG3, .LOG4, .TSTORE] ∨
         (w = .CALL ∧ s.get? 2 ≠ some ⟨0⟩)
 
       -- Exceptional halting (158)
       let Z (evmState : State) : Except EVM.ExecutionException (State × ℕ) := do
         let cost₁ := memoryExpansionCost evmState w
-        -- dbg_trace s!"gasAvailable: {evmState.gasAvailable.toNat}"
-        -- dbg_trace s!"cost₁: {cost₁}"
 
         if evmState.gasAvailable.toNat < cost₁ then
           if debugMode then
             dbg_trace s!"Exceptional halting: insufficient gas (available gas < gas cost for memory expantion)"
-            -- dbg_trace s!"({evmState.gasAvailable.toNat} < {cost₁}"
           .error .OutOfGass
         let gasAvailable := evmState.gasAvailable - .ofNat cost₁
         let evmState := { evmState with gasAvailable := gasAvailable}
         let cost₂ := C' evmState w
-        -- dbg_trace s!"cost₂: {cost₂}"
         if evmState.gasAvailable.toNat < cost₂ then
           if debugMode then
             dbg_trace s!"Exceptional halting: insufficient gas (available gas < gas cost)"
-            -- dbg_trace s!"({evmState.gasAvailable.toNat} < {cost₂})"
           .error .OutOfGass
 
         if δ w = none then
@@ -634,7 +601,6 @@ def X (debugMode : Bool) (fuel : ℕ) (evmState : State)
 
       let H (μ : MachineState) (w : Operation .EVM) : Option ByteArray :=
         if w ∈ [.RETURN, .REVERT] then
-          -- dbg_trace s!"{w.pretty} gives {toHex μ.H_return}"
           some <| μ.H_return
         else
           if w ∈ [.STOP, .SELFDESTRUCT] then
@@ -643,11 +609,9 @@ def X (debugMode : Bool) (fuel : ℕ) (evmState : State)
 
       match Z evmState with
         | .error e =>
-          -- dbg_trace s!"X: {evmState.execLength} primops before exceptional halting"
           .error e
         | some (evmState, cost₂) =>
           let evmState' ← step debugMode f cost₂ instr evmState
-          -- if evmState.accountMap == ∅ then .ok <| ({evmState' with accountMap := ∅}, none) else
           -- Maybe we should restructure in a way such that it is more meaningful to compute
           -- gas independently, but the model has not been set up thusly and it seems
           -- that neither really was the YP.
@@ -657,15 +621,14 @@ def X (debugMode : Bool) (fuel : ℕ) (evmState : State)
             | none => X debugMode f evmState'
             | some o =>
               if w == .REVERT then
-                -- The Yellow Paper says we don't call the "iterator function" "O" for `REVERT`,
-                -- but we actually have to call the semantics of `REVERT` to pass the test
-                -- EthereumTests/BlockchainTests/GeneralStateTests/stReturnDataTest/returndatacopy_after_revert_in_staticcall.json
-                -- And the EEL spec does so too.
-                -- dbg_trace s!"Output data after REVERT: {toHex o}"
-                -- dbg_trace s!"X: {evmState'.execLength} primops before revert"
+                /-
+                  The Yellow Paper says we don't call the "iterator function" "O" for `REVERT`,
+                  but we actually have to call the semantics of `REVERT` to pass the test
+                  EthereumTests/BlockchainTests/GeneralStateTests/stReturnDataTest/returndatacopy_after_revert_in_staticcall.json
+                  And the EEL spec does so too.
+                -/
                 .ok <| .revert evmState'.gasAvailable o
               else
-                -- dbg_trace s!"X: {evmState'.execLength} primops before success"
                 .ok <| .success evmState' o
  where
   belongs (o : Option UInt256) (l : List UInt256) : Bool :=
@@ -714,9 +677,6 @@ def Ξ -- Type `Ξ` using `\GX` or `\Xi`
           let finalGas := evmState'.gasAvailable
           .ok (ExecutionResult.success (evmState'.createdAccounts, evmState'.accountMap, finalGas, evmState'.substate) o)
         | .revert g' o => .ok (ExecutionResult.revert g' o)
-      -- dbg_trace s!"σ = ∅: {evmState'.accountMap == ∅}, o: {o}"
-      -- if debugMode then
-      -- dbg_trace s!"Ξ executed {evmState'.execLength} primops"
 
 def Lambda
   (debugMode : Bool)
@@ -757,26 +717,24 @@ def Lambda
   -- https://eips.ethereum.org/EIPS/eip-3860
 
   let n : UInt256 := (σ.find? s |>.option ⟨0⟩ (·.nonce)) - ⟨1⟩
-  -- dbg_trace s!"s: {toHex (BE s)}, n:{n}, ζ:{ζ},\n i:{toHex i}"
   let lₐ ← L_A s n ζ i
   let a : AccountAddress := -- (94) (95)
     (KEC lₐ).extract 12 32 /- 160 bits = 20 bytes -/
       |> fromByteArrayBigEndian |> Fin.ofNat
-
-
-  -- dbg_trace s!"New address: {toHex a.toByteArray} added to createdAccounts"
 
   -- A* (97)
   let AStar := A.addAccessedAccount a
   -- σ*
   let existentAccount := σ.findD a default
 
-  -- https://eips.ethereum.org/EIPS/eip-7610
-  -- If a contract creation is attempted due to a creation transaction,
-  -- the CREATE opcode, the CREATE2 opcode, or any other reason,
-  -- and the destination address already has either a nonzero nonce,
-  -- a nonzero code length, or non-empty storage, then the creation MUST throw
-  -- as if the first byte in the init code were an invalid opcode.
+  /-
+    https://eips.ethereum.org/EIPS/eip-7610
+    If a contract creation is attempted due to a creation transaction,
+    the CREATE opcode, the CREATE2 opcode, or any other reason,
+    and the destination address already has either a nonzero nonce,
+    a nonzero code length, or non-empty storage, then the creation MUST throw
+    as if the first byte in the init code were an invalid opcode.
+  -/
   let (i, createdAccounts) :=
     if
       existentAccount.nonce ≠ ⟨0⟩
@@ -813,7 +771,6 @@ def Lambda
     , perm      := w
     , blobVersionedHashes := blobVersionedHashes
     }
-  -- dbg_trace "Calling Ξ"
   match Ξ debugMode f createdAccounts genesisBlockHeader blocks σStar σ₀ g AStar exEnv with
     | .error e =>
       if debugMode then dbg_trace s!"Execution failed in Λ: {repr e}"
@@ -885,9 +842,6 @@ Message cal
 `e`  - depth of the message-call / contract-creation stack
 `w`  - permissions to make modifications to the stack
 
-TODO check - UInt256 vs Nat for some of the arguments.
-TODO check - There's some stuff with .none and .some .empty ByteArray on return.
-
 NB - This is implemented using the 'boolean' fragment with ==, <=, ||, etc.
      The 'prop' version will come next once we have the comutable one.
 -/
@@ -915,7 +869,6 @@ def Θ (debugMode : Bool)
         :
       Except EVM.ExecutionException (Batteries.RBSet AccountAddress compare × AccountMap × UInt256 × Substate × Bool × ByteArray)
 :=
-  -- dbg_trace s!"Θ receiver: {repr r}"
   match fuel with
     | 0 => .error .OutOfFuel
     | fuel + 1 => do
@@ -956,10 +909,6 @@ def Θ (debugMode : Bool)
       header    := H
       blobVersionedHashes := blobVersionedHashes
     }
-
-  -- let
-  --   spoon (h : AccountMap × UInt256 × Substate × ByteArray) : Except _ _ :=
-  --     .ok <| ((∅ : Batteries.RBSet _ _), h.1, h.2.1, h.2.2.1, h.2.2.2)
 
   -- Equation (131)
   -- Note that the `c` used here is the actual code, not the address. TODO - Handle precompiled contracts.
@@ -1016,7 +965,6 @@ def Υ (debugMode : Bool) (fuel : ℕ)
   (S_T : AccountAddress)
   : Except EVM.Exception (AccountMap × Substate × Bool × UInt256)
 := do
-  -- let (S_T, g₀) ← checkTransactionGetSender σ chainId H_f T expectedSender
   let g₀ : ℕ := EVM.intrinsicGas T
   -- "here can be no invalid transactions from this point"
   let senderAccount := (σ.find? S_T).get!
@@ -1024,21 +972,14 @@ def Υ (debugMode : Bool) (fuel : ℕ)
   let f :=
     match T with
       | .legacy t | .access t =>
-            -- dbg_trace s!"f: legacy or access: gas price: {t.gasPrice} base fee: {H_f}"
             t.gasPrice - .ofNat H_f
       | .dynamic t | .blob t =>
-            -- dbg_trace s!"f: dynamic or blob: {min t.maxPriorityFeePerGas (t.maxFeePerGas - .ofNat H_f)}"
             min t.maxPriorityFeePerGas (t.maxFeePerGas - .ofNat H_f)
   -- The effective gas price
   let p := -- (66)
     match T with
-      | .legacy t | .access t =>
-          -- dbg_trace s!"p: legacy or access: gas price: {t.gasPrice}"
-          t.gasPrice
-      | .dynamic _ | .blob _ =>
-            -- dbg_trace s!"p: dynamic or blob: {f + .ofNat H_f}"
-            f + .ofNat H_f
-  -- dbg_trace s!"TYPE: {T.type}, calcBlobFee: {calcBlobFee H T}"
+      | .legacy t | .access t => t.gasPrice
+      | .dynamic _ | .blob _ => f + .ofNat H_f
   let senderAccount :=
     { senderAccount with
         /-

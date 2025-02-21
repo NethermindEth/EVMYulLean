@@ -51,27 +51,10 @@ def balance (self : State) (k : UInt256) : State × UInt256 :=
   let addr := AccountAddress.ofUInt256 k
   (self.addAccessedAccount addr, self.accountMap.find? addr |>.elim ⟨0⟩ (·.balance))
 
--- def transferBalance (sender : AccountAddress) (recipient : AccountAddress) (balance : UInt256) (self : State) : Option State :=
---   if sender == recipient then .some self -- NB this check renders `balance` validity irrelevant
---   else do
---     let senderAcc ← self.accountMap.find? sender
---     let recipientAcc ← self.accountMap.find? recipient
---     let (senderAcc, recipientAcc) ← senderAcc.transferBalanceTo balance recipientAcc
---     self.updateAccount sender senderAcc
---       |>.updateAccount recipient recipientAcc
-
 def initialiseAccount (addr : AccountAddress) (self : State) : State :=
   if self.accountExists addr then self else self.updateAccount addr default
 
--- def setBalance! (self : State) (addr : AccountAddress) (balance : UInt256) : State :=
---   self.updateAccount! addr (λ acc ↦ { acc with balance := balance })
-
--- def setSelfBalance! (self : State) : UInt256 → State :=
---   self.setBalance! self.executionEnv.codeOwner
-
 def calldataload (self : State) (v : UInt256) : UInt256 :=
-  -- dbg_trace s!"calldataload arr: {self.executionEnv.inputData.extract' v (v + 32)}"
-  -- dbg_trace s!"calldataload yielding: {toHex <| self.executionEnv.inputData.extract' v (v + 32)}"
   uInt256OfByteArray <| self.executionEnv.inputData.readBytes v.toNat 32
 
 def setNonce! (self : State) (addr : AccountAddress) (nonce : UInt256) : State :=
@@ -102,7 +85,6 @@ end CodeCopy
 section Blocks
 
 def blockHash (self : State) (blockNumber : UInt256) : UInt256 :=
-  -- TODO: Don't keep the whole blocks, just the hashes
   let v := self.executionEnv.header.number
   if v ≤ blockNumber.toNat || blockNumber.toNat + 256 < v then ⟨0⟩
   else
@@ -113,7 +95,6 @@ def coinBase (self : State) : AccountAddress :=
   self.executionEnv.header.beneficiary
 
 def timeStamp (self : State) : UInt256 :=
-  -- dbg_trace self.executionEnv.header.timestamp
   .ofNat self.executionEnv.header.timestamp
 
 def number (self : State) : UInt256 :=
@@ -193,13 +174,9 @@ def tload (self : State) (spos : UInt256) : State × UInt256 :=
   (self, v)
 
 def tstore (self : State) (spos sval : UInt256) : State :=
-  -- TODO: "If the `TSTORE` opcode is called within the context of a `STATICCALL`,
-  -- it will result in an exception instead of performing the modification."
-  -- Not any static call (i.e. perm = 0)?
   let Iₐ := self.executionEnv.codeOwner
   self.lookupAccount Iₐ |>.option self λ acc ↦
     self.updateAccount Iₐ (acc.updateTransientStorage spos sval)
-
 
 end Storage
 

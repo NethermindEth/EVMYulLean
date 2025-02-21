@@ -28,7 +28,6 @@ structure Transaction.Base where
   r               : ByteArray
   s               : ByteArray
   data            : ByteArray
-  -- expectedSender  : AccountAddress
 deriving BEq, Repr
 
 -- "EIP-2930 (type 1) and EIP-1559 (type 2) transactions also have:""

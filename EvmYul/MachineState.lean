@@ -5,7 +5,6 @@ import Batteries
 import EvmYul.Maps.ByteMap
 import EvmYul.UInt256
 import Batteries.Data.HashMap
-import EvmYul.MachineMemory
 
 namespace EvmYul
 

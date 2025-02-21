@@ -21,9 +21,6 @@ structure UInt256 where
 
 instance : ToString UInt256 where
   toString a := toString a.val
--- instance : NeZero UInt256.size := ⟨by decide⟩
-
--- instance : SizeOf UInt256 where sizeOf := 1
 
 namespace UInt256
 
@@ -120,15 +117,15 @@ def toSigned (i : ℤ) : UInt256 :=
     | .negSucc n => ofNat (UInt256.size - 1 - n)
 
 
-example : fromSigned (toSigned 0) = 0 := by rfl
-example : fromSigned (toSigned (-7)) = -7 := by rfl
-example : fromSigned (toSigned 7) = 7 := by rfl
+private example : fromSigned (toSigned 0) = 0 := by rfl
+private example : fromSigned (toSigned (-7)) = -7 := by rfl
+private example : fromSigned (toSigned 7) = 7 := by rfl
 -- Largest two’s complement signed 256-bit integer
-example : fromSigned (toSigned (2^255 - 1)) = 2^255 - 1 := by rfl
-example : abs (toSigned (2^255 - 1)) = ofNat (2^255 - 1) := by rfl
+private example : fromSigned (toSigned (2^255 - 1)) = 2^255 - 1 := by rfl
+private example : abs (toSigned (2^255 - 1)) = ofNat (2^255 - 1) := by rfl
 -- Smallest two’s complement signed 256-bit integer
-example : fromSigned (toSigned (-2^255)) = -2^255 := by rfl
-example : abs (toSigned (-2^255)) = ofNat (2^255) := by rfl
+private example : fromSigned (toSigned (-2^255)) = -2^255 := by rfl
+private example : abs (toSigned (-2^255)) = ofNat (2^255) := by rfl
 
 instance : Complement UInt256 := ⟨EvmYul.UInt256.complement⟩
 
@@ -197,11 +194,6 @@ def sdiv (a b : UInt256) : UInt256 :=
 def smod (a b : UInt256) : UInt256 :=
   if b.toNat == 0 then ⟨0⟩
   else
-    -- let sgnA : ℤ := if 2 ^ 255 <= a.toNat then -1 else 1
-    -- let sgnB : ℤ := if 2 ^ 255 <= b.toNat then -1 else 1
-    -- let mask : UInt256 := ofNat (2 ^ 256 - 1 : ℕ)
-    -- let absA := abs a -- if sgnA == 1 then a else ⟨- (UInt256.xor a mask + ⟨1⟩).val⟩
-    -- let absB := abs b -- if sgnB == 1 then b else ⟨- (UInt256.xor b mask + ⟨1⟩).val⟩
     toSigned <| sgn a * (abs a % abs b).toNat
 
 def sltBool (a b : UInt256) : Bool :=
@@ -259,22 +251,16 @@ def addMod (a b c : UInt256) : UInt256 :=
 
 def mulMod (a b c : UInt256) : UInt256 :=
   -- "All intermediate calculations of this operation are **not** subject to the 2^256 modulo."
-  -- dbg_trace s!"mulmod: {a} {b} {c}"
   if eq0 c then ⟨0⟩ else
     ofNat <| Nat.mod (a.val * b.val) c.toNat
 
 def exp (a b : UInt256) : UInt256 := pow a b
-  -- a ^ b.val
 
-def lt (a b : UInt256) :=
-  fromBool (a < b)
+def lt (a b : UInt256) := fromBool (a < b)
 
-def gt (a b : UInt256) :=
-  fromBool (a > b)
+def gt (a b : UInt256) := fromBool (a > b)
 
-def eq (a b : UInt256) :=
-  -- dbg_trace fromBool (a = b)
-  fromBool (a = b)
+def eq (a b : UInt256) := fromBool (a = b)
 
 def isZero (a : UInt256) :=
   fromBool (eq0 a)
