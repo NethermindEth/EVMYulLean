@@ -45,8 +45,8 @@ structure BlockHeader where
   baseFeePerGas : ℕ
   parentBeaconBlockRoot : ByteArray
   withdrawalsRoot : Option ByteArray
-  blobGasUsed     : Option UInt64
-  excessBlobGas   : Option UInt64
+  blobGasUsed     : UInt64
+  excessBlobGas   : UInt64
 deriving DecidableEq, Inhabited, Repr, BEq
 
 def prettyDifference (h₁ h₂ : BlockHeader) : String := Id.run do
@@ -77,12 +77,10 @@ def prettyDifference (h₁ h₂ : BlockHeader) : String := Id.run do
 def TARGET_BLOB_GAS_PER_BLOCK := 393216
 
 def calcExcessBlobGas (parent : BlockHeader) : Option UInt64 := do
-  let parentExcessBlobGas ← parent.excessBlobGas
-  let parentBlobGasUsed ← parent.blobGasUsed
-  if parentExcessBlobGas.toNat + parentBlobGasUsed.toNat < TARGET_BLOB_GAS_PER_BLOCK then
+  if parent.excessBlobGas.toNat + parent.blobGasUsed.toNat < TARGET_BLOB_GAS_PER_BLOCK then
     pure ⟨0⟩
   else
-    pure <| .ofNat <| parentExcessBlobGas.toNat + parentBlobGasUsed.toNat - TARGET_BLOB_GAS_PER_BLOCK
+    pure <| .ofNat <| parent.excessBlobGas.toNat + parent.blobGasUsed.toNat - TARGET_BLOB_GAS_PER_BLOCK
 
 -- See https://eips.ethereum.org/EIPS/eip-4844#gas-accounting
 partial def fakeExponential0 (i output factor numerator denominator : ℕ) : (numeratorAccum : ℕ) → ℕ
@@ -103,7 +101,7 @@ def BLOB_BASE_FEE_UPDATE_FRACTION := 3338477
 def BlockHeader.getBlobGasprice (h : BlockHeader) : ℕ :=
   fakeExponential
     MIN_BASE_FEE_PER_BLOB_GAS
-    (h.excessBlobGas.getD ⟨0⟩).toNat
+    h.excessBlobGas.toNat
     BLOB_BASE_FEE_UPDATE_FRACTION
 
 attribute [deprecated] BlockHeader.nonce

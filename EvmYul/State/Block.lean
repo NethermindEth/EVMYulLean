@@ -337,8 +337,8 @@ def deserializeBlock
           (fromByteArrayBigEndian baseFeePerGas)
           parentBeaconBlockRoot
           (some withdrawalsRoot)
-          (some <| .ofNat <| fromByteArrayBigEndian blobGasUsed)
-          (some <| .ofNat <| fromByteArrayBigEndian excessBlobGas)
+          (.ofNat <| fromByteArrayBigEndian blobGasUsed)
+          (.ofNat <| fromByteArrayBigEndian excessBlobGas)
     | _ =>
       dbg_trace "Block header has wrong RLP structure"
       throw <| .BlockException .RLP_STRUCTURES_ENCODING

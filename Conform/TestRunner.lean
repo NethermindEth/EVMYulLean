@@ -461,17 +461,8 @@ def validateBlock
   then
     throw <| .BlockException .IMPORT_IMPOSSIBLE_UNCLES_OVER_PARIS
 
-  -- TODO: Not needed in Cancun. Make `blobGasUsed` and `excessBlobGas` `UInt64`s, not `Option`s.
-  match block.blockHeader.blobGasUsed, block.blockHeader.excessBlobGas with
-  | some _, none | none, some _ =>
-    throw <| .BlockException .INCORRECT_BLOCK_FORMAT
-  | _, _ => pure ()
-
-  match block.blockHeader.blobGasUsed with
-    | none => pure ()
-    | some bGU =>
-      if blobGasUsed != bGU.toNat then
-        throw <| .BlockException .INCORRECT_BLOB_GAS_USED
+  if blobGasUsed != block.blockHeader.blobGasUsed.toNat then
+      throw <| .BlockException .INCORRECT_BLOB_GAS_USED
 
   if blobGasUsed > MAX_BLOB_GAS_PER_BLOCK then
     throw <| .BlockException .BLOB_GAS_USED_ABOVE_LIMIT
