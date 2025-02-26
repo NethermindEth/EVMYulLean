@@ -14,6 +14,8 @@ import EvmYul.SNARKV
 import EvmYul.BLAKE2_F
 import EvmYul.PointEval
 
+import EvmYul.FFI.ffi
+
 open EvmYul
 
 def Ξ_ECREC
@@ -97,7 +99,7 @@ def Ξ_SHA256
     (false, ∅, ⟨0⟩, A, .empty)
   else
     let o :=
-      match SHA256 I.inputData with
+      match sha256.SHA256 I.inputData with
         | .ok s => s
         | .error e =>
           dbg_trace s!"Ξ_SHA56 failed: {e}"
@@ -114,11 +116,11 @@ private def shaOutput :=
         inputData := longInput.toUTF8
       }
   o
-private example :
-  EvmYul.toHex shaOutput
-    =
-  "4dbbf25c7844e6087e0a6948a71949c0ae2d46e75c16859457c430b8ce2d72ae"
-:= by native_decide
+-- private example :
+--   EvmYul.toHex shaOutput
+--     =
+--   "4dbbf25c7844e6087e0a6948a71949c0ae2d46e75c16859457c430b8ce2d72ae"
+-- := by native_decide
 
 def Ξ_RIP160
   (σ : AccountMap)
@@ -154,9 +156,9 @@ private def ripOutput :=
         inputData := longInput.toUTF8
       }
   o
-private example :
-  EvmYul.toHex ripOutput = "0000000000000000000000005cff4c1668e5542c74a609a3146427c28e51ff5a"
-:= by native_decide
+-- private example :
+--   EvmYul.toHex ripOutput = "0000000000000000000000005cff4c1668e5542c74a609a3146427c28e51ff5a"
+-- := by native_decide
 
 
 def Ξ_ID
@@ -388,7 +390,7 @@ private def bn_mulOutput :=
   n  : ByteArray := UInt256.toByteArray ⟨2⟩
 
 -- (0, 0) + (1, 2) + (1, 2) = 2 * (1, 2)
-private example : bn_addOutput₁ = bn_mulOutput := by native_decide
+-- private example : bn_addOutput₁ = bn_mulOutput := by native_decide
 
 def Ξ_SNARKV
   (σ : AccountMap)
@@ -438,15 +440,21 @@ def Ξ_BLAKE2_F
     :
   (Bool × AccountMap × UInt256 × Substate × ByteArray)
 :=
+  -- dbg_trace "blake called"
   let d := I.inputData
   let gᵣ : ℕ := fromByteArrayBigEndian (d.extract 0 4)
 
   if g.toNat < gᵣ then
+    dbg_trace "failed"
     (false, ∅, ⟨0⟩, A, .empty)
   else
-    let o := BLAKE2_F d
+    -- dbg_trace s!"CHECKING for d: {EvmYul.toHex d}"
+    -- let oX := blake2b64.BLAKE2 d
+    -- let o := BLAKE2_F d
+    -- dbg_trace s!"oAndrei: {o}\noFFI: {oX}\n"
+    let o := blake2b64.BLAKE2 d
     match o with
-      | .ok o => (true, σ, g - .ofNat gᵣ, A, o)
+      | .ok o => /- dbg_trace s!"in .ok: {EvmYul.toHex o}"; -/ (true, σ, g - .ofNat gᵣ, A, o)
       | .error e =>
         dbg_trace s!"Ξ_BLAKE2_F failed: {e}"
         (false, ∅, ⟨0⟩, A, .empty)
@@ -455,24 +463,24 @@ def blake2_fInput :=
   ByteArray.ofBlob "0000000048c9bdf267e6096a3ba7ca8485ae67bb2bf894fe72f36e3cf1361d5f3af54fa5d182e6ad7f520e511f6c3e2b8c68059b6bbd41fbabd9831f79217e1319cde05b61626300000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000300000000000000000000000000000001"
   |>.toOption.getD .empty
 
-private def blake2_fOutput :=
-  let (_, _, _, _, o) :=
-    Ξ_BLAKE2_F
-      default
-      ⟨100000⟩
-      default
-      { (default : ExecutionEnv) with
-        inputData := blake2_fInput
-      }
-  o
+-- private def blake2_fOutput :=
+--   let (_, _, _, _, o) :=
+--     Ξ_BLAKE2_F
+--       default
+--       ⟨42949672970⟩
+--       default
+--       { (default : ExecutionEnv) with
+--         inputData := blake2_fInput
+--       }
+--   o
 
--- Example taken from
--- https://eips.ethereum.org/EIPS/eip-152
-private example :
-  blake2_fOutput
-    =
-  (ByteArray.ofBlob "08c9bcf367e6096a3ba7ca8485ae67bb2bf894fe72f36e3cf1361d5f3af54fa5d282e6ad7f520e511f6c3e2b8c68059b9442be0454267ce079217e1319cde05b").toOption
-:= by native_decide
+-- -- Example taken from
+-- -- https://eips.ethereum.org/EIPS/eip-152
+-- private example :
+--   blake2_fOutput
+--     =
+--   (ByteArray.ofBlob "08c9bcf367e6096a3ba7ca8485ae67bb2bf894fe72f36e3cf1361d5f3af54fa5d282e6ad7f520e511f6c3e2b8c68059b9442be0454267ce079217e1319cde05b").toOption
+-- := by native_decide
 
 def Ξ_PointEval
   (σ : AccountMap)

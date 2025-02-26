@@ -1,4 +1,5 @@
 import Conform.TestRunner
+import EvmYul.FFI.ffi
 
 -- def TestsSubdir := "BlockchainTests"
 -- def isTestFile (file : System.FilePath) : Bool := file.extension.option false (· == "json")
@@ -7,7 +8,14 @@ def SimpleFile := "EthereumTests/BlockchainTests/GeneralStateTests/VMTests/vmAri
 -- def BuggyFile := "EthereumTests/BlockchainTests/GeneralStateTests/VMTests/vmArithmeticTest/exp.json"
 def BuggyFile := "Conform/testfile.json"
 -- def BuggyFile := "EthereumTests/BlockchainTests/GeneralStateTests/VMTests/vmTests/calldatacopy.json"
-def SpecificFile := "EthereumTests/BlockchainTests/GeneralStateTests/stStackTests/underflowTest.json"
+-- def SpecificFile := "EthereumTests/BlockchainTests/GeneralStateTests/stStackTests/underflowTest.json"
+-- def SpecificFile := "EthereumTests/BlockchainTests/GeneralStateTests/stQuadraticComplexityTest/Call50000_sha256.json"
+
+
+def SpecificFile := "EthereumTests/BlockchainTests/GeneralStateTests/stTimeConsuming/CALLBlake2f_MaxRounds.json"
+-- def SpecificFile := "EthereumTests/BlockchainTests/GeneralStateTests/stPreCompiledContracts2/CALLBlake2f.json"
+-- def SpecificFile := "EthereumTests/BlockchainTests/GeneralStateTests/stPreCompiledContracts/blake2B.json"
+-- def SpecificFile := "EthereumTests/BlockchainTests/GeneralStateTests/stPreCompiledContracts2/CALLCODEBlake2f.json"
 
 def TestsSubdir := "BlockchainTests"
 def isTestFile (file : System.FilePath  ) : Bool := file.extension.option false (· == "json")
@@ -172,7 +180,59 @@ def directoryBlacklist : List System.FilePath := []
 
 def fileBlacklist : List System.FilePath := []
 
+def testInput : ByteArray :=
+  (ByteArray.ofBlob "0000000048c9bdf267e6096a3ba7ca8485ae67bb2bf894fe72f36e3cf1361d5f3af54fa5d182e6ad7f520e511f6c3e2b8c68059b6bbd41fbabd9831f79217e1319cde05b61626300000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000300000000000000000000000000000001").toOption.getD .empty
+
+def testOutput : ByteArray :=
+  (ByteArray.ofBlob "08c9bcf367e6096a3ba7ca8485ae67bb2bf894fe72f36e3cf1361d5f3af54fa5d282e6ad7f520e511f6c3e2b8c68059b9442be0454267ce079217e1319cde05b").toOption.getD .empty
+
+def exampleInput : ByteArray := ⟨#[
+  -- rounds (big endian, 4 bytes)
+  0, 0, 0, 42,
+  -- h (little endian, 8 bytes, 8 times)
+  1, 0, 0, 0, 0, 0, 0, 0,
+  2, 0, 0, 0, 0, 0, 0, 0,
+  3, 0, 0, 0, 0, 0, 0, 0,
+  4, 0, 0, 0, 0, 0, 0, 0,
+  5, 0, 0, 0, 0, 0, 0, 0,
+  6, 0, 0, 0, 0, 0, 0, 0,
+  7, 0, 0, 0, 0, 0, 0, 0,
+  8, 0, 0, 0, 0, 0, 0, 0,
+  -- m (little endian, 8 bytes, 16 times)
+  1, 0, 0, 0, 0, 0, 0, 0,
+  2, 0, 0, 0, 0, 0, 0, 0,
+  3, 0, 0, 0, 0, 0, 0, 0,
+  4, 0, 0, 0, 0, 0, 0, 0,
+  5, 0, 0, 0, 0, 0, 0, 0,
+  6, 0, 0, 0, 0, 0, 0, 0,
+  7, 0, 0, 0, 0, 0, 0, 0,
+  8, 0, 0, 0, 0, 0, 0, 0,
+  1, 0, 0, 0, 0, 0, 0, 0,
+  2, 0, 0, 0, 0, 0, 0, 0,
+  3, 0, 0, 0, 0, 0, 0, 0,
+  4, 0, 0, 0, 0, 0, 0, 0,
+  5, 0, 0, 0, 0, 0, 0, 0,
+  6, 0, 0, 0, 0, 0, 0, 0,
+  7, 0, 0, 0, 0, 0, 0, 0,
+  8, 0, 0, 0, 0, 0, 0, 0,
+  -- t (little endian, 8 bytes, 2 times)
+  1, 0, 0, 0, 0, 0, 0, 0,
+  2, 0, 0, 0, 0, 0, 0, 0,
+  -- f (1 byte)
+  1
+]⟩
+
 def main : IO Unit := do
+  -- dbg_trace "The number is: {testme 42}"
+  -- dbg_trace "The hash is: {sha256.sha256 "abc".toUTF8 "abc".length.toUSize}"
+  -- dbg_trace s!"The hash is: {blake2b64.blake2b64 "abc".toUTF8 "abc".length.toUSize}"
+  -- dbg_trace s!"The hash is: {EvmYul.toHex <| blake2b64.BLAKE2Compress testInput}"
+  -- pure ()
+  -- pure ()
+
+  -- #eval main
+  -- CALLBlake2f_MaxRounds_d0g0v0_Cancun
+  -- pure ()
   let testFiles ←
     Array.filter isTestFile <$>
       System.FilePath.walkDir
@@ -182,66 +242,72 @@ def main : IO Unit := do
   let mut discardedFiles := #[]
   -- let testFiles := #[SimpleFile]
   -- let testFiles := #[BuggyFile]
-  -- let testFiles := #[SpecificFile]
+  let testFiles := #[SpecificFile]
 
   let mut numFailedTest := 0
   let mut numSuccess := 0
 
   if ←System.FilePath.pathExists logFile then IO.FS.removeFile logFile
+  dbg_trace s!"test files: {testFiles}"
   for testFile in testFiles do
     if fileBlacklist.contains testFile then continue
     dbg_trace s!"File under test: {testFile}"
     let res ←
       ExceptT.run <|
         EvmYul.Conform.processTestsOfFile
-          -- (whitelist := #["CreateOOGafterMaxCodesize_d4g0v0_Cancun"])
-          --   #[
-          --     "21_tstoreCannotBeDosdOOO_d0g0v0_Cancun"
-          --   , "15_tstoreCannotBeDosd_d0g0v0_Cancun"
-          --   , "ContractCreationSpam_d0g0v0_Cancun"
-          --   , "static_Return50000_2_d0g0v0_Cancun"
-          --   , "static_Call50000_identity_d0g0v0_Cancun"
-          --   , "static_Call50000_identity_d1g0v0_Cancun"
-          --   , "static_Call50000_ecrec_d0g0v0_Cancun"
-          --   , "static_Call50000_ecrec_d0g0v0_Cancun"
-          --   , "static_Call50000_identity2_d0g0v0_Cancun"
-          --   , "static_Call50000_identity2_d1g0v0_Cancun"
-          --   , "static_LoopCallsThenRevert_d0g0v0_Cancun"
-          --   , "static_LoopCallsThenRevert_d0g1v0_Cancun"
-          --   , "static_Call50000_d0g0v0_Cancun"
-          --   , "static_Call50000_d1g0v0_Cancun"
-          --   , "static_Call50000_rip160_d0g0v0_Cancun"
-          --   , "static_Call50000_rip160_d1g0v0_Cancun"
-          --   , "loopMul_d0g0v0_Cancun" -- OOF
-          --   , "loopMul_d1g0v0_Cancun" -- OOF
-          --   , "loopMul_d2g0v0_Cancun" -- OOF
-          --   , "performanceTester_d1g0v0_Cancun"
-          --   , "performanceTester_d4g0v0_Cancun"
-          --   , "loopExp_d10g0v0_Cancun" -- OOF
-          --   , "loopExp_d11g0v0_Cancun" -- OOF
-          --   , "loopExp_d12g0v0_Cancun" -- OOF
-          --   , "loopExp_d13g0v0_Cancun"
-          --   , "loopExp_d14g0v0_Cancun" -- OOF
-          --   , "loopExp_d8g0v0_Cancun" -- OOF
-          --   , "loopExp_d9g0v0_Cancun" -- OOF
-          --   , "Return50000_2_d0g0v0_Cancun"
-          --   , "Call50000_identity2_d0g1v0_Cancun"
-          --   , "Call50000_ecrec_d0g1v0_Cancun"
-          --   , "Return50000_d0g1v0_Cancun"
-          --   -- , "Call50000_sha256_d0g1v0_Cancun"
-          --   , "Call50000_d0g1v0_Cancun"
-          --   , "Callcode50000_d0g1v0_Cancun"
-          --   , "Call50000_identity_d0g1v0_Cancun"
-          --   , "QuadraticComplexitySolidity_CallDataCopy_d0g1v0_Cancun"
-          --   , "static_Call50000_sha256_d0g0v0_Cancun"
-          --   , "static_Call50000_sha256_d1g0v0_Cancun"
-          --   ]
-          -- )
+          (whitelist :=
+            #[ -- "CALLBlake2f_d1g0v0_Cancun"
+            --   "21_tstoreCannotBeDosdOOO_d0g0v0_Cancun"
+            -- , "15_tstoreCannotBeDosd_d0g0v0_Cancun"
+            -- , "ContractCreationSpam_d0g0v0_Cancun"
+            -- , "static_Return50000_2_d0g0v0_Cancun"
+            -- , "static_Call50000_identity_d0g0v0_Cancun"
+            -- , "static_Call50000_identity_d1g0v0_Cancun"
+            -- , "static_Call50000_ecrec_d0g0v0_Cancun"
+            -- , "static_Call50000_ecrec_d0g0v0_Cancun"
+            -- , "static_Call50000_identity2_d0g0v0_Cancun"
+            -- , "static_Call50000_identity2_d1g0v0_Cancun"
+            -- , "static_LoopCallsThenRevert_d0g0v0_Cancun"
+            -- , "static_LoopCallsThenRevert_d0g1v0_Cancun"
+            -- , "static_Call50000_d0g0v0_Cancun"
+            -- , "static_Call50000_d1g0v0_Cancun"
+            -- , "static_Call50000_rip160_d0g0v0_Cancun"
+            -- , "static_Call50000_rip160_d1g0v0_Cancun"
+            -- , "loopMul_d0g0v0_Cancun" -- OOF
+            -- , "loopMul_d1g0v0_Cancun" -- OOF
+            -- , "loopMul_d2g0v0_Cancun" -- OOF
+            -- , "performanceTester_d1g0v0_Cancun"
+            -- , "performanceTester_d4g0v0_Cancun"
+            -- , "loopExp_d10g0v0_Cancun" -- OOF
+            -- , "loopExp_d11g0v0_Cancun" -- OOF
+            -- , "loopExp_d12g0v0_Cancun" -- OOF
+            -- , "loopExp_d13g0v0_Cancun"
+            -- , "loopExp_d14g0v0_Cancun" -- OOF
+            -- , "loopExp_d8g0v0_Cancun" -- OOF
+            -- , "loopExp_d9g0v0_Cancun" -- OOF
+            -- , "Return50000_2_d0g0v0_Cancun"
+            -- , "Call50000_identity2_d0g1v0_Cancun"
+            -- , "Call50000_ecrec_d0g1v0_Cancun"
+            -- , "Return50000_d0g1v0_Cancun"
+            -- ,
+            -- "Call50000_sha256_d0g1v0_Cancun"
+            -- , "Call50000_d0g1v0_Cancun"
+            -- , "Callcode50000_d0g1v0_Cancun"
+            -- , "Call50000_identity_d0g1v0_Cancun"
+            -- , "QuadraticComplexitySolidity_CallDataCopy_d0g1v0_Cancun"
+            -- , "static_Call50000_sha256_d0g0v0_Cancun"
+            -- , "static_Call50000_sha256_d1g0v0_Cancun"
+            "CALLBlake2f_MaxRounds_d0g0v0_Cancun"
+            ]
+          )
 
           testFile
     match res with
-      | .error err         => discardedFiles := discardedFiles.push (testFile, err)
-      | .ok    testresults => for (test, result) in testresults do
+      | .error err         => dbg_trace "error!"
+                              discardedFiles := discardedFiles.push (testFile, err)
+      | .ok    testresults => dbg_trace "ok! - testresults: {repr testresults}"
+                              for (test, result) in testresults do
+                                dbg_trace s!"test: {test} result: {result}"
                                 log testFile test result
                                 if result.isNone
                                 then numSuccess := numSuccess + 1
