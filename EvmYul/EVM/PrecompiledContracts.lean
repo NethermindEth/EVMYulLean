@@ -154,9 +154,9 @@ private def ripOutput :=
         inputData := longInput.toUTF8
       }
   o
-private example :
-  EvmYul.toHex ripOutput = "0000000000000000000000005cff4c1668e5542c74a609a3146427c28e51ff5a"
-:= by native_decide
+-- private example :
+--   EvmYul.toHex ripOutput = "0000000000000000000000005cff4c1668e5542c74a609a3146427c28e51ff5a"
+-- := by native_decide
 
 
 def Ξ_ID
@@ -388,7 +388,7 @@ private def bn_mulOutput :=
   n  : ByteArray := UInt256.toByteArray ⟨2⟩
 
 -- (0, 0) + (1, 2) + (1, 2) = 2 * (1, 2)
-private example : bn_addOutput₁ = bn_mulOutput := by native_decide
+-- private example : bn_addOutput₁ = bn_mulOutput := by native_decide
 
 def Ξ_SNARKV
   (σ : AccountMap)

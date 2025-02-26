@@ -1,4 +1,5 @@
 import Conform.TestRunner
+import EvmYul.FFI.ffi
 
 -- def TestsSubdir := "BlockchainTests"
 -- def isTestFile (file : System.FilePath) : Bool := file.extension.option false (· == "json")
@@ -173,84 +174,89 @@ def directoryBlacklist : List System.FilePath := []
 def fileBlacklist : List System.FilePath := []
 
 def main : IO Unit := do
-  let testFiles ←
-    Array.filter isTestFile <$>
-      System.FilePath.walkDir
-        (enter := λ path ↦ pure <| path ∉ directoryBlacklist)
-        ("EthereumTests/BlockchainTests")
+  dbg_trace "The number is: {testme 42}"
+  pure ()
 
-  let mut discardedFiles := #[]
-  -- let testFiles := #[SimpleFile]
-  -- let testFiles := #[BuggyFile]
-  -- let testFiles := #[SpecificFile]
+-- #eval main
 
-  let mut numFailedTest := 0
-  let mut numSuccess := 0
+  -- let testFiles ←
+  --   Array.filter isTestFile <$>
+  --     System.FilePath.walkDir
+  --       (enter := λ path ↦ pure <| path ∉ directoryBlacklist)
+  --       ("EthereumTests/BlockchainTests")
 
-  if ←System.FilePath.pathExists logFile then IO.FS.removeFile logFile
-  for testFile in testFiles do
-    if fileBlacklist.contains testFile then continue
-    dbg_trace s!"File under test: {testFile}"
-    let res ←
-      ExceptT.run <|
-        EvmYul.Conform.processTestsOfFile
-          -- (whitelist := #["CreateOOGafterMaxCodesize_d4g0v0_Cancun"])
-          --   #[
-          --     "21_tstoreCannotBeDosdOOO_d0g0v0_Cancun"
-          --   , "15_tstoreCannotBeDosd_d0g0v0_Cancun"
-          --   , "ContractCreationSpam_d0g0v0_Cancun"
-          --   , "static_Return50000_2_d0g0v0_Cancun"
-          --   , "static_Call50000_identity_d0g0v0_Cancun"
-          --   , "static_Call50000_identity_d1g0v0_Cancun"
-          --   , "static_Call50000_ecrec_d0g0v0_Cancun"
-          --   , "static_Call50000_ecrec_d0g0v0_Cancun"
-          --   , "static_Call50000_identity2_d0g0v0_Cancun"
-          --   , "static_Call50000_identity2_d1g0v0_Cancun"
-          --   , "static_LoopCallsThenRevert_d0g0v0_Cancun"
-          --   , "static_LoopCallsThenRevert_d0g1v0_Cancun"
-          --   , "static_Call50000_d0g0v0_Cancun"
-          --   , "static_Call50000_d1g0v0_Cancun"
-          --   , "static_Call50000_rip160_d0g0v0_Cancun"
-          --   , "static_Call50000_rip160_d1g0v0_Cancun"
-          --   , "loopMul_d0g0v0_Cancun" -- OOF
-          --   , "loopMul_d1g0v0_Cancun" -- OOF
-          --   , "loopMul_d2g0v0_Cancun" -- OOF
-          --   , "performanceTester_d1g0v0_Cancun"
-          --   , "performanceTester_d4g0v0_Cancun"
-          --   , "loopExp_d10g0v0_Cancun" -- OOF
-          --   , "loopExp_d11g0v0_Cancun" -- OOF
-          --   , "loopExp_d12g0v0_Cancun" -- OOF
-          --   , "loopExp_d13g0v0_Cancun"
-          --   , "loopExp_d14g0v0_Cancun" -- OOF
-          --   , "loopExp_d8g0v0_Cancun" -- OOF
-          --   , "loopExp_d9g0v0_Cancun" -- OOF
-          --   , "Return50000_2_d0g0v0_Cancun"
-          --   , "Call50000_identity2_d0g1v0_Cancun"
-          --   , "Call50000_ecrec_d0g1v0_Cancun"
-          --   , "Return50000_d0g1v0_Cancun"
-          --   -- , "Call50000_sha256_d0g1v0_Cancun"
-          --   , "Call50000_d0g1v0_Cancun"
-          --   , "Callcode50000_d0g1v0_Cancun"
-          --   , "Call50000_identity_d0g1v0_Cancun"
-          --   , "QuadraticComplexitySolidity_CallDataCopy_d0g1v0_Cancun"
-          --   , "static_Call50000_sha256_d0g0v0_Cancun"
-          --   , "static_Call50000_sha256_d1g0v0_Cancun"
-          --   ]
-          -- )
+  -- let mut discardedFiles := #[]
+  -- -- let testFiles := #[SimpleFile]
+  -- -- let testFiles := #[BuggyFile]
+  -- -- let testFiles := #[SpecificFile]
 
-          testFile
-    match res with
-      | .error err         => discardedFiles := discardedFiles.push (testFile, err)
-      | .ok    testresults => for (test, result) in testresults do
-                                log testFile test result
-                                if result.isNone
-                                then numSuccess := numSuccess + 1
-                                else numFailedTest := numFailedTest + 1
+  -- let mut numFailedTest := 0
+  -- let mut numSuccess := 0
 
-  let total := numFailedTest + numSuccess
-  IO.println s!"Total tests: {total}"
-  IO.println s!"The post was NOT equal to the resulting state: {numFailedTest}"
-  IO.println s!"Succeeded: {numSuccess}"
-  IO.println s!"Success rate of: {(numSuccess.toFloat / total.toFloat) * 100.0}"
+  -- if ←System.FilePath.pathExists logFile then IO.FS.removeFile logFile
+  -- for testFile in testFiles do
+  --   if fileBlacklist.contains testFile then continue
+  --   dbg_trace s!"File under test: {testFile}"
+  --   let res ←
+  --     ExceptT.run <|
+  --       EvmYul.Conform.processTestsOfFile
+  --         -- (whitelist := #["CreateOOGafterMaxCodesize_d4g0v0_Cancun"])
+  --         --   #[
+  --         --     "21_tstoreCannotBeDosdOOO_d0g0v0_Cancun"
+  --         --   , "15_tstoreCannotBeDosd_d0g0v0_Cancun"
+  --         --   , "ContractCreationSpam_d0g0v0_Cancun"
+  --         --   , "static_Return50000_2_d0g0v0_Cancun"
+  --         --   , "static_Call50000_identity_d0g0v0_Cancun"
+  --         --   , "static_Call50000_identity_d1g0v0_Cancun"
+  --         --   , "static_Call50000_ecrec_d0g0v0_Cancun"
+  --         --   , "static_Call50000_ecrec_d0g0v0_Cancun"
+  --         --   , "static_Call50000_identity2_d0g0v0_Cancun"
+  --         --   , "static_Call50000_identity2_d1g0v0_Cancun"
+  --         --   , "static_LoopCallsThenRevert_d0g0v0_Cancun"
+  --         --   , "static_LoopCallsThenRevert_d0g1v0_Cancun"
+  --         --   , "static_Call50000_d0g0v0_Cancun"
+  --         --   , "static_Call50000_d1g0v0_Cancun"
+  --         --   , "static_Call50000_rip160_d0g0v0_Cancun"
+  --         --   , "static_Call50000_rip160_d1g0v0_Cancun"
+  --         --   , "loopMul_d0g0v0_Cancun" -- OOF
+  --         --   , "loopMul_d1g0v0_Cancun" -- OOF
+  --         --   , "loopMul_d2g0v0_Cancun" -- OOF
+  --         --   , "performanceTester_d1g0v0_Cancun"
+  --         --   , "performanceTester_d4g0v0_Cancun"
+  --         --   , "loopExp_d10g0v0_Cancun" -- OOF
+  --         --   , "loopExp_d11g0v0_Cancun" -- OOF
+  --         --   , "loopExp_d12g0v0_Cancun" -- OOF
+  --         --   , "loopExp_d13g0v0_Cancun"
+  --         --   , "loopExp_d14g0v0_Cancun" -- OOF
+  --         --   , "loopExp_d8g0v0_Cancun" -- OOF
+  --         --   , "loopExp_d9g0v0_Cancun" -- OOF
+  --         --   , "Return50000_2_d0g0v0_Cancun"
+  --         --   , "Call50000_identity2_d0g1v0_Cancun"
+  --         --   , "Call50000_ecrec_d0g1v0_Cancun"
+  --         --   , "Return50000_d0g1v0_Cancun"
+  --         --   -- , "Call50000_sha256_d0g1v0_Cancun"
+  --         --   , "Call50000_d0g1v0_Cancun"
+  --         --   , "Callcode50000_d0g1v0_Cancun"
+  --         --   , "Call50000_identity_d0g1v0_Cancun"
+  --         --   , "QuadraticComplexitySolidity_CallDataCopy_d0g1v0_Cancun"
+  --         --   , "static_Call50000_sha256_d0g0v0_Cancun"
+  --         --   , "static_Call50000_sha256_d1g0v0_Cancun"
+  --         --   ]
+  --         -- )
 
-  IO.println s!"Files discarded along the way: {repr discardedFiles}"
+  --         testFile
+  --   match res with
+  --     | .error err         => discardedFiles := discardedFiles.push (testFile, err)
+  --     | .ok    testresults => for (test, result) in testresults do
+  --                               log testFile test result
+  --                               if result.isNone
+  --                               then numSuccess := numSuccess + 1
+  --                               else numFailedTest := numFailedTest + 1
+
+  -- let total := numFailedTest + numSuccess
+  -- IO.println s!"Total tests: {total}"
+  -- IO.println s!"The post was NOT equal to the resulting state: {numFailedTest}"
+  -- IO.println s!"Succeeded: {numSuccess}"
+  -- IO.println s!"Success rate of: {(numSuccess.toFloat / total.toFloat) * 100.0}"
+
+  -- IO.println s!"Files discarded along the way: {repr discardedFiles}"

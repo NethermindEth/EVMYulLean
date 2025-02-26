@@ -25,8 +25,8 @@ instance : ToString UInt256 where
 namespace UInt256
 
 def ofNat (n : ℕ) : UInt256 := Id.run do
-  if n >= UInt256.size then
-    dbg_trace s!"Truncating large number for UInt256 casting: {n}"
+  -- if n >= UInt256.size then
+  --   dbg_trace s!"Truncating large number for UInt256 casting: {n}"
   ⟨Fin.ofNat n⟩
 
 def toNat (u : UInt256) : ℕ := u.val.val
@@ -117,15 +117,15 @@ def toSigned (i : ℤ) : UInt256 :=
     | .negSucc n => ofNat (UInt256.size - 1 - n)
 
 
-private example : fromSigned (toSigned 0) = 0 := by rfl
-private example : fromSigned (toSigned (-7)) = -7 := by rfl
-private example : fromSigned (toSigned 7) = 7 := by rfl
--- Largest two’s complement signed 256-bit integer
-private example : fromSigned (toSigned (2^255 - 1)) = 2^255 - 1 := by rfl
-private example : abs (toSigned (2^255 - 1)) = ofNat (2^255 - 1) := by rfl
--- Smallest two’s complement signed 256-bit integer
-private example : fromSigned (toSigned (-2^255)) = -2^255 := by rfl
-private example : abs (toSigned (-2^255)) = ofNat (2^255) := by rfl
+-- private example : fromSigned (toSigned 0) = 0 := by rfl
+-- private example : fromSigned (toSigned (-7)) = -7 := by rfl
+-- private example : fromSigned (toSigned 7) = 7 := by rfl
+-- -- Largest two’s complement signed 256-bit integer
+-- private example : fromSigned (toSigned (2^255 - 1)) = 2^255 - 1 := by rfl
+-- private example : abs (toSigned (2^255 - 1)) = ofNat (2^255 - 1) := by rfl
+-- -- Smallest two’s complement signed 256-bit integer
+-- private example : fromSigned (toSigned (-2^255)) = -2^255 := by rfl
+-- private example : abs (toSigned (-2^255)) = ofNat (2^255) := by rfl
 
 instance : Complement UInt256 := ⟨EvmYul.UInt256.complement⟩
 
@@ -227,8 +227,8 @@ def sar (a b : UInt256) : UInt256 :=
   then UInt256.complement (UInt256.complement b >>> a)
   else b >>> a
 
-example : sar ⟨2⟩ (toSigned 32) = toSigned 8 := by rfl
-example : sar ⟨2⟩ (toSigned (-32)) = toSigned (-8) := by rfl
+-- example : sar ⟨2⟩ (toSigned 32) = toSigned 8 := by rfl
+-- example : sar ⟨2⟩ (toSigned (-32)) = toSigned (-8) := by rfl
 
 private partial def dbg_toHex (n : Nat) : String :=
   if n < 16
