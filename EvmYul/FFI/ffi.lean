@@ -12,4 +12,7 @@ instance : Inhabited Sha256Digest := ⟨⟨.mkArray LengthSha256 0⟩, rfl⟩
 @[extern "sha256"]
 opaque sha256 (input : @& ByteArray) (len : USize) : ByteArray
 
+def SHA256 (d : ByteArray) : Except String ByteArray :=
+  pure <| sha256 d d.size.toUSize
+
 end sha256
