@@ -55,7 +55,7 @@ def VerySlowTests : Array String :=
   , "Call50000_identity2_d0g1v0_Cancun"
   , "Call50000_ecrec_d0g1v0_Cancun"
   , "Return50000_d0g1v0_Cancun"
-  , "Call50000_sha256_d0g1v0_Cancun"
+  -- , "Call50000_sha256_d0g1v0_Cancun"
   , "Call50000_d0g1v0_Cancun"
   , "Callcode50000_d0g1v0_Cancun"
   , "Call50000_identity_d0g1v0_Cancun"
@@ -678,8 +678,8 @@ def processTestsOfFile (file : System.FilePath)
   let testMap ← Lean.FromJson.fromJson? (α := TestMap) file
   let tests := testMap.toTests
   let cancunTests := guardCancun tests
-
   let tests := guardBlacklist ∘ guardWhitelist <| cancunTests
+
   tests.foldlM (init := ∅) λ acc (testname, test) ↦
     dbg_trace s!"TESTING {testname} FROM {path}"
     pure <| acc.insert testname (processTest test)
