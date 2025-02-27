@@ -7,17 +7,8 @@ extern uint32_t testme(uint32_t x) { return x + 10; }
 
 extern lean_obj_res sha256(b_lean_obj_arg input, size_t len)
 {
-	// uint8_t* hash = (uint8_t*) malloc(32);
-  // calc_sha_256(hash, "abc", strlen("abc"));
-
-  // lean_obj_res res = lean_mk_empty_array_with_capacity(lean_box(32));
-  // memcpy(res, hash, 32);
-
-  // free(hash);
-  // return res;
-  int hash[32] = { 42, 42, 42, 42, 42, 42, 42, 42, 42, 42, 42, 42, 42, 42, 42, 42,
-    42, 42, 42, 42, 42, 42, 42, 42, 42, 42, 42, 42, 42, 42, 42, 42
-  };
+  uint8_t hash[32];
+  calc_sha_256(hash, lean_sarray_cptr(input), len);
   lean_obj_res res = lean_mk_empty_byte_array(lean_box(32));
   for (int i = 0; i < 32; ++i)
     lean_byte_array_push(res, hash[i]);

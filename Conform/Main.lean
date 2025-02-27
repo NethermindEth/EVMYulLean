@@ -175,7 +175,7 @@ def fileBlacklist : List System.FilePath := []
 
 def main : IO Unit := do
   dbg_trace "The number is: {testme 42}"
-  dbg_trace "The hash is: {sha256.sha256 .empty 42}"
+  dbg_trace "The hash is: {sha256.sha256 "abc".toUTF8 "abc".length.toUSize}"
   pure ()
 
 -- #eval main
