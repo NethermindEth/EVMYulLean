@@ -2,3 +2,4 @@
 .lake/
 vc/.stack-work/*
 __pycache__/
+tests.txt
