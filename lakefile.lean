@@ -16,6 +16,8 @@ def cloneWithCache (pkg : NPackage _package.name) (dirname url : String) : Fetch
 
 target cloneSha2 pkg : GitRepo := cloneWithCache pkg "sha2" "https://github.com/amosnier/sha-2.git"
 
+target cloneKeccak256 pkg : GitRepo := cloneWithCache pkg "keccak256" "https://github.com/brainhub/SHA3IUF.git"
+
 def inputTextFile (path : FilePath) : SpawnM (BuildJob FilePath) :=
   Job.async <| (path, ·) <$> computeTrace (TextFilePath.mk path)
 
@@ -26,11 +28,13 @@ abbrev compiler := "cc"
 
 target ffi.o pkg : FilePath := do
   let (sha2, _) ← (←cloneSha2.fetch).await
+  let (keccak256, _) ← (←cloneKeccak256.fetch).await
   let oFile := pkg.buildDir / "ffi.o"
   let srcJob ← inputTextFile <| pkg.dir / "EvmYul" / "FFI" / "ffi.c"
   let weakArgs := #[
     "-I", (← getLeanIncludeDir).toString,
-    "-I", sha2.dir.toString
+    "-I", sha2.dir.toString,
+    "-I", keccak256.dir.toString
   ]
   buildO oFile srcJob weakArgs #["-fPIC"] compiler getLeanTrace
 
@@ -44,18 +48,22 @@ def buildFFILib (pkg : Package) (repo : GitRepo) (fileName : String) : FetchM (B
 def buildSha256Obj (pkg : Package) (fileName : String) := do
   buildFFILib pkg (← (←cloneSha2.fetch).await).1 fileName
 
+def buildKeccak256Obj (pkg : Package) (fileName : String) := do
+  buildFFILib pkg (← (←cloneKeccak256.fetch).await).1 fileName
+
 extern_lib libleanffi pkg := do
   -- In the static lib we include:
   -- the `sha-256` library itself
   let sha256O ← buildSha256Obj pkg "sha-256"
+  let keccak256 ← buildKeccak256Obj pkg "sha3"
   -- our own `ffi.c`
   let ffiO ← ffi.o.fetch
   let name := nameToStaticLib "leanffi"
-  buildStaticLib (pkg.nativeLibDir / name) #[sha256O, ffiO]
+  buildStaticLib (pkg.nativeLibDir / name) #[sha256O, keccak256, ffiO]
 
 lean_lib «Conform»
   
-lean_lib «sha2»
+-- lean_lib «sha2»
 
 @[default_target]
 lean_lib «EvmYul»

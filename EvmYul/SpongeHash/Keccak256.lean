@@ -6,6 +6,7 @@ import EvmYul.Wheels
 import EvmYul.PerformIO
 import EvmYul.UInt256
 import Conform.Wheels
+import EvmYul.FFI.ffi
 
 open BigOperators
 open Vector
@@ -204,6 +205,7 @@ def hashFunction (paddingFunction : Nat → ByteArray → SHA3SR) (rate : Nat) (
   where outputBytes := (1600 - rate) / 16
 
 def blobKeccak (data : String) : String :=
+  -- dbg_trace s!"EvmYul/EllipticCurvesPy/keccak.py"
   totallySafePerformIO do
     IO.FS.withFile "EvmYul/EllipticCurvesPy/keccakInput.txt" .write λ h ↦ h.putStrLn data
     -- dbg_trace s!"before IO.Process.run"
@@ -224,12 +226,16 @@ private def Keccak (data : ByteArray) : ByteArray :=
     | .ok s => s
 
 def KEC (data : ByteArray) : ByteArray :=
-  if data.size < 100 then
-    -- dbg_trace s!"Lean Kec called for {data.size} bytes"
-    hashFunction paddingKeccak 1088 data
-  else
-    -- dbg_trace s!"Python Kec called for {data.size} bytes"
-    Keccak data
+  -- let x :=
+  -- if data.size < 100 then
+  --   -- dbg_trace s!"Lean Kec called for {data.size} bytes"
+  --   hashFunction paddingKeccak 1088 data
+  -- else
+  --   -- dbg_trace s!"Python Kec called for {data.size} bytes"
+  --   Keccak data
+  -- dbg_trace s!"KECCAK; original: {x} \n new: {ffi.KECCAK256 data}"
+  -- x
+  ffi.KECCAK256 data |>.toOption.getD .empty
 
 instance : Coe UInt8 (Fin (2^8)) := ⟨(·.val)⟩
 instance : Coe (Fin (2^8)) UInt8 := ⟨(⟨·⟩)⟩

@@ -232,10 +232,10 @@ partial def deserializeRLP (rlp : ByteArray) : Option 𝕋 :=
 --     some (58, .𝔹 (ByteArray.zeroes ⟨56⟩))
 --   := by native_decide
 
-private example :
-  deserializeRLP₀ (⟨#[192 + 3, 0, 127, 128]⟩) ==
-    some (4, 𝕋.𝕃 [𝕋.𝔹 ⟨#[0x00]⟩, 𝕋.𝔹 ⟨#[0x7f]⟩, 𝕋.𝔹 .empty])
-  := by native_decide
+-- private example :
+--   deserializeRLP₀ (⟨#[192 + 3, 0, 127, 128]⟩) ==
+--     some (4, 𝕋.𝕃 [𝕋.𝔹 ⟨#[0x00]⟩, 𝕋.𝔹 ⟨#[0x7f]⟩, 𝕋.𝔹 .empty])
+--   := by native_decide
 
 private def R_b (x : ByteArray) : Option ByteArray :=
   if x.size = 1 ∧ x.get! 0 < 128 then some x

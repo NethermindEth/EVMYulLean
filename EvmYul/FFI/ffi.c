@@ -3,8 +3,10 @@
 #include "sha-256.h"
 #include <stdio.h>
 #include <stdbool.h> 
+#include "sha3.h"
 
 #define SHA256_OUTPUT_SIZE 32
+#define KECCAK256_OUTPUT_SIZE 32
 
 // #define BLAKE2B_OUTPUT_SIZE 64
 #define BLAKE2B_COMPRESS_SIZE 8
@@ -147,4 +149,13 @@ extern lean_obj_arg memset_zero(size_t n) {
   uint8_t* it = lean_sarray_cptr(res);
   memset(it, 0, n);
   return res;
-}  
+}
+
+extern lean_obj_arg keccak256(b_lean_obj_arg input, size_t inBytes) {
+  uint8_t hash[KECCAK256_OUTPUT_SIZE];
+  sha3_HashBuffer(256, SHA3_FLAGS_KECCAK, lean_sarray_cptr(input), inBytes, hash, KECCAK256_OUTPUT_SIZE);
+  lean_obj_res res = lean_mk_empty_byte_array(lean_box(KECCAK256_OUTPUT_SIZE));
+  for (int i = 0; i < KECCAK256_OUTPUT_SIZE; ++i)
+    lean_byte_array_push(res, hash[i]);
+  return res;
+}

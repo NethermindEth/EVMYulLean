@@ -11,10 +11,14 @@ namespace Conform
 - `InvalidTestStructure` - The structure of tests has been violated. `why` is the reason. 
 -/
 inductive Exception :=
-  | CannotParse (why : String)
+  | CannotParse (file : System.FilePath) (why : String)
   -- | EVMError (exc : EVM.Exception)
-  | InvalidTestStructure (why : String)
+  | InvalidTestStructure (file : System.FilePath) (why : String)
   deriving Repr
+
+def Exception.toFilePath : Exception → System.FilePath
+  | .CannotParse f _ | .InvalidTestStructure f _ => f
+
 end Conform
 
 end EvmYul

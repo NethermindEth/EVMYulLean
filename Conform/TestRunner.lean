@@ -666,7 +666,7 @@ def processTest (entry : TestEntry) (verbose : Bool := true) : TestResult := do
               s!"\npost: {EvmYul.toHex h} \nactual: {EvmYul.toHex <$> stateTrieRoot σ}"
         errorF := if verbose then verboseError else discardError
 
-local instance : MonadLift (Except String) (Except Conform.Exception) := ⟨Except.mapError .CannotParse⟩
+-- local instance : MonadLift (Except String) (Except Conform.Exception) := ⟨Except.mapError .CannotParse⟩
 
 def processTestsOfFile (file : System.FilePath)
                        (whitelist : Array String := #[])
@@ -674,7 +674,8 @@ def processTestsOfFile (file : System.FilePath)
                        ExceptT Exception IO (Batteries.RBMap String TestResult compare) := do
   let path := file
   let file ← Lean.Json.fromFile file
-  let testMap ← Lean.FromJson.fromJson? (α := TestMap) file
+  let testMap ← Except.mapError (Conform.Exception.CannotParse path) ∘
+                Lean.FromJson.fromJson? (α := TestMap) <| file
   let tests := testMap.toTests
   let cancunTests := guardCancun tests
   let tests := guardBlacklist ∘ guardWhitelist <| cancunTests
@@ -688,6 +689,19 @@ def processTestsOfFile (file : System.FilePath)
       tests.filter (λ (name, _) ↦ name ∉ GlobalBlacklist ++ blacklist)
     guardCancun (tests : List (String × TestEntry)) :=
       tests.filter (λ (_, test) ↦ test.network.take 6 == "Cancun")
+
+def processTestsOfFiles (files : Array System.FilePath)
+                        (whitelist : Array String := #[])
+                        (blacklist : Array String := #[]) :
+                        IO (Array System.FilePath × Array (Batteries.RBMap String TestResult compare × System.FilePath)) := do
+  let mut discarded : Array System.FilePath := .empty
+  let mut results : Array (Batteries.RBMap String TestResult compare × System.FilePath) := .empty
+  for file in files do
+    let IOεresult := ExceptT.run <| EvmYul.Conform.processTestsOfFile file whitelist blacklist
+    match ← IOεresult with
+      | .error ε => discarded := discarded.push ε.toFilePath
+      | .ok res => results := results.push (res, file)
+  return (discarded, results)
 
 end Conform
 

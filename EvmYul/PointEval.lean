@@ -3,6 +3,7 @@ import EvmYul.PerformIO
 import Conform.Wheels
 
 def blobPointEval (data : String) : String :=
+  -- dbg_trace s!"EvmYul/EllipticCurvesPy/point_evaluation.py"
   totallySafePerformIO ∘ IO.Process.run <|
     pythonCommandOfInput data
   where pythonCommandOfInput (data : String) : IO.Process.SpawnArgs := {
