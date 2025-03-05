@@ -8,7 +8,10 @@ namespace EvmYul
 
 instance : Repr (Finset BlockHeader) := ⟨λ _ _ ↦ "Dummy Repr for ommers. TODO - change this :)."⟩
 
-abbrev Transactions := Array Transaction
+structure Transactions where
+  trieRoot : ByteArray
+  array : Array Transaction
+deriving BEq, Inhabited, Repr
 
 abbrev Withdrawals := Array Withdrawal
 
@@ -66,22 +69,27 @@ def validateAccountAddress
 def deserializeBlock
   (rlp : ByteArray)
   : Except EVM.Exception (UInt256 × BlockHeader × Transactions × Withdrawals)
-:=
-  match deserializeRLP rlp with
-    | some (.𝕃 [header, transactions, _, withdrawals]) => do
-      -- TODO: Use partial result from deserialization instead of reserializing the final result
-      let hash :=
-        .ofNat <| fromByteArrayBigEndian <| KEC <| (RLP header).getD .empty
-      let header ← parseHeader header
-      let transactions ← parseTransactions transactions
-      let withdrawals ← parseWithdrawals withdrawals
-      pure (hash, header, Array.mk transactions, Array.mk withdrawals)
-    | none =>
-      dbg_trace "RLP error: deserializeRLP returned none"
-      throw <| .BlockException .RLP_STRUCTURES_ENCODING
-    | _ =>
-      dbg_trace "RLP error: deserializeRLP returned wrong rlp structure"
-      throw <| .BlockException .RLP_STRUCTURES_ENCODING
+:= do
+  let (hash, header, transactionTrieRoot, ts, ws) ←
+    Option.toExceptWith (.BlockException .RLP_STRUCTURES_ENCODING) do
+      let .inr [headerRLP, transactionsRLP, _, withdrawalsRLP] ← oneStepRLP rlp | none
+      let hash : UInt256 := .ofNat <| fromByteArrayBigEndian <| KEC headerRLP
+      let header ← deserializeRLP headerRLP
+      let (.inr transactions) ← oneStepRLP transactionsRLP | none
+      let getTrieSnd (t : ByteArray) : Option ByteArray := do
+        match ← oneStepRLP t with
+          | .inl typePlusPayload => typePlusPayload
+          | .inr _ => t
+      let transactionTrieRoot ←
+        Transaction.computeTrieRoot (← transactions.toArray.mapM getTrieSnd)
+      let ts ← transactions.mapM deserializeRLP
+      let (.inr withdrawals) ← oneStepRLP withdrawalsRLP | none
+      let ws ← withdrawals.mapM deserializeRLP
+      pure (hash, header, transactionTrieRoot, ts, ws)
+  let header ← parseHeader header
+  let transactions ← parseTransactions (.𝕃 ts)
+  let withdrawals ← parseWithdrawals (.𝕃 ws)
+  pure (hash, header, ⟨transactionTrieRoot, Array.mk transactions⟩, Array.mk withdrawals)
  where
   parseWithdrawal : 𝕋 → Except EVM.Exception Withdrawal
     | .𝕃 [.𝔹 globalIndex, .𝔹 validatorIndex, .𝔹 recipient, .𝔹 amount] => do
@@ -323,7 +331,7 @@ def deserializeBlock
           (.ofNat <| fromByteArrayBigEndian uncleHash)
           (.ofNat <| fromByteArrayBigEndian coinbase)
           (.ofNat <| fromByteArrayBigEndian stateRoot)
-          (.ofNat <| fromByteArrayBigEndian transactionsTrie)
+          transactionsTrie
           (.ofNat <| fromByteArrayBigEndian receiptTrie)
           bloom
           (fromByteArrayBigEndian difficulty)

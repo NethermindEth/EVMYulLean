@@ -2,6 +2,8 @@ import Mathlib.Data.List.AList
 
 import EvmYul.UInt256
 import EvmYul.Wheels
+import EvmYul.State.TrieRoot
+import Conform.Wheels
 
 namespace EvmYul
 
@@ -135,5 +137,15 @@ def Transaction.type : Transaction → UInt8
   | .access  _ => 1
   | .dynamic _ => 2
   | .blob _ => 3
+
+def Transaction.toBlobs (t : ℕ × ByteArray) : Option (String × String) := do
+  let rlpᵢ ← RLP (.𝔹 (BE t.1))
+  let rlp := t.2
+  pure (EvmYul.toHex rlpᵢ, EvmYul.toHex rlp)
+
+def Transaction.computeTrieRoot (ts : Array ByteArray) : Option ByteArray := do
+  match Array.mapM Transaction.toBlobs ((Array.range ts.size).zip ts) with
+    | none => .none
+    | some ws => (ByteArray.ofBlob (blobComputeTrieRoot ws)).toOption
 
 end EvmYul

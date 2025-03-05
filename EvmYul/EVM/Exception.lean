@@ -49,6 +49,7 @@ inductive BlockException where
   | UNKNOWN_PARENT
   | INVALID_STATE_ROOT
   | INVALID_LOG_BLOOM
+  | INVALID_TRANSACTIONS_ROOT
 
 instance : Repr BlockException where
   reprPrec s _ :=
@@ -74,6 +75,7 @@ instance : Repr BlockException where
       | .UNKNOWN_PARENT => "UNKNOWN_PARENT"
       | .INVALID_STATE_ROOT => "INVALID_STATE_ROOT"
       | .INVALID_LOG_BLOOM => "INVALID_LOG_BLOOM"
+      | .INVALID_TRANSACTIONS_ROOT => "INVALID_TRANSACTIONS_ROOT"
 
 inductive TransactionException where
   | IllFormedRLP
