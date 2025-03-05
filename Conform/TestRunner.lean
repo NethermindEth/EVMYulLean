@@ -478,8 +478,8 @@ def validateBlock
     stateTrieRoot state.accountMap.toPersistentAccountMap
     |>.option 0 fromByteArrayBigEndian
     |> .ofNat
-  -- if block.blockHeader.stateRoot ≠ computedStateHash then
-  --   throw <| .BlockException .INVALID_STATE_ROOT
+  if block.blockHeader.stateRoot ≠ computedStateHash then
+    throw <| .BlockException .INVALID_STATE_ROOT
   pure ()
 
 def deserializeRawBlock (rawBlock : RawBlock)

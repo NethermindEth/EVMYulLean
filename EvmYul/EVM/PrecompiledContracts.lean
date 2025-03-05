@@ -99,7 +99,7 @@ def Ξ_SHA256
     (false, ∅, ⟨0⟩, A, .empty)
   else
     let o :=
-      match sha256.SHA256 I.inputData with
+      match ffi.SHA256 I.inputData with
         | .ok s => s
         | .error e =>
           dbg_trace s!"Ξ_SHA56 failed: {e}"
@@ -448,13 +448,9 @@ def Ξ_BLAKE2_F
     dbg_trace "failed"
     (false, ∅, ⟨0⟩, A, .empty)
   else
-    -- dbg_trace s!"CHECKING for d: {EvmYul.toHex d}"
-    -- let oX := blake2b64.BLAKE2 d
-    -- let o := BLAKE2_F d
-    -- dbg_trace s!"oAndrei: {o}\noFFI: {oX}\n"
-    let o := blake2b64.BLAKE2 d
+    let o := ffi.BLAKE2 d
     match o with
-      | .ok o => /- dbg_trace s!"in .ok: {EvmYul.toHex o}"; -/ (true, σ, g - .ofNat gᵣ, A, o)
+      | .ok o => (true, σ, g - .ofNat gᵣ, A, o)
       | .error e =>
         dbg_trace s!"Ξ_BLAKE2_F failed: {e}"
         (false, ∅, ⟨0⟩, A, .empty)

@@ -21,17 +21,6 @@ extern lean_obj_res sha256(b_lean_obj_arg input, size_t len) {
   return res;
 }
 
-// // Oh good golly miss Moly - this is not what we want... **facepalm**
-// extern lean_obj_res blake2b64(b_lean_obj_arg input, size_t len) {
-//   const uint8_t key[BLAKE2B_KEY_LENGTH] = { 255, 255, 255, 255, 255, 255, 255, 255 };
-//   uint8_t hash[BLAKE2B_OUTPUT_SIZE];
-//   blake2b(hash, BLAKE2B_OUTPUT_SIZE, lean_sarray_cptr(input), len, key, BLAKE2B_KEY_LENGTH);
-//   lean_obj_res res = lean_mk_empty_byte_array(lean_box(BLAKE2B_OUTPUT_SIZE));
-//   for (int i = 0; i < BLAKE2B_OUTPUT_SIZE; ++i)
-//     lean_byte_array_push(res, hash[i]);
-//   return res;
-// }
-
 // Implementation based on https://github.com/BLAKE2/BLAKE2/
 // with # of rounds parameterised from 12 (BLAKE2) to k < 2^32.
 
@@ -113,7 +102,6 @@ extern lean_obj_arg blake2compressb64(b_lean_obj_arg input) {
   in += 4;
   printf("rounds: %u : 32bit\n", rounds);
 
-  // printf("h:\n");
   // [4; 67] (64 bytes) - small endian, 8 bytes, 8 times
   uint64_t h[8];
   for (int i = 0; i < 8; ++i) {
@@ -122,10 +110,8 @@ extern lean_obj_arg blake2compressb64(b_lean_obj_arg input) {
            ((uint64_t)in[4] << (4 * 8)) | ((uint64_t)in[5] << (5 * 8)) |
            ((uint64_t)in[6] << (6 * 8)) | ((uint64_t)in[7] << (7 * 8));
     in += sizeof(uint64_t);
-    // printf("h[i]: %ld : 64bit\n", h[i]);
   }
   
-  // printf("m:\n");
   // [68; 195] (128 bytes) - small endian, 8 bytes, 16 times
   uint64_t m[16];
   for (int i = 0; i < 16; ++i) {
@@ -134,7 +120,6 @@ extern lean_obj_arg blake2compressb64(b_lean_obj_arg input) {
            ((uint64_t)in[4] << (4 * 8)) | ((uint64_t)in[5] << (5 * 8)) |
            ((uint64_t)in[6] << (6 * 8)) | ((uint64_t)in[7] << (7 * 8));
     in += sizeof(uint64_t);
-    // printf("m[i]: %ld : 64bit\n", m[i]);
   }
 
   // printf("t:\n");
@@ -146,12 +131,10 @@ extern lean_obj_arg blake2compressb64(b_lean_obj_arg input) {
            ((uint64_t)in[4] << (4 * 8)) | ((uint64_t)in[5] << (5 * 8)) |
            ((uint64_t)in[6] << (6 * 8)) | ((uint64_t)in[7] << (7 * 8));
     in += sizeof(uint64_t);
-    // printf("m[t]: %ld : 64bit\n", t[i]);
   }
 
   // [212; 212] (1 bytes) - 0 is false, 1 is true
   bool f = *in;
-  // printf("f: %s", f ? "true" : "false");
 
   blake2b_compress_any(rounds, h, m, t, f);
 
