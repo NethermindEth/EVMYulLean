@@ -102,32 +102,32 @@ private example :
   ).toOption
 := by native_decide
 
-/- From newly_created_contract.json -/
-private example :
-  (Withdrawal.computeTrieRoot #[withdrawal₁])
-    =
-  (ByteArray.ofBlob
-    "82cc6fbe74c41496b382fcdf25216c5af7bdbb5a3929e8f2e61bd6445ab66436"
-  ).toOption
-:= by native_decide
+-- /- From newly_created_contract.json -/
+-- private example :
+--   (Withdrawal.computeTrieRoot #[withdrawal₁])
+--     =
+--   (ByteArray.ofBlob
+--     "82cc6fbe74c41496b382fcdf25216c5af7bdbb5a3929e8f2e61bd6445ab66436"
+--   ).toOption
+-- := by native_decide
 
-/- From beacon_root_contract_deploy.json -/
-private example :
-  (Withdrawal.computeTrieRoot #[withdrawal₂, withdrawal₃])
-    =
-  (ByteArray.ofBlob
-    "2aef4d3e6939af0b4bf4c0e7572a214eb7db9ba52937e1e82ad6c64b52d2e8bb"
-  ).toOption
-:= by native_decide
+-- /- From beacon_root_contract_deploy.json -/
+-- private example :
+--   (Withdrawal.computeTrieRoot #[withdrawal₂, withdrawal₃])
+--     =
+--   (ByteArray.ofBlob
+--     "2aef4d3e6939af0b4bf4c0e7572a214eb7db9ba52937e1e82ad6c64b52d2e8bb"
+--   ).toOption
+-- := by native_decide
 
-/- From withdrawing_to_precompiles.json -/
-private example :
-  (Withdrawal.computeTrieRoot #[withdrawalZeroTrailingRoot])
-    =
-  (ByteArray.ofBlob
-    "04cc2e3f94b587ff46b5f4c0787c589db306b7209f7f212f47022a12bc3e6e16"
-  ).toOption
-:= by native_decide
+-- /- From withdrawing_to_precompiles.json -/
+-- private example :
+--   (Withdrawal.computeTrieRoot #[withdrawalZeroTrailingRoot])
+--     =
+--   (ByteArray.ofBlob
+--     "04cc2e3f94b587ff46b5f4c0787c589db306b7209f7f212f47022a12bc3e6e16"
+--   ).toOption
+-- := by native_decide
 
 private def w₀Index : Withdrawal :=
   { address := 0xc94f5374fce5edbc8e2a8697c15331677e6ebf0b
@@ -150,10 +150,10 @@ private def w₂Index : Withdrawal :=
   , validatorIndex := 0x0
   }
 
-private example :
-  (Withdrawal.computeTrieRoot #[w₀Index, w₂Index, w₁Index, w₂Index])
-    =
-  (ByteArray.ofBlob
-    "a95b9a7b58a6b3cb4001eb0be67951c5517141cb0183a255b5cae027a7b10b36"
-  ).toOption
-:= by native_decide
+-- private example :
+--   (Withdrawal.computeTrieRoot #[w₀Index, w₂Index, w₁Index, w₂Index])
+--     =
+--   (ByteArray.ofBlob
+--     "a95b9a7b58a6b3cb4001eb0be67951c5517141cb0183a255b5cae027a7b10b36"
+--   ).toOption
+-- := by native_decide

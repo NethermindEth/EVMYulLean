@@ -4,8 +4,6 @@
 #include <stdio.h>
 #include <stdbool.h> 
 
-extern uint32_t testme(uint32_t x) { return x + 10; }
-
 #define SHA256_OUTPUT_SIZE 32
 
 // #define BLAKE2B_OUTPUT_SIZE 64
@@ -100,7 +98,6 @@ extern lean_obj_arg blake2compressb64(b_lean_obj_arg input) {
   uint32_t rounds = (in[3] << 0 * 8) | (in[2] << 1 * 8) |
                     (in[1] << 2 * 8) | ((uint32_t)in[0] << 3 * 8);
   in += 4;
-  printf("rounds: %u : 32bit\n", rounds);
 
   // [4; 67] (64 bytes) - small endian, 8 bytes, 8 times
   uint64_t h[8];
@@ -122,7 +119,6 @@ extern lean_obj_arg blake2compressb64(b_lean_obj_arg input) {
     in += sizeof(uint64_t);
   }
 
-  // printf("t:\n");
   // [196; 211] (16 bytes) - small endian, 8 bytes, 2 times
   uint64_t t[2];
   for (int i = 0; i < 2; ++i) {
@@ -145,3 +141,10 @@ extern lean_obj_arg blake2compressb64(b_lean_obj_arg input) {
 
   return res;
 }
+
+extern lean_obj_arg memset_zero(size_t n) {
+  lean_object* res = lean_alloc_sarray(1, n, n);
+  uint8_t* it = lean_sarray_cptr(res);
+  memset(it, 0, n);
+  return res;
+}  

@@ -1,7 +1,6 @@
-import FastMemset
-
 import EvmYul.UInt256
 import Mathlib.Data.Finmap
+import EvmYul.FFI.ffi
 
 -- (195)
 def BE : ℕ → ByteArray := List.toByteArray ∘ EvmYul.toBytesBigEndian
@@ -12,7 +11,7 @@ def chainId : ℕ := 1
 
 def UInt256.toByteArray (val : UInt256) : ByteArray :=
   let b := BE val.toNat
-  ByteArray.zeroes ⟨32 - b.size⟩ ++ b
+  ffi.ByteArray.zeroes ⟨32 - b.size⟩ ++ b
 
 abbrev Literal := UInt256
 
@@ -34,7 +33,7 @@ instance {n : Nat} : OfNat AccountAddress n := ⟨Fin.ofNat n⟩
 
 def toByteArray (a : AccountAddress) : ByteArray :=
   let b := BE a
-  ByteArray.zeroes ⟨20 - b.size⟩ ++ b
+  ffi.ByteArray.zeroes ⟨20 - b.size⟩ ++ b
 
 end AccountAddress
 
@@ -147,7 +146,7 @@ def ByteArray.readBytes (source : ByteArray) (start size : ℕ) : ByteArray :=
       source.copySlice start empty 0 size
     else
       ⟨⟨source.toList.drop start |>.take size⟩⟩
-  read ++ ByteArray.zeroes ⟨size - read.size⟩
+  read ++ ffi.ByteArray.zeroes ⟨size - read.size⟩
 
 def ByteArray.readWithoutPadding (source : ByteArray) (addr len : ℕ) : ByteArray :=
   if addr ≥ source.size then .empty else
@@ -161,7 +160,7 @@ def ByteArray.readWithPadding (source : ByteArray) (addr len : ℕ) : ByteArray 
     panic! s!"ByteArray.readWithPadding: can not handle byte arrays of length {len}"
   else
     let read := source.readWithoutPadding addr len
-    read ++ ByteArray.zeroes ⟨len - read.size⟩
+    read ++ ffi.ByteArray.zeroes ⟨len - read.size⟩
 
 inductive 𝕋 :=
   | 𝔹 : ByteArray → 𝕋
@@ -421,14 +420,14 @@ def ByteArray.write
     if sourceAddr ≥ source.size then
       let len := min len (dest.size - destAddr)
       let destAddr := min destAddr dest.size
-      (ByteArray.zeroes ⟨len⟩).copySlice 0 dest destAddr len
+      (ffi.ByteArray.zeroes ⟨len⟩).copySlice 0 dest destAddr len
     else
       let practicalLen := min len (source.size - sourceAddr)
       let endPaddingAddr := min dest.size (destAddr + len)
       let sourcePaddingLength : ℕ := endPaddingAddr - (destAddr + practicalLen)
-      let sourcePadding := ByteArray.zeroes ⟨sourcePaddingLength⟩
+      let sourcePadding := ffi.ByteArray.zeroes ⟨sourcePaddingLength⟩
       let destPaddingLength : ℕ := destAddr - dest.size
-      let destPadding := ByteArray.zeroes ⟨destPaddingLength⟩
+      let destPadding := ffi.ByteArray.zeroes ⟨destPaddingLength⟩
       (source ++ sourcePadding).copySlice sourceAddr
         (dest ++ destPadding)
         destAddr

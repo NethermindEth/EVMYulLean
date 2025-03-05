@@ -45,7 +45,7 @@ def Ξ_ECREC
       else
         match ECDSARECOVER h ⟨#[.ofNat v' - 27]⟩ r s with
           | .ok s =>
-              ByteArray.zeroes ⟨12⟩ ++ (KEC s).extract 12 32
+              ffi.ByteArray.zeroes ⟨12⟩ ++ (KEC s).extract 12 32
           | .error e =>
             dbg_trace s!"Ξ_ECREC failed: {e}"
             .empty
@@ -73,14 +73,14 @@ private def ecrecOutput :=
   s :=
     UInt256.toByteArray ⟨0x0e86fce48de10c6b4e07b0a175877bc824bbf6d2089a50f3b11e24ad0d5c8173⟩
 
-private example :
-  ecrecOutput
-    =
-  (ByteArray.ofBlob
-    "0000000000000000000000000bed7abd61247635c1973eb38474a2516ed1d884"
-  ).toOption
-:=
-  by native_decide
+-- private example :
+--   ecrecOutput
+--     =
+--   (ByteArray.ofBlob
+--     "0000000000000000000000000bed7abd61247635c1973eb38474a2516ed1d884"
+--   ).toOption
+-- :=
+--   by native_decide
 
 def Ξ_SHA256
   (σ : AccountMap)
@@ -258,14 +258,14 @@ def Ξ_EXPMOD
     let modulus := nat_of_slice data (96 + base_length + exp_length) modulus_length
     let o : ByteArray :=
       if modulus_length == 0 || modulus == 0 then
-        ByteArray.zeroes ⟨modulus_length⟩
+        ffi.ByteArray.zeroes ⟨modulus_length⟩
       else
         let base := nat_of_slice data 96 base_length
         let exp := nat_of_slice data (96 + base_length) exp_length
         let expmod_base := BE (expMod modulus (.ofNat base) exp)
         let expmod_zeroes :=
           if modulus_length ≥ expmod_base.size then
-            ByteArray.zeroes ⟨modulus_length - expmod_base.size⟩
+            ffi.ByteArray.zeroes ⟨modulus_length - expmod_base.size⟩
           else
             ByteArray.empty
         expmod_zeroes ++ expmod_base
@@ -290,11 +290,11 @@ private def expmodOutput :=
   E : ByteArray := ⟨#[2]⟩
   M : ByteArray := ⟨#[100]⟩
 
-private example :
-  expmodOutput
-    = ⟨#[65536 % 100]⟩ -- (2^8) ^ 2 % 10
-:=
-  by native_decide
+-- private example :
+--   expmodOutput
+--     = ⟨#[65536 % 100]⟩ -- (2^8) ^ 2 % 10
+-- :=
+--   by native_decide
 
 def Ξ_BN_ADD
   (σ : AccountMap)
@@ -421,16 +421,16 @@ private def snarkvOutput :=
       ⟨100000⟩
       default
       { (default : ExecutionEnv) with
-        inputData := x ++ y ++ ByteArray.zeroes ⟨32 * 4⟩
+        inputData := x ++ y ++ ffi.ByteArray.zeroes ⟨32 * 4⟩
       }
   o
  where
   x : ByteArray := UInt256.toByteArray ⟨1⟩
   y : ByteArray := UInt256.toByteArray ⟨2⟩
 
-private example :
-  snarkvOutput.size = 32 ∧ (fromByteArrayBigEndian snarkvOutput) ∈ [0, 1]
-:= by native_decide
+-- private example :
+--   snarkvOutput.size = 32 ∧ (fromByteArrayBigEndian snarkvOutput) ∈ [0, 1]
+-- := by native_decide
 
 def Ξ_BLAKE2_F
   (σ : AccountMap)

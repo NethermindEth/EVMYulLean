@@ -1,5 +1,3 @@
-import FastMemset
-
 import Batteries
 
 import EvmYul.Maps.ByteMap
@@ -19,7 +17,7 @@ instance : DecidableEq ByteArray
 The partial shared `MachineState` `μ`. Section 9.4.1.
 - `gasAvailable` `g`
 - `memory`       `m`
-- `activeWords`   `i` - # active words.
+- `activeWords`  `i` - # active words.
 - `returnData`   `o` - Data from the previous call from the current environment.
 -/
 structure MachineState where

@@ -14,4 +14,7 @@ def BLAKE2 (d : ByteArray) : Except String ByteArray := do
   if d[212]! ∉ [0, 1] then throw "error"
   return BLAKE2Compress d
 
+@[extern "memset_zero"]
+opaque ByteArray.zeroes (n : USize) : ByteArray
+
 end ffi
