@@ -231,7 +231,7 @@ def main : IO Unit := do
     Array.filter isTestFile <$>
       System.FilePath.walkDir
         (enter := λ path ↦ pure <| path ∉ directoryBlacklist)
-        ("EthereumTests/BlockchainTests/InvalidBlocks")
+        ("EthereumTests/BlockchainTests")
 
   let mut discardedFiles := #[]
   -- let testFiles := #[SimpleFile]
@@ -242,7 +242,7 @@ def main : IO Unit := do
   let mut numSuccess := 0
 
   if ←System.FilePath.pathExists logFile then IO.FS.removeFile logFile
-  dbg_trace s!"test files: {testFiles}"
+  -- dbg_trace s!"test files: {testFiles}"
   for testFile in testFiles do
     if fileBlacklist.contains testFile then continue
     dbg_trace s!"File under test: {testFile}"
