@@ -96,14 +96,27 @@ def fetchInstr (I : EvmYul.ExecutionEnv) (pc : UInt256) :
                Except EVM.ExecutionException (Operation .EVM × Option (UInt256 × Nat)) :=
   decode I.code pc |>.option (.error .StackUnderflow) Except.ok
 
-partial def D_J (c : ByteArray) (i : UInt256) : List UInt256 :=
+-- partial def D_J (c : ByteArray) (i : UInt256) : List UInt256 :=
+--   match c.get? i.toNat >>= EvmYul.EVM.parseInstr with
+--     | none => 
+--     dbg_trace "none"
+--     []
+--     | some cᵢ =>
+--       dbg_trace "some"
+--       if cᵢ = .JUMPDEST then
+--         i :: D_J c (N i cᵢ)
+--       else
+--         D_J c (N i cᵢ)
+
+partial def D_J_aux (c : ByteArray) (i : UInt256) (result : Array UInt256) : Array UInt256 :=
   match c.get? i.toNat >>= EvmYul.EVM.parseInstr with
-    | none => []
-    | some cᵢ =>
-      if  cᵢ = .JUMPDEST then
-        i :: D_J c (N i cᵢ)
-      else
-        D_J c (N i cᵢ)
+    | none => result
+    | some cᵢ => D_J_aux c (N i cᵢ) (if cᵢ = .JUMPDEST then result.push i else result)
+  -- c.get? i.toNat >>= EvmYul.EVM.parseInstr |>.elim result <|
+  --   λ cᵢ ↦ (D_J_aux c (N i cᵢ) (if cᵢ = .JUMPDEST then result.push i else result))
+
+def D_J (c : ByteArray) (i : UInt256) : Array UInt256 :=
+  D_J_aux c i #[]
 
 private def BitVec.ofFn {k} (x : Fin k → Bool) : BitVec k :=
   BitVec.ofNat k (natOfBools (Vector.ofFn x))
@@ -516,13 +529,12 @@ def step (debugMode : Bool) (fuel : ℕ) (gasCost : ℕ) (instr : Option (Operat
         let evmState' := state'.replaceStackAndIncrPC μ'ₛ
         .ok evmState'
       | instr =>
-        -- dbg_trace s!"{instr.pretty} called by {toHex evmState.executionEnv.codeOwner.toByteArray}"
         EvmYul.step debugMode instr {evmState with gasAvailable := evmState.gasAvailable - UInt256.ofNat gasCost}
 
 /--
   Iterative progression of `step`
 -/
-def X (debugMode : Bool) (fuel : ℕ) (evmState : State)
+def X (debugMode : Bool) (fuel : ℕ) (validJumps : Array UInt256) (evmState : State)
   : Except EVM.ExecutionException (ExecutionResult State)
 := do
   match fuel with
@@ -530,16 +542,13 @@ def X (debugMode : Bool) (fuel : ℕ) (evmState : State)
     | .succ f =>
       let I_b := evmState.toState.executionEnv.code
       let instr@(w, _) := decode I_b evmState.pc |>.getD (.STOP, .none)
-
       -- (159)
       let W (w : Operation .EVM) (s : Stack UInt256) : Bool :=
         w ∈ [.CREATE, .CREATE2, .SSTORE, .SELFDESTRUCT, .LOG0, .LOG1, .LOG2, .LOG3, .LOG4, .TSTORE] ∨
         (w = .CALL ∧ s.get? 2 ≠ some ⟨0⟩)
-
       -- Exceptional halting (158)
       let Z (evmState : State) : Except EVM.ExecutionException (State × ℕ) := do
         let cost₁ := memoryExpansionCost evmState w
-
         if evmState.gasAvailable.toNat < cost₁ then
           if debugMode then
             dbg_trace s!"Exceptional halting: insufficient gas (available gas < gas cost for memory expantion)"
@@ -547,6 +556,7 @@ def X (debugMode : Bool) (fuel : ℕ) (evmState : State)
         let gasAvailable := evmState.gasAvailable - .ofNat cost₁
         let evmState := { evmState with gasAvailable := gasAvailable}
         let cost₂ := C' evmState w
+
         if evmState.gasAvailable.toNat < cost₂ then
           if debugMode then
             dbg_trace s!"Exceptional halting: insufficient gas (available gas < gas cost)"
@@ -562,12 +572,14 @@ def X (debugMode : Bool) (fuel : ℕ) (evmState : State)
             dbg_trace s!"Exceptional halting: insufficient stack items for {w.pretty}"
           .error .StackUnderflow
 
-        if w = .JUMP ∧ notIn (evmState.stack.get? 0) (D_J I_b ⟨0⟩) then
+        let invalidJump := notIn (evmState.stack.get? 0) validJumps
+
+        if w = .JUMP ∧ invalidJump then
           if debugMode then
             dbg_trace s!"Exceptional halting: invalid JUMP destination"
           .error .BadJumpDestination
 
-        if w = .JUMPI ∧ (evmState.stack.get? 1 ≠ some ⟨0⟩) ∧ notIn (evmState.stack.get? 0) (D_J I_b ⟨0⟩) then
+        if w = .JUMPI ∧ (evmState.stack.get? 1 ≠ some ⟨0⟩) ∧ invalidJump then
           if debugMode then
             dbg_trace s!"Exceptional halting: invalid JUMPI destination"
           .error .BadJumpDestination
@@ -591,6 +603,7 @@ def X (debugMode : Bool) (fuel : ℕ) (evmState : State)
           if debugMode then
             dbg_trace s!"Exceptional halting: attempted SSTORE with gas ≤ Gcallstipend"
           .error .OutOfGass
+        
 
         if
           w.isCreate ∧ evmState.stack.getD 2 ⟨0⟩ > ⟨49152⟩
@@ -598,7 +611,6 @@ def X (debugMode : Bool) (fuel : ℕ) (evmState : State)
           .error .OutOfGass
 
         pure (evmState, cost₂)
-
       let H (μ : MachineState) (w : Operation .EVM) : Option ByteArray :=
         if w ∈ [.RETURN, .REVERT] then
           some <| μ.H_return
@@ -606,7 +618,6 @@ def X (debugMode : Bool) (fuel : ℕ) (evmState : State)
           if w ∈ [.STOP, .SELFDESTRUCT] then
             some .empty
           else none
-
       match Z evmState with
         | .error e =>
           .error e
@@ -618,7 +629,7 @@ def X (debugMode : Bool) (fuel : ℕ) (evmState : State)
           -- Similarly, we cannot reach a situation in which the stack elements are not available
           -- on the stack because this is guarded above. As such, `C` can be pure here.
           match H evmState'.toMachineState w with -- The YP does this in a weird way.
-            | none => X debugMode f evmState'
+            | none => X debugMode f validJumps evmState'
             | some o =>
               if w == .REVERT then
                 /-
@@ -631,11 +642,11 @@ def X (debugMode : Bool) (fuel : ℕ) (evmState : State)
               else
                 .ok <| .success evmState' o
  where
-  belongs (o : Option UInt256) (l : List UInt256) : Bool :=
+  belongs (o : Option UInt256) (l : Array UInt256) : Bool :=
     match o with
       | none => false
       | some n => l.contains n
-  notIn (o : Option UInt256) (l : List UInt256) : Bool := not (belongs o l)
+  notIn (o : Option UInt256) (l : Array UInt256) : Bool := not (belongs o l)
 
 /--
   The code execution function
@@ -671,7 +682,8 @@ def Ξ -- Type `Ξ` using `\GX` or `\Xi`
             blocks := blocks
             genesisBlockHeader := genesisBlockHeader
         }
-      let result ← X debugMode f freshEvmState
+      dbg_trace s!"code size: {I.code.size}"
+      let result ← X debugMode f (D_J I.code ⟨0⟩) freshEvmState
       match result with
         | .success evmState' o =>
           let finalGas := evmState'.gasAvailable

@@ -24,11 +24,7 @@ def left_pad_zero_bytes(value: Bytes, size: int) -> Bytes:
     return value.rjust(size, b"\x00")
 
 data = bytes.fromhex(sys.argv[1])
-print("data")
 hash_bytes = hashlib.new("ripemd160", data).digest()
-print("hash_bytes")
 padded_hash = left_pad_zero_bytes(hash_bytes, 32)
-print("padded_hash")
 output = padded_hash
-print("output")
 print(bytes.hex(output), end = '')

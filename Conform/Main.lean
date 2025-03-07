@@ -47,6 +47,72 @@ def log (testFile : System.FilePath) (testName : String) (result : TestResult) :
   IO.FS.withFile logFile .append λ h ↦ h.putStrLn s!"{testFile.fileName.get!}[{testName}] - {result}\n"
 
 /-
+  Threads are scheduled on per-file basis. This granularity is not sufficient.
+
+  Cancun                               :  0m 40s | 16threads
+  Pyspecs                              :  3m  8s | 16threads (1 test failed)
+  Shanghai                             :  0m  6s |  8threads
+  stArgsZeroOneBalance                 :  0m 14s | 16threads
+  stAttackTest                         :  0m  6s |  2threads
+  stBadOpcode                          : 14m 19s | 16threads (scheduling not ideal, need per-testcase)
+  stBugs                               :  0m  4s |  5threads
+  stCallCodes                          :  0m 13s | 16threads
+  stCallCreateCallCodeTest             :  0m  9s | 16threads
+  stCallDelegateCodesCallCodeHomestead :  0m 12s | 16threads
+  stCallDelegateCodesHomestead         :  0m 10s | 16threads
+  stChainId                            :  0m  3s |  2threads
+  stCodeCopyTest                       :  0m  3s |  2threads
+  stCodeSizeLimit                      :  0m  3s |  5threads
+  stCreate2                            :  5m  5s | 16threads (_all_ slow tests in Create2Recursive, scheduled for a single thread, ouch)
+  stCreateTest                         :  1m  5s | 16threads
+  stDelegatecallTestHomestead          :  0m 10s | 16threads
+  stEIP150singleCodeGasPrices          :  1m  5s | 16threads
+  stEIP150Specific                     :  0m  9s | 14threads  
+  stEIP158Specific                     :  0m  6s |  8threads 
+  stEIP1559                            :  4m 30s | 13threads (scheduling issue)
+  stEIP2930                            :  1m  0s |  7threads (scheduling issue)
+  stEIP3607                            :  0m  7s |  5threads  
+  stExample                            :  0m 12s | 12threads 
+  stExtCodeHash                        :  0m 14s | 16threads   
+  stHomesteadSpecific                  :  0m  5s |  5threads
+  stInitCodeTest                       :  0m  6s | 16threads   
+  stLogTests                           :  0m 11s | 16threads   
+  stMemExpandingEIP150Calls            :  0m  7s |  9threads   
+  stMemoryStressTest                   :  0m 12s | 16threads   
+  stMemoryTest                         :  2m 47s | 16threads (scheduling issue)
+  stNonZeroCallsTest                   :  0m  8s | 16threads   
+  stPreCompiledContracts               :  3m 18s |  9threads  
+  stPreCompiledContracts2              :  0m 28s | 16threads   
+  stQuadraticComplexityTest            :  1m 42s | 16threads   
+  stRandom                             :  0m 32s | 16threads   
+  stRandom2                            :  0m 22s | 16threads   
+  stRecursiveCreate                    :  0m 37s |  2threads  
+  stRefundTest                         :  0m  8s | 16threads   
+  stReturnDataTest                     :  2m  2s | 16threads   
+  stRevertTest                         :  1m 53s | 16threads   
+  stSelfBalance                        :  0m 36s |  6threads
+  stShift                              :  0m  9s | 16threads   
+  stSLoadTest                          :  0m  5s |  1thread     
+  stSolidityTest                       :  0m  7s | 16threads   
+  stSpecialTest                        :  0m  9s | 15threads  
+  stSStoreTest                         :  0m 35s | 16threads   
+  stStackTests                         :         | 10threads  
+  stStaticCall                         :         | 16threads   
+  stStaticFlagEnabled                  :         | 13threads 
+  stSystemOperationsTest               :         | 16threads   
+  stTimeConsuming                      : 11m 42s | 14threads
+  stTransactionTest                    :         | 16threads     
+  stTransitionTest                     :         |  6threads  
+  stWalletTest                         :         | 16threads     
+  stZeroCallsRevert                    :         | 16threads     
+  stZeroCallsTest                      :         | 16threads     
+  stZeroKnowledge                      :         | 16threads     
+  stZeroKnowledge2                     :         | 16threads
+  VMTests                                        |      
+
+-/
+
+/-
 GeneralStateTests:
   Cancun                                2m43
 
@@ -178,7 +244,15 @@ TransitionTests                         1m3
 /-
 ValidBlocks                             15m40
 -/
-def directoryBlacklist : List System.FilePath := ["EthereumTests/BlockchainTests/GeneralStateTests/VMTests/vmPerformance"]
+def directoryBlacklist : List System.FilePath := []
+-- [
+--   "EthereumTests/BlockchainTests/GeneralStateTests/VMTests",
+--   "EthereumTests/BlockchainTests/GeneralStateTests/stZeroKnowledge",
+--   "EthereumTests/BlockchainTests/GeneralStateTests/stTimeConsuming",
+--   "EthereumTests/BlockchainTests/GeneralStateTests/stPreCompiledContracts2",
+--   "EthereumTests/BlockchainTests/GeneralStateTests/stBadOpcode"
+  
+--   ]
 
 def fileBlacklist : List System.FilePath := []
 
@@ -232,20 +306,25 @@ def main (args : List String) : IO Unit := do
       System.FilePath.walkDir
         (enter := λ path ↦ pure <| path ∉ directoryBlacklist)
         -- ("EthereumTests/BlockchainTests")
-        ("EthereumTests/BlockchainTests/GeneralStateTests/stPreCompiledContracts")
-
+        -- ("EthereumTests/BlockchainTests/GeneralStateTests/stPreCompiledContracts")
+        -- ("EthereumTests/BlockchainTests/GeneralStateTests/VMTests/vmPerformance")
+        -- ("EthereumTests/BlockchainTests/GeneralStateTests/Pyspecs")
+        -- ("EthereumTests/BlockchainTests/GeneralStateTests/Shanghai")
+        ("EthereumTests/BlockchainTests/GeneralStateTests/Cancun")
+        -- ("EthereumTests/BlockchainTests/GeneralStateTests/stTimeConsuming")
   let mut discardedFiles : Array System.FilePath := #[]
   -- let testFiles := #[SimpleFile]
   -- let testFiles := #[BuggyFile]
   -- let testFiles := #[SpecificFile]
   -- let testFiles : Array System.FilePath := #["EthereumTests/BlockchainTests/GeneralStateTests/stZeroCallsTest/ZeroValue_CALLCODE_ToEmpty_Paris.json"]
+  let testFiles : Array System.FilePath := #["EthereumTests/BlockchainTests/GeneralStateTests/VMTests/vmPerformance/loopMul.json"]
 
   let mut numFailedTest := 0
   let mut numSuccess := 0
 
   let testFiles := testFiles.filter (· ∉ fileBlacklist)
   let NumChunks := testFiles.size / NumThreads
-  let NumRemaining := testFiles.size % NumThreads
+  let mut numRemaining := testFiles.size % NumThreads
   dbg_trace s!"Running {testFiles.size} files; {NumChunks} per thread."
   
   if ←System.FilePath.pathExists logFile then IO.FS.removeFile logFile
@@ -256,11 +335,12 @@ def main (args : List String) : IO Unit := do
     for offset in [0:NumChunks] do
       let testFileIdx := thread * NumChunks + offset
       files := files.push testFiles[testFileIdx]!
-    if thread == NumThreads - 1 then
-      for offset in [0:NumRemaining] do
-        files := files.push testFiles[thread * NumChunks + NumChunks + offset]!
+    if 0 < numRemaining then
+      dbg_trace s!"huh: {NumThreads * NumChunks + numRemaining} numRemaining: {numRemaining}"
+      numRemaining := numRemaining - 1
+      files := files.push testFiles[NumThreads * NumChunks + numRemaining]!
     dbg_trace s!"Batching: {files} on thread: {thread}."
-    tasks := tasks.push (←IO.asTask (EvmYul.Conform.processTestsOfFiles /-(whitelist := #["ZeroValue_CALLCODE_ToEmpty_Paris_d0g0v0_Cancun"])-/ files))
+    tasks := tasks.push (←IO.asTask (EvmYul.Conform.processTestsOfFiles thread (whitelist := #["loopMul_d0g0v0_Cancun"]) files))
   dbg_trace s!"Patience is a virtue..."
   let testResults ← tasks.mapM (IO.wait · >>= IO.ofExcept)
   for (discarded, batch) in testResults do

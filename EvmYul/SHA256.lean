@@ -3,7 +3,7 @@ import EvmYul.Wheels
 import Conform.Wheels
 
 def blobSHA256 (d : String) : String :=
-  -- dbg_trace s!"EvmYul/EllipticCurvesPy/sha256.py"
+  dbg_trace s!"EvmYul/EllipticCurvesPy/sha256.py"
   totallySafePerformIO ∘ IO.Process.run <|
     pythonCommandOfInput d
   where pythonCommandOfInput (d : String) : IO.Process.SpawnArgs := {

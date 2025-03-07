@@ -1,0 +1,983 @@
+ℹ [2253/4496] Replayed Conform.Main
+info: ././././Conform/Main.lean:7:0: Task.{u} (α : Type u) : Type u
+Running tests on 16 threads.
+Running 28 files; 1 per thread.
+huh: 28 numRemaining: 12
+Batching: #[EthereumTests/BlockchainTests/GeneralStateTests/stSStoreTest/sstore_XtoXto0.json, EthereumTests/BlockchainTests/GeneralStateTests/stSStoreTest/InitCollisionParis.json] on thread: 0.
+huh: 27 numRemaining: 11
+Batching: #[EthereumTests/BlockchainTests/GeneralStateTests/stSStoreTest/sstoreGas.json, EthereumTests/BlockchainTests/GeneralStateTests/stSStoreTest/sstore_0to0to0.json] on thread: 1.
+huh: 26 numRemaining: 10
+Batching: #[EthereumTests/BlockchainTests/GeneralStateTests/stSStoreTest/sstore_0toX.json, EthereumTests/BlockchainTests/GeneralStateTests/stSStoreTest/sstore_XtoX.json] on thread: 2.
+huh: 25 numRemaining: 9
+Batching: #[EthereumTests/BlockchainTests/GeneralStateTests/stSStoreTest/sstore_XtoYtoY.json, EthereumTests/BlockchainTests/GeneralStateTests/stSStoreTest/SstoreCallToSelfSubRefundBelowZero.json] on thread: 3.
+huh: 24 numRemaining: 8
+Batching: #[EthereumTests/BlockchainTests/GeneralStateTests/stSStoreTest/sstore_0to0.json, EthereumTests/BlockchainTests/GeneralStateTests/stSStoreTest/sstore_Xto0toX.json] on thread: 4.
+huh: 23 numRemaining: 7
+Batching: #[EthereumTests/BlockchainTests/GeneralStateTests/stSStoreTest/sstore_0toXto0.json, EthereumTests/BlockchainTests/GeneralStateTests/stSStoreTest/sstore_Xto0.json] on thread: 5.
+huh: 22 numRemaining: 6
+Batching: #[EthereumTests/BlockchainTests/GeneralStateTests/stSStoreTest/sstore_XtoY.json, EthereumTests/BlockchainTests/GeneralStateTests/stSStoreTest/sstore_Xto0toY.json] on thread: 6.
+huh: 21 numRemaining: 5
+Batching: #[EthereumTests/BlockchainTests/GeneralStateTests/stSStoreTest/InitCollisionNonZeroNonce.json, EthereumTests/BlockchainTests/GeneralStateTests/stSStoreTest/sstore_XtoYtoZ.json] on thread: 7.
+huh: 20 numRemaining: 4
+Batching: #[EthereumTests/BlockchainTests/GeneralStateTests/stSStoreTest/sstore_XtoYto0.json, EthereumTests/BlockchainTests/GeneralStateTests/stSStoreTest/sstore_0to0toX.json] on thread: 8.
+huh: 19 numRemaining: 3
+Batching: #[EthereumTests/BlockchainTests/GeneralStateTests/stSStoreTest/sstore_Xto0toXto0.json, EthereumTests/BlockchainTests/GeneralStateTests/stSStoreTest/sstore_gasLeft.json] on thread: 9.
+huh: 18 numRemaining: 2
+Batching: #[EthereumTests/BlockchainTests/GeneralStateTests/stSStoreTest/sstore_changeFromExternalCallInInitCode.json, EthereumTests/BlockchainTests/GeneralStateTests/stSStoreTest/sstore_XtoXtoY.json] on thread: 10.
+huh: 17 numRemaining: 1
+Batching: #[EthereumTests/BlockchainTests/GeneralStateTests/stSStoreTest/sstore_XtoYtoX.json, EthereumTests/BlockchainTests/GeneralStateTests/stSStoreTest/sstore_Xto0to0.json] on thread: 11.
+#1 TESTING sstoreGas_d0g0v0_Cancun FROM EthereumTests/BlockchainTests/GeneralStateTests/stSStoreTest/sstoreGas.json
+Batching: #[EthereumTests/BlockchainTests/GeneralStateTests/stSStoreTest/sstore_0toXtoX.json] on thread: 12.
+Batching: #[EthereumTests/BlockchainTests/GeneralStateTests/stSStoreTest/sstore_0toXto0toX.json] on thread: 13.
+Batching: #[EthereumTests/BlockchainTests/GeneralStateTests/stSStoreTest/sstore_0toXtoY.json] on thread: 14.
+Batching: #[EthereumTests/BlockchainTests/GeneralStateTests/stSStoreTest/sstore_XtoXtoX.json] on thread: 15.
+Patience is a virtue...
+#7 TESTING InitCollisionNonZeroNonce_d0g0v0_Cancun FROM EthereumTests/BlockchainTests/GeneralStateTests/stSStoreTest/InitCollisionNonZeroNonce.json
+#10 TESTING sstore_changeFromExternalCallInInitCode_d0g0v0_Cancun FROM EthereumTests/BlockchainTests/GeneralStateTests/stSStoreTest/sstore_changeFromExternalCallInInitCode.json
+#0 TESTING sstore_XtoXto0_d0g0v0_Cancun FROM EthereumTests/BlockchainTests/GeneralStateTests/stSStoreTest/sstore_XtoXto0.json
+#5 TESTING sstore_0toXto0_d0g0v0_Cancun FROM EthereumTests/BlockchainTests/GeneralStateTests/stSStoreTest/sstore_0toXto0.json
+#4 TESTING sstore_0to0_d0g0v0_Cancun FROM EthereumTests/BlockchainTests/GeneralStateTests/stSStoreTest/sstore_0to0.json
+#6 TESTING sstore_XtoY_d0g0v0_Cancun FROM EthereumTests/BlockchainTests/GeneralStateTests/stSStoreTest/sstore_XtoY.json
+#3 TESTING sstore_XtoYtoY_d0g0v0_Cancun FROM EthereumTests/BlockchainTests/GeneralStateTests/stSStoreTest/sstore_XtoYtoY.json
+#13 TESTING sstore_0toXto0toX_d0g0v0_Cancun FROM EthereumTests/BlockchainTests/GeneralStateTests/stSStoreTest/sstore_0toXto0toX.json
+#15 TESTING sstore_XtoXtoX_d0g0v0_Cancun FROM EthereumTests/BlockchainTests/GeneralStateTests/stSStoreTest/sstore_XtoXtoX.json
+#11 TESTING sstore_XtoYtoX_d0g0v0_Cancun FROM EthereumTests/BlockchainTests/GeneralStateTests/stSStoreTest/sstore_XtoYtoX.json
+#12 TESTING sstore_0toXtoX_d0g0v0_Cancun FROM EthereumTests/BlockchainTests/GeneralStateTests/stSStoreTest/sstore_0toXtoX.json
+#9 TESTING sstore_Xto0toXto0_d0g0v0_Cancun FROM EthereumTests/BlockchainTests/GeneralStateTests/stSStoreTest/sstore_Xto0toXto0.json
+#8 TESTING sstore_XtoYto0_d0g0v0_Cancun FROM EthereumTests/BlockchainTests/GeneralStateTests/stSStoreTest/sstore_XtoYto0.json
+#14 TESTING sstore_0toXtoY_d0g0v0_Cancun FROM EthereumTests/BlockchainTests/GeneralStateTests/stSStoreTest/sstore_0toXtoY.json
+#2 TESTING sstore_0toX_d0g0v0_Cancun FROM EthereumTests/BlockchainTests/GeneralStateTests/stSStoreTest/sstore_0toX.json
+sstoreGas_d0g0v0_Cancun took: 0.607000s
+#1 TESTING sstore_0to0to0_d0g0v0_Cancun FROM EthereumTests/BlockchainTests/GeneralStateTests/stSStoreTest/sstore_0to0to0.json
+sstore_changeFromExternalCallInInitCode_d0g0v0_Cancun took: 0.808000s
+#10 TESTING sstore_changeFromExternalCallInInitCode_d10g0v0_Cancun FROM EthereumTests/BlockchainTests/GeneralStateTests/stSStoreTest/sstore_changeFromExternalCallInInitCode.json
+InitCollisionNonZeroNonce_d0g0v0_Cancun took: 0.926000s
+#7 TESTING InitCollisionNonZeroNonce_d1g0v0_Cancun FROM EthereumTests/BlockchainTests/GeneralStateTests/stSStoreTest/InitCollisionNonZeroNonce.json
+sstore_XtoY_d0g0v0_Cancun took: 0.901000s
+#6 TESTING sstore_XtoY_d0g1v0_Cancun FROM EthereumTests/BlockchainTests/GeneralStateTests/stSStoreTest/sstore_XtoY.json
+sstore_0to0_d0g0v0_Cancun took: 0.912000s
+#4 TESTING sstore_0to0_d0g1v0_Cancun FROM EthereumTests/BlockchainTests/GeneralStateTests/stSStoreTest/sstore_0to0.json
+sstore_0toXto0_d0g0v0_Cancun took: 0.920000s
+#5 TESTING sstore_0toXto0_d0g1v0_Cancun FROM EthereumTests/BlockchainTests/GeneralStateTests/stSStoreTest/sstore_0toXto0.json
+sstore_XtoXto0_d0g0v0_Cancun took: 0.931000s
+#0 TESTING sstore_XtoXto0_d0g1v0_Cancun FROM EthereumTests/BlockchainTests/GeneralStateTests/stSStoreTest/sstore_XtoXto0.json
+sstore_Xto0toXto0_d0g0v0_Cancun took: 0.921000s
+#9 TESTING sstore_Xto0toXto0_d0g1v0_Cancun FROM EthereumTests/BlockchainTests/GeneralStateTests/stSStoreTest/sstore_Xto0toXto0.json
+sstore_XtoYtoY_d0g0v0_Cancun took: 0.941000s
+#3 TESTING sstore_XtoYtoY_d0g1v0_Cancun FROM EthereumTests/BlockchainTests/GeneralStateTests/stSStoreTest/sstore_XtoYtoY.json
+sstore_0toXto0toX_d0g0v0_Cancun took: 0.947000s
+#13 TESTING sstore_0toXto0toX_d0g1v0_Cancun FROM EthereumTests/BlockchainTests/GeneralStateTests/stSStoreTest/sstore_0toXto0toX.json
+sstore_XtoYtoX_d0g0v0_Cancun took: 0.935000s
+sstore_XtoXtoX_d0g0v0_Cancun took: 0.944000s
+#11 TESTING sstore_XtoYtoX_d0g1v0_Cancun FROM EthereumTests/BlockchainTests/GeneralStateTests/stSStoreTest/sstore_XtoYtoX.json
+#15 TESTING sstore_XtoXtoX_d0g1v0_Cancun FROM EthereumTests/BlockchainTests/GeneralStateTests/stSStoreTest/sstore_XtoXtoX.json
+sstore_0toXtoX_d0g0v0_Cancun took: 0.939000s
+#12 TESTING sstore_0toXtoX_d0g1v0_Cancun FROM EthereumTests/BlockchainTests/GeneralStateTests/stSStoreTest/sstore_0toXtoX.json
+sstore_XtoYto0_d0g0v0_Cancun took: 0.932000s
+#8 TESTING sstore_XtoYto0_d0g1v0_Cancun FROM EthereumTests/BlockchainTests/GeneralStateTests/stSStoreTest/sstore_XtoYto0.json
+sstore_0toX_d0g0v0_Cancun took: 0.935000s
+#2 TESTING sstore_0toX_d0g1v0_Cancun FROM EthereumTests/BlockchainTests/GeneralStateTests/stSStoreTest/sstore_0toX.json
+sstore_0toXtoY_d0g0v0_Cancun took: 0.941000s
+#14 TESTING sstore_0toXtoY_d0g1v0_Cancun FROM EthereumTests/BlockchainTests/GeneralStateTests/stSStoreTest/sstore_0toXtoY.json
+sstore_changeFromExternalCallInInitCode_d10g0v0_Cancun took: 0.778000s
+#10 TESTING sstore_changeFromExternalCallInInitCode_d11g0v0_Cancun FROM EthereumTests/BlockchainTests/GeneralStateTests/stSStoreTest/sstore_changeFromExternalCallInInitCode.json
+sstore_0to0to0_d0g0v0_Cancun took: 0.992000s
+#1 TESTING sstore_0to0to0_d0g1v0_Cancun FROM EthereumTests/BlockchainTests/GeneralStateTests/stSStoreTest/sstore_0to0to0.json
+sstore_XtoY_d0g1v0_Cancun took: 0.985000s
+#6 TESTING sstore_XtoY_d1g0v0_Cancun FROM EthereumTests/BlockchainTests/GeneralStateTests/stSStoreTest/sstore_XtoY.json
+sstore_Xto0toXto0_d0g1v0_Cancun took: 0.976000s
+#9 TESTING sstore_Xto0toXto0_d1g0v0_Cancun FROM EthereumTests/BlockchainTests/GeneralStateTests/stSStoreTest/sstore_Xto0toXto0.json
+sstore_XtoXto0_d0g1v0_Cancun took: 1.005000s
+#0 TESTING sstore_XtoXto0_d1g0v0_Cancun FROM EthereumTests/BlockchainTests/GeneralStateTests/stSStoreTest/sstore_XtoXto0.json
+sstore_XtoYtoY_d0g1v0_Cancun took: 0.985000s
+#3 TESTING sstore_XtoYtoY_d1g0v0_Cancun FROM EthereumTests/BlockchainTests/GeneralStateTests/stSStoreTest/sstore_XtoYtoY.json
+sstore_0to0_d0g1v0_Cancun took: 1.021000s
+#4 TESTING sstore_0to0_d1g0v0_Cancun FROM EthereumTests/BlockchainTests/GeneralStateTests/stSStoreTest/sstore_0to0.json
+sstore_XtoYto0_d0g1v0_Cancun took: 0.991000s
+#8 TESTING sstore_XtoYto0_d1g0v0_Cancun FROM EthereumTests/BlockchainTests/GeneralStateTests/stSStoreTest/sstore_XtoYto0.json
+InitCollisionNonZeroNonce_d1g0v0_Cancun took: 1.077000s
+#7 TESTING InitCollisionNonZeroNonce_d2g0v0_Cancun FROM EthereumTests/BlockchainTests/GeneralStateTests/stSStoreTest/InitCollisionNonZeroNonce.json
+sstore_0toXto0_d0g1v0_Cancun took: 1.061000s
+#5 TESTING sstore_0toXto0_d1g0v0_Cancun FROM EthereumTests/BlockchainTests/GeneralStateTests/stSStoreTest/sstore_0toXto0.json
+sstore_0toXto0toX_d0g1v0_Cancun took: 1.036000s
+#13 TESTING sstore_0toXto0toX_d1g0v0_Cancun FROM EthereumTests/BlockchainTests/GeneralStateTests/stSStoreTest/sstore_0toXto0toX.json
+sstore_XtoXtoX_d0g1v0_Cancun took: 1.038000s
+#15 TESTING sstore_XtoXtoX_d1g0v0_Cancun FROM EthereumTests/BlockchainTests/GeneralStateTests/stSStoreTest/sstore_XtoXtoX.json
+sstore_XtoYtoX_d0g1v0_Cancun took: 1.057000s
+#11 TESTING sstore_XtoYtoX_d1g0v0_Cancun FROM EthereumTests/BlockchainTests/GeneralStateTests/stSStoreTest/sstore_XtoYtoX.json
+sstore_0toX_d0g1v0_Cancun took: 1.048000s
+#2 TESTING sstore_0toX_d1g0v0_Cancun FROM EthereumTests/BlockchainTests/GeneralStateTests/stSStoreTest/sstore_0toX.json
+sstore_0toXtoY_d0g1v0_Cancun took: 1.064000s
+#14 TESTING sstore_0toXtoY_d1g0v0_Cancun FROM EthereumTests/BlockchainTests/GeneralStateTests/stSStoreTest/sstore_0toXtoY.json
+sstore_0toXtoX_d0g1v0_Cancun took: 1.090000s
+#12 TESTING sstore_0toXtoX_d1g0v0_Cancun FROM EthereumTests/BlockchainTests/GeneralStateTests/stSStoreTest/sstore_0toXtoX.json
+sstore_changeFromExternalCallInInitCode_d11g0v0_Cancun took: 1.058000s
+#10 TESTING sstore_changeFromExternalCallInInitCode_d12g0v0_Cancun FROM EthereumTests/BlockchainTests/GeneralStateTests/stSStoreTest/sstore_changeFromExternalCallInInitCode.json
+sstore_0to0to0_d0g1v0_Cancun took: 1.045000s
+#1 TESTING sstore_0to0to0_d1g0v0_Cancun FROM EthereumTests/BlockchainTests/GeneralStateTests/stSStoreTest/sstore_0to0to0.json
+InitCollisionNonZeroNonce_d2g0v0_Cancun took: 0.974000s
+#7 TESTING InitCollisionNonZeroNonce_d3g0v0_Cancun FROM EthereumTests/BlockchainTests/GeneralStateTests/stSStoreTest/InitCollisionNonZeroNonce.json
+sstore_XtoXto0_d1g0v0_Cancun took: 1.018000s
+#0 TESTING sstore_XtoXto0_d1g1v0_Cancun FROM EthereumTests/BlockchainTests/GeneralStateTests/stSStoreTest/sstore_XtoXto0.json
+sstore_XtoYtoY_d1g0v0_Cancun took: 1.027000s
+#3 TESTING sstore_XtoYtoY_d1g1v0_Cancun FROM EthereumTests/BlockchainTests/GeneralStateTests/stSStoreTest/sstore_XtoYtoY.json
+sstore_Xto0toXto0_d1g0v0_Cancun took: 1.053000s
+#9 TESTING sstore_Xto0toXto0_d1g1v0_Cancun FROM EthereumTests/BlockchainTests/GeneralStateTests/stSStoreTest/sstore_Xto0toXto0.json
+sstore_XtoYto0_d1g0v0_Cancun took: 1.057000s
+#8 TESTING sstore_XtoYto0_d1g1v0_Cancun FROM EthereumTests/BlockchainTests/GeneralStateTests/stSStoreTest/sstore_XtoYto0.json
+sstore_XtoYtoX_d1g0v0_Cancun took: 1.007000s
+#11 TESTING sstore_XtoYtoX_d1g1v0_Cancun FROM EthereumTests/BlockchainTests/GeneralStateTests/stSStoreTest/sstore_XtoYtoX.json
+sstore_0to0_d1g0v0_Cancun took: 1.093000s
+#4 TESTING sstore_0to0_d1g1v0_Cancun FROM EthereumTests/BlockchainTests/GeneralStateTests/stSStoreTest/sstore_0to0.json
+sstore_XtoY_d1g0v0_Cancun took: 1.156000s
+#6 TESTING sstore_XtoY_d1g1v0_Cancun FROM EthereumTests/BlockchainTests/GeneralStateTests/stSStoreTest/sstore_XtoY.json
+sstore_0toXto0_d1g0v0_Cancun took: 1.075000s
+#5 TESTING sstore_0toXto0_d1g1v0_Cancun FROM EthereumTests/BlockchainTests/GeneralStateTests/stSStoreTest/sstore_0toXto0.json
+sstore_0toX_d1g0v0_Cancun took: 1.043000s
+#2 TESTING sstore_0toX_d1g1v0_Cancun FROM EthereumTests/BlockchainTests/GeneralStateTests/stSStoreTest/sstore_0toX.json
+sstore_0toXtoY_d1g0v0_Cancun took: 1.027000s
+#14 TESTING sstore_0toXtoY_d1g1v0_Cancun FROM EthereumTests/BlockchainTests/GeneralStateTests/stSStoreTest/sstore_0toXtoY.json
+sstore_0toXto0toX_d1g0v0_Cancun took: 1.099000s
+#13 TESTING sstore_0toXto0toX_d1g1v0_Cancun FROM EthereumTests/BlockchainTests/GeneralStateTests/stSStoreTest/sstore_0toXto0toX.json
+sstore_XtoXtoX_d1g0v0_Cancun took: 1.125000s
+#15 TESTING sstore_XtoXtoX_d1g1v0_Cancun FROM EthereumTests/BlockchainTests/GeneralStateTests/stSStoreTest/sstore_XtoXtoX.json
+sstore_0toXtoX_d1g0v0_Cancun took: 1.072000s
+#12 TESTING sstore_0toXtoX_d1g1v0_Cancun FROM EthereumTests/BlockchainTests/GeneralStateTests/stSStoreTest/sstore_0toXtoX.json
+sstore_changeFromExternalCallInInitCode_d12g0v0_Cancun took: 0.945000s
+#10 TESTING sstore_changeFromExternalCallInInitCode_d13g0v0_Cancun FROM EthereumTests/BlockchainTests/GeneralStateTests/stSStoreTest/sstore_changeFromExternalCallInInitCode.json
+sstore_0to0to0_d1g0v0_Cancun took: 1.040000s
+#1 TESTING sstore_0to0to0_d1g1v0_Cancun FROM EthereumTests/BlockchainTests/GeneralStateTests/stSStoreTest/sstore_0to0to0.json
+sstore_XtoYtoY_d1g1v0_Cancun took: 0.992000s
+#3 TESTING sstore_XtoYtoY_d2g0v0_Cancun FROM EthereumTests/BlockchainTests/GeneralStateTests/stSStoreTest/sstore_XtoYtoY.json
+sstore_XtoXto0_d1g1v0_Cancun took: 1.014000s
+#0 TESTING sstore_XtoXto0_d2g0v0_Cancun FROM EthereumTests/BlockchainTests/GeneralStateTests/stSStoreTest/sstore_XtoXto0.json
+sstore_0to0_d1g1v0_Cancun took: 0.966000s
+#4 TESTING sstore_0to0_d2g0v0_Cancun FROM EthereumTests/BlockchainTests/GeneralStateTests/stSStoreTest/sstore_0to0.json
+sstore_Xto0toXto0_d1g1v0_Cancun took: 1.047000s
+#9 TESTING sstore_Xto0toXto0_d2g0v0_Cancun FROM EthereumTests/BlockchainTests/GeneralStateTests/stSStoreTest/sstore_Xto0toXto0.json
+sstore_XtoYto0_d1g1v0_Cancun took: 1.007000s
+#8 TESTING sstore_XtoYto0_d2g0v0_Cancun FROM EthereumTests/BlockchainTests/GeneralStateTests/stSStoreTest/sstore_XtoYto0.json
+sstore_XtoYtoX_d1g1v0_Cancun took: 1.009000s
+#11 TESTING sstore_XtoYtoX_d2g0v0_Cancun FROM EthereumTests/BlockchainTests/GeneralStateTests/stSStoreTest/sstore_XtoYtoX.json
+sstore_0toXtoY_d1g1v0_Cancun took: 0.967000s
+#14 TESTING sstore_0toXtoY_d2g0v0_Cancun FROM EthereumTests/BlockchainTests/GeneralStateTests/stSStoreTest/sstore_0toXtoY.json
+sstore_0toXto0_d1g1v0_Cancun took: 0.983000s
+#5 TESTING sstore_0toXto0_d2g0v0_Cancun FROM EthereumTests/BlockchainTests/GeneralStateTests/stSStoreTest/sstore_0toXto0.json
+sstore_XtoY_d1g1v0_Cancun took: 1.022000s
+#6 TESTING sstore_XtoY_d2g0v0_Cancun FROM EthereumTests/BlockchainTests/GeneralStateTests/stSStoreTest/sstore_XtoY.json
+sstore_0toX_d1g1v0_Cancun took: 1.011000s
+#2 TESTING sstore_0toX_d2g0v0_Cancun FROM EthereumTests/BlockchainTests/GeneralStateTests/stSStoreTest/sstore_0toX.json
+sstore_0toXtoX_d1g1v0_Cancun took: 0.959000s
+#12 TESTING sstore_0toXtoX_d2g0v0_Cancun FROM EthereumTests/BlockchainTests/GeneralStateTests/stSStoreTest/sstore_0toXtoX.json
+sstore_XtoXtoX_d1g1v0_Cancun took: 0.978000s
+InitCollisionNonZeroNonce_d3g0v0_Cancun took: 1.158000s
+#15 TESTING sstore_XtoXtoX_d2g0v0_Cancun FROM EthereumTests/BlockchainTests/GeneralStateTests/stSStoreTest/sstore_XtoXtoX.json
+sstore_0toXto0toX_d1g1v0_Cancun took: 1.035000s
+#13 TESTING sstore_0toXto0toX_d2g0v0_Cancun FROM EthereumTests/BlockchainTests/GeneralStateTests/stSStoreTest/sstore_0toXto0toX.json
+#7 TESTING sstore_XtoYtoZ_d0g0v0_Cancun FROM EthereumTests/BlockchainTests/GeneralStateTests/stSStoreTest/sstore_XtoYtoZ.json
+sstore_changeFromExternalCallInInitCode_d13g0v0_Cancun took: 0.988000s
+#10 TESTING sstore_changeFromExternalCallInInitCode_d14g0v0_Cancun FROM EthereumTests/BlockchainTests/GeneralStateTests/stSStoreTest/sstore_changeFromExternalCallInInitCode.json
+sstore_0to0to0_d1g1v0_Cancun took: 0.938000s
+#1 TESTING sstore_0to0to0_d2g0v0_Cancun FROM EthereumTests/BlockchainTests/GeneralStateTests/stSStoreTest/sstore_0to0to0.json
+sstore_XtoXto0_d2g0v0_Cancun took: 0.922000s
+#0 TESTING sstore_XtoXto0_d2g1v0_Cancun FROM EthereumTests/BlockchainTests/GeneralStateTests/stSStoreTest/sstore_XtoXto0.json
+sstore_0to0_d2g0v0_Cancun took: 0.943000s
+#4 TESTING sstore_0to0_d2g1v0_Cancun FROM EthereumTests/BlockchainTests/GeneralStateTests/stSStoreTest/sstore_0to0.json
+sstore_XtoYtoY_d2g0v0_Cancun took: 0.996000s
+#3 TESTING sstore_XtoYtoY_d2g1v0_Cancun FROM EthereumTests/BlockchainTests/GeneralStateTests/stSStoreTest/sstore_XtoYtoY.json
+sstore_Xto0toXto0_d2g0v0_Cancun took: 0.946000s
+#9 TESTING sstore_Xto0toXto0_d2g1v0_Cancun FROM EthereumTests/BlockchainTests/GeneralStateTests/stSStoreTest/sstore_Xto0toXto0.json
+sstore_XtoYto0_d2g0v0_Cancun took: 0.954000s
+#8 TESTING sstore_XtoYto0_d2g1v0_Cancun FROM EthereumTests/BlockchainTests/GeneralStateTests/stSStoreTest/sstore_XtoYto0.json
+sstore_0toX_d2g0v0_Cancun took: 0.922000s
+#2 TESTING sstore_0toX_d2g1v0_Cancun FROM EthereumTests/BlockchainTests/GeneralStateTests/stSStoreTest/sstore_0toX.json
+sstore_XtoYtoX_d2g0v0_Cancun took: 0.970000s
+#11 TESTING sstore_XtoYtoX_d2g1v0_Cancun FROM EthereumTests/BlockchainTests/GeneralStateTests/stSStoreTest/sstore_XtoYtoX.json
+sstore_XtoY_d2g0v0_Cancun took: 0.930000s
+#6 TESTING sstore_XtoY_d2g1v0_Cancun FROM EthereumTests/BlockchainTests/GeneralStateTests/stSStoreTest/sstore_XtoY.json
+sstore_0toXtoY_d2g0v0_Cancun took: 1.003000s
+#14 TESTING sstore_0toXtoY_d2g1v0_Cancun FROM EthereumTests/BlockchainTests/GeneralStateTests/stSStoreTest/sstore_0toXtoY.json
+sstore_XtoXtoX_d2g0v0_Cancun took: 0.944000s
+#15 TESTING sstore_XtoXtoX_d2g1v0_Cancun FROM EthereumTests/BlockchainTests/GeneralStateTests/stSStoreTest/sstore_XtoXtoX.json
+sstore_0toXtoX_d2g0v0_Cancun took: 0.966000s
+#12 TESTING sstore_0toXtoX_d2g1v0_Cancun FROM EthereumTests/BlockchainTests/GeneralStateTests/stSStoreTest/sstore_0toXtoX.json
+sstore_0toXto0_d2g0v0_Cancun took: 1.011000s
+#5 TESTING sstore_0toXto0_d2g1v0_Cancun FROM EthereumTests/BlockchainTests/GeneralStateTests/stSStoreTest/sstore_0toXto0.json
+sstore_0toXto0toX_d2g0v0_Cancun took: 0.993000s
+#13 TESTING sstore_0toXto0toX_d2g1v0_Cancun FROM EthereumTests/BlockchainTests/GeneralStateTests/stSStoreTest/sstore_0toXto0toX.json
+sstore_XtoYtoZ_d0g0v0_Cancun took: 1.001000s
+#7 TESTING sstore_XtoYtoZ_d0g1v0_Cancun FROM EthereumTests/BlockchainTests/GeneralStateTests/stSStoreTest/sstore_XtoYtoZ.json
+sstore_changeFromExternalCallInInitCode_d14g0v0_Cancun took: 0.759000s
+#10 TESTING sstore_changeFromExternalCallInInitCode_d15g0v0_Cancun FROM EthereumTests/BlockchainTests/GeneralStateTests/stSStoreTest/sstore_changeFromExternalCallInInitCode.json
+sstore_0to0to0_d2g0v0_Cancun took: 1.034000s
+#1 TESTING sstore_0to0to0_d2g1v0_Cancun FROM EthereumTests/BlockchainTests/GeneralStateTests/stSStoreTest/sstore_0to0to0.json
+sstore_XtoXto0_d2g1v0_Cancun took: 1.053000s
+#0 TESTING sstore_XtoXto0_d3g0v0_Cancun FROM EthereumTests/BlockchainTests/GeneralStateTests/stSStoreTest/sstore_XtoXto0.json
+sstore_0to0_d2g1v0_Cancun took: 1.004000s
+#4 TESTING sstore_0to0_d3g0v0_Cancun FROM EthereumTests/BlockchainTests/GeneralStateTests/stSStoreTest/sstore_0to0.json
+sstore_XtoYtoY_d2g1v0_Cancun took: 1.042000s
+#3 TESTING sstore_XtoYtoY_d3g0v0_Cancun FROM EthereumTests/BlockchainTests/GeneralStateTests/stSStoreTest/sstore_XtoYtoY.json
+sstore_XtoY_d2g1v0_Cancun took: 1.013000s
+#6 TESTING sstore_XtoY_d3g0v0_Cancun FROM EthereumTests/BlockchainTests/GeneralStateTests/stSStoreTest/sstore_XtoY.json
+sstore_0toXtoX_d2g1v0_Cancun took: 1.000000s
+#12 TESTING sstore_0toXtoX_d3g0v0_Cancun FROM EthereumTests/BlockchainTests/GeneralStateTests/stSStoreTest/sstore_0toXtoX.json
+sstore_XtoYtoX_d2g1v0_Cancun took: 1.048000s
+#11 TESTING sstore_XtoYtoX_d3g0v0_Cancun FROM EthereumTests/BlockchainTests/GeneralStateTests/stSStoreTest/sstore_XtoYtoX.json
+sstore_XtoYto0_d2g1v0_Cancun took: 1.089000s
+#8 TESTING sstore_XtoYto0_d3g0v0_Cancun FROM EthereumTests/BlockchainTests/GeneralStateTests/stSStoreTest/sstore_XtoYto0.json
+sstore_0toXto0_d2g1v0_Cancun took: 1.047000s
+#5 TESTING sstore_0toXto0_d3g0v0_Cancun FROM EthereumTests/BlockchainTests/GeneralStateTests/stSStoreTest/sstore_0toXto0.json
+sstore_XtoXtoX_d2g1v0_Cancun took: 1.056000s
+#15 TESTING sstore_XtoXtoX_d3g0v0_Cancun FROM EthereumTests/BlockchainTests/GeneralStateTests/stSStoreTest/sstore_XtoXtoX.json
+sstore_Xto0toXto0_d2g1v0_Cancun took: 1.138000s
+#9 TESTING sstore_Xto0toXto0_d3g0v0_Cancun FROM EthereumTests/BlockchainTests/GeneralStateTests/stSStoreTest/sstore_Xto0toXto0.json
+sstore_0toXtoY_d2g1v0_Cancun took: 1.081000s
+#14 TESTING sstore_0toXtoY_d3g0v0_Cancun FROM EthereumTests/BlockchainTests/GeneralStateTests/stSStoreTest/sstore_0toXtoY.json
+sstore_0toX_d2g1v0_Cancun took: 1.145000s
+#2 TESTING sstore_0toX_d3g0v0_Cancun FROM EthereumTests/BlockchainTests/GeneralStateTests/stSStoreTest/sstore_0toX.json
+sstore_0toXto0toX_d2g1v0_Cancun took: 1.107000s
+#13 TESTING sstore_0toXto0toX_d3g0v0_Cancun FROM EthereumTests/BlockchainTests/GeneralStateTests/stSStoreTest/sstore_0toXto0toX.json
+sstore_XtoYtoZ_d0g1v0_Cancun took: 1.088000s
+#7 TESTING sstore_XtoYtoZ_d1g0v0_Cancun FROM EthereumTests/BlockchainTests/GeneralStateTests/stSStoreTest/sstore_XtoYtoZ.json
+sstore_changeFromExternalCallInInitCode_d15g0v0_Cancun took: 1.055000s
+#10 TESTING sstore_changeFromExternalCallInInitCode_d1g0v0_Cancun FROM EthereumTests/BlockchainTests/GeneralStateTests/stSStoreTest/sstore_changeFromExternalCallInInitCode.json
+sstore_0to0to0_d2g1v0_Cancun took: 1.102000s
+#1 TESTING sstore_0to0to0_d3g0v0_Cancun FROM EthereumTests/BlockchainTests/GeneralStateTests/stSStoreTest/sstore_0to0to0.json
+sstore_XtoXto0_d3g0v0_Cancun took: 1.028000s
+#0 TESTING sstore_XtoXto0_d3g1v0_Cancun FROM EthereumTests/BlockchainTests/GeneralStateTests/stSStoreTest/sstore_XtoXto0.json
+sstore_0to0_d3g0v0_Cancun took: 1.029000s
+#4 TESTING sstore_0to0_d3g1v0_Cancun FROM EthereumTests/BlockchainTests/GeneralStateTests/stSStoreTest/sstore_0to0.json
+sstore_XtoYtoY_d3g0v0_Cancun took: 0.987000s
+#3 TESTING sstore_XtoYtoY_d3g1v0_Cancun FROM EthereumTests/BlockchainTests/GeneralStateTests/stSStoreTest/sstore_XtoYtoY.json
+sstore_XtoY_d3g0v0_Cancun took: 0.966000s
+#6 TESTING sstore_XtoY_d3g1v0_Cancun FROM EthereumTests/BlockchainTests/GeneralStateTests/stSStoreTest/sstore_XtoY.json
+sstore_XtoYtoX_d3g0v0_Cancun took: 0.980000s
+#11 TESTING sstore_XtoYtoX_d3g1v0_Cancun FROM EthereumTests/BlockchainTests/GeneralStateTests/stSStoreTest/sstore_XtoYtoX.json
+sstore_XtoYto0_d3g0v0_Cancun took: 0.986000s
+#8 TESTING sstore_XtoYto0_d3g1v0_Cancun FROM EthereumTests/BlockchainTests/GeneralStateTests/stSStoreTest/sstore_XtoYto0.json
+sstore_0toXtoX_d3g0v0_Cancun took: 1.005000s
+#12 TESTING sstore_0toXtoX_d3g1v0_Cancun FROM EthereumTests/BlockchainTests/GeneralStateTests/stSStoreTest/sstore_0toXtoX.json
+sstore_0toXto0_d3g0v0_Cancun took: 0.983000s
+#5 TESTING sstore_0toXto0_d3g1v0_Cancun FROM EthereumTests/BlockchainTests/GeneralStateTests/stSStoreTest/sstore_0toXto0.json
+sstore_0toXtoY_d3g0v0_Cancun took: 0.993000s
+#14 TESTING sstore_0toXtoY_d3g1v0_Cancun FROM EthereumTests/BlockchainTests/GeneralStateTests/stSStoreTest/sstore_0toXtoY.json
+sstore_XtoXtoX_d3g0v0_Cancun took: 1.018000s
+#15 TESTING sstore_XtoXtoX_d3g1v0_Cancun FROM EthereumTests/BlockchainTests/GeneralStateTests/stSStoreTest/sstore_XtoXtoX.json
+sstore_Xto0toXto0_d3g0v0_Cancun took: 1.018000s
+#9 TESTING sstore_Xto0toXto0_d3g1v0_Cancun FROM EthereumTests/BlockchainTests/GeneralStateTests/stSStoreTest/sstore_Xto0toXto0.json
+sstore_0toX_d3g0v0_Cancun took: 1.020000s
+#2 TESTING sstore_0toX_d3g1v0_Cancun FROM EthereumTests/BlockchainTests/GeneralStateTests/stSStoreTest/sstore_0toX.json
+sstore_XtoYtoZ_d1g0v0_Cancun took: 0.984000s
+#7 TESTING sstore_XtoYtoZ_d1g1v0_Cancun FROM EthereumTests/BlockchainTests/GeneralStateTests/stSStoreTest/sstore_XtoYtoZ.json
+sstore_0toXto0toX_d3g0v0_Cancun took: 1.007000s
+#13 TESTING sstore_0toXto0toX_d3g1v0_Cancun FROM EthereumTests/BlockchainTests/GeneralStateTests/stSStoreTest/sstore_0toXto0toX.json
+sstore_changeFromExternalCallInInitCode_d1g0v0_Cancun took: 0.958000s
+#10 TESTING sstore_changeFromExternalCallInInitCode_d2g0v0_Cancun FROM EthereumTests/BlockchainTests/GeneralStateTests/stSStoreTest/sstore_changeFromExternalCallInInitCode.json
+sstore_0to0to0_d3g0v0_Cancun took: 0.951000s
+#1 TESTING sstore_0to0to0_d3g1v0_Cancun FROM EthereumTests/BlockchainTests/GeneralStateTests/stSStoreTest/sstore_0to0to0.json
+sstore_XtoXto0_d3g1v0_Cancun took: 0.983000s
+#0 TESTING sstore_XtoXto0_d4g0v0_Cancun FROM EthereumTests/BlockchainTests/GeneralStateTests/stSStoreTest/sstore_XtoXto0.json
+sstore_0to0_d3g1v0_Cancun took: 0.984000s
+#4 TESTING sstore_0to0_d4g0v0_Cancun FROM EthereumTests/BlockchainTests/GeneralStateTests/stSStoreTest/sstore_0to0.json
+sstore_XtoYtoY_d3g1v0_Cancun took: 0.994000s
+#3 TESTING sstore_XtoYtoY_d4g0v0_Cancun FROM EthereumTests/BlockchainTests/GeneralStateTests/stSStoreTest/sstore_XtoYtoY.json
+sstore_XtoY_d3g1v0_Cancun took: 1.004000s
+#6 TESTING sstore_XtoY_d4g0v0_Cancun FROM EthereumTests/BlockchainTests/GeneralStateTests/stSStoreTest/sstore_XtoY.json
+sstore_XtoYtoX_d3g1v0_Cancun took: 0.990000s
+#11 TESTING sstore_XtoYtoX_d4g0v0_Cancun FROM EthereumTests/BlockchainTests/GeneralStateTests/stSStoreTest/sstore_XtoYtoX.json
+sstore_0toXtoY_d3g1v0_Cancun took: 0.972000s
+#14 TESTING sstore_0toXtoY_d4g0v0_Cancun FROM EthereumTests/BlockchainTests/GeneralStateTests/stSStoreTest/sstore_0toXtoY.json
+sstore_0toXtoX_d3g1v0_Cancun took: 1.035000s
+#12 TESTING sstore_0toXtoX_d4g0v0_Cancun FROM EthereumTests/BlockchainTests/GeneralStateTests/stSStoreTest/sstore_0toXtoX.json
+sstore_XtoYto0_d3g1v0_Cancun took: 1.053000s
+#8 TESTING sstore_XtoYto0_d4g0v0_Cancun FROM EthereumTests/BlockchainTests/GeneralStateTests/stSStoreTest/sstore_XtoYto0.json
+sstore_0toXto0_d3g1v0_Cancun took: 1.041000s
+#5 TESTING sstore_0toXto0_d4g0v0_Cancun FROM EthereumTests/BlockchainTests/GeneralStateTests/stSStoreTest/sstore_0toXto0.json
+sstore_XtoXtoX_d3g1v0_Cancun took: 1.008000s
+#15 TESTING sstore_XtoXtoX_d4g0v0_Cancun FROM EthereumTests/BlockchainTests/GeneralStateTests/stSStoreTest/sstore_XtoXtoX.json
+sstore_changeFromExternalCallInInitCode_d2g0v0_Cancun took: 0.849000s
+#10 TESTING sstore_changeFromExternalCallInInitCode_d3g0v0_Cancun FROM EthereumTests/BlockchainTests/GeneralStateTests/stSStoreTest/sstore_changeFromExternalCallInInitCode.json
+sstore_Xto0toXto0_d3g1v0_Cancun took: 1.079000s
+#9 TESTING sstore_Xto0toXto0_d4g0v0_Cancun FROM EthereumTests/BlockchainTests/GeneralStateTests/stSStoreTest/sstore_Xto0toXto0.json
+sstore_0toX_d3g1v0_Cancun took: 1.064000s
+#2 TESTING sstore_0toX_d4g0v0_Cancun FROM EthereumTests/BlockchainTests/GeneralStateTests/stSStoreTest/sstore_0toX.json
+sstore_0toXto0toX_d3g1v0_Cancun took: 1.006000s
+#13 TESTING sstore_0toXto0toX_d4g0v0_Cancun FROM EthereumTests/BlockchainTests/GeneralStateTests/stSStoreTest/sstore_0toXto0toX.json
+sstore_XtoYtoZ_d1g1v0_Cancun took: 1.046000s
+#7 TESTING sstore_XtoYtoZ_d2g0v0_Cancun FROM EthereumTests/BlockchainTests/GeneralStateTests/stSStoreTest/sstore_XtoYtoZ.json
+sstore_0to0to0_d3g1v0_Cancun took: 1.036000s
+#1 TESTING sstore_0to0to0_d4g0v0_Cancun FROM EthereumTests/BlockchainTests/GeneralStateTests/stSStoreTest/sstore_0to0to0.json
+sstore_0to0_d4g0v0_Cancun took: 1.086000s
+#4 TESTING sstore_0to0_d4g1v0_Cancun FROM EthereumTests/BlockchainTests/GeneralStateTests/stSStoreTest/sstore_0to0.json
+sstore_XtoYtoY_d4g0v0_Cancun took: 1.097000s
+#3 TESTING sstore_XtoYtoY_d4g1v0_Cancun FROM EthereumTests/BlockchainTests/GeneralStateTests/stSStoreTest/sstore_XtoYtoY.json
+sstore_XtoXto0_d4g0v0_Cancun took: 1.134000s
+#0 TESTING sstore_XtoXto0_d4g1v0_Cancun FROM EthereumTests/BlockchainTests/GeneralStateTests/stSStoreTest/sstore_XtoXto0.json
+sstore_XtoY_d4g0v0_Cancun took: 1.129000s
+#6 TESTING sstore_XtoY_d4g1v0_Cancun FROM EthereumTests/BlockchainTests/GeneralStateTests/stSStoreTest/sstore_XtoY.json
+sstore_0toXtoY_d4g0v0_Cancun took: 1.053000s
+#14 TESTING sstore_0toXtoY_d4g1v0_Cancun FROM EthereumTests/BlockchainTests/GeneralStateTests/stSStoreTest/sstore_0toXtoY.json
+sstore_XtoYtoX_d4g0v0_Cancun took: 1.147000s
+#11 TESTING sstore_XtoYtoX_d4g1v0_Cancun FROM EthereumTests/BlockchainTests/GeneralStateTests/stSStoreTest/sstore_XtoYtoX.json
+sstore_0toXto0_d4g0v0_Cancun took: 1.085000s
+#5 TESTING sstore_0toXto0_d4g1v0_Cancun FROM EthereumTests/BlockchainTests/GeneralStateTests/stSStoreTest/sstore_0toXto0.json
+sstore_XtoXtoX_d4g0v0_Cancun took: 1.081000s
+#15 TESTING sstore_XtoXtoX_d4g1v0_Cancun FROM EthereumTests/BlockchainTests/GeneralStateTests/stSStoreTest/sstore_XtoXtoX.json
+sstore_0toXtoX_d4g0v0_Cancun took: 1.123000s
+#12 TESTING sstore_0toXtoX_d4g1v0_Cancun FROM EthereumTests/BlockchainTests/GeneralStateTests/stSStoreTest/sstore_0toXtoX.json
+sstore_changeFromExternalCallInInitCode_d3g0v0_Cancun took: 1.043000s
+#10 TESTING sstore_changeFromExternalCallInInitCode_d4g0v0_Cancun FROM EthereumTests/BlockchainTests/GeneralStateTests/stSStoreTest/sstore_changeFromExternalCallInInitCode.json
+sstore_XtoYto0_d4g0v0_Cancun took: 1.130000s
+#8 TESTING sstore_XtoYto0_d4g1v0_Cancun FROM EthereumTests/BlockchainTests/GeneralStateTests/stSStoreTest/sstore_XtoYto0.json
+sstore_XtoYtoZ_d2g0v0_Cancun took: 0.993000s
+#7 TESTING sstore_XtoYtoZ_d2g1v0_Cancun FROM EthereumTests/BlockchainTests/GeneralStateTests/stSStoreTest/sstore_XtoYtoZ.json
+sstore_Xto0toXto0_d4g0v0_Cancun took: 1.089000s
+#9 TESTING sstore_Xto0toXto0_d4g1v0_Cancun FROM EthereumTests/BlockchainTests/GeneralStateTests/stSStoreTest/sstore_Xto0toXto0.json
+sstore_0toXto0toX_d4g0v0_Cancun took: 1.110000s
+#13 TESTING sstore_0toXto0toX_d4g1v0_Cancun FROM EthereumTests/BlockchainTests/GeneralStateTests/stSStoreTest/sstore_0toXto0toX.json
+sstore_0toX_d4g0v0_Cancun took: 1.132000s
+#2 TESTING sstore_0toX_d4g1v0_Cancun FROM EthereumTests/BlockchainTests/GeneralStateTests/stSStoreTest/sstore_0toX.json
+sstore_0to0to0_d4g0v0_Cancun took: 1.086000s
+#1 TESTING sstore_0to0to0_d4g1v0_Cancun FROM EthereumTests/BlockchainTests/GeneralStateTests/stSStoreTest/sstore_0to0to0.json
+sstore_changeFromExternalCallInInitCode_d4g0v0_Cancun took: 0.835000s
+#10 TESTING sstore_changeFromExternalCallInInitCode_d5g0v0_Cancun FROM EthereumTests/BlockchainTests/GeneralStateTests/stSStoreTest/sstore_changeFromExternalCallInInitCode.json
+sstore_0to0_d4g1v0_Cancun took: 1.050000s
+#4 TESTING sstore_0to0_d5g0v0_Cancun FROM EthereumTests/BlockchainTests/GeneralStateTests/stSStoreTest/sstore_0to0.json
+sstore_XtoXto0_d4g1v0_Cancun took: 1.022000s
+#0 TESTING sstore_XtoXto0_d5g0v0_Cancun FROM EthereumTests/BlockchainTests/GeneralStateTests/stSStoreTest/sstore_XtoXto0.json
+sstore_XtoYtoY_d4g1v0_Cancun took: 1.039000s
+#3 TESTING sstore_XtoYtoY_d5g0v0_Cancun FROM EthereumTests/BlockchainTests/GeneralStateTests/stSStoreTest/sstore_XtoYtoY.json
+sstore_0toXtoY_d4g1v0_Cancun took: 1.004000s
+#14 TESTING sstore_0toXtoY_d5g0v0_Cancun FROM EthereumTests/BlockchainTests/GeneralStateTests/stSStoreTest/sstore_0toXtoY.json
+sstore_XtoY_d4g1v0_Cancun took: 1.042000s
+#6 TESTING sstore_XtoY_d5g0v0_Cancun FROM EthereumTests/BlockchainTests/GeneralStateTests/stSStoreTest/sstore_XtoY.json
+sstore_XtoYtoX_d4g1v0_Cancun took: 1.014000s
+sstore_XtoYtoZ_d2g1v0_Cancun took: 0.921000s
+#11 TESTING sstore_XtoYtoX_d5g0v0_Cancun FROM EthereumTests/BlockchainTests/GeneralStateTests/stSStoreTest/sstore_XtoYtoX.json
+#7 TESTING sstore_XtoYtoZ_d3g0v0_Cancun FROM EthereumTests/BlockchainTests/GeneralStateTests/stSStoreTest/sstore_XtoYtoZ.json
+sstore_0toXto0_d4g1v0_Cancun took: 1.011000s
+#5 TESTING sstore_0toXto0_d5g0v0_Cancun FROM EthereumTests/BlockchainTests/GeneralStateTests/stSStoreTest/sstore_0toXto0.json
+sstore_XtoXtoX_d4g1v0_Cancun took: 1.014000s
+#15 TESTING sstore_XtoXtoX_d5g0v0_Cancun FROM EthereumTests/BlockchainTests/GeneralStateTests/stSStoreTest/sstore_XtoXtoX.json
+sstore_0toXtoX_d4g1v0_Cancun took: 1.024000s
+#12 TESTING sstore_0toXtoX_d5g0v0_Cancun FROM EthereumTests/BlockchainTests/GeneralStateTests/stSStoreTest/sstore_0toXtoX.json
+sstore_XtoYto0_d4g1v0_Cancun took: 1.032000s
+#8 TESTING sstore_XtoYto0_d5g0v0_Cancun FROM EthereumTests/BlockchainTests/GeneralStateTests/stSStoreTest/sstore_XtoYto0.json
+sstore_Xto0toXto0_d4g1v0_Cancun took: 1.035000s
+#9 TESTING sstore_Xto0toXto0_d5g0v0_Cancun FROM EthereumTests/BlockchainTests/GeneralStateTests/stSStoreTest/sstore_Xto0toXto0.json
+sstore_0toXto0toX_d4g1v0_Cancun took: 1.049000s
+#13 TESTING sstore_0toXto0toX_d5g0v0_Cancun FROM EthereumTests/BlockchainTests/GeneralStateTests/stSStoreTest/sstore_0toXto0toX.json
+sstore_0toX_d4g1v0_Cancun took: 1.054000s
+#2 TESTING sstore_0toX_d5g0v0_Cancun FROM EthereumTests/BlockchainTests/GeneralStateTests/stSStoreTest/sstore_0toX.json
+sstore_0to0to0_d4g1v0_Cancun took: 1.046000s
+#1 TESTING sstore_0to0to0_d5g0v0_Cancun FROM EthereumTests/BlockchainTests/GeneralStateTests/stSStoreTest/sstore_0to0to0.json
+sstore_0to0_d5g0v0_Cancun took: 0.842000s
+#4 TESTING sstore_0to0_d5g1v0_Cancun FROM EthereumTests/BlockchainTests/GeneralStateTests/stSStoreTest/sstore_0to0.json
+sstore_XtoYtoY_d5g0v0_Cancun took: 0.838000s
+#3 TESTING sstore_XtoYtoY_d5g1v0_Cancun FROM EthereumTests/BlockchainTests/GeneralStateTests/stSStoreTest/sstore_XtoYtoY.json
+sstore_XtoXto0_d5g0v0_Cancun took: 0.851000s
+#0 TESTING sstore_XtoXto0_d5g1v0_Cancun FROM EthereumTests/BlockchainTests/GeneralStateTests/stSStoreTest/sstore_XtoXto0.json
+sstore_0toXtoY_d5g0v0_Cancun took: 0.865000s
+#14 TESTING sstore_0toXtoY_d5g1v0_Cancun FROM EthereumTests/BlockchainTests/GeneralStateTests/stSStoreTest/sstore_0toXtoY.json
+sstore_changeFromExternalCallInInitCode_d5g0v0_Cancun took: 0.943000s
+#10 TESTING sstore_changeFromExternalCallInInitCode_d6g0v0_Cancun FROM EthereumTests/BlockchainTests/GeneralStateTests/stSStoreTest/sstore_changeFromExternalCallInInitCode.json
+sstore_XtoY_d5g0v0_Cancun took: 0.868000s
+#6 TESTING sstore_XtoY_d5g1v0_Cancun FROM EthereumTests/BlockchainTests/GeneralStateTests/stSStoreTest/sstore_XtoY.json
+sstore_XtoYtoX_d5g0v0_Cancun took: 0.876000s
+#11 TESTING sstore_XtoYtoX_d5g1v0_Cancun FROM EthereumTests/BlockchainTests/GeneralStateTests/stSStoreTest/sstore_XtoYtoX.json
+sstore_XtoXtoX_d5g0v0_Cancun took: 0.847000s
+#15 TESTING sstore_XtoXtoX_d5g1v0_Cancun FROM EthereumTests/BlockchainTests/GeneralStateTests/stSStoreTest/sstore_XtoXtoX.json
+sstore_0toXto0_d5g0v0_Cancun took: 0.860000s
+#5 TESTING sstore_0toXto0_d5g1v0_Cancun FROM EthereumTests/BlockchainTests/GeneralStateTests/stSStoreTest/sstore_0toXto0.json
+sstore_0toXtoX_d5g0v0_Cancun took: 0.849000s
+#12 TESTING sstore_0toXtoX_d5g1v0_Cancun FROM EthereumTests/BlockchainTests/GeneralStateTests/stSStoreTest/sstore_0toXtoX.json
+sstore_XtoYtoZ_d3g0v0_Cancun took: 0.929000s
+#7 TESTING sstore_XtoYtoZ_d3g1v0_Cancun FROM EthereumTests/BlockchainTests/GeneralStateTests/stSStoreTest/sstore_XtoYtoZ.json
+sstore_XtoYto0_d5g0v0_Cancun took: 0.867000s
+#8 TESTING sstore_XtoYto0_d5g1v0_Cancun FROM EthereumTests/BlockchainTests/GeneralStateTests/stSStoreTest/sstore_XtoYto0.json
+sstore_Xto0toXto0_d5g0v0_Cancun took: 0.878000s
+#9 TESTING sstore_Xto0toXto0_d5g1v0_Cancun FROM EthereumTests/BlockchainTests/GeneralStateTests/stSStoreTest/sstore_Xto0toXto0.json
+sstore_0toXto0toX_d5g0v0_Cancun took: 0.876000s
+#13 TESTING sstore_0toXto0toX_d5g1v0_Cancun FROM EthereumTests/BlockchainTests/GeneralStateTests/stSStoreTest/sstore_0toXto0toX.json
+sstore_0toX_d5g0v0_Cancun took: 0.861000s
+#2 TESTING sstore_0toX_d5g1v0_Cancun FROM EthereumTests/BlockchainTests/GeneralStateTests/stSStoreTest/sstore_0toX.json
+sstore_0to0to0_d5g0v0_Cancun took: 0.866000s
+#1 TESTING sstore_0to0to0_d5g1v0_Cancun FROM EthereumTests/BlockchainTests/GeneralStateTests/stSStoreTest/sstore_0to0to0.json
+sstore_changeFromExternalCallInInitCode_d6g0v0_Cancun took: 0.762000s
+#10 TESTING sstore_changeFromExternalCallInInitCode_d7g0v0_Cancun FROM EthereumTests/BlockchainTests/GeneralStateTests/stSStoreTest/sstore_changeFromExternalCallInInitCode.json
+sstore_XtoYtoY_d5g1v0_Cancun took: 0.870000s
+#3 TESTING sstore_XtoYtoY_d6g0v0_Cancun FROM EthereumTests/BlockchainTests/GeneralStateTests/stSStoreTest/sstore_XtoYtoY.json
+sstore_0to0_d5g1v0_Cancun took: 0.891000s
+#4 TESTING sstore_0to0_d6g0v0_Cancun FROM EthereumTests/BlockchainTests/GeneralStateTests/stSStoreTest/sstore_0to0.json
+sstore_XtoXto0_d5g1v0_Cancun took: 0.878000s
+#0 TESTING sstore_XtoXto0_d6g0v0_Cancun FROM EthereumTests/BlockchainTests/GeneralStateTests/stSStoreTest/sstore_XtoXto0.json
+sstore_0toXtoY_d5g1v0_Cancun took: 0.839000s
+#14 TESTING sstore_0toXtoY_d6g0v0_Cancun FROM EthereumTests/BlockchainTests/GeneralStateTests/stSStoreTest/sstore_0toXtoY.json
+sstore_XtoY_d5g1v0_Cancun took: 0.871000s
+#6 TESTING sstore_XtoY_d6g0v0_Cancun FROM EthereumTests/BlockchainTests/GeneralStateTests/stSStoreTest/sstore_XtoY.json
+sstore_0toXtoX_d5g1v0_Cancun took: 0.841000s
+#12 TESTING sstore_0toXtoX_d6g0v0_Cancun FROM EthereumTests/BlockchainTests/GeneralStateTests/stSStoreTest/sstore_0toXtoX.json
+sstore_XtoYtoX_d5g1v0_Cancun took: 0.870000s
+#11 TESTING sstore_XtoYtoX_d6g0v0_Cancun FROM EthereumTests/BlockchainTests/GeneralStateTests/stSStoreTest/sstore_XtoYtoX.json
+sstore_XtoXtoX_d5g1v0_Cancun took: 0.860000s
+#15 TESTING sstore_XtoXtoX_d6g0v0_Cancun FROM EthereumTests/BlockchainTests/GeneralStateTests/stSStoreTest/sstore_XtoXtoX.json
+sstore_0toXto0_d5g1v0_Cancun took: 0.870000s
+#5 TESTING sstore_0toXto0_d6g0v0_Cancun FROM EthereumTests/BlockchainTests/GeneralStateTests/stSStoreTest/sstore_0toXto0.json
+sstore_XtoYto0_d5g1v0_Cancun took: 0.838000s
+#8 TESTING sstore_XtoYto0_d6g0v0_Cancun FROM EthereumTests/BlockchainTests/GeneralStateTests/stSStoreTest/sstore_XtoYto0.json
+sstore_Xto0toXto0_d5g1v0_Cancun took: 0.851000s
+#9 TESTING sstore_Xto0toXto0_d6g0v0_Cancun FROM EthereumTests/BlockchainTests/GeneralStateTests/stSStoreTest/sstore_Xto0toXto0.json
+sstore_XtoYtoZ_d3g1v0_Cancun took: 0.964000s
+#7 TESTING sstore_XtoYtoZ_d4g0v0_Cancun FROM EthereumTests/BlockchainTests/GeneralStateTests/stSStoreTest/sstore_XtoYtoZ.json
+sstore_0toX_d5g1v0_Cancun took: 0.827000s
+#2 TESTING sstore_0toX_d6g0v0_Cancun FROM EthereumTests/BlockchainTests/GeneralStateTests/stSStoreTest/sstore_0toX.json
+sstore_0toXto0toX_d5g1v0_Cancun took: 0.865000s
+#13 TESTING sstore_0toXto0toX_d6g0v0_Cancun FROM EthereumTests/BlockchainTests/GeneralStateTests/stSStoreTest/sstore_0toXto0toX.json
+sstore_0to0to0_d5g1v0_Cancun took: 0.870000s
+#1 TESTING sstore_0to0to0_d6g0v0_Cancun FROM EthereumTests/BlockchainTests/GeneralStateTests/stSStoreTest/sstore_0to0to0.json
+sstore_XtoYtoY_d6g0v0_Cancun took: 0.831000s
+#3 TESTING sstore_XtoYtoY_d6g1v0_Cancun FROM EthereumTests/BlockchainTests/GeneralStateTests/stSStoreTest/sstore_XtoYtoY.json
+sstore_XtoXto0_d6g0v0_Cancun took: 0.827000s
+#0 TESTING sstore_XtoXto0_d6g1v0_Cancun FROM EthereumTests/BlockchainTests/GeneralStateTests/stSStoreTest/sstore_XtoXto0.json
+sstore_0to0_d6g0v0_Cancun took: 0.846000s
+#4 TESTING sstore_0to0_d6g1v0_Cancun FROM EthereumTests/BlockchainTests/GeneralStateTests/stSStoreTest/sstore_0to0.json
+sstore_0toXtoY_d6g0v0_Cancun took: 0.826000s
+#14 TESTING sstore_0toXtoY_d6g1v0_Cancun FROM EthereumTests/BlockchainTests/GeneralStateTests/stSStoreTest/sstore_0toXtoY.json
+sstore_changeFromExternalCallInInitCode_d7g0v0_Cancun took: 0.921000s
+#10 TESTING sstore_changeFromExternalCallInInitCode_d8g0v0_Cancun FROM EthereumTests/BlockchainTests/GeneralStateTests/stSStoreTest/sstore_changeFromExternalCallInInitCode.json
+sstore_0toXtoX_d6g0v0_Cancun took: 0.798000s
+#12 TESTING sstore_0toXtoX_d6g1v0_Cancun FROM EthereumTests/BlockchainTests/GeneralStateTests/stSStoreTest/sstore_0toXtoX.json
+sstore_XtoY_d6g0v0_Cancun took: 0.828000s
+#6 TESTING sstore_XtoY_d6g1v0_Cancun FROM EthereumTests/BlockchainTests/GeneralStateTests/stSStoreTest/sstore_XtoY.json
+sstore_0toXto0_d6g0v0_Cancun took: 0.833000s
+#5 TESTING sstore_0toXto0_d6g1v0_Cancun FROM EthereumTests/BlockchainTests/GeneralStateTests/stSStoreTest/sstore_0toXto0.json
+sstore_XtoYtoX_d6g0v0_Cancun took: 0.862000s
+#11 TESTING sstore_XtoYtoX_d6g1v0_Cancun FROM EthereumTests/BlockchainTests/GeneralStateTests/stSStoreTest/sstore_XtoYtoX.json
+sstore_XtoXtoX_d6g0v0_Cancun took: 0.866000s
+#15 TESTING sstore_XtoXtoX_d6g1v0_Cancun FROM EthereumTests/BlockchainTests/GeneralStateTests/stSStoreTest/sstore_XtoXtoX.json
+sstore_XtoYto0_d6g0v0_Cancun took: 0.836000s
+#8 TESTING sstore_XtoYto0_d6g1v0_Cancun FROM EthereumTests/BlockchainTests/GeneralStateTests/stSStoreTest/sstore_XtoYto0.json
+sstore_Xto0toXto0_d6g0v0_Cancun took: 0.825000s
+#9 TESTING sstore_Xto0toXto0_d6g1v0_Cancun FROM EthereumTests/BlockchainTests/GeneralStateTests/stSStoreTest/sstore_Xto0toXto0.json
+sstore_0toX_d6g0v0_Cancun took: 0.836000s
+#2 TESTING sstore_0toX_d6g1v0_Cancun FROM EthereumTests/BlockchainTests/GeneralStateTests/stSStoreTest/sstore_0toX.json
+sstore_0toXto0toX_d6g0v0_Cancun took: 0.833000s
+#13 TESTING sstore_0toXto0toX_d6g1v0_Cancun FROM EthereumTests/BlockchainTests/GeneralStateTests/stSStoreTest/sstore_0toXto0toX.json
+sstore_XtoYtoZ_d4g0v0_Cancun took: 1.077000s
+#7 TESTING sstore_XtoYtoZ_d4g1v0_Cancun FROM EthereumTests/BlockchainTests/GeneralStateTests/stSStoreTest/sstore_XtoYtoZ.json
+sstore_0to0to0_d6g0v0_Cancun took: 0.876000s
+#1 TESTING sstore_0to0to0_d6g1v0_Cancun FROM EthereumTests/BlockchainTests/GeneralStateTests/stSStoreTest/sstore_0to0to0.json
+sstore_XtoYtoY_d6g1v0_Cancun took: 0.880000s
+#3 TESTING sstore_XtoYtoY_d7g0v0_Cancun FROM EthereumTests/BlockchainTests/GeneralStateTests/stSStoreTest/sstore_XtoYtoY.json
+sstore_XtoXto0_d6g1v0_Cancun took: 0.883000s
+#0 TESTING sstore_XtoXto0_d7g0v0_Cancun FROM EthereumTests/BlockchainTests/GeneralStateTests/stSStoreTest/sstore_XtoXto0.json
+sstore_0toXtoY_d6g1v0_Cancun took: 0.898000s
+#14 TESTING sstore_0toXtoY_d7g0v0_Cancun FROM EthereumTests/BlockchainTests/GeneralStateTests/stSStoreTest/sstore_0toXtoY.json
+sstore_0to0_d6g1v0_Cancun took: 0.901000s
+#4 TESTING sstore_0to0_d7g0v0_Cancun FROM EthereumTests/BlockchainTests/GeneralStateTests/stSStoreTest/sstore_0to0.json
+sstore_changeFromExternalCallInInitCode_d8g0v0_Cancun took: 0.889000s
+#10 TESTING sstore_changeFromExternalCallInInitCode_d9g0v0_Cancun FROM EthereumTests/BlockchainTests/GeneralStateTests/stSStoreTest/sstore_changeFromExternalCallInInitCode.json
+sstore_XtoY_d6g1v0_Cancun took: 0.872000s
+#6 TESTING sstore_XtoY_d7g0v0_Cancun FROM EthereumTests/BlockchainTests/GeneralStateTests/stSStoreTest/sstore_XtoY.json
+sstore_0toXtoX_d6g1v0_Cancun took: 0.877000s
+#12 TESTING sstore_0toXtoX_d7g0v0_Cancun FROM EthereumTests/BlockchainTests/GeneralStateTests/stSStoreTest/sstore_0toXtoX.json
+sstore_0toXto0_d6g1v0_Cancun took: 0.858000s
+#5 TESTING sstore_0toXto0_d7g0v0_Cancun FROM EthereumTests/BlockchainTests/GeneralStateTests/stSStoreTest/sstore_0toXto0.json
+sstore_XtoYto0_d6g1v0_Cancun took: 0.859000s
+#8 TESTING sstore_XtoYto0_d7g0v0_Cancun FROM EthereumTests/BlockchainTests/GeneralStateTests/stSStoreTest/sstore_XtoYto0.json
+sstore_XtoXtoX_d6g1v0_Cancun took: 0.890000s
+#15 TESTING sstore_XtoXtoX_d7g0v0_Cancun FROM EthereumTests/BlockchainTests/GeneralStateTests/stSStoreTest/sstore_XtoXtoX.json
+sstore_XtoYtoX_d6g1v0_Cancun took: 0.951000s
+#11 TESTING sstore_XtoYtoX_d7g0v0_Cancun FROM EthereumTests/BlockchainTests/GeneralStateTests/stSStoreTest/sstore_XtoYtoX.json
+sstore_Xto0toXto0_d6g1v0_Cancun took: 0.903000s
+#9 TESTING sstore_Xto0toXto0_d7g0v0_Cancun FROM EthereumTests/BlockchainTests/GeneralStateTests/stSStoreTest/sstore_Xto0toXto0.json
+sstore_0toX_d6g1v0_Cancun took: 0.942000s
+#2 TESTING sstore_0toX_d7g0v0_Cancun FROM EthereumTests/BlockchainTests/GeneralStateTests/stSStoreTest/sstore_0toX.json
+sstore_0toXto0toX_d6g1v0_Cancun took: 0.918000s
+#13 TESTING sstore_0toXto0toX_d7g0v0_Cancun FROM EthereumTests/BlockchainTests/GeneralStateTests/stSStoreTest/sstore_0toXto0toX.json
+sstore_XtoYtoZ_d4g1v0_Cancun took: 1.224000s
+#7 TESTING sstore_XtoYtoZ_d5g0v0_Cancun FROM EthereumTests/BlockchainTests/GeneralStateTests/stSStoreTest/sstore_XtoYtoZ.json
+sstore_0to0to0_d6g1v0_Cancun took: 0.941000s
+#1 TESTING sstore_0to0to0_d7g0v0_Cancun FROM EthereumTests/BlockchainTests/GeneralStateTests/stSStoreTest/sstore_0to0to0.json
+sstore_XtoYtoY_d7g0v0_Cancun took: 0.952000s
+#3 TESTING sstore_XtoYtoY_d7g1v0_Cancun FROM EthereumTests/BlockchainTests/GeneralStateTests/stSStoreTest/sstore_XtoYtoY.json
+sstore_XtoXto0_d7g0v0_Cancun took: 0.977000s
+#0 TESTING sstore_XtoXto0_d7g1v0_Cancun FROM EthereumTests/BlockchainTests/GeneralStateTests/stSStoreTest/sstore_XtoXto0.json
+sstore_XtoY_d7g0v0_Cancun took: 0.935000s
+#6 TESTING sstore_XtoY_d7g1v0_Cancun FROM EthereumTests/BlockchainTests/GeneralStateTests/stSStoreTest/sstore_XtoY.json
+sstore_0to0_d7g0v0_Cancun took: 0.963000s
+#4 TESTING sstore_0to0_d7g1v0_Cancun FROM EthereumTests/BlockchainTests/GeneralStateTests/stSStoreTest/sstore_0to0.json
+sstore_0toXtoY_d7g0v0_Cancun took: 1.043000s
+#14 TESTING sstore_0toXtoY_d7g1v0_Cancun FROM EthereumTests/BlockchainTests/GeneralStateTests/stSStoreTest/sstore_0toXtoY.json
+sstore_XtoXtoX_d7g0v0_Cancun took: 0.953000s
+#15 TESTING sstore_XtoXtoX_d7g1v0_Cancun FROM EthereumTests/BlockchainTests/GeneralStateTests/stSStoreTest/sstore_XtoXtoX.json
+sstore_0toXtoX_d7g0v0_Cancun took: 1.040000s
+#12 TESTING sstore_0toXtoX_d7g1v0_Cancun FROM EthereumTests/BlockchainTests/GeneralStateTests/stSStoreTest/sstore_0toXtoX.json
+sstore_changeFromExternalCallInInitCode_d9g0v0_Cancun took: 1.063000s
+sstore_0toXto0_d7g0v0_Cancun took: 1.036000s
+#5 TESTING sstore_0toXto0_d7g1v0_Cancun FROM EthereumTests/BlockchainTests/GeneralStateTests/stSStoreTest/sstore_0toXto0.json
+sstore_XtoYto0_d7g0v0_Cancun took: 1.022000s
+#8 TESTING sstore_XtoYto0_d7g1v0_Cancun FROM EthereumTests/BlockchainTests/GeneralStateTests/stSStoreTest/sstore_XtoYto0.json
+#10 TESTING sstore_XtoXtoY_d0g0v0_Cancun FROM EthereumTests/BlockchainTests/GeneralStateTests/stSStoreTest/sstore_XtoXtoY.json
+sstore_XtoYtoX_d7g0v0_Cancun took: 0.954000s
+#11 TESTING sstore_XtoYtoX_d7g1v0_Cancun FROM EthereumTests/BlockchainTests/GeneralStateTests/stSStoreTest/sstore_XtoYtoX.json
+sstore_Xto0toXto0_d7g0v0_Cancun took: 0.932000s
+#9 TESTING sstore_Xto0toXto0_d7g1v0_Cancun FROM EthereumTests/BlockchainTests/GeneralStateTests/stSStoreTest/sstore_Xto0toXto0.json
+sstore_0toX_d7g0v0_Cancun took: 0.948000s
+#2 TESTING sstore_0toX_d7g1v0_Cancun FROM EthereumTests/BlockchainTests/GeneralStateTests/stSStoreTest/sstore_0toX.json
+sstore_0toXto0toX_d7g0v0_Cancun took: 0.966000s
+#13 TESTING sstore_0toXto0toX_d7g1v0_Cancun FROM EthereumTests/BlockchainTests/GeneralStateTests/stSStoreTest/sstore_0toXto0toX.json
+sstore_0to0to0_d7g0v0_Cancun took: 0.918000s
+#1 TESTING sstore_0to0to0_d7g1v0_Cancun FROM EthereumTests/BlockchainTests/GeneralStateTests/stSStoreTest/sstore_0to0to0.json
+sstore_XtoYtoZ_d5g0v0_Cancun took: 1.003000s
+#7 TESTING sstore_XtoYtoZ_d5g1v0_Cancun FROM EthereumTests/BlockchainTests/GeneralStateTests/stSStoreTest/sstore_XtoYtoZ.json
+sstore_XtoYtoY_d7g1v0_Cancun took: 0.920000s
+#3 TESTING sstore_XtoYtoY_d8g0v0_Cancun FROM EthereumTests/BlockchainTests/GeneralStateTests/stSStoreTest/sstore_XtoYtoY.json
+sstore_XtoXto0_d7g1v0_Cancun took: 0.919000s
+#0 TESTING sstore_XtoXto0_d8g0v0_Cancun FROM EthereumTests/BlockchainTests/GeneralStateTests/stSStoreTest/sstore_XtoXto0.json
+sstore_0to0_d7g1v0_Cancun took: 0.919000s
+#4 TESTING sstore_0to0_d8g0v0_Cancun FROM EthereumTests/BlockchainTests/GeneralStateTests/stSStoreTest/sstore_0to0.json
+sstore_XtoY_d7g1v0_Cancun took: 0.929000s
+#6 TESTING sstore_XtoY_d8g0v0_Cancun FROM EthereumTests/BlockchainTests/GeneralStateTests/stSStoreTest/sstore_XtoY.json
+sstore_0toXtoY_d7g1v0_Cancun took: 0.916000s
+#14 TESTING sstore_0toXtoY_d8g0v0_Cancun FROM EthereumTests/BlockchainTests/GeneralStateTests/stSStoreTest/sstore_0toXtoY.json
+sstore_XtoXtoX_d7g1v0_Cancun took: 0.946000s
+#15 TESTING sstore_XtoXtoX_d8g0v0_Cancun FROM EthereumTests/BlockchainTests/GeneralStateTests/stSStoreTest/sstore_XtoXtoX.json
+sstore_0toXtoX_d7g1v0_Cancun took: 0.973000s
+#12 TESTING sstore_0toXtoX_d8g0v0_Cancun FROM EthereumTests/BlockchainTests/GeneralStateTests/stSStoreTest/sstore_0toXtoX.json
+sstore_0toXto0_d7g1v0_Cancun took: 0.953000s
+#5 TESTING sstore_0toXto0_d8g0v0_Cancun FROM EthereumTests/BlockchainTests/GeneralStateTests/stSStoreTest/sstore_0toXto0.json
+sstore_XtoYto0_d7g1v0_Cancun took: 0.948000s
+#8 TESTING sstore_XtoYto0_d8g0v0_Cancun FROM EthereumTests/BlockchainTests/GeneralStateTests/stSStoreTest/sstore_XtoYto0.json
+sstore_XtoYtoX_d7g1v0_Cancun took: 0.959000s
+#11 TESTING sstore_XtoYtoX_d8g0v0_Cancun FROM EthereumTests/BlockchainTests/GeneralStateTests/stSStoreTest/sstore_XtoYtoX.json
+sstore_Xto0toXto0_d7g1v0_Cancun took: 0.983000s
+#9 TESTING sstore_Xto0toXto0_d8g0v0_Cancun FROM EthereumTests/BlockchainTests/GeneralStateTests/stSStoreTest/sstore_Xto0toXto0.json
+sstore_XtoXtoY_d0g0v0_Cancun took: 1.040000s
+#10 TESTING sstore_XtoXtoY_d0g1v0_Cancun FROM EthereumTests/BlockchainTests/GeneralStateTests/stSStoreTest/sstore_XtoXtoY.json
+sstore_0toX_d7g1v0_Cancun took: 0.936000s
+#2 TESTING sstore_0toX_d8g0v0_Cancun FROM EthereumTests/BlockchainTests/GeneralStateTests/stSStoreTest/sstore_0toX.json
+sstore_0toXto0toX_d7g1v0_Cancun took: 0.937000s
+#13 TESTING sstore_0toXto0toX_d8g0v0_Cancun FROM EthereumTests/BlockchainTests/GeneralStateTests/stSStoreTest/sstore_0toXto0toX.json
+sstore_0to0to0_d7g1v0_Cancun took: 0.854000s
+#1 TESTING sstore_0to0to0_d8g0v0_Cancun FROM EthereumTests/BlockchainTests/GeneralStateTests/stSStoreTest/sstore_0to0to0.json
+sstore_XtoYtoZ_d5g1v0_Cancun took: 0.883000s
+#7 TESTING sstore_XtoYtoZ_d6g0v0_Cancun FROM EthereumTests/BlockchainTests/GeneralStateTests/stSStoreTest/sstore_XtoYtoZ.json
+sstore_XtoYtoY_d8g0v0_Cancun took: 0.868000s
+#3 TESTING sstore_XtoYtoY_d8g1v0_Cancun FROM EthereumTests/BlockchainTests/GeneralStateTests/stSStoreTest/sstore_XtoYtoY.json
+sstore_XtoXto0_d8g0v0_Cancun took: 0.864000s
+#0 TESTING sstore_XtoXto0_d8g1v0_Cancun FROM EthereumTests/BlockchainTests/GeneralStateTests/stSStoreTest/sstore_XtoXto0.json
+sstore_XtoY_d8g0v0_Cancun took: 0.851000s
+#6 TESTING sstore_XtoY_d8g1v0_Cancun FROM EthereumTests/BlockchainTests/GeneralStateTests/stSStoreTest/sstore_XtoY.json
+sstore_0to0_d8g0v0_Cancun took: 0.878000s
+#4 TESTING sstore_0to0_d8g1v0_Cancun FROM EthereumTests/BlockchainTests/GeneralStateTests/stSStoreTest/sstore_0to0.json
+sstore_0toXtoY_d8g0v0_Cancun took: 0.842000s
+#14 TESTING sstore_0toXtoY_d8g1v0_Cancun FROM EthereumTests/BlockchainTests/GeneralStateTests/stSStoreTest/sstore_0toXtoY.json
+sstore_0toXtoX_d8g0v0_Cancun took: 0.821000s
+#12 TESTING sstore_0toXtoX_d8g1v0_Cancun FROM EthereumTests/BlockchainTests/GeneralStateTests/stSStoreTest/sstore_0toXtoX.json
+sstore_0toXto0_d8g0v0_Cancun took: 0.815000s
+#5 TESTING sstore_0toXto0_d8g1v0_Cancun FROM EthereumTests/BlockchainTests/GeneralStateTests/stSStoreTest/sstore_0toXto0.json
+sstore_XtoXtoX_d8g0v0_Cancun took: 0.882000s
+#15 TESTING sstore_XtoXtoX_d8g1v0_Cancun FROM EthereumTests/BlockchainTests/GeneralStateTests/stSStoreTest/sstore_XtoXtoX.json
+sstore_XtoYto0_d8g0v0_Cancun took: 0.861000s
+#8 TESTING sstore_XtoYto0_d8g1v0_Cancun FROM EthereumTests/BlockchainTests/GeneralStateTests/stSStoreTest/sstore_XtoYto0.json
+sstore_XtoYtoX_d8g0v0_Cancun took: 0.841000s
+#11 TESTING sstore_XtoYtoX_d8g1v0_Cancun FROM EthereumTests/BlockchainTests/GeneralStateTests/stSStoreTest/sstore_XtoYtoX.json
+sstore_Xto0toXto0_d8g0v0_Cancun took: 0.857000s
+#9 TESTING sstore_Xto0toXto0_d8g1v0_Cancun FROM EthereumTests/BlockchainTests/GeneralStateTests/stSStoreTest/sstore_Xto0toXto0.json
+sstore_0toX_d8g0v0_Cancun took: 0.866000s
+#2 TESTING sstore_0toX_d8g1v0_Cancun FROM EthereumTests/BlockchainTests/GeneralStateTests/stSStoreTest/sstore_0toX.json
+sstore_0toXto0toX_d8g0v0_Cancun took: 0.852000s
+#13 TESTING sstore_0toXto0toX_d8g1v0_Cancun FROM EthereumTests/BlockchainTests/GeneralStateTests/stSStoreTest/sstore_0toXto0toX.json
+sstore_XtoXtoY_d0g1v0_Cancun took: 0.928000s
+#10 TESTING sstore_XtoXtoY_d1g0v0_Cancun FROM EthereumTests/BlockchainTests/GeneralStateTests/stSStoreTest/sstore_XtoXtoY.json
+sstore_0to0to0_d8g0v0_Cancun took: 0.842000s
+#1 TESTING sstore_0to0to0_d8g1v0_Cancun FROM EthereumTests/BlockchainTests/GeneralStateTests/stSStoreTest/sstore_0to0to0.json
+sstore_XtoYtoZ_d6g0v0_Cancun took: 0.876000s
+#7 TESTING sstore_XtoYtoZ_d6g1v0_Cancun FROM EthereumTests/BlockchainTests/GeneralStateTests/stSStoreTest/sstore_XtoYtoZ.json
+sstore_XtoXto0_d8g1v0_Cancun took: 0.845000s
+#0 TESTING sstore_XtoXto0_d9g0v0_Cancun FROM EthereumTests/BlockchainTests/GeneralStateTests/stSStoreTest/sstore_XtoXto0.json
+sstore_XtoYtoY_d8g1v0_Cancun took: 0.898000s
+#3 TESTING sstore_XtoYtoY_d9g0v0_Cancun FROM EthereumTests/BlockchainTests/GeneralStateTests/stSStoreTest/sstore_XtoYtoY.json
+sstore_XtoY_d8g1v0_Cancun took: 0.870000s
+#6 TESTING sstore_XtoY_d9g0v0_Cancun FROM EthereumTests/BlockchainTests/GeneralStateTests/stSStoreTest/sstore_XtoY.json
+sstore_0to0_d8g1v0_Cancun took: 0.875000s
+#4 TESTING sstore_0to0_d9g0v0_Cancun FROM EthereumTests/BlockchainTests/GeneralStateTests/stSStoreTest/sstore_0to0.json
+sstore_0toXtoY_d8g1v0_Cancun took: 0.879000s
+#14 TESTING sstore_0toXtoY_d9g0v0_Cancun FROM EthereumTests/BlockchainTests/GeneralStateTests/stSStoreTest/sstore_0toXtoY.json
+sstore_0toXtoX_d8g1v0_Cancun took: 0.881000s
+#12 TESTING sstore_0toXtoX_d9g0v0_Cancun FROM EthereumTests/BlockchainTests/GeneralStateTests/stSStoreTest/sstore_0toXtoX.json
+sstore_0toXto0_d8g1v0_Cancun took: 0.909000s
+#5 TESTING sstore_0toXto0_d9g0v0_Cancun FROM EthereumTests/BlockchainTests/GeneralStateTests/stSStoreTest/sstore_0toXto0.json
+sstore_XtoYto0_d8g1v0_Cancun took: 0.890000s
+#8 TESTING sstore_XtoYto0_d9g0v0_Cancun FROM EthereumTests/BlockchainTests/GeneralStateTests/stSStoreTest/sstore_XtoYto0.json
+sstore_XtoXtoX_d8g1v0_Cancun took: 0.938000s
+#15 TESTING sstore_XtoXtoX_d9g0v0_Cancun FROM EthereumTests/BlockchainTests/GeneralStateTests/stSStoreTest/sstore_XtoXtoX.json
+sstore_XtoYtoX_d8g1v0_Cancun took: 0.909000s
+#11 TESTING sstore_XtoYtoX_d9g0v0_Cancun FROM EthereumTests/BlockchainTests/GeneralStateTests/stSStoreTest/sstore_XtoYtoX.json
+sstore_Xto0toXto0_d8g1v0_Cancun took: 0.883000s
+#9 TESTING sstore_Xto0toXto0_d9g0v0_Cancun FROM EthereumTests/BlockchainTests/GeneralStateTests/stSStoreTest/sstore_Xto0toXto0.json
+sstore_0toX_d8g1v0_Cancun took: 0.855000s
+#2 TESTING sstore_0toX_d9g0v0_Cancun FROM EthereumTests/BlockchainTests/GeneralStateTests/stSStoreTest/sstore_0toX.json
+sstore_0toXto0toX_d8g1v0_Cancun took: 0.898000s
+#13 TESTING sstore_0toXto0toX_d9g0v0_Cancun FROM EthereumTests/BlockchainTests/GeneralStateTests/stSStoreTest/sstore_0toXto0toX.json
+sstore_XtoXtoY_d1g0v0_Cancun took: 0.961000s
+#10 TESTING sstore_XtoXtoY_d1g1v0_Cancun FROM EthereumTests/BlockchainTests/GeneralStateTests/stSStoreTest/sstore_XtoXtoY.json
+sstore_0to0to0_d8g1v0_Cancun took: 0.859000s
+#1 TESTING sstore_0to0to0_d9g0v0_Cancun FROM EthereumTests/BlockchainTests/GeneralStateTests/stSStoreTest/sstore_0to0to0.json
+sstore_XtoXto0_d9g0v0_Cancun took: 0.850000s
+#0 TESTING sstore_XtoXto0_d9g1v0_Cancun FROM EthereumTests/BlockchainTests/GeneralStateTests/stSStoreTest/sstore_XtoXto0.json
+sstore_XtoYtoZ_d6g1v0_Cancun took: 0.901000s
+#7 TESTING sstore_XtoYtoZ_d7g0v0_Cancun FROM EthereumTests/BlockchainTests/GeneralStateTests/stSStoreTest/sstore_XtoYtoZ.json
+sstore_XtoY_d9g0v0_Cancun took: 0.860000s
+#6 TESTING sstore_XtoY_d9g1v0_Cancun FROM EthereumTests/BlockchainTests/GeneralStateTests/stSStoreTest/sstore_XtoY.json
+sstore_0to0_d9g0v0_Cancun took: 0.887000s
+#4 TESTING sstore_0to0_d9g1v0_Cancun FROM EthereumTests/BlockchainTests/GeneralStateTests/stSStoreTest/sstore_0to0.json
+sstore_XtoYtoY_d9g0v0_Cancun took: 0.932000s
+#3 TESTING sstore_XtoYtoY_d9g1v0_Cancun FROM EthereumTests/BlockchainTests/GeneralStateTests/stSStoreTest/sstore_XtoYtoY.json
+sstore_0toXtoY_d9g0v0_Cancun took: 0.859000s
+#14 TESTING sstore_0toXtoY_d9g1v0_Cancun FROM EthereumTests/BlockchainTests/GeneralStateTests/stSStoreTest/sstore_0toXtoY.json
+sstore_0toXtoX_d9g0v0_Cancun took: 0.848000s
+#12 TESTING sstore_0toXtoX_d9g1v0_Cancun FROM EthereumTests/BlockchainTests/GeneralStateTests/stSStoreTest/sstore_0toXtoX.json
+sstore_XtoYto0_d9g0v0_Cancun took: 0.836000s
+#8 TESTING sstore_XtoYto0_d9g1v0_Cancun FROM EthereumTests/BlockchainTests/GeneralStateTests/stSStoreTest/sstore_XtoYto0.json
+sstore_0toXto0_d9g0v0_Cancun took: 0.890000s
+#5 TESTING sstore_0toXto0_d9g1v0_Cancun FROM EthereumTests/BlockchainTests/GeneralStateTests/stSStoreTest/sstore_0toXto0.json
+sstore_XtoYtoX_d9g0v0_Cancun took: 0.829000s
+#11 TESTING sstore_XtoYtoX_d9g1v0_Cancun FROM EthereumTests/BlockchainTests/GeneralStateTests/stSStoreTest/sstore_XtoYtoX.json
+sstore_XtoXtoX_d9g0v0_Cancun took: 0.854000s
+#15 TESTING sstore_XtoXtoX_d9g1v0_Cancun FROM EthereumTests/BlockchainTests/GeneralStateTests/stSStoreTest/sstore_XtoXtoX.json
+sstore_Xto0toXto0_d9g0v0_Cancun took: 0.879000s
+#9 TESTING sstore_Xto0toXto0_d9g1v0_Cancun FROM EthereumTests/BlockchainTests/GeneralStateTests/stSStoreTest/sstore_Xto0toXto0.json
+sstore_0toX_d9g0v0_Cancun took: 0.894000s
+#2 TESTING sstore_0toX_d9g1v0_Cancun FROM EthereumTests/BlockchainTests/GeneralStateTests/stSStoreTest/sstore_0toX.json
+sstore_0toXto0toX_d9g0v0_Cancun took: 0.852000s
+#13 TESTING sstore_0toXto0toX_d9g1v0_Cancun FROM EthereumTests/BlockchainTests/GeneralStateTests/stSStoreTest/sstore_0toXto0toX.json
+sstore_XtoXtoY_d1g1v0_Cancun took: 0.933000s
+#10 TESTING sstore_XtoXtoY_d2g0v0_Cancun FROM EthereumTests/BlockchainTests/GeneralStateTests/stSStoreTest/sstore_XtoXtoY.json
+sstore_0to0to0_d9g0v0_Cancun took: 0.881000s
+#1 TESTING sstore_0to0to0_d9g1v0_Cancun FROM EthereumTests/BlockchainTests/GeneralStateTests/stSStoreTest/sstore_0to0to0.json
+sstore_XtoXto0_d9g1v0_Cancun took: 0.857000s
+#0 TESTING InitCollisionParis_d0g0v0_Cancun FROM EthereumTests/BlockchainTests/GeneralStateTests/stSStoreTest/InitCollisionParis.json
+sstore_XtoY_d9g1v0_Cancun took: 0.844000s
+sstore_XtoYtoZ_d7g0v0_Cancun took: 0.856000s
+#7 TESTING sstore_XtoYtoZ_d7g1v0_Cancun FROM EthereumTests/BlockchainTests/GeneralStateTests/stSStoreTest/sstore_XtoYtoZ.json
+#6 TESTING sstore_Xto0toY_d0g0v0_Cancun FROM EthereumTests/BlockchainTests/GeneralStateTests/stSStoreTest/sstore_Xto0toY.json
+sstore_0to0_d9g1v0_Cancun took: 0.856000s
+sstore_XtoYtoY_d9g1v0_Cancun took: 0.870000s
+#3 TESTING SstoreCallToSelfSubRefundBelowZero_d0g0v0_Cancun FROM EthereumTests/BlockchainTests/GeneralStateTests/stSStoreTest/SstoreCallToSelfSubRefundBelowZero.json
+sstore_0toXtoY_d9g1v0_Cancun took: 0.849000s
+#4 TESTING sstore_Xto0toX_d0g0v0_Cancun FROM EthereumTests/BlockchainTests/GeneralStateTests/stSStoreTest/sstore_Xto0toX.json
+sstore_0toXtoX_d9g1v0_Cancun took: 0.870000s
+sstore_XtoXtoX_d9g1v0_Cancun took: 0.839000s
+sstore_XtoYtoX_d9g1v0_Cancun took: 0.868000s
+sstore_0toXto0_d9g1v0_Cancun took: 0.875000s
+sstore_XtoYto0_d9g1v0_Cancun took: 0.892000s
+#11 TESTING sstore_Xto0to0_d0g0v0_Cancun FROM EthereumTests/BlockchainTests/GeneralStateTests/stSStoreTest/sstore_Xto0to0.json
+sstore_Xto0toXto0_d9g1v0_Cancun took: 0.840000s
+#5 TESTING sstore_Xto0_d0g0v0_Cancun FROM EthereumTests/BlockchainTests/GeneralStateTests/stSStoreTest/sstore_Xto0.json
+#8 TESTING sstore_0to0toX_d0g0v0_Cancun FROM EthereumTests/BlockchainTests/GeneralStateTests/stSStoreTest/sstore_0to0toX.json
+#9 TESTING sstore_gasLeft_d0g0v0_Cancun FROM EthereumTests/BlockchainTests/GeneralStateTests/stSStoreTest/sstore_gasLeft.json
+sstore_0toX_d9g1v0_Cancun took: 0.846000s
+sstore_0toXto0toX_d9g1v0_Cancun took: 0.840000s
+#2 TESTING sstore_XtoX_d0g0v0_Cancun FROM EthereumTests/BlockchainTests/GeneralStateTests/stSStoreTest/sstore_XtoX.json
+sstore_XtoXtoY_d2g0v0_Cancun took: 0.920000s
+#10 TESTING sstore_XtoXtoY_d2g1v0_Cancun FROM EthereumTests/BlockchainTests/GeneralStateTests/stSStoreTest/sstore_XtoXtoY.json
+SstoreCallToSelfSubRefundBelowZero_d0g0v0_Cancun took: 0.579000s
+sstore_0to0to0_d9g1v0_Cancun took: 0.783000s
+InitCollisionParis_d0g0v0_Cancun took: 0.755000s
+#0 TESTING InitCollisionParis_d1g0v0_Cancun FROM EthereumTests/BlockchainTests/GeneralStateTests/stSStoreTest/InitCollisionParis.json
+sstore_XtoYtoZ_d7g1v0_Cancun took: 0.740000s
+#7 TESTING sstore_XtoYtoZ_d8g0v0_Cancun FROM EthereumTests/BlockchainTests/GeneralStateTests/stSStoreTest/sstore_XtoYtoZ.json
+sstore_Xto0toY_d0g0v0_Cancun took: 0.820000s
+#6 TESTING sstore_Xto0toY_d0g1v0_Cancun FROM EthereumTests/BlockchainTests/GeneralStateTests/stSStoreTest/sstore_Xto0toY.json
+sstore_Xto0toX_d0g0v0_Cancun took: 0.814000s
+#4 TESTING sstore_Xto0toX_d0g1v0_Cancun FROM EthereumTests/BlockchainTests/GeneralStateTests/stSStoreTest/sstore_Xto0toX.json
+sstore_gasLeft_d0g0v0_Cancun took: 0.690000s
+#9 TESTING sstore_gasLeft_d1g0v0_Cancun FROM EthereumTests/BlockchainTests/GeneralStateTests/stSStoreTest/sstore_gasLeft.json
+sstore_Xto0_d0g0v0_Cancun took: 0.767000s
+#5 TESTING sstore_Xto0_d0g1v0_Cancun FROM EthereumTests/BlockchainTests/GeneralStateTests/stSStoreTest/sstore_Xto0.json
+sstore_0to0toX_d0g0v0_Cancun took: 0.765000s
+#8 TESTING sstore_0to0toX_d0g1v0_Cancun FROM EthereumTests/BlockchainTests/GeneralStateTests/stSStoreTest/sstore_0to0toX.json
+sstore_Xto0to0_d0g0v0_Cancun took: 0.779000s
+#11 TESTING sstore_Xto0to0_d0g1v0_Cancun FROM EthereumTests/BlockchainTests/GeneralStateTests/stSStoreTest/sstore_Xto0to0.json
+sstore_XtoX_d0g0v0_Cancun took: 0.764000s
+#2 TESTING sstore_XtoX_d0g1v0_Cancun FROM EthereumTests/BlockchainTests/GeneralStateTests/stSStoreTest/sstore_XtoX.json
+sstore_XtoXtoY_d2g1v0_Cancun took: 0.731000s
+#10 TESTING sstore_XtoXtoY_d3g0v0_Cancun FROM EthereumTests/BlockchainTests/GeneralStateTests/stSStoreTest/sstore_XtoXtoY.json
+InitCollisionParis_d1g0v0_Cancun took: 0.648000s
+#0 TESTING InitCollisionParis_d2g0v0_Cancun FROM EthereumTests/BlockchainTests/GeneralStateTests/stSStoreTest/InitCollisionParis.json
+sstore_XtoYtoZ_d8g0v0_Cancun took: 0.656000s
+#7 TESTING sstore_XtoYtoZ_d8g1v0_Cancun FROM EthereumTests/BlockchainTests/GeneralStateTests/stSStoreTest/sstore_XtoYtoZ.json
+sstore_Xto0toY_d0g1v0_Cancun took: 0.727000s
+#6 TESTING sstore_Xto0toY_d1g0v0_Cancun FROM EthereumTests/BlockchainTests/GeneralStateTests/stSStoreTest/sstore_Xto0toY.json
+sstore_Xto0toX_d0g1v0_Cancun took: 0.699000s
+#4 TESTING sstore_Xto0toX_d1g0v0_Cancun FROM EthereumTests/BlockchainTests/GeneralStateTests/stSStoreTest/sstore_Xto0toX.json
+sstore_gasLeft_d1g0v0_Cancun took: 0.654000s
+#9 TESTING sstore_gasLeft_d2g0v0_Cancun FROM EthereumTests/BlockchainTests/GeneralStateTests/stSStoreTest/sstore_gasLeft.json
+sstore_Xto0_d0g1v0_Cancun took: 0.698000s
+#5 TESTING sstore_Xto0_d1g0v0_Cancun FROM EthereumTests/BlockchainTests/GeneralStateTests/stSStoreTest/sstore_Xto0.json
+sstore_Xto0to0_d0g1v0_Cancun took: 0.704000s
+#11 TESTING sstore_Xto0to0_d1g0v0_Cancun FROM EthereumTests/BlockchainTests/GeneralStateTests/stSStoreTest/sstore_Xto0to0.json
+sstore_0to0toX_d0g1v0_Cancun took: 0.733000s
+#8 TESTING sstore_0to0toX_d1g0v0_Cancun FROM EthereumTests/BlockchainTests/GeneralStateTests/stSStoreTest/sstore_0to0toX.json
+sstore_XtoX_d0g1v0_Cancun took: 0.728000s
+#2 TESTING sstore_XtoX_d1g0v0_Cancun FROM EthereumTests/BlockchainTests/GeneralStateTests/stSStoreTest/sstore_XtoX.json
+InitCollisionParis_d2g0v0_Cancun took: 0.676000s
+#0 TESTING InitCollisionParis_d3g0v0_Cancun FROM EthereumTests/BlockchainTests/GeneralStateTests/stSStoreTest/InitCollisionParis.json
+sstore_XtoYtoZ_d8g1v0_Cancun took: 0.662000s
+#7 TESTING sstore_XtoYtoZ_d9g0v0_Cancun FROM EthereumTests/BlockchainTests/GeneralStateTests/stSStoreTest/sstore_XtoYtoZ.json
+sstore_XtoXtoY_d3g0v0_Cancun took: 0.744000s
+#10 TESTING sstore_XtoXtoY_d3g1v0_Cancun FROM EthereumTests/BlockchainTests/GeneralStateTests/stSStoreTest/sstore_XtoXtoY.json
+sstore_gasLeft_d2g0v0_Cancun took: 0.676000s
+#9 TESTING sstore_gasLeft_d3g0v0_Cancun FROM EthereumTests/BlockchainTests/GeneralStateTests/stSStoreTest/sstore_gasLeft.json
+sstore_Xto0toY_d1g0v0_Cancun took: 0.741000s
+#6 TESTING sstore_Xto0toY_d1g1v0_Cancun FROM EthereumTests/BlockchainTests/GeneralStateTests/stSStoreTest/sstore_Xto0toY.json
+sstore_Xto0toX_d1g0v0_Cancun took: 0.762000s
+#4 TESTING sstore_Xto0toX_d1g1v0_Cancun FROM EthereumTests/BlockchainTests/GeneralStateTests/stSStoreTest/sstore_Xto0toX.json
+sstore_Xto0_d1g0v0_Cancun took: 0.759000s
+#5 TESTING sstore_Xto0_d1g1v0_Cancun FROM EthereumTests/BlockchainTests/GeneralStateTests/stSStoreTest/sstore_Xto0.json
+sstore_Xto0to0_d1g0v0_Cancun took: 0.748000s
+#11 TESTING sstore_Xto0to0_d1g1v0_Cancun FROM EthereumTests/BlockchainTests/GeneralStateTests/stSStoreTest/sstore_Xto0to0.json
+sstore_0to0toX_d1g0v0_Cancun took: 0.752000s
+#8 TESTING sstore_0to0toX_d1g1v0_Cancun FROM EthereumTests/BlockchainTests/GeneralStateTests/stSStoreTest/sstore_0to0toX.json
+sstore_XtoX_d1g0v0_Cancun took: 0.763000s
+#2 TESTING sstore_XtoX_d1g1v0_Cancun FROM EthereumTests/BlockchainTests/GeneralStateTests/stSStoreTest/sstore_XtoX.json
+InitCollisionParis_d3g0v0_Cancun took: 0.641000s
+sstore_XtoYtoZ_d9g0v0_Cancun took: 0.659000s
+#7 TESTING sstore_XtoYtoZ_d9g1v0_Cancun FROM EthereumTests/BlockchainTests/GeneralStateTests/stSStoreTest/sstore_XtoYtoZ.json
+sstore_XtoXtoY_d3g1v0_Cancun took: 0.728000s
+#10 TESTING sstore_XtoXtoY_d4g0v0_Cancun FROM EthereumTests/BlockchainTests/GeneralStateTests/stSStoreTest/sstore_XtoXtoY.json
+sstore_gasLeft_d3g0v0_Cancun took: 0.616000s
+#9 TESTING sstore_gasLeft_d4g0v0_Cancun FROM EthereumTests/BlockchainTests/GeneralStateTests/stSStoreTest/sstore_gasLeft.json
+sstore_Xto0toY_d1g1v0_Cancun took: 0.726000s
+#6 TESTING sstore_Xto0toY_d2g0v0_Cancun FROM EthereumTests/BlockchainTests/GeneralStateTests/stSStoreTest/sstore_Xto0toY.json
+sstore_Xto0toX_d1g1v0_Cancun took: 0.706000s
+#4 TESTING sstore_Xto0toX_d2g0v0_Cancun FROM EthereumTests/BlockchainTests/GeneralStateTests/stSStoreTest/sstore_Xto0toX.json
+sstore_Xto0_d1g1v0_Cancun took: 0.678000s
+#5 TESTING sstore_Xto0_d2g0v0_Cancun FROM EthereumTests/BlockchainTests/GeneralStateTests/stSStoreTest/sstore_Xto0.json
+sstore_Xto0to0_d1g1v0_Cancun took: 0.700000s
+#11 TESTING sstore_Xto0to0_d2g0v0_Cancun FROM EthereumTests/BlockchainTests/GeneralStateTests/stSStoreTest/sstore_Xto0to0.json
+sstore_0to0toX_d1g1v0_Cancun took: 0.710000s
+#8 TESTING sstore_0to0toX_d2g0v0_Cancun FROM EthereumTests/BlockchainTests/GeneralStateTests/stSStoreTest/sstore_0to0toX.json
+sstore_XtoX_d1g1v0_Cancun took: 0.737000s
+#2 TESTING sstore_XtoX_d2g0v0_Cancun FROM EthereumTests/BlockchainTests/GeneralStateTests/stSStoreTest/sstore_XtoX.json
+sstore_XtoYtoZ_d9g1v0_Cancun took: 0.645000s
+sstore_gasLeft_d4g0v0_Cancun took: 0.613000s
+#9 TESTING sstore_gasLeft_d5g0v0_Cancun FROM EthereumTests/BlockchainTests/GeneralStateTests/stSStoreTest/sstore_gasLeft.json
+sstore_XtoXtoY_d4g0v0_Cancun took: 0.808000s
+#10 TESTING sstore_XtoXtoY_d4g1v0_Cancun FROM EthereumTests/BlockchainTests/GeneralStateTests/stSStoreTest/sstore_XtoXtoY.json
+sstore_Xto0toY_d2g0v0_Cancun took: 0.655000s
+#6 TESTING sstore_Xto0toY_d2g1v0_Cancun FROM EthereumTests/BlockchainTests/GeneralStateTests/stSStoreTest/sstore_Xto0toY.json
+sstore_Xto0toX_d2g0v0_Cancun took: 0.683000s
+#4 TESTING sstore_Xto0toX_d2g1v0_Cancun FROM EthereumTests/BlockchainTests/GeneralStateTests/stSStoreTest/sstore_Xto0toX.json
+sstore_Xto0_d2g0v0_Cancun took: 0.658000s
+#5 TESTING sstore_Xto0_d2g1v0_Cancun FROM EthereumTests/BlockchainTests/GeneralStateTests/stSStoreTest/sstore_Xto0.json
+sstore_Xto0to0_d2g0v0_Cancun took: 0.670000s
+#11 TESTING sstore_Xto0to0_d2g1v0_Cancun FROM EthereumTests/BlockchainTests/GeneralStateTests/stSStoreTest/sstore_Xto0to0.json
+sstore_0to0toX_d2g0v0_Cancun took: 0.688000s
+#8 TESTING sstore_0to0toX_d2g1v0_Cancun FROM EthereumTests/BlockchainTests/GeneralStateTests/stSStoreTest/sstore_0to0toX.json
+sstore_XtoX_d2g0v0_Cancun took: 0.682000s
+#2 TESTING sstore_XtoX_d2g1v0_Cancun FROM EthereumTests/BlockchainTests/GeneralStateTests/stSStoreTest/sstore_XtoX.json
+sstore_gasLeft_d5g0v0_Cancun took: 0.587000s
+#9 TESTING sstore_gasLeft_d6g0v0_Cancun FROM EthereumTests/BlockchainTests/GeneralStateTests/stSStoreTest/sstore_gasLeft.json
+sstore_XtoXtoY_d4g1v0_Cancun took: 0.753000s
+#10 TESTING sstore_XtoXtoY_d5g0v0_Cancun FROM EthereumTests/BlockchainTests/GeneralStateTests/stSStoreTest/sstore_XtoXtoY.json
+sstore_Xto0toY_d2g1v0_Cancun took: 0.636000s
+#6 TESTING sstore_Xto0toY_d3g0v0_Cancun FROM EthereumTests/BlockchainTests/GeneralStateTests/stSStoreTest/sstore_Xto0toY.json
+sstore_Xto0toX_d2g1v0_Cancun took: 0.604000s
+#4 TESTING sstore_Xto0toX_d3g0v0_Cancun FROM EthereumTests/BlockchainTests/GeneralStateTests/stSStoreTest/sstore_Xto0toX.json
+sstore_Xto0_d2g1v0_Cancun took: 0.645000s
+#5 TESTING sstore_Xto0_d3g0v0_Cancun FROM EthereumTests/BlockchainTests/GeneralStateTests/stSStoreTest/sstore_Xto0.json
+sstore_Xto0to0_d2g1v0_Cancun took: 0.670000s
+#11 TESTING sstore_Xto0to0_d3g0v0_Cancun FROM EthereumTests/BlockchainTests/GeneralStateTests/stSStoreTest/sstore_Xto0to0.json
+sstore_0to0toX_d2g1v0_Cancun took: 0.634000s
+#8 TESTING sstore_0to0toX_d3g0v0_Cancun FROM EthereumTests/BlockchainTests/GeneralStateTests/stSStoreTest/sstore_0to0toX.json
+sstore_gasLeft_d6g0v0_Cancun took: 0.605000s
+#9 TESTING sstore_gasLeft_d7g0v0_Cancun FROM EthereumTests/BlockchainTests/GeneralStateTests/stSStoreTest/sstore_gasLeft.json
+sstore_XtoX_d2g1v0_Cancun took: 0.694000s
+#2 TESTING sstore_XtoX_d3g0v0_Cancun FROM EthereumTests/BlockchainTests/GeneralStateTests/stSStoreTest/sstore_XtoX.json
+sstore_XtoXtoY_d5g0v0_Cancun took: 0.551000s
+#10 TESTING sstore_XtoXtoY_d5g1v0_Cancun FROM EthereumTests/BlockchainTests/GeneralStateTests/stSStoreTest/sstore_XtoXtoY.json
+sstore_Xto0toY_d3g0v0_Cancun took: 0.631000s
+#6 TESTING sstore_Xto0toY_d3g1v0_Cancun FROM EthereumTests/BlockchainTests/GeneralStateTests/stSStoreTest/sstore_Xto0toY.json
+sstore_Xto0toX_d3g0v0_Cancun took: 0.653000s
+#4 TESTING sstore_Xto0toX_d3g1v0_Cancun FROM EthereumTests/BlockchainTests/GeneralStateTests/stSStoreTest/sstore_Xto0toX.json
+sstore_Xto0_d3g0v0_Cancun took: 0.639000s
+#5 TESTING sstore_Xto0_d3g1v0_Cancun FROM EthereumTests/BlockchainTests/GeneralStateTests/stSStoreTest/sstore_Xto0.json
+sstore_Xto0to0_d3g0v0_Cancun took: 0.667000s
+#11 TESTING sstore_Xto0to0_d3g1v0_Cancun FROM EthereumTests/BlockchainTests/GeneralStateTests/stSStoreTest/sstore_Xto0to0.json
+sstore_0to0toX_d3g0v0_Cancun took: 0.653000s
+#8 TESTING sstore_0to0toX_d3g1v0_Cancun FROM EthereumTests/BlockchainTests/GeneralStateTests/stSStoreTest/sstore_0to0toX.json
+sstore_gasLeft_d7g0v0_Cancun took: 0.594000s
+#9 TESTING sstore_gasLeft_d8g0v0_Cancun FROM EthereumTests/BlockchainTests/GeneralStateTests/stSStoreTest/sstore_gasLeft.json
+sstore_XtoX_d3g0v0_Cancun took: 0.668000s
+#2 TESTING sstore_XtoX_d3g1v0_Cancun FROM EthereumTests/BlockchainTests/GeneralStateTests/stSStoreTest/sstore_XtoX.json
+sstore_XtoXtoY_d5g1v0_Cancun took: 0.580000s
+#10 TESTING sstore_XtoXtoY_d6g0v0_Cancun FROM EthereumTests/BlockchainTests/GeneralStateTests/stSStoreTest/sstore_XtoXtoY.json
+sstore_Xto0toY_d3g1v0_Cancun took: 0.677000s
+#6 TESTING sstore_Xto0toY_d4g0v0_Cancun FROM EthereumTests/BlockchainTests/GeneralStateTests/stSStoreTest/sstore_Xto0toY.json
+sstore_Xto0toX_d3g1v0_Cancun took: 0.666000s
+#4 TESTING sstore_Xto0toX_d4g0v0_Cancun FROM EthereumTests/BlockchainTests/GeneralStateTests/stSStoreTest/sstore_Xto0toX.json
+sstore_Xto0_d3g1v0_Cancun took: 0.636000s
+#5 TESTING sstore_Xto0_d4g0v0_Cancun FROM EthereumTests/BlockchainTests/GeneralStateTests/stSStoreTest/sstore_Xto0.json
+sstore_0to0toX_d3g1v0_Cancun took: 0.638000s
+#8 TESTING sstore_0to0toX_d4g0v0_Cancun FROM EthereumTests/BlockchainTests/GeneralStateTests/stSStoreTest/sstore_0to0toX.json
+sstore_Xto0to0_d3g1v0_Cancun took: 0.656000s
+#11 TESTING sstore_Xto0to0_d4g0v0_Cancun FROM EthereumTests/BlockchainTests/GeneralStateTests/stSStoreTest/sstore_Xto0to0.json
+sstore_gasLeft_d8g0v0_Cancun took: 0.572000s
+sstore_XtoX_d3g1v0_Cancun took: 0.634000s
+#2 TESTING sstore_XtoX_d4g0v0_Cancun FROM EthereumTests/BlockchainTests/GeneralStateTests/stSStoreTest/sstore_XtoX.json
+sstore_XtoXtoY_d6g0v0_Cancun took: 0.619000s
+#10 TESTING sstore_XtoXtoY_d6g1v0_Cancun FROM EthereumTests/BlockchainTests/GeneralStateTests/stSStoreTest/sstore_XtoXtoY.json
+sstore_Xto0toY_d4g0v0_Cancun took: 0.665000s
+#6 TESTING sstore_Xto0toY_d4g1v0_Cancun FROM EthereumTests/BlockchainTests/GeneralStateTests/stSStoreTest/sstore_Xto0toY.json
+sstore_Xto0toX_d4g0v0_Cancun took: 0.681000s
+#4 TESTING sstore_Xto0toX_d4g1v0_Cancun FROM EthereumTests/BlockchainTests/GeneralStateTests/stSStoreTest/sstore_Xto0toX.json
+sstore_Xto0_d4g0v0_Cancun took: 0.650000s
+#5 TESTING sstore_Xto0_d4g1v0_Cancun FROM EthereumTests/BlockchainTests/GeneralStateTests/stSStoreTest/sstore_Xto0.json
+sstore_Xto0to0_d4g0v0_Cancun took: 0.670000s
+#11 TESTING sstore_Xto0to0_d4g1v0_Cancun FROM EthereumTests/BlockchainTests/GeneralStateTests/stSStoreTest/sstore_Xto0to0.json
+sstore_0to0toX_d4g0v0_Cancun took: 0.718000s
+#8 TESTING sstore_0to0toX_d4g1v0_Cancun FROM EthereumTests/BlockchainTests/GeneralStateTests/stSStoreTest/sstore_0to0toX.json
+sstore_XtoXtoY_d6g1v0_Cancun took: 0.583000s
+#10 TESTING sstore_XtoXtoY_d7g0v0_Cancun FROM EthereumTests/BlockchainTests/GeneralStateTests/stSStoreTest/sstore_XtoXtoY.json
+sstore_XtoX_d4g0v0_Cancun took: 0.691000s
+#2 TESTING sstore_XtoX_d4g1v0_Cancun FROM EthereumTests/BlockchainTests/GeneralStateTests/stSStoreTest/sstore_XtoX.json
+sstore_Xto0toY_d4g1v0_Cancun took: 0.695000s
+#6 TESTING sstore_Xto0toY_d5g0v0_Cancun FROM EthereumTests/BlockchainTests/GeneralStateTests/stSStoreTest/sstore_Xto0toY.json
+sstore_Xto0toX_d4g1v0_Cancun took: 0.707000s
+#4 TESTING sstore_Xto0toX_d5g0v0_Cancun FROM EthereumTests/BlockchainTests/GeneralStateTests/stSStoreTest/sstore_Xto0toX.json
+sstore_Xto0_d4g1v0_Cancun took: 0.684000s
+#5 TESTING sstore_Xto0_d5g0v0_Cancun FROM EthereumTests/BlockchainTests/GeneralStateTests/stSStoreTest/sstore_Xto0.json
+sstore_XtoXtoY_d7g0v0_Cancun took: 0.514000s
+#10 TESTING sstore_XtoXtoY_d7g1v0_Cancun FROM EthereumTests/BlockchainTests/GeneralStateTests/stSStoreTest/sstore_XtoXtoY.json
+sstore_0to0toX_d4g1v0_Cancun took: 0.643000s
+#8 TESTING sstore_0to0toX_d5g0v0_Cancun FROM EthereumTests/BlockchainTests/GeneralStateTests/stSStoreTest/sstore_0to0toX.json
+sstore_Xto0to0_d4g1v0_Cancun took: 0.683000s
+#11 TESTING sstore_Xto0to0_d5g0v0_Cancun FROM EthereumTests/BlockchainTests/GeneralStateTests/stSStoreTest/sstore_Xto0to0.json
+sstore_XtoX_d4g1v0_Cancun took: 0.680000s
+#2 TESTING sstore_XtoX_d5g0v0_Cancun FROM EthereumTests/BlockchainTests/GeneralStateTests/stSStoreTest/sstore_XtoX.json
+sstore_Xto0toY_d5g0v0_Cancun took: 0.505000s
+#6 TESTING sstore_Xto0toY_d5g1v0_Cancun FROM EthereumTests/BlockchainTests/GeneralStateTests/stSStoreTest/sstore_Xto0toY.json
+sstore_Xto0toX_d5g0v0_Cancun took: 0.522000s
+#4 TESTING sstore_Xto0toX_d5g1v0_Cancun FROM EthereumTests/BlockchainTests/GeneralStateTests/stSStoreTest/sstore_Xto0toX.json
+sstore_Xto0_d5g0v0_Cancun took: 0.570000s
+#5 TESTING sstore_Xto0_d5g1v0_Cancun FROM EthereumTests/BlockchainTests/GeneralStateTests/stSStoreTest/sstore_Xto0.json
+sstore_XtoXtoY_d7g1v0_Cancun took: 0.514000s
+#10 TESTING sstore_XtoXtoY_d8g0v0_Cancun FROM EthereumTests/BlockchainTests/GeneralStateTests/stSStoreTest/sstore_XtoXtoY.json
+sstore_0to0toX_d5g0v0_Cancun took: 0.531000s
+#8 TESTING sstore_0to0toX_d5g1v0_Cancun FROM EthereumTests/BlockchainTests/GeneralStateTests/stSStoreTest/sstore_0to0toX.json
+sstore_Xto0to0_d5g0v0_Cancun took: 0.563000s
+#11 TESTING sstore_Xto0to0_d5g1v0_Cancun FROM EthereumTests/BlockchainTests/GeneralStateTests/stSStoreTest/sstore_Xto0to0.json
+sstore_XtoX_d5g0v0_Cancun took: 0.506000s
+#2 TESTING sstore_XtoX_d5g1v0_Cancun FROM EthereumTests/BlockchainTests/GeneralStateTests/stSStoreTest/sstore_XtoX.json
+sstore_Xto0toY_d5g1v0_Cancun took: 0.530000s
+#6 TESTING sstore_Xto0toY_d6g0v0_Cancun FROM EthereumTests/BlockchainTests/GeneralStateTests/stSStoreTest/sstore_Xto0toY.json
+sstore_Xto0toX_d5g1v0_Cancun took: 0.509000s
+#4 TESTING sstore_Xto0toX_d6g0v0_Cancun FROM EthereumTests/BlockchainTests/GeneralStateTests/stSStoreTest/sstore_Xto0toX.json
+sstore_Xto0_d5g1v0_Cancun took: 0.540000s
+#5 TESTING sstore_Xto0_d6g0v0_Cancun FROM EthereumTests/BlockchainTests/GeneralStateTests/stSStoreTest/sstore_Xto0.json
+sstore_XtoXtoY_d8g0v0_Cancun took: 0.495000s
+#10 TESTING sstore_XtoXtoY_d8g1v0_Cancun FROM EthereumTests/BlockchainTests/GeneralStateTests/stSStoreTest/sstore_XtoXtoY.json
+sstore_0to0toX_d5g1v0_Cancun took: 0.542000s
+#8 TESTING sstore_0to0toX_d6g0v0_Cancun FROM EthereumTests/BlockchainTests/GeneralStateTests/stSStoreTest/sstore_0to0toX.json
+sstore_Xto0to0_d5g1v0_Cancun took: 0.531000s
+#11 TESTING sstore_Xto0to0_d6g0v0_Cancun FROM EthereumTests/BlockchainTests/GeneralStateTests/stSStoreTest/sstore_Xto0to0.json
+sstore_XtoX_d5g1v0_Cancun took: 0.503000s
+#2 TESTING sstore_XtoX_d6g0v0_Cancun FROM EthereumTests/BlockchainTests/GeneralStateTests/stSStoreTest/sstore_XtoX.json
+sstore_Xto0toY_d6g0v0_Cancun took: 0.516000s
+#6 TESTING sstore_Xto0toY_d6g1v0_Cancun FROM EthereumTests/BlockchainTests/GeneralStateTests/stSStoreTest/sstore_Xto0toY.json
+sstore_Xto0toX_d6g0v0_Cancun took: 0.524000s
+#4 TESTING sstore_Xto0toX_d6g1v0_Cancun FROM EthereumTests/BlockchainTests/GeneralStateTests/stSStoreTest/sstore_Xto0toX.json
+sstore_Xto0_d6g0v0_Cancun took: 0.516000s
+#5 TESTING sstore_Xto0_d6g1v0_Cancun FROM EthereumTests/BlockchainTests/GeneralStateTests/stSStoreTest/sstore_Xto0.json
+sstore_XtoXtoY_d8g1v0_Cancun took: 0.531000s
+#10 TESTING sstore_XtoXtoY_d9g0v0_Cancun FROM EthereumTests/BlockchainTests/GeneralStateTests/stSStoreTest/sstore_XtoXtoY.json
+sstore_0to0toX_d6g0v0_Cancun took: 0.519000s
+#8 TESTING sstore_0to0toX_d6g1v0_Cancun FROM EthereumTests/BlockchainTests/GeneralStateTests/stSStoreTest/sstore_0to0toX.json
+sstore_Xto0to0_d6g0v0_Cancun took: 0.527000s
+#11 TESTING sstore_Xto0to0_d6g1v0_Cancun FROM EthereumTests/BlockchainTests/GeneralStateTests/stSStoreTest/sstore_Xto0to0.json
+sstore_XtoX_d6g0v0_Cancun took: 0.507000s
+#2 TESTING sstore_XtoX_d6g1v0_Cancun FROM EthereumTests/BlockchainTests/GeneralStateTests/stSStoreTest/sstore_XtoX.json
+sstore_Xto0toY_d6g1v0_Cancun took: 0.513000s
+#6 TESTING sstore_Xto0toY_d7g0v0_Cancun FROM EthereumTests/BlockchainTests/GeneralStateTests/stSStoreTest/sstore_Xto0toY.json
+sstore_Xto0toX_d6g1v0_Cancun took: 0.521000s
+#4 TESTING sstore_Xto0toX_d7g0v0_Cancun FROM EthereumTests/BlockchainTests/GeneralStateTests/stSStoreTest/sstore_Xto0toX.json
+sstore_Xto0_d6g1v0_Cancun took: 0.514000s
+#5 TESTING sstore_Xto0_d7g0v0_Cancun FROM EthereumTests/BlockchainTests/GeneralStateTests/stSStoreTest/sstore_Xto0.json
+sstore_XtoXtoY_d9g0v0_Cancun took: 0.535000s
+#10 TESTING sstore_XtoXtoY_d9g1v0_Cancun FROM EthereumTests/BlockchainTests/GeneralStateTests/stSStoreTest/sstore_XtoXtoY.json
+sstore_0to0toX_d6g1v0_Cancun took: 0.512000s
+#8 TESTING sstore_0to0toX_d7g0v0_Cancun FROM EthereumTests/BlockchainTests/GeneralStateTests/stSStoreTest/sstore_0to0toX.json
+sstore_Xto0to0_d6g1v0_Cancun took: 0.529000s
+#11 TESTING sstore_Xto0to0_d7g0v0_Cancun FROM EthereumTests/BlockchainTests/GeneralStateTests/stSStoreTest/sstore_Xto0to0.json
+sstore_XtoX_d6g1v0_Cancun took: 0.489000s
+#2 TESTING sstore_XtoX_d7g0v0_Cancun FROM EthereumTests/BlockchainTests/GeneralStateTests/stSStoreTest/sstore_XtoX.json
+sstore_Xto0toY_d7g0v0_Cancun took: 0.510000s
+#6 TESTING sstore_Xto0toY_d7g1v0_Cancun FROM EthereumTests/BlockchainTests/GeneralStateTests/stSStoreTest/sstore_Xto0toY.json
+sstore_Xto0toX_d7g0v0_Cancun took: 0.555000s
+#4 TESTING sstore_Xto0toX_d7g1v0_Cancun FROM EthereumTests/BlockchainTests/GeneralStateTests/stSStoreTest/sstore_Xto0toX.json
+sstore_Xto0_d7g0v0_Cancun took: 0.543000s
+#5 TESTING sstore_Xto0_d7g1v0_Cancun FROM EthereumTests/BlockchainTests/GeneralStateTests/stSStoreTest/sstore_Xto0.json
+sstore_XtoXtoY_d9g1v0_Cancun took: 0.545000s
+sstore_0to0toX_d7g0v0_Cancun took: 0.542000s
+#8 TESTING sstore_0to0toX_d7g1v0_Cancun FROM EthereumTests/BlockchainTests/GeneralStateTests/stSStoreTest/sstore_0to0toX.json
+sstore_Xto0to0_d7g0v0_Cancun took: 0.520000s
+#11 TESTING sstore_Xto0to0_d7g1v0_Cancun FROM EthereumTests/BlockchainTests/GeneralStateTests/stSStoreTest/sstore_Xto0to0.json
+sstore_XtoX_d7g0v0_Cancun took: 0.535000s
+#2 TESTING sstore_XtoX_d7g1v0_Cancun FROM EthereumTests/BlockchainTests/GeneralStateTests/stSStoreTest/sstore_XtoX.json
+sstore_Xto0toY_d7g1v0_Cancun took: 0.485000s
+#6 TESTING sstore_Xto0toY_d8g0v0_Cancun FROM EthereumTests/BlockchainTests/GeneralStateTests/stSStoreTest/sstore_Xto0toY.json
+sstore_Xto0toX_d7g1v0_Cancun took: 0.496000s
+#4 TESTING sstore_Xto0toX_d8g0v0_Cancun FROM EthereumTests/BlockchainTests/GeneralStateTests/stSStoreTest/sstore_Xto0toX.json
+sstore_Xto0_d7g1v0_Cancun took: 0.497000s
+#5 TESTING sstore_Xto0_d8g0v0_Cancun FROM EthereumTests/BlockchainTests/GeneralStateTests/stSStoreTest/sstore_Xto0.json
+sstore_0to0toX_d7g1v0_Cancun took: 0.483000s
+#8 TESTING sstore_0to0toX_d8g0v0_Cancun FROM EthereumTests/BlockchainTests/GeneralStateTests/stSStoreTest/sstore_0to0toX.json
+sstore_Xto0to0_d7g1v0_Cancun took: 0.524000s
+#11 TESTING sstore_Xto0to0_d8g0v0_Cancun FROM EthereumTests/BlockchainTests/GeneralStateTests/stSStoreTest/sstore_Xto0to0.json
+sstore_XtoX_d7g1v0_Cancun took: 0.531000s
+#2 TESTING sstore_XtoX_d8g0v0_Cancun FROM EthereumTests/BlockchainTests/GeneralStateTests/stSStoreTest/sstore_XtoX.json
+sstore_Xto0toY_d8g0v0_Cancun took: 0.493000s
+#6 TESTING sstore_Xto0toY_d8g1v0_Cancun FROM EthereumTests/BlockchainTests/GeneralStateTests/stSStoreTest/sstore_Xto0toY.json
+sstore_Xto0toX_d8g0v0_Cancun took: 0.520000s
+#4 TESTING sstore_Xto0toX_d8g1v0_Cancun FROM EthereumTests/BlockchainTests/GeneralStateTests/stSStoreTest/sstore_Xto0toX.json
+sstore_Xto0_d8g0v0_Cancun took: 0.492000s
+#5 TESTING sstore_Xto0_d8g1v0_Cancun FROM EthereumTests/BlockchainTests/GeneralStateTests/stSStoreTest/sstore_Xto0.json
+sstore_0to0toX_d8g0v0_Cancun took: 0.495000s
+#8 TESTING sstore_0to0toX_d8g1v0_Cancun FROM EthereumTests/BlockchainTests/GeneralStateTests/stSStoreTest/sstore_0to0toX.json
+sstore_Xto0to0_d8g0v0_Cancun took: 0.521000s
+#11 TESTING sstore_Xto0to0_d8g1v0_Cancun FROM EthereumTests/BlockchainTests/GeneralStateTests/stSStoreTest/sstore_Xto0to0.json
+sstore_XtoX_d8g0v0_Cancun took: 0.516000s
+#2 TESTING sstore_XtoX_d8g1v0_Cancun FROM EthereumTests/BlockchainTests/GeneralStateTests/stSStoreTest/sstore_XtoX.json
+sstore_Xto0toY_d8g1v0_Cancun took: 0.517000s
+#6 TESTING sstore_Xto0toY_d9g0v0_Cancun FROM EthereumTests/BlockchainTests/GeneralStateTests/stSStoreTest/sstore_Xto0toY.json
+sstore_Xto0toX_d8g1v0_Cancun took: 0.486000s
+#4 TESTING sstore_Xto0toX_d9g0v0_Cancun FROM EthereumTests/BlockchainTests/GeneralStateTests/stSStoreTest/sstore_Xto0toX.json
+sstore_Xto0_d8g1v0_Cancun took: 0.461000s
+#5 TESTING sstore_Xto0_d9g0v0_Cancun FROM EthereumTests/BlockchainTests/GeneralStateTests/stSStoreTest/sstore_Xto0.json
+sstore_0to0toX_d8g1v0_Cancun took: 0.451000s
+#8 TESTING sstore_0to0toX_d9g0v0_Cancun FROM EthereumTests/BlockchainTests/GeneralStateTests/stSStoreTest/sstore_0to0toX.json
+sstore_Xto0to0_d8g1v0_Cancun took: 0.444000s
+#11 TESTING sstore_Xto0to0_d9g0v0_Cancun FROM EthereumTests/BlockchainTests/GeneralStateTests/stSStoreTest/sstore_Xto0to0.json
+sstore_XtoX_d8g1v0_Cancun took: 0.486000s
+#2 TESTING sstore_XtoX_d9g0v0_Cancun FROM EthereumTests/BlockchainTests/GeneralStateTests/stSStoreTest/sstore_XtoX.json
+sstore_Xto0toY_d9g0v0_Cancun took: 0.473000s
+#6 TESTING sstore_Xto0toY_d9g1v0_Cancun FROM EthereumTests/BlockchainTests/GeneralStateTests/stSStoreTest/sstore_Xto0toY.json
+sstore_Xto0_d9g0v0_Cancun took: 0.479000s
+#5 TESTING sstore_Xto0_d9g1v0_Cancun FROM EthereumTests/BlockchainTests/GeneralStateTests/stSStoreTest/sstore_Xto0.json
+sstore_Xto0toX_d9g0v0_Cancun took: 0.515000s
+#4 TESTING sstore_Xto0toX_d9g1v0_Cancun FROM EthereumTests/BlockchainTests/GeneralStateTests/stSStoreTest/sstore_Xto0toX.json
+sstore_0to0toX_d9g0v0_Cancun took: 0.457000s
+#8 TESTING sstore_0to0toX_d9g1v0_Cancun FROM EthereumTests/BlockchainTests/GeneralStateTests/stSStoreTest/sstore_0to0toX.json
+sstore_Xto0to0_d9g0v0_Cancun took: 0.522000s
+#11 TESTING sstore_Xto0to0_d9g1v0_Cancun FROM EthereumTests/BlockchainTests/GeneralStateTests/stSStoreTest/sstore_Xto0to0.json
+sstore_XtoX_d9g0v0_Cancun took: 0.478000s
+#2 TESTING sstore_XtoX_d9g1v0_Cancun FROM EthereumTests/BlockchainTests/GeneralStateTests/stSStoreTest/sstore_XtoX.json
+sstore_Xto0toY_d9g1v0_Cancun took: 0.465000s
+sstore_Xto0_d9g1v0_Cancun took: 0.462000s
+sstore_Xto0toX_d9g1v0_Cancun took: 0.459000s
+sstore_0to0toX_d9g1v0_Cancun took: 0.474000s
+sstore_Xto0to0_d9g1v0_Cancun took: 0.444000s
+sstore_XtoX_d9g1v0_Cancun took: 0.423000s

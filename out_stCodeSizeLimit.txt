@@ -1,0 +1,24 @@
+ℹ [2253/4496] Replayed Conform.Main
+info: ././././Conform/Main.lean:7:0: Task.{u} (α : Type u) : Type u
+Ξ_RIP160 failed: Not a hex digit: t
+Running tests on 5 threads.
+Running 5 files; 1 per thread.
+Patience is a virtue...
+#3 TESTING codesizeOOGInvalidSize_d0g0v0_Cancun FROM EthereumTests/BlockchainTests/GeneralStateTests/stCodeSizeLimit/codesizeOOGInvalidSize.json
+#4 TESTING codesizeInit_d0g0v0_Cancun FROM EthereumTests/BlockchainTests/GeneralStateTests/stCodeSizeLimit/codesizeInit.json
+#0 TESTING createCodeSizeLimit_d0g0v0_Cancun FROM EthereumTests/BlockchainTests/GeneralStateTests/stCodeSizeLimit/createCodeSizeLimit.json
+#1 TESTING create2CodeSizeLimit_d0g0v0_Cancun FROM EthereumTests/BlockchainTests/GeneralStateTests/stCodeSizeLimit/create2CodeSizeLimit.json
+#2 TESTING codesizeValid_d0g0v0_Cancun FROM EthereumTests/BlockchainTests/GeneralStateTests/stCodeSizeLimit/codesizeValid.json
+codesizeOOGInvalidSize_d0g0v0_Cancun took: 0.277000s
+#3 TESTING codesizeOOGInvalidSize_d1g0v0_Cancun FROM EthereumTests/BlockchainTests/GeneralStateTests/stCodeSizeLimit/codesizeOOGInvalidSize.json
+codesizeInit_d0g0v0_Cancun took: 0.338000s
+codesizeValid_d0g0v0_Cancun took: 0.333000s
+#2 TESTING codesizeValid_d1g0v0_Cancun FROM EthereumTests/BlockchainTests/GeneralStateTests/stCodeSizeLimit/codesizeValid.json
+create2CodeSizeLimit_d0g0v0_Cancun took: 0.357000s
+#1 TESTING create2CodeSizeLimit_d1g0v0_Cancun FROM EthereumTests/BlockchainTests/GeneralStateTests/stCodeSizeLimit/create2CodeSizeLimit.json
+createCodeSizeLimit_d0g0v0_Cancun took: 0.379000s
+#0 TESTING createCodeSizeLimit_d1g0v0_Cancun FROM EthereumTests/BlockchainTests/GeneralStateTests/stCodeSizeLimit/createCodeSizeLimit.json
+codesizeOOGInvalidSize_d1g0v0_Cancun took: 0.255000s
+codesizeValid_d1g0v0_Cancun took: 0.303000s
+create2CodeSizeLimit_d1g0v0_Cancun took: 0.295000s
+createCodeSizeLimit_d1g0v0_Cancun took: 0.308000s

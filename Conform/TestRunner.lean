@@ -531,8 +531,8 @@ def processBlocks
             | .MissedExpectedException _  => throw e
             | _ =>
               if rawBlock.exception.contains (repr e).pretty then
-                dbg_trace
-                  s!"Expected exception: {String.intercalate "|" rawBlock.exception}; got exception: {repr e}"
+                -- dbg_trace
+                --   s!"Expected exception: {String.intercalate "|" rawBlock.exception}; got exception: {repr e}"
                 pure accState
               else
                 throw e
@@ -648,11 +648,15 @@ instance (priority := high) : Repr PersistentAccountMap := ⟨λ m _ ↦
       for (sk, sv) in v.storage do
         result := result ++ s!"{sk} → {sv}\n"
     return result⟩
-
-def processTest (entry : TestEntry) (verbose : Bool := true) : TestResult := do
-  let result :=
-    preImpliesPost entry
-  match result with
+ 
+def processTest (testname : System.FilePath) (entry : TestEntry) (verbose : Bool := true) : IO TestResult := do
+  let tα ← IO.monoMsNow
+  let result := preImpliesPost entry
+  let tω ← IO.monoMsNow
+  -- let result ← timeit s!"{testname} took: " (pure (preImpliesPost entry)) -- WARNING: IO needed
+  dbg_trace s!"{testname} took: {(tω - tα).toFloat / 1000.0}s"
+  pure <|
+    match result with
     | .error err => .mkFailed s!"{repr err}"
     | .ok result => errorF <$> result
 
@@ -670,7 +674,8 @@ def processTest (entry : TestEntry) (verbose : Bool := true) : TestResult := do
 
 def processTestsOfFile (file : System.FilePath)
                        (whitelist : Array String := #[])
-                       (blacklist : Array String := #[]) :
+                       (blacklist : Array String := #[])
+                       (thread : ℕ := 0) :
                        ExceptT Exception IO (Batteries.RBMap String TestResult compare) := do
   let path := file
   let file ← Lean.Json.fromFile file
@@ -679,9 +684,9 @@ def processTestsOfFile (file : System.FilePath)
   let tests := testMap.toTests
   let cancunTests := guardCancun tests
   let tests := guardBlacklist ∘ guardWhitelist <| cancunTests
-  tests.foldlM (init := ∅) λ acc (testname, test) ↦
-    dbg_trace s!"TESTING {testname} FROM {path}"
-    pure <| acc.insert testname (processTest test)
+  tests.foldlM (init := ∅) λ acc (testname, test) ↦ do
+    dbg_trace s!"#{thread} TESTING {testname} FROM {path}"
+    pure <| acc.insert testname (←processTest testname test)
   where
     guardWhitelist (tests : List (String × TestEntry)) :=
       if whitelist.isEmpty then tests else tests.filter (λ (name, _) ↦ name ∈ whitelist)
@@ -690,14 +695,15 @@ def processTestsOfFile (file : System.FilePath)
     guardCancun (tests : List (String × TestEntry)) :=
       tests.filter (λ (_, test) ↦ test.network.take 6 == "Cancun")
 
-def processTestsOfFiles (files : Array System.FilePath)
+def processTestsOfFiles (thread : ℕ)
+                        (files : Array System.FilePath)
                         (whitelist : Array String := #[])
                         (blacklist : Array String := #[]) :
                         IO (Array System.FilePath × Array (Batteries.RBMap String TestResult compare × System.FilePath)) := do
   let mut discarded : Array System.FilePath := .empty
   let mut results : Array (Batteries.RBMap String TestResult compare × System.FilePath) := .empty
   for file in files do
-    let IOεresult := ExceptT.run <| EvmYul.Conform.processTestsOfFile file whitelist blacklist
+    let IOεresult := ExceptT.run <| EvmYul.Conform.processTestsOfFile file whitelist blacklist thread
     match ← IOεresult with
       | .error ε => discarded := discarded.push ε.toFilePath
       | .ok res => results := results.push (res, file)

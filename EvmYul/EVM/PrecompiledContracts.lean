@@ -440,7 +440,6 @@ def Ξ_BLAKE2_F
     :
   (Bool × AccountMap × UInt256 × Substate × ByteArray)
 :=
-  -- dbg_trace "blake called"
   let d := I.inputData
   let gᵣ : ℕ := fromByteArrayBigEndian (d.extract 0 4)
 

@@ -1,0 +1,53 @@
+ℹ [4494/4496] Built Conform.Main
+info: ././././Conform/Main.lean:7:0: Task.{u} (α : Type u) : Type u
+✔ [4495/4496] Built Conform.Main:c.o
+✔ [4496/4496] Built conform
+Running tests on 16 threads.
+Running 18 files; 1 per thread.
+Patience is a virtue...
+#0 TESTING RecursiveCreateContractsCreate4Contracts_d0g0v0_Cancun FROM EthereumTests/BlockchainTests/GeneralStateTests/stSolidityTest/RecursiveCreateContractsCreate4Contracts.json
+#10 TESTING CallInfiniteLoop_d0g0v0_Cancun FROM EthereumTests/BlockchainTests/GeneralStateTests/stSolidityTest/CallInfiniteLoop.json
+#8 TESTING CallLowLevelCreatesSolidity_d0g0v0_Cancun FROM EthereumTests/BlockchainTests/GeneralStateTests/stSolidityTest/CallLowLevelCreatesSolidity.json
+#4 TESTING CallRecursiveMethods_d0g0v0_Cancun FROM EthereumTests/BlockchainTests/GeneralStateTests/stSolidityTest/CallRecursiveMethods.json
+#1 TESTING TestOverflow_d0g0v0_Cancun FROM EthereumTests/BlockchainTests/GeneralStateTests/stSolidityTest/TestOverflow.json
+#6 TESTING TestBlockAndTransactionProperties_d0g0v0_Cancun FROM EthereumTests/BlockchainTests/GeneralStateTests/stSolidityTest/TestBlockAndTransactionProperties.json
+#9 TESTING TestCryptographicFunctions_d0g0v0_Cancun FROM EthereumTests/BlockchainTests/GeneralStateTests/stSolidityTest/TestCryptographicFunctions.json
+#12 TESTING TestContractSuicide_d0g0v0_Cancun FROM EthereumTests/BlockchainTests/GeneralStateTests/stSolidityTest/TestContractSuicide.json
+#3 TESTING CreateContractFromMethod_d0g0v0_Cancun FROM EthereumTests/BlockchainTests/GeneralStateTests/stSolidityTest/CreateContractFromMethod.json
+#5 TESTING ContractInheritance_d0g0v0_Cancun FROM EthereumTests/BlockchainTests/GeneralStateTests/stSolidityTest/ContractInheritance.json
+#7 TESTING TestStoreGasPrices_d0g0v0_Cancun FROM EthereumTests/BlockchainTests/GeneralStateTests/stSolidityTest/TestStoreGasPrices.json
+#13 TESTING TestContractInteraction_d0g0v0_Cancun FROM EthereumTests/BlockchainTests/GeneralStateTests/stSolidityTest/TestContractInteraction.json
+#14 TESTING TestKeywords_d0g0v0_Cancun FROM EthereumTests/BlockchainTests/GeneralStateTests/stSolidityTest/TestKeywords.json
+#15 TESTING AmbiguousMethod_d0g0v0_Cancun FROM EthereumTests/BlockchainTests/GeneralStateTests/stSolidityTest/AmbiguousMethod.json
+#11 TESTING ByZero_d0g0v0_Cancun FROM EthereumTests/BlockchainTests/GeneralStateTests/stSolidityTest/ByZero.json
+#2 TESTING SelfDestruct_d0g0v0_Cancun FROM EthereumTests/BlockchainTests/GeneralStateTests/stSolidityTest/SelfDestruct.json
+TestBlockAndTransactionProperties_d0g0v0_Cancun took: 0.620000s
+TestOverflow_d0g0v0_Cancun took: 0.627000s
+TestStoreGasPrices_d0g0v0_Cancun took: 0.639000s
+TestContractSuicide_d0g0v0_Cancun took: 0.656000s
+AmbiguousMethod_d0g0v0_Cancun took: 0.644000s
+#15 TESTING RecursiveCreateContracts_d0g0v0_Cancun FROM EthereumTests/BlockchainTests/GeneralStateTests/stSolidityTest/RecursiveCreateContracts.json
+ByZero_d0g0v0_Cancun took: 0.655000s
+#11 TESTING ByZero_d1g0v0_Cancun FROM EthereumTests/BlockchainTests/GeneralStateTests/stSolidityTest/ByZero.json
+TestKeywords_d0g0v0_Cancun took: 0.674000s
+CallLowLevelCreatesSolidity_d0g0v0_Cancun took: 0.716000s
+TestContractInteraction_d0g0v0_Cancun took: 0.731000s
+CreateContractFromMethod_d0g0v0_Cancun took: 0.743000s
+CallRecursiveMethods_d0g0v0_Cancun took: 0.784000s
+ContractInheritance_d0g0v0_Cancun took: 0.801000s
+TestCryptographicFunctions_d0g0v0_Cancun took: 0.816000s
+RecursiveCreateContractsCreate4Contracts_d0g0v0_Cancun took: 0.906000s
+SelfDestruct_d0g0v0_Cancun took: 0.997000s
+#2 TESTING SelfDestruct_d1g0v0_Cancun FROM EthereumTests/BlockchainTests/GeneralStateTests/stSolidityTest/SelfDestruct.json
+ByZero_d1g0v0_Cancun took: 0.362000s
+#11 TESTING ByZero_d2g0v0_Cancun FROM EthereumTests/BlockchainTests/GeneralStateTests/stSolidityTest/ByZero.json
+RecursiveCreateContracts_d0g0v0_Cancun took: 0.408000s
+#15 TESTING TestStructuresAndVariabless_d0g0v0_Cancun FROM EthereumTests/BlockchainTests/GeneralStateTests/stSolidityTest/TestStructuresAndVariabless.json
+CallInfiniteLoop_d0g0v0_Cancun took: 1.141000s
+ByZero_d2g0v0_Cancun took: 0.306000s
+#11 TESTING ByZero_d3g0v0_Cancun FROM EthereumTests/BlockchainTests/GeneralStateTests/stSolidityTest/ByZero.json
+TestStructuresAndVariabless_d0g0v0_Cancun took: 0.320000s
+ByZero_d3g0v0_Cancun took: 0.296000s
+SelfDestruct_d1g0v0_Cancun took: 0.615000s
+#2 TESTING SelfDestruct_d2g0v0_Cancun FROM EthereumTests/BlockchainTests/GeneralStateTests/stSolidityTest/SelfDestruct.json
+SelfDestruct_d2g0v0_Cancun took: 0.574000s

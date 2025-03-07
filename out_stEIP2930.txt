@@ -1,0 +1,287 @@
+ℹ [4494/4496] Built Conform.Main
+info: ././././Conform/Main.lean:7:0: Task.{u} (α : Type u) : Type u
+✔ [4495/4496] Built Conform.Main:c.o
+✔ [4496/4496] Built conform
+Running tests on 7 threads.
+Running 7 files; 1 per thread.
+Patience is a virtue...
+#2 TESTING manualCreate_d0g0v0_Cancun FROM EthereumTests/BlockchainTests/GeneralStateTests/stEIP2930/manualCreate.json
+#3 TESTING coinbaseT01_d0g0v0_Cancun FROM EthereumTests/BlockchainTests/GeneralStateTests/stEIP2930/coinbaseT01.json
+#6 TESTING coinbaseT2_d0g0v0_Cancun FROM EthereumTests/BlockchainTests/GeneralStateTests/stEIP2930/coinbaseT2.json
+#1 TESTING transactionCosts_d0g0v0_Cancun FROM EthereumTests/BlockchainTests/GeneralStateTests/stEIP2930/transactionCosts.json
+#0 TESTING addressOpcodes_d0g0v0_Cancun FROM EthereumTests/BlockchainTests/GeneralStateTests/stEIP2930/addressOpcodes.json
+#5 TESTING storageCosts_d0g0v0_Cancun FROM EthereumTests/BlockchainTests/GeneralStateTests/stEIP2930/storageCosts.json
+#4 TESTING variedContext_d0g0v0_Cancun FROM EthereumTests/BlockchainTests/GeneralStateTests/stEIP2930/variedContext.json
+manualCreate_d0g0v0_Cancun took: 0.471000s
+#2 TESTING manualCreate_d1g0v0_Cancun FROM EthereumTests/BlockchainTests/GeneralStateTests/stEIP2930/manualCreate.json
+transactionCosts_d0g0v0_Cancun took: 0.460000s
+#1 TESTING transactionCosts_d10g0v0_Cancun FROM EthereumTests/BlockchainTests/GeneralStateTests/stEIP2930/transactionCosts.json
+coinbaseT2_d0g0v0_Cancun took: 0.550000s
+#6 TESTING coinbaseT2_d1g0v0_Cancun FROM EthereumTests/BlockchainTests/GeneralStateTests/stEIP2930/coinbaseT2.json
+coinbaseT01_d0g0v0_Cancun took: 0.561000s
+#3 TESTING coinbaseT01_d1g0v0_Cancun FROM EthereumTests/BlockchainTests/GeneralStateTests/stEIP2930/coinbaseT01.json
+addressOpcodes_d0g0v0_Cancun took: 0.563000s
+#0 TESTING addressOpcodes_d10g0v0_Cancun FROM EthereumTests/BlockchainTests/GeneralStateTests/stEIP2930/addressOpcodes.json
+transactionCosts_d10g0v0_Cancun took: 0.441000s
+#1 TESTING transactionCosts_d11g0v0_Cancun FROM EthereumTests/BlockchainTests/GeneralStateTests/stEIP2930/transactionCosts.json
+manualCreate_d1g0v0_Cancun took: 0.481000s
+#2 TESTING manualCreate_d2g0v0_Cancun FROM EthereumTests/BlockchainTests/GeneralStateTests/stEIP2930/manualCreate.json
+coinbaseT01_d1g0v0_Cancun took: 0.536000s
+#3 TESTING coinbaseT01_d2g0v0_Cancun FROM EthereumTests/BlockchainTests/GeneralStateTests/stEIP2930/coinbaseT01.json
+coinbaseT2_d1g0v0_Cancun took: 0.565000s
+addressOpcodes_d10g0v0_Cancun took: 0.537000s
+#0 TESTING addressOpcodes_d11g0v0_Cancun FROM EthereumTests/BlockchainTests/GeneralStateTests/stEIP2930/addressOpcodes.json
+storageCosts_d0g0v0_Cancun took: 1.172000s
+#5 TESTING storageCosts_d10g0v0_Cancun FROM EthereumTests/BlockchainTests/GeneralStateTests/stEIP2930/storageCosts.json
+transactionCosts_d11g0v0_Cancun took: 0.411000s
+#1 TESTING transactionCosts_d1g0v0_Cancun FROM EthereumTests/BlockchainTests/GeneralStateTests/stEIP2930/transactionCosts.json
+manualCreate_d2g0v0_Cancun took: 0.396000s
+coinbaseT01_d2g0v0_Cancun took: 0.416000s
+addressOpcodes_d11g0v0_Cancun took: 0.399000s
+#0 TESTING addressOpcodes_d12g0v0_Cancun FROM EthereumTests/BlockchainTests/GeneralStateTests/stEIP2930/addressOpcodes.json
+transactionCosts_d1g0v0_Cancun took: 0.330000s
+#1 TESTING transactionCosts_d2g0v0_Cancun FROM EthereumTests/BlockchainTests/GeneralStateTests/stEIP2930/transactionCosts.json
+addressOpcodes_d12g0v0_Cancun took: 0.368000s
+#0 TESTING addressOpcodes_d13g0v0_Cancun FROM EthereumTests/BlockchainTests/GeneralStateTests/stEIP2930/addressOpcodes.json
+transactionCosts_d2g0v0_Cancun took: 0.311000s
+#1 TESTING transactionCosts_d3g0v0_Cancun FROM EthereumTests/BlockchainTests/GeneralStateTests/stEIP2930/transactionCosts.json
+storageCosts_d10g0v0_Cancun took: 0.869000s
+#5 TESTING storageCosts_d11g0v0_Cancun FROM EthereumTests/BlockchainTests/GeneralStateTests/stEIP2930/storageCosts.json
+variedContext_d0g0v0_Cancun took: 1.987000s
+#4 TESTING variedContext_d10g0v0_Cancun FROM EthereumTests/BlockchainTests/GeneralStateTests/stEIP2930/variedContext.json
+transactionCosts_d3g0v0_Cancun took: 0.301000s
+#1 TESTING transactionCosts_d4g0v0_Cancun FROM EthereumTests/BlockchainTests/GeneralStateTests/stEIP2930/transactionCosts.json
+addressOpcodes_d13g0v0_Cancun took: 0.366000s
+#0 TESTING addressOpcodes_d14g0v0_Cancun FROM EthereumTests/BlockchainTests/GeneralStateTests/stEIP2930/addressOpcodes.json
+transactionCosts_d4g0v0_Cancun took: 0.313000s
+#1 TESTING transactionCosts_d5g0v0_Cancun FROM EthereumTests/BlockchainTests/GeneralStateTests/stEIP2930/transactionCosts.json
+addressOpcodes_d14g0v0_Cancun took: 0.376000s
+#0 TESTING addressOpcodes_d15g0v0_Cancun FROM EthereumTests/BlockchainTests/GeneralStateTests/stEIP2930/addressOpcodes.json
+transactionCosts_d5g0v0_Cancun took: 0.321000s
+#1 TESTING transactionCosts_d6g0v0_Cancun FROM EthereumTests/BlockchainTests/GeneralStateTests/stEIP2930/transactionCosts.json
+storageCosts_d11g0v0_Cancun took: 0.876000s
+#5 TESTING storageCosts_d12g0v0_Cancun FROM EthereumTests/BlockchainTests/GeneralStateTests/stEIP2930/storageCosts.json
+addressOpcodes_d15g0v0_Cancun took: 0.402000s
+#0 TESTING addressOpcodes_d16g0v0_Cancun FROM EthereumTests/BlockchainTests/GeneralStateTests/stEIP2930/addressOpcodes.json
+transactionCosts_d6g0v0_Cancun took: 0.372000s
+#1 TESTING transactionCosts_d7g0v0_Cancun FROM EthereumTests/BlockchainTests/GeneralStateTests/stEIP2930/transactionCosts.json
+addressOpcodes_d16g0v0_Cancun took: 0.422000s
+#0 TESTING addressOpcodes_d17g0v0_Cancun FROM EthereumTests/BlockchainTests/GeneralStateTests/stEIP2930/addressOpcodes.json
+transactionCosts_d7g0v0_Cancun took: 0.374000s
+#1 TESTING transactionCosts_d8g0v0_Cancun FROM EthereumTests/BlockchainTests/GeneralStateTests/stEIP2930/transactionCosts.json
+variedContext_d10g0v0_Cancun took: 1.786000s
+#4 TESTING variedContext_d11g0v0_Cancun FROM EthereumTests/BlockchainTests/GeneralStateTests/stEIP2930/variedContext.json
+storageCosts_d12g0v0_Cancun took: 0.927000s
+addressOpcodes_d17g0v0_Cancun took: 0.417000s
+#5 TESTING storageCosts_d13g0v0_Cancun FROM EthereumTests/BlockchainTests/GeneralStateTests/stEIP2930/storageCosts.json
+#0 TESTING addressOpcodes_d18g0v0_Cancun FROM EthereumTests/BlockchainTests/GeneralStateTests/stEIP2930/addressOpcodes.json
+transactionCosts_d8g0v0_Cancun took: 0.325000s
+#1 TESTING transactionCosts_d9g0v0_Cancun FROM EthereumTests/BlockchainTests/GeneralStateTests/stEIP2930/transactionCosts.json
+addressOpcodes_d18g0v0_Cancun took: 0.388000s
+#0 TESTING addressOpcodes_d19g0v0_Cancun FROM EthereumTests/BlockchainTests/GeneralStateTests/stEIP2930/addressOpcodes.json
+transactionCosts_d9g0v0_Cancun took: 0.341000s
+addressOpcodes_d19g0v0_Cancun took: 0.383000s
+#0 TESTING addressOpcodes_d1g0v0_Cancun FROM EthereumTests/BlockchainTests/GeneralStateTests/stEIP2930/addressOpcodes.json
+storageCosts_d13g0v0_Cancun took: 0.893000s
+#5 TESTING storageCosts_d14g0v0_Cancun FROM EthereumTests/BlockchainTests/GeneralStateTests/stEIP2930/storageCosts.json
+addressOpcodes_d1g0v0_Cancun took: 0.359000s
+#0 TESTING addressOpcodes_d20g0v0_Cancun FROM EthereumTests/BlockchainTests/GeneralStateTests/stEIP2930/addressOpcodes.json
+addressOpcodes_d20g0v0_Cancun took: 0.410000s
+#0 TESTING addressOpcodes_d21g0v0_Cancun FROM EthereumTests/BlockchainTests/GeneralStateTests/stEIP2930/addressOpcodes.json
+variedContext_d11g0v0_Cancun took: 1.763000s
+#4 TESTING variedContext_d12g0v0_Cancun FROM EthereumTests/BlockchainTests/GeneralStateTests/stEIP2930/variedContext.json
+storageCosts_d14g0v0_Cancun took: 0.852000s
+#5 TESTING storageCosts_d15g0v0_Cancun FROM EthereumTests/BlockchainTests/GeneralStateTests/stEIP2930/storageCosts.json
+addressOpcodes_d21g0v0_Cancun took: 0.365000s
+#0 TESTING addressOpcodes_d22g0v0_Cancun FROM EthereumTests/BlockchainTests/GeneralStateTests/stEIP2930/addressOpcodes.json
+addressOpcodes_d22g0v0_Cancun took: 0.408000s
+#0 TESTING addressOpcodes_d23g0v0_Cancun FROM EthereumTests/BlockchainTests/GeneralStateTests/stEIP2930/addressOpcodes.json
+storageCosts_d15g0v0_Cancun took: 0.856000s
+#5 TESTING storageCosts_d16g0v0_Cancun FROM EthereumTests/BlockchainTests/GeneralStateTests/stEIP2930/storageCosts.json
+addressOpcodes_d23g0v0_Cancun took: 0.359000s
+#0 TESTING addressOpcodes_d24g0v0_Cancun FROM EthereumTests/BlockchainTests/GeneralStateTests/stEIP2930/addressOpcodes.json
+addressOpcodes_d24g0v0_Cancun took: 0.366000s
+#0 TESTING addressOpcodes_d25g0v0_Cancun FROM EthereumTests/BlockchainTests/GeneralStateTests/stEIP2930/addressOpcodes.json
+addressOpcodes_d25g0v0_Cancun took: 0.348000s
+#0 TESTING addressOpcodes_d26g0v0_Cancun FROM EthereumTests/BlockchainTests/GeneralStateTests/stEIP2930/addressOpcodes.json
+storageCosts_d16g0v0_Cancun took: 0.828000s
+#5 TESTING storageCosts_d17g0v0_Cancun FROM EthereumTests/BlockchainTests/GeneralStateTests/stEIP2930/storageCosts.json
+variedContext_d12g0v0_Cancun took: 1.735000s
+#4 TESTING variedContext_d13g0v0_Cancun FROM EthereumTests/BlockchainTests/GeneralStateTests/stEIP2930/variedContext.json
+addressOpcodes_d26g0v0_Cancun took: 0.389000s
+#0 TESTING addressOpcodes_d27g0v0_Cancun FROM EthereumTests/BlockchainTests/GeneralStateTests/stEIP2930/addressOpcodes.json
+addressOpcodes_d27g0v0_Cancun took: 0.338000s
+#0 TESTING addressOpcodes_d28g0v0_Cancun FROM EthereumTests/BlockchainTests/GeneralStateTests/stEIP2930/addressOpcodes.json
+storageCosts_d17g0v0_Cancun took: 0.831000s
+#5 TESTING storageCosts_d18g0v0_Cancun FROM EthereumTests/BlockchainTests/GeneralStateTests/stEIP2930/storageCosts.json
+addressOpcodes_d28g0v0_Cancun took: 0.345000s
+#0 TESTING addressOpcodes_d29g0v0_Cancun FROM EthereumTests/BlockchainTests/GeneralStateTests/stEIP2930/addressOpcodes.json
+addressOpcodes_d29g0v0_Cancun took: 0.365000s
+#0 TESTING addressOpcodes_d2g0v0_Cancun FROM EthereumTests/BlockchainTests/GeneralStateTests/stEIP2930/addressOpcodes.json
+storageCosts_d18g0v0_Cancun took: 0.765000s
+#5 TESTING storageCosts_d19g0v0_Cancun FROM EthereumTests/BlockchainTests/GeneralStateTests/stEIP2930/storageCosts.json
+variedContext_d13g0v0_Cancun took: 1.615000s
+#4 TESTING variedContext_d14g0v0_Cancun FROM EthereumTests/BlockchainTests/GeneralStateTests/stEIP2930/variedContext.json
+addressOpcodes_d2g0v0_Cancun took: 0.340000s
+#0 TESTING addressOpcodes_d30g0v0_Cancun FROM EthereumTests/BlockchainTests/GeneralStateTests/stEIP2930/addressOpcodes.json
+addressOpcodes_d30g0v0_Cancun took: 0.333000s
+#0 TESTING addressOpcodes_d31g0v0_Cancun FROM EthereumTests/BlockchainTests/GeneralStateTests/stEIP2930/addressOpcodes.json
+storageCosts_d19g0v0_Cancun took: 0.746000s
+#5 TESTING storageCosts_d1g0v0_Cancun FROM EthereumTests/BlockchainTests/GeneralStateTests/stEIP2930/storageCosts.json
+addressOpcodes_d31g0v0_Cancun took: 0.342000s
+#0 TESTING addressOpcodes_d32g0v0_Cancun FROM EthereumTests/BlockchainTests/GeneralStateTests/stEIP2930/addressOpcodes.json
+addressOpcodes_d32g0v0_Cancun took: 0.333000s
+#0 TESTING addressOpcodes_d33g0v0_Cancun FROM EthereumTests/BlockchainTests/GeneralStateTests/stEIP2930/addressOpcodes.json
+addressOpcodes_d33g0v0_Cancun took: 0.347000s
+#0 TESTING addressOpcodes_d34g0v0_Cancun FROM EthereumTests/BlockchainTests/GeneralStateTests/stEIP2930/addressOpcodes.json
+storageCosts_d1g0v0_Cancun took: 0.758000s
+#5 TESTING storageCosts_d20g0v0_Cancun FROM EthereumTests/BlockchainTests/GeneralStateTests/stEIP2930/storageCosts.json
+variedContext_d14g0v0_Cancun took: 1.518000s
+#4 TESTING variedContext_d15g0v0_Cancun FROM EthereumTests/BlockchainTests/GeneralStateTests/stEIP2930/variedContext.json
+addressOpcodes_d34g0v0_Cancun took: 0.337000s
+#0 TESTING addressOpcodes_d35g0v0_Cancun FROM EthereumTests/BlockchainTests/GeneralStateTests/stEIP2930/addressOpcodes.json
+addressOpcodes_d35g0v0_Cancun took: 0.343000s
+#0 TESTING addressOpcodes_d36g0v0_Cancun FROM EthereumTests/BlockchainTests/GeneralStateTests/stEIP2930/addressOpcodes.json
+storageCosts_d20g0v0_Cancun took: 0.753000s
+#5 TESTING storageCosts_d21g0v0_Cancun FROM EthereumTests/BlockchainTests/GeneralStateTests/stEIP2930/storageCosts.json
+addressOpcodes_d36g0v0_Cancun took: 0.355000s
+#0 TESTING addressOpcodes_d37g0v0_Cancun FROM EthereumTests/BlockchainTests/GeneralStateTests/stEIP2930/addressOpcodes.json
+addressOpcodes_d37g0v0_Cancun took: 0.334000s
+#0 TESTING addressOpcodes_d38g0v0_Cancun FROM EthereumTests/BlockchainTests/GeneralStateTests/stEIP2930/addressOpcodes.json
+storageCosts_d21g0v0_Cancun took: 0.762000s
+#5 TESTING storageCosts_d22g0v0_Cancun FROM EthereumTests/BlockchainTests/GeneralStateTests/stEIP2930/storageCosts.json
+variedContext_d15g0v0_Cancun took: 1.521000s
+#4 TESTING variedContext_d16g0v0_Cancun FROM EthereumTests/BlockchainTests/GeneralStateTests/stEIP2930/variedContext.json
+addressOpcodes_d38g0v0_Cancun took: 0.338000s
+#0 TESTING addressOpcodes_d39g0v0_Cancun FROM EthereumTests/BlockchainTests/GeneralStateTests/stEIP2930/addressOpcodes.json
+addressOpcodes_d39g0v0_Cancun took: 0.356000s
+#0 TESTING addressOpcodes_d3g0v0_Cancun FROM EthereumTests/BlockchainTests/GeneralStateTests/stEIP2930/addressOpcodes.json
+storageCosts_d22g0v0_Cancun took: 0.808000s
+#5 TESTING storageCosts_d23g0v0_Cancun FROM EthereumTests/BlockchainTests/GeneralStateTests/stEIP2930/storageCosts.json
+addressOpcodes_d3g0v0_Cancun took: 0.374000s
+#0 TESTING addressOpcodes_d40g0v0_Cancun FROM EthereumTests/BlockchainTests/GeneralStateTests/stEIP2930/addressOpcodes.json
+addressOpcodes_d40g0v0_Cancun took: 0.359000s
+#0 TESTING addressOpcodes_d41g0v0_Cancun FROM EthereumTests/BlockchainTests/GeneralStateTests/stEIP2930/addressOpcodes.json
+storageCosts_d23g0v0_Cancun took: 0.767000s
+#5 TESTING storageCosts_d24g0v0_Cancun FROM EthereumTests/BlockchainTests/GeneralStateTests/stEIP2930/storageCosts.json
+addressOpcodes_d41g0v0_Cancun took: 0.343000s
+#0 TESTING addressOpcodes_d42g0v0_Cancun FROM EthereumTests/BlockchainTests/GeneralStateTests/stEIP2930/addressOpcodes.json
+variedContext_d16g0v0_Cancun took: 1.563000s
+#4 TESTING variedContext_d17g0v0_Cancun FROM EthereumTests/BlockchainTests/GeneralStateTests/stEIP2930/variedContext.json
+addressOpcodes_d42g0v0_Cancun took: 0.339000s
+#0 TESTING addressOpcodes_d43g0v0_Cancun FROM EthereumTests/BlockchainTests/GeneralStateTests/stEIP2930/addressOpcodes.json
+addressOpcodes_d43g0v0_Cancun took: 0.352000s
+#0 TESTING addressOpcodes_d44g0v0_Cancun FROM EthereumTests/BlockchainTests/GeneralStateTests/stEIP2930/addressOpcodes.json
+storageCosts_d24g0v0_Cancun took: 0.744000s
+#5 TESTING storageCosts_d25g0v0_Cancun FROM EthereumTests/BlockchainTests/GeneralStateTests/stEIP2930/storageCosts.json
+addressOpcodes_d44g0v0_Cancun took: 0.338000s
+#0 TESTING addressOpcodes_d45g0v0_Cancun FROM EthereumTests/BlockchainTests/GeneralStateTests/stEIP2930/addressOpcodes.json
+addressOpcodes_d45g0v0_Cancun took: 0.336000s
+#0 TESTING addressOpcodes_d46g0v0_Cancun FROM EthereumTests/BlockchainTests/GeneralStateTests/stEIP2930/addressOpcodes.json
+storageCosts_d25g0v0_Cancun took: 0.755000s
+#5 TESTING storageCosts_d26g0v0_Cancun FROM EthereumTests/BlockchainTests/GeneralStateTests/stEIP2930/storageCosts.json
+variedContext_d17g0v0_Cancun took: 1.508000s
+#4 TESTING variedContext_d18g0v0_Cancun FROM EthereumTests/BlockchainTests/GeneralStateTests/stEIP2930/variedContext.json
+addressOpcodes_d46g0v0_Cancun took: 0.340000s
+#0 TESTING addressOpcodes_d47g0v0_Cancun FROM EthereumTests/BlockchainTests/GeneralStateTests/stEIP2930/addressOpcodes.json
+addressOpcodes_d47g0v0_Cancun took: 0.342000s
+#0 TESTING addressOpcodes_d4g0v0_Cancun FROM EthereumTests/BlockchainTests/GeneralStateTests/stEIP2930/addressOpcodes.json
+storageCosts_d26g0v0_Cancun took: 0.747000s
+#5 TESTING storageCosts_d27g0v0_Cancun FROM EthereumTests/BlockchainTests/GeneralStateTests/stEIP2930/storageCosts.json
+addressOpcodes_d4g0v0_Cancun took: 0.353000s
+#0 TESTING addressOpcodes_d5g0v0_Cancun FROM EthereumTests/BlockchainTests/GeneralStateTests/stEIP2930/addressOpcodes.json
+addressOpcodes_d5g0v0_Cancun took: 0.348000s
+#0 TESTING addressOpcodes_d6g0v0_Cancun FROM EthereumTests/BlockchainTests/GeneralStateTests/stEIP2930/addressOpcodes.json
+storageCosts_d27g0v0_Cancun took: 0.758000s
+#5 TESTING storageCosts_d28g0v0_Cancun FROM EthereumTests/BlockchainTests/GeneralStateTests/stEIP2930/storageCosts.json
+variedContext_d18g0v0_Cancun took: 1.507000s
+#4 TESTING variedContext_d19g0v0_Cancun FROM EthereumTests/BlockchainTests/GeneralStateTests/stEIP2930/variedContext.json
+addressOpcodes_d6g0v0_Cancun took: 0.347000s
+#0 TESTING addressOpcodes_d7g0v0_Cancun FROM EthereumTests/BlockchainTests/GeneralStateTests/stEIP2930/addressOpcodes.json
+addressOpcodes_d7g0v0_Cancun took: 0.336000s
+#0 TESTING addressOpcodes_d8g0v0_Cancun FROM EthereumTests/BlockchainTests/GeneralStateTests/stEIP2930/addressOpcodes.json
+storageCosts_d28g0v0_Cancun took: 0.777000s
+#5 TESTING storageCosts_d29g0v0_Cancun FROM EthereumTests/BlockchainTests/GeneralStateTests/stEIP2930/storageCosts.json
+addressOpcodes_d8g0v0_Cancun took: 0.371000s
+#0 TESTING addressOpcodes_d9g0v0_Cancun FROM EthereumTests/BlockchainTests/GeneralStateTests/stEIP2930/addressOpcodes.json
+addressOpcodes_d9g0v0_Cancun took: 0.339000s
+storageCosts_d29g0v0_Cancun took: 0.756000s
+#5 TESTING storageCosts_d2g0v0_Cancun FROM EthereumTests/BlockchainTests/GeneralStateTests/stEIP2930/storageCosts.json
+variedContext_d19g0v0_Cancun took: 1.519000s
+#4 TESTING variedContext_d1g0v0_Cancun FROM EthereumTests/BlockchainTests/GeneralStateTests/stEIP2930/variedContext.json
+storageCosts_d2g0v0_Cancun took: 0.766000s
+#5 TESTING storageCosts_d30g0v0_Cancun FROM EthereumTests/BlockchainTests/GeneralStateTests/stEIP2930/storageCosts.json
+storageCosts_d30g0v0_Cancun took: 0.840000s
+#5 TESTING storageCosts_d31g0v0_Cancun FROM EthereumTests/BlockchainTests/GeneralStateTests/stEIP2930/storageCosts.json
+variedContext_d1g0v0_Cancun took: 1.579000s
+#4 TESTING variedContext_d20g0v0_Cancun FROM EthereumTests/BlockchainTests/GeneralStateTests/stEIP2930/variedContext.json
+storageCosts_d31g0v0_Cancun took: 0.765000s
+#5 TESTING storageCosts_d32g0v0_Cancun FROM EthereumTests/BlockchainTests/GeneralStateTests/stEIP2930/storageCosts.json
+storageCosts_d32g0v0_Cancun took: 0.759000s
+#5 TESTING storageCosts_d33g0v0_Cancun FROM EthereumTests/BlockchainTests/GeneralStateTests/stEIP2930/storageCosts.json
+variedContext_d20g0v0_Cancun took: 1.508000s
+#4 TESTING variedContext_d21g0v0_Cancun FROM EthereumTests/BlockchainTests/GeneralStateTests/stEIP2930/variedContext.json
+storageCosts_d33g0v0_Cancun took: 0.744000s
+#5 TESTING storageCosts_d34g0v0_Cancun FROM EthereumTests/BlockchainTests/GeneralStateTests/stEIP2930/storageCosts.json
+storageCosts_d34g0v0_Cancun took: 0.738000s
+#5 TESTING storageCosts_d35g0v0_Cancun FROM EthereumTests/BlockchainTests/GeneralStateTests/stEIP2930/storageCosts.json
+variedContext_d21g0v0_Cancun took: 1.486000s
+#4 TESTING variedContext_d22g0v0_Cancun FROM EthereumTests/BlockchainTests/GeneralStateTests/stEIP2930/variedContext.json
+storageCosts_d35g0v0_Cancun took: 0.754000s
+#5 TESTING storageCosts_d3g0v0_Cancun FROM EthereumTests/BlockchainTests/GeneralStateTests/stEIP2930/storageCosts.json
+storageCosts_d3g0v0_Cancun took: 0.782000s
+#5 TESTING storageCosts_d4g0v0_Cancun FROM EthereumTests/BlockchainTests/GeneralStateTests/stEIP2930/storageCosts.json
+variedContext_d22g0v0_Cancun took: 1.561000s
+#4 TESTING variedContext_d23g0v0_Cancun FROM EthereumTests/BlockchainTests/GeneralStateTests/stEIP2930/variedContext.json
+storageCosts_d4g0v0_Cancun took: 0.740000s
+#5 TESTING storageCosts_d5g0v0_Cancun FROM EthereumTests/BlockchainTests/GeneralStateTests/stEIP2930/storageCosts.json
+storageCosts_d5g0v0_Cancun took: 0.738000s
+#5 TESTING storageCosts_d6g0v0_Cancun FROM EthereumTests/BlockchainTests/GeneralStateTests/stEIP2930/storageCosts.json
+variedContext_d23g0v0_Cancun took: 1.512000s
+#4 TESTING variedContext_d24g0v0_Cancun FROM EthereumTests/BlockchainTests/GeneralStateTests/stEIP2930/variedContext.json
+storageCosts_d6g0v0_Cancun took: 0.729000s
+#5 TESTING storageCosts_d7g0v0_Cancun FROM EthereumTests/BlockchainTests/GeneralStateTests/stEIP2930/storageCosts.json
+storageCosts_d7g0v0_Cancun took: 0.736000s
+#5 TESTING storageCosts_d8g0v0_Cancun FROM EthereumTests/BlockchainTests/GeneralStateTests/stEIP2930/storageCosts.json
+variedContext_d24g0v0_Cancun took: 1.513000s
+#4 TESTING variedContext_d25g0v0_Cancun FROM EthereumTests/BlockchainTests/GeneralStateTests/stEIP2930/variedContext.json
+storageCosts_d8g0v0_Cancun took: 0.772000s
+#5 TESTING storageCosts_d9g0v0_Cancun FROM EthereumTests/BlockchainTests/GeneralStateTests/stEIP2930/storageCosts.json
+storageCosts_d9g0v0_Cancun took: 0.750000s
+variedContext_d25g0v0_Cancun took: 1.532000s
+#4 TESTING variedContext_d26g0v0_Cancun FROM EthereumTests/BlockchainTests/GeneralStateTests/stEIP2930/variedContext.json
+variedContext_d26g0v0_Cancun took: 1.484000s
+#4 TESTING variedContext_d27g0v0_Cancun FROM EthereumTests/BlockchainTests/GeneralStateTests/stEIP2930/variedContext.json
+variedContext_d27g0v0_Cancun took: 1.500000s
+#4 TESTING variedContext_d28g0v0_Cancun FROM EthereumTests/BlockchainTests/GeneralStateTests/stEIP2930/variedContext.json
+variedContext_d28g0v0_Cancun took: 1.533000s
+#4 TESTING variedContext_d29g0v0_Cancun FROM EthereumTests/BlockchainTests/GeneralStateTests/stEIP2930/variedContext.json
+variedContext_d29g0v0_Cancun took: 1.497000s
+#4 TESTING variedContext_d2g0v0_Cancun FROM EthereumTests/BlockchainTests/GeneralStateTests/stEIP2930/variedContext.json
+variedContext_d2g0v0_Cancun took: 1.466000s
+#4 TESTING variedContext_d30g0v0_Cancun FROM EthereumTests/BlockchainTests/GeneralStateTests/stEIP2930/variedContext.json
+variedContext_d30g0v0_Cancun took: 1.481000s
+#4 TESTING variedContext_d31g0v0_Cancun FROM EthereumTests/BlockchainTests/GeneralStateTests/stEIP2930/variedContext.json
+variedContext_d31g0v0_Cancun took: 1.482000s
+#4 TESTING variedContext_d32g0v0_Cancun FROM EthereumTests/BlockchainTests/GeneralStateTests/stEIP2930/variedContext.json
+variedContext_d32g0v0_Cancun took: 1.511000s
+#4 TESTING variedContext_d33g0v0_Cancun FROM EthereumTests/BlockchainTests/GeneralStateTests/stEIP2930/variedContext.json
+variedContext_d33g0v0_Cancun took: 1.537000s
+#4 TESTING variedContext_d34g0v0_Cancun FROM EthereumTests/BlockchainTests/GeneralStateTests/stEIP2930/variedContext.json
+variedContext_d34g0v0_Cancun took: 1.483000s
+#4 TESTING variedContext_d35g0v0_Cancun FROM EthereumTests/BlockchainTests/GeneralStateTests/stEIP2930/variedContext.json
+variedContext_d35g0v0_Cancun took: 1.494000s
+#4 TESTING variedContext_d3g0v0_Cancun FROM EthereumTests/BlockchainTests/GeneralStateTests/stEIP2930/variedContext.json
+variedContext_d3g0v0_Cancun took: 1.496000s
+#4 TESTING variedContext_d4g0v0_Cancun FROM EthereumTests/BlockchainTests/GeneralStateTests/stEIP2930/variedContext.json
+variedContext_d4g0v0_Cancun took: 1.435000s
+#4 TESTING variedContext_d5g0v0_Cancun FROM EthereumTests/BlockchainTests/GeneralStateTests/stEIP2930/variedContext.json
+variedContext_d5g0v0_Cancun took: 1.420000s
+#4 TESTING variedContext_d6g0v0_Cancun FROM EthereumTests/BlockchainTests/GeneralStateTests/stEIP2930/variedContext.json
+variedContext_d6g0v0_Cancun took: 1.418000s
+#4 TESTING variedContext_d7g0v0_Cancun FROM EthereumTests/BlockchainTests/GeneralStateTests/stEIP2930/variedContext.json
+variedContext_d7g0v0_Cancun took: 1.424000s
+#4 TESTING variedContext_d8g0v0_Cancun FROM EthereumTests/BlockchainTests/GeneralStateTests/stEIP2930/variedContext.json
+variedContext_d8g0v0_Cancun took: 1.521000s
+#4 TESTING variedContext_d9g0v0_Cancun FROM EthereumTests/BlockchainTests/GeneralStateTests/stEIP2930/variedContext.json
+variedContext_d9g0v0_Cancun took: 1.535000s

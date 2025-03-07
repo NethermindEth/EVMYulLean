@@ -1,0 +1,10 @@
+ℹ [2253/4496] Replayed Conform.Main
+info: ././././Conform/Main.lean:7:0: Task.{u} (α : Type u) : Type u
+Ξ_RIP160 failed: Not a hex digit: t
+Running tests on 2 threads.
+Running 2 files; 1 per thread.
+Patience is a virtue...
+#1 TESTING CrashingTransaction_d0g0v0_Cancun FROM EthereumTests/BlockchainTests/GeneralStateTests/stAttackTest/CrashingTransaction.json
+#0 TESTING ContractCreationSpam_d0g0v0_Cancun FROM EthereumTests/BlockchainTests/GeneralStateTests/stAttackTest/ContractCreationSpam.json
+CrashingTransaction_d0g0v0_Cancun took: 0.344000s
+ContractCreationSpam_d0g0v0_Cancun took: 3.913000s

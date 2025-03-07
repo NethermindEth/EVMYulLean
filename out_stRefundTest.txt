@@ -1,0 +1,59 @@
+ℹ [4494/4496] Built Conform.Main
+info: ././././Conform/Main.lean:7:0: Task.{u} (α : Type u) : Type u
+✔ [4495/4496] Built Conform.Main:c.o
+✔ [4496/4496] Built conform
+Running tests on 16 threads.
+Running 22 files; 1 per thread.
+Patience is a virtue...
+#3 TESTING refund_CallA_OOG_d0g0v0_Cancun FROM EthereumTests/BlockchainTests/GeneralStateTests/stRefundTest/refund_CallA_OOG.json
+#9 TESTING refund_OOG_d0g0v0_Cancun FROM EthereumTests/BlockchainTests/GeneralStateTests/stRefundTest/refund_OOG.json
+#1 TESTING refund50percentCap_d0g0v0_Cancun FROM EthereumTests/BlockchainTests/GeneralStateTests/stRefundTest/refund50percentCap.json
+#2 TESTING refundFF_d0g0v0_Cancun FROM EthereumTests/BlockchainTests/GeneralStateTests/stRefundTest/refundFF.json
+#8 TESTING refund_multimpleSuicide_d0g0v0_Cancun FROM EthereumTests/BlockchainTests/GeneralStateTests/stRefundTest/refund_multimpleSuicide.json
+#7 TESTING refund_CallA_notEnoughGasInCall_d0g0v0_Cancun FROM EthereumTests/BlockchainTests/GeneralStateTests/stRefundTest/refund_CallA_notEnoughGasInCall.json
+#6 TESTING refund_CallA_d0g0v0_Cancun FROM EthereumTests/BlockchainTests/GeneralStateTests/stRefundTest/refund_CallA.json
+#0 TESTING refund50_2_d0g0v0_Cancun FROM EthereumTests/BlockchainTests/GeneralStateTests/stRefundTest/refund50_2.json
+#4 TESTING refund_singleSuicide_d0g0v0_Cancun FROM EthereumTests/BlockchainTests/GeneralStateTests/stRefundTest/refund_singleSuicide.json
+#12 TESTING refund_changeNonZeroStorage_d0g0v0_Cancun FROM EthereumTests/BlockchainTests/GeneralStateTests/stRefundTest/refund_changeNonZeroStorage.json
+#11 TESTING refundMax_d0g0v0_Cancun FROM EthereumTests/BlockchainTests/GeneralStateTests/stRefundTest/refundMax.json
+#14 TESTING refund_getEtherBack_d0g0v0_Cancun FROM EthereumTests/BlockchainTests/GeneralStateTests/stRefundTest/refund_getEtherBack.json
+#15 TESTING refund50_1_d0g0v0_Cancun FROM EthereumTests/BlockchainTests/GeneralStateTests/stRefundTest/refund50_1.json
+#10 TESTING refundSuicide50procentCap_d0g0v0_Cancun FROM EthereumTests/BlockchainTests/GeneralStateTests/stRefundTest/refundSuicide50procentCap.json
+#13 TESTING refund_CallToSuicideNoStorage_d0g0v0_Cancun FROM EthereumTests/BlockchainTests/GeneralStateTests/stRefundTest/refund_CallToSuicideNoStorage.json
+#5 TESTING refund_CallToSuicideTwice_d0g0v0_Cancun FROM EthereumTests/BlockchainTests/GeneralStateTests/stRefundTest/refund_CallToSuicideTwice.json
+refundMax_d0g0v0_Cancun took: 0.741000s
+refund50percentCap_d0g0v0_Cancun took: 0.848000s
+refund_changeNonZeroStorage_d0g0v0_Cancun took: 0.849000s
+refund_singleSuicide_d0g0v0_Cancun took: 0.868000s
+refund50_1_d0g0v0_Cancun took: 0.867000s
+#15 TESTING refund_TxToSuicide_d0g0v0_Cancun FROM EthereumTests/BlockchainTests/GeneralStateTests/stRefundTest/refund_TxToSuicide.json
+refundFF_d0g0v0_Cancun took: 0.880000s
+refund_OOG_d0g0v0_Cancun took: 0.889000s
+refund_CallToSuicideTwice_d0g0v0_Cancun took: 0.900000s
+#5 TESTING refund_CallToSuicideTwice_d1g0v0_Cancun FROM EthereumTests/BlockchainTests/GeneralStateTests/stRefundTest/refund_CallToSuicideTwice.json
+refund50_2_d0g0v0_Cancun took: 0.918000s
+refund_multimpleSuicide_d0g0v0_Cancun took: 0.923000s
+refundSuicide50procentCap_d0g0v0_Cancun took: 0.919000s
+#10 TESTING refundSuicide50procentCap_d1g0v0_Cancun FROM EthereumTests/BlockchainTests/GeneralStateTests/stRefundTest/refundSuicide50procentCap.json
+refund_CallToSuicideNoStorage_d0g0v0_Cancun took: 0.924000s
+#13 TESTING refund_CallToSuicideNoStorage_d1g0v0_Cancun FROM EthereumTests/BlockchainTests/GeneralStateTests/stRefundTest/refund_CallToSuicideNoStorage.json
+refund_getEtherBack_d0g0v0_Cancun took: 0.934000s
+refund_CallA_d0g0v0_Cancun took: 0.955000s
+refund_CallA_OOG_d0g0v0_Cancun took: 0.957000s
+refund_CallA_notEnoughGasInCall_d0g0v0_Cancun took: 1.002000s
+refund_CallToSuicideTwice_d1g0v0_Cancun took: 0.407000s
+refund_TxToSuicide_d0g0v0_Cancun took: 0.471000s
+#15 TESTING refundSSTORE_d0g0v0_Cancun FROM EthereumTests/BlockchainTests/GeneralStateTests/stRefundTest/refundSSTORE.json
+refund_CallToSuicideNoStorage_d1g0v0_Cancun took: 0.418000s
+refundSuicide50procentCap_d1g0v0_Cancun took: 0.481000s
+refundSSTORE_d0g0v0_Cancun took: 0.306000s
+#15 TESTING refund600_d0g0v0_Cancun FROM EthereumTests/BlockchainTests/GeneralStateTests/stRefundTest/refund600.json
+refund600_d0g0v0_Cancun took: 0.347000s
+#15 TESTING refund_TxToSuicideOOG_d0g0v0_Cancun FROM EthereumTests/BlockchainTests/GeneralStateTests/stRefundTest/refund_TxToSuicideOOG.json
+refund_TxToSuicideOOG_d0g0v0_Cancun took: 0.336000s
+#15 TESTING refund_CallToSuicideStorage_d0g0v0_Cancun FROM EthereumTests/BlockchainTests/GeneralStateTests/stRefundTest/refund_CallToSuicideStorage.json
+refund_CallToSuicideStorage_d0g0v0_Cancun took: 0.354000s
+#15 TESTING refund_CallToSuicideStorage_d1g0v0_Cancun FROM EthereumTests/BlockchainTests/GeneralStateTests/stRefundTest/refund_CallToSuicideStorage.json
+refund_CallToSuicideStorage_d1g0v0_Cancun took: 0.334000s
+#15 TESTING refund_NoOOG_1_d0g0v0_Cancun FROM EthereumTests/BlockchainTests/GeneralStateTests/stRefundTest/refund_NoOOG_1.json
+refund_NoOOG_1_d0g0v0_Cancun took: 0.333000s

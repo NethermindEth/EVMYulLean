@@ -3,7 +3,6 @@ import EvmYul.PerformIO
 import Conform.Wheels
 
 def blobBN_MUL (x₀ y₀ n : String) : String :=
-  -- dbg_trace s!"EvmYul/EllipticCurvesPy/bn_mul.py"
   totallySafePerformIO ∘ IO.Process.run <|
     pythonCommandOfInput x₀ y₀ n
   where pythonCommandOfInput (x₀ y₀ n : String) : IO.Process.SpawnArgs := {

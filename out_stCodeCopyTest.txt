@@ -1,0 +1,10 @@
+ℹ [2253/4496] Replayed Conform.Main
+info: ././././Conform/Main.lean:7:0: Task.{u} (α : Type u) : Type u
+Ξ_RIP160 failed: Not a hex digit: t
+Running tests on 2 threads.
+Running 2 files; 1 per thread.
+Patience is a virtue...
+#1 TESTING ExtCodeCopyTargetRangeLongerThanCodeTests_d0g0v0_Cancun FROM EthereumTests/BlockchainTests/GeneralStateTests/stCodeCopyTest/ExtCodeCopyTargetRangeLongerThanCodeTests.json
+#0 TESTING ExtCodeCopyTestsParis_d0g0v0_Cancun FROM EthereumTests/BlockchainTests/GeneralStateTests/stCodeCopyTest/ExtCodeCopyTestsParis.json
+ExtCodeCopyTargetRangeLongerThanCodeTests_d0g0v0_Cancun took: 0.334000s
+ExtCodeCopyTestsParis_d0g0v0_Cancun took: 0.412000s

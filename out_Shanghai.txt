@@ -1,0 +1,60 @@
+ℹ [2253/4496] Replayed Conform.Main
+info: ././././Conform/Main.lean:7:0: Task.{u} (α : Type u) : Type u
+Ξ_RIP160 failed: Not a hex digit: t
+Running tests on 8 threads.
+Running 8 files; 1 per thread.
+Patience is a virtue...
+#0 TESTING push0Gas2_d0g0v0_Cancun FROM EthereumTests/BlockchainTests/GeneralStateTests/Shanghai/stEIP3855-push0/push0Gas2.json
+#1 TESTING push0Gas_d0g0v0_Cancun FROM EthereumTests/BlockchainTests/GeneralStateTests/Shanghai/stEIP3855-push0/push0Gas.json
+#7 TESTING create2InitCodeSizeLimit_d0g0v0_Cancun FROM EthereumTests/BlockchainTests/GeneralStateTests/Shanghai/stEIP3860-limitmeterinitcode/create2InitCodeSizeLimit.json
+#6 TESTING createInitCodeSizeLimit_d0g0v0_Cancun FROM EthereumTests/BlockchainTests/GeneralStateTests/Shanghai/stEIP3860-limitmeterinitcode/createInitCodeSizeLimit.json
+#4 TESTING coinbaseWarmAccountCallGasFail_d0g0v0_Cancun FROM EthereumTests/BlockchainTests/GeneralStateTests/Shanghai/stEIP3651-warmcoinbase/coinbaseWarmAccountCallGasFail.json
+#3 TESTING coinbaseWarmAccountCallGas_d0g0v0_Cancun FROM EthereumTests/BlockchainTests/GeneralStateTests/Shanghai/stEIP3651-warmcoinbase/coinbaseWarmAccountCallGas.json
+#2 TESTING push0_d0g0v0_Cancun FROM EthereumTests/BlockchainTests/GeneralStateTests/Shanghai/stEIP3855-push0/push0.json
+#5 TESTING creationTxInitCodeSizeLimit_d0g0v0_Cancun FROM EthereumTests/BlockchainTests/GeneralStateTests/Shanghai/stEIP3860-limitmeterinitcode/creationTxInitCodeSizeLimit.json
+push0Gas_d0g0v0_Cancun took: 0.426000s
+creationTxInitCodeSizeLimit_d0g0v0_Cancun took: 0.410000s
+#5 TESTING creationTxInitCodeSizeLimit_d1g0v0_Cancun FROM EthereumTests/BlockchainTests/GeneralStateTests/Shanghai/stEIP3860-limitmeterinitcode/creationTxInitCodeSizeLimit.json
+creationTxInitCodeSizeLimit_d1g0v0_Cancun took: 0.000000s
+coinbaseWarmAccountCallGas_d0g0v0_Cancun took: 0.493000s
+#3 TESTING coinbaseWarmAccountCallGas_d1g0v0_Cancun FROM EthereumTests/BlockchainTests/GeneralStateTests/Shanghai/stEIP3651-warmcoinbase/coinbaseWarmAccountCallGas.json
+create2InitCodeSizeLimit_d0g0v0_Cancun took: 0.534000s
+push0Gas2_d0g0v0_Cancun took: 0.540000s
+#7 TESTING create2InitCodeSizeLimit_d1g0v0_Cancun FROM EthereumTests/BlockchainTests/GeneralStateTests/Shanghai/stEIP3860-limitmeterinitcode/create2InitCodeSizeLimit.json
+#0 TESTING push0Gas2_d1g0v0_Cancun FROM EthereumTests/BlockchainTests/GeneralStateTests/Shanghai/stEIP3855-push0/push0Gas2.json
+createInitCodeSizeLimit_d0g0v0_Cancun took: 0.534000s
+#6 TESTING createInitCodeSizeLimit_d1g0v0_Cancun FROM EthereumTests/BlockchainTests/GeneralStateTests/Shanghai/stEIP3860-limitmeterinitcode/createInitCodeSizeLimit.json
+coinbaseWarmAccountCallGasFail_d0g0v0_Cancun took: 0.721000s
+#4 TESTING coinbaseWarmAccountCallGasFail_d1g0v0_Cancun FROM EthereumTests/BlockchainTests/GeneralStateTests/Shanghai/stEIP3651-warmcoinbase/coinbaseWarmAccountCallGasFail.json
+push0_d0g0v0_Cancun took: 0.816000s
+#2 TESTING push0_d1g0v0_Cancun FROM EthereumTests/BlockchainTests/GeneralStateTests/Shanghai/stEIP3855-push0/push0.json
+coinbaseWarmAccountCallGas_d1g0v0_Cancun took: 0.389000s
+#3 TESTING coinbaseWarmAccountCallGas_d2g0v0_Cancun FROM EthereumTests/BlockchainTests/GeneralStateTests/Shanghai/stEIP3651-warmcoinbase/coinbaseWarmAccountCallGas.json
+createInitCodeSizeLimit_d1g0v0_Cancun took: 0.393000s
+create2InitCodeSizeLimit_d1g0v0_Cancun took: 0.408000s
+push0Gas2_d1g0v0_Cancun took: 0.461000s
+coinbaseWarmAccountCallGas_d2g0v0_Cancun took: 0.349000s
+#3 TESTING coinbaseWarmAccountCallGas_d3g0v0_Cancun FROM EthereumTests/BlockchainTests/GeneralStateTests/Shanghai/stEIP3651-warmcoinbase/coinbaseWarmAccountCallGas.json
+coinbaseWarmAccountCallGasFail_d1g0v0_Cancun took: 0.588000s
+#4 TESTING coinbaseWarmAccountCallGasFail_d2g0v0_Cancun FROM EthereumTests/BlockchainTests/GeneralStateTests/Shanghai/stEIP3651-warmcoinbase/coinbaseWarmAccountCallGasFail.json
+push0_d1g0v0_Cancun took: 0.650000s
+#2 TESTING push0_d2g0v0_Cancun FROM EthereumTests/BlockchainTests/GeneralStateTests/Shanghai/stEIP3855-push0/push0.json
+coinbaseWarmAccountCallGas_d3g0v0_Cancun took: 0.347000s
+#3 TESTING coinbaseWarmAccountCallGas_d4g0v0_Cancun FROM EthereumTests/BlockchainTests/GeneralStateTests/Shanghai/stEIP3651-warmcoinbase/coinbaseWarmAccountCallGas.json
+coinbaseWarmAccountCallGasFail_d2g0v0_Cancun took: 0.541000s
+#4 TESTING coinbaseWarmAccountCallGasFail_d3g0v0_Cancun FROM EthereumTests/BlockchainTests/GeneralStateTests/Shanghai/stEIP3651-warmcoinbase/coinbaseWarmAccountCallGasFail.json
+coinbaseWarmAccountCallGas_d4g0v0_Cancun took: 0.340000s
+#3 TESTING coinbaseWarmAccountCallGas_d5g0v0_Cancun FROM EthereumTests/BlockchainTests/GeneralStateTests/Shanghai/stEIP3651-warmcoinbase/coinbaseWarmAccountCallGas.json
+push0_d2g0v0_Cancun took: 0.619000s
+#2 TESTING push0_d3g0v0_Cancun FROM EthereumTests/BlockchainTests/GeneralStateTests/Shanghai/stEIP3855-push0/push0.json
+coinbaseWarmAccountCallGas_d5g0v0_Cancun took: 0.337000s
+#3 TESTING coinbaseWarmAccountCallGas_d6g0v0_Cancun FROM EthereumTests/BlockchainTests/GeneralStateTests/Shanghai/stEIP3651-warmcoinbase/coinbaseWarmAccountCallGas.json
+coinbaseWarmAccountCallGasFail_d3g0v0_Cancun took: 0.525000s
+coinbaseWarmAccountCallGas_d6g0v0_Cancun took: 0.336000s
+#3 TESTING coinbaseWarmAccountCallGas_d7g0v0_Cancun FROM EthereumTests/BlockchainTests/GeneralStateTests/Shanghai/stEIP3651-warmcoinbase/coinbaseWarmAccountCallGas.json
+push0_d3g0v0_Cancun took: 0.610000s
+#2 TESTING push0_d4g0v0_Cancun FROM EthereumTests/BlockchainTests/GeneralStateTests/Shanghai/stEIP3855-push0/push0.json
+coinbaseWarmAccountCallGas_d7g0v0_Cancun took: 0.326000s
+push0_d4g0v0_Cancun took: 0.599000s
+#2 TESTING push0_d5g0v0_Cancun FROM EthereumTests/BlockchainTests/GeneralStateTests/Shanghai/stEIP3855-push0/push0.json
+push0_d5g0v0_Cancun took: 0.590000s

@@ -3,7 +3,6 @@ import EvmYul.PerformIO
 import Conform.Wheels
 
 def blobSNARKV (data : String) : String :=
-  -- dbg_trace s!"EvmYul/EllipticCurvesPy/snarkv.py"
   totallySafePerformIO ∘ IO.Process.run <|
     pythonCommandOfInput data
   where pythonCommandOfInput (data : String) : IO.Process.SpawnArgs := {

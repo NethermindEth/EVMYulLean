@@ -1,0 +1,9 @@
+ℹ [4494/4496] Built Conform.Main
+info: ././././Conform/Main.lean:7:0: Task.{u} (α : Type u) : Type u
+✔ [4495/4496] Built Conform.Main:c.o
+✔ [4496/4496] Built conform
+Running tests on 1 thread.
+Running 1 files; 1 per thread.
+Patience is a virtue...
+#0 TESTING sloadGasCost_d0g0v0_Cancun FROM EthereumTests/BlockchainTests/GeneralStateTests/stSLoadTest/sloadGasCost.json
+sloadGasCost_d0g0v0_Cancun took: 0.290000s

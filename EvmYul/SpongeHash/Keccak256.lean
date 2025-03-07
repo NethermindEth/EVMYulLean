@@ -204,26 +204,24 @@ def hashFunction (paddingFunction : Nat → ByteArray → SHA3SR) (rate : Nat) (
   squeeze' rate outputBytes ∘ Absorb.absorb rate ∘ byteArrayOfSHA3SR ∘ paddingFunction (rate / 8) $ inp
   where outputBytes := (1600 - rate) / 16
 
-def blobKeccak (data : String) : String :=
-  -- dbg_trace s!"EvmYul/EllipticCurvesPy/keccak.py"
-  totallySafePerformIO do
-    IO.FS.withFile "EvmYul/EllipticCurvesPy/keccakInput.txt" .write λ h ↦ h.putStrLn data
-    -- dbg_trace s!"before IO.Process.run"
-    let result ← IO.Process.run (pythonCommandOfInput "EvmYul/EllipticCurvesPy/keccakInput.txt")
-    -- dbg_trace s!"after IO.Process.run"
-    IO.FS.removeFile "EvmYul/EllipticCurvesPy/keccakInput.txt"
-    pure result
-  where pythonCommandOfInput (fileName : String) : IO.Process.SpawnArgs := {
-    cmd := "python3",
-    args := #["EvmYul/EllipticCurvesPy/keccak.py", fileName]
-  }
+-- def blobKeccak (data : String) : String :=
+--   dbg_trace s!"EvmYul/EllipticCurvesPy/keccak.py"
+--   totallySafePerformIO do
+--     IO.FS.withFile "EvmYul/EllipticCurvesPy/keccakInput.txt" .write λ h ↦ h.putStrLn data
+--     let result ← IO.Process.run (pythonCommandOfInput "EvmYul/EllipticCurvesPy/keccakInput.txt")
+--     IO.FS.removeFile "EvmYul/EllipticCurvesPy/keccakInput.txt"
+--     pure result
+--   where pythonCommandOfInput (fileName : String) : IO.Process.SpawnArgs := {
+--     cmd := "python3",
+--     args := #["EvmYul/EllipticCurvesPy/keccak.py", fileName]
+--   }
 
-private def Keccak (data : ByteArray) : ByteArray :=
-  let data := toHex data
-  -- dbg_trace s!"{toHex data}"
-  match ByteArray.ofBlob (blobKeccak data) with
-    | .error _ => panic! "Error in keccak"
-    | .ok s => s
+-- private def Keccak (data : ByteArray) : ByteArray :=
+--   let data := toHex data
+--   -- dbg_trace s!"{toHex data}"
+--   match ByteArray.ofBlob (blobKeccak data) with
+--     | .error _ => panic! "Error in keccak"
+--     | .ok s => s
 
 def KEC (data : ByteArray) : ByteArray :=
   -- let x :=
