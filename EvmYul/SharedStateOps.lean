@@ -48,7 +48,7 @@ def extCodeCopy' (self : SharedState) (acc mstart cstart size : UInt256) : Share
 
 end Memory
 
-def logOp (μ₀ μ₁ : UInt256) (t : List UInt256) (sState : SharedState) : SharedState :=
+def logOp (μ₀ μ₁ : UInt256) (t : Array UInt256) (sState : SharedState) : SharedState :=
   let Iₐ := sState.executionEnv.codeOwner
   let mem := sState.memory.readWithPadding μ₀.toNat μ₁.toNat
   { sState with

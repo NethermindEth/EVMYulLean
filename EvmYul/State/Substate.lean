@@ -33,12 +33,36 @@ structure Substate :=
   refundBalance       : UInt256
   accessedAccounts    : Batteries.RBSet AccountAddress compare
   accessedStorageKeys : Batteries.RBSet (AccountAddress × UInt256) Substate.storageKeysCmp
-  logSeries           : Array (AccountAddress × List UInt256 × ByteArray)
+  logSeries           : Array (AccountAddress × Array UInt256 × ByteArray)
   deriving BEq, Inhabited, Repr
 
 /--
   (63) `A0 ≡ (∅, (), ∅, 0, π, ∅)`
 -/
 def A0 : Substate := { (default : Substate) with accessedAccounts := π }
+
+-- See the Bloom filter function M
+def bloomFilter (a : Array ByteArray) : ByteArray  :=
+  let zeroes : ByteArray := ByteArray.zeroes 256
+  a.foldl set3Bits zeroes
+ where
+  setBit (bytes256 : ByteArray) (bitIndex : ℕ) : ByteArray :=
+    let byteIndex := 255 - bitIndex / 8
+    let mask : UInt8 := .ofNat <| 1 <<< (bitIndex % 8)
+    let newByte := bytes256[byteIndex]! ||| mask
+    bytes256.set! byteIndex newByte
+  bitIndices (x : ByteArray) : List ℕ :=
+    let kec := KEC x
+    let lowOrder11Bits := λ b ↦ b &&& (1<<<11 - 1)
+    [ kec.readWithPadding 0 2
+    , kec.readWithPadding 2 2
+    , kec.readWithPadding 4 2
+    ].map (lowOrder11Bits ∘ fromByteArrayBigEndian)
+  set3Bits acc b := bitIndices b |>.foldl setBit acc
+
+def Substate.joinLogs (substate : Substate) : Array ByteArray :=
+  Array.join <|
+    substate.logSeries.map
+      λ (a, as, _) ↦ (as.map UInt256.toByteArray).push a.toByteArray
 
 end EvmYul

@@ -191,7 +191,7 @@ def quaternaryCopyOp
           .ok <| evmState'.replaceStackAndIncrPC stack'
         | _ => .error .StackUnderflow
 
-private def evmLogOp (evmState : State) (μ₀ μ₁ : UInt256) (t : List UInt256) : State :=
+private def evmLogOp (evmState : State) (μ₀ μ₁ : UInt256) (t : Array UInt256) : State :=
   let sharedState' := SharedState.logOp μ₀ μ₁ t evmState.toSharedState
   { evmState with toSharedState := sharedState'}
 
@@ -201,7 +201,7 @@ def log0Op (debugMode : Bool) : Transformer :=
       | some ⟨stack', μ₀, μ₁⟩ => Id.run do
         if debugMode then
           dbg_trace s!"called with μ₀: {μ₀} μ₁: {μ₁}"
-        let evmState' := evmLogOp evmState μ₀ μ₁ []
+        let evmState' := evmLogOp evmState μ₀ μ₁ #[]
         .ok <| evmState'.replaceStackAndIncrPC stack'
       | _ => .error .StackUnderflow
 
@@ -211,7 +211,7 @@ def log1Op (debugMode : Bool) : Transformer :=
       | some ⟨stack', μ₀, μ₁, μ₂⟩ => Id.run do
         if debugMode then
           dbg_trace s!"called with μ₀: {μ₀} μ₁: {μ₁}"
-        let evmState' := evmLogOp evmState μ₀ μ₁ [μ₂]
+        let evmState' := evmLogOp evmState μ₀ μ₁ #[μ₂]
         .ok <| evmState'.replaceStackAndIncrPC stack'
       | _ => .error .StackUnderflow
 
@@ -221,7 +221,7 @@ def log2Op (debugMode : Bool) : Transformer :=
       | some ⟨stack', μ₀, μ₁, μ₂, μ₃⟩ => Id.run do
         if debugMode then
           dbg_trace s!"called with μ₀: {μ₀} μ₁: {μ₁} μ₂: {μ₂}  μ₃: {μ₃}"
-        let evmState' := evmLogOp evmState μ₀ μ₁ [μ₂, μ₃]
+        let evmState' := evmLogOp evmState μ₀ μ₁ #[μ₂, μ₃]
         .ok <| evmState'.replaceStackAndIncrPC stack'
       | _ => .error .StackUnderflow
 
@@ -231,7 +231,7 @@ def log3Op (debugMode : Bool) : Transformer :=
       | some ⟨stack', μ₀, μ₁, μ₂, μ₃, μ₄⟩ => Id.run do
         if debugMode then
           dbg_trace s!"called with μ₀: {μ₀} μ₁: {μ₁} μ₂: {μ₂}  μ₃: {μ₃} μ₄: {μ₄}"
-        let evmState' := evmLogOp evmState μ₀ μ₁ [μ₂, μ₃, μ₄]
+        let evmState' := evmLogOp evmState μ₀ μ₁ #[μ₂, μ₃, μ₄]
         .ok <| evmState'.replaceStackAndIncrPC stack'
       | _ => .error .StackUnderflow
 
@@ -241,7 +241,7 @@ def log4Op (debugMode : Bool) : Transformer :=
       | some ⟨stack', μ₀, μ₁, μ₂, μ₃, μ₄, μ₅⟩ => Id.run do
         if debugMode then
           dbg_trace s!"called with μ₀: {μ₀} μ₁: {μ₁} μ₂: {μ₂}  μ₃: {μ₃} μ₄: {μ₄} μ₅: {μ₅}"
-        let evmState' := evmLogOp evmState μ₀ μ₁ [μ₂, μ₃, μ₄, μ₅]
+        let evmState' := evmLogOp evmState μ₀ μ₁ #[μ₂, μ₃, μ₄, μ₅]
         .ok <| evmState'.replaceStackAndIncrPC stack'
       | _ => .error .StackUnderflow
 

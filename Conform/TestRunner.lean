@@ -167,7 +167,7 @@ def executeTransaction
 := do
   let _TODOfuel : ℕ := s.accountMap.find? sender |>.elim ⟨0⟩ (·.balance) |>.toNat
 
-  let (ypState, _, _, totalGasUsed) ←
+  let (ypState, substate, _, totalGasUsed) ←
     EVM.Υ (debugMode := false) _TODOfuel
       s.accountMap
       header.baseFeePerGas
@@ -184,6 +184,7 @@ def executeTransaction
     { s with
       accountMap := ypState
       totalGasUsedInBlock := s.totalGasUsedInBlock + totalGasUsed.toNat
+      substate
     }
   pure result
 
@@ -480,6 +481,11 @@ def validateBlock
     |> .ofNat
   if block.blockHeader.stateRoot ≠ computedStateHash then
     throw <| .BlockException .INVALID_STATE_ROOT
+
+  let expectedBloom := block.blockHeader.logsBloom
+  let actualBloom := bloomFilter state.substate.joinLogs
+  if expectedBloom ≠ actualBloom then
+    throw <| .BlockException .INVALID_LOG_BLOOM
 
   pure ()
 

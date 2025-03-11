@@ -119,7 +119,7 @@ def quaternaryCopyOp
       .ok (yulState', none)
     | _ => .error .InvalidArguments
 
-private def yulLogOp (yulState : State) (a b : UInt256) (t : List UInt256) : State × Option Literal :=
+private def yulLogOp (yulState : State) (a b : UInt256) (t : Array UInt256) : State × Option Literal :=
   let sharedState' := SharedState.logOp a b t yulState.toSharedState
   ( yulState.setSharedState sharedState'
   , none
@@ -129,35 +129,35 @@ def log0Op : Transformer :=
   λ yulState lits ↦
     match lits with
       | [a, b] =>
-        .ok <| yulLogOp yulState a b []
+        .ok <| yulLogOp yulState a b #[]
       | _ => .ok (yulState, none)
 
 def log1Op : Transformer :=
   λ yulState lits ↦
     match lits with
       | [a, b, c] =>
-        .ok <| yulLogOp yulState a b [c]
+        .ok <| yulLogOp yulState a b #[c]
       | _ => .ok (yulState, none)
 
 def log2Op : Transformer :=
   λ yulState lits ↦
     match lits with
       | [a, b, c, d] =>
-        .ok <| yulLogOp yulState a b [c, d]
+        .ok <| yulLogOp yulState a b #[c, d]
       | _ => .ok (yulState, none)
 
 def log3Op : Transformer :=
   λ yulState lits ↦
     match lits with
       | [a, b, c, d, e] =>
-        .ok <| yulLogOp yulState a b [c, d, e]
+        .ok <| yulLogOp yulState a b #[c, d, e]
       | _ => .ok (yulState, none)
 
 def log4Op : Transformer :=
   λ yulState lits ↦
     match lits with
       | [a, b, c, d, e, f] =>
-        .ok <| yulLogOp yulState a b [c, d, e, f]
+        .ok <| yulLogOp yulState a b #[c, d, e, f]
       | _ => .ok (yulState, none)
 
 end Yul
