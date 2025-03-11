@@ -421,10 +421,7 @@ def validateBlock
   if blobGasUsed > MAX_BLOB_GAS_PER_BLOCK then
     throw <| .BlockException .BLOB_GAS_USED_ABOVE_LIMIT
 
-  if
-    Withdrawal.computeTrieRoot block.withdrawals
-      ≠ block.blockHeader.withdrawalsRoot
-  then
+  if block.withdrawals.trieRoot ≠ block.blockHeader.withdrawalsRoot then
     throw <| .BlockException .INVALID_WITHDRAWALS_ROOT
 
   -- TODO: Integrate this with the `postState` comparison.
@@ -561,7 +558,7 @@ def processBlocks
         {s with totalGasUsedInBlock := 0}
 
     -- Withdrawals execution
-    let σ := applyWithdrawals s.accountMap block.withdrawals
+    let σ := applyWithdrawals s.accountMap block.withdrawals.array
 
     pure { s with accountMap := σ }
 
