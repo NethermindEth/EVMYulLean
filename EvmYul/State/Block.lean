@@ -13,7 +13,10 @@ structure Transactions where
   array : Array Transaction
 deriving BEq, Inhabited, Repr
 
-abbrev Withdrawals := Array Withdrawal
+structure Withdrawals where
+  trieRoot : ByteArray
+  array : Array Withdrawal
+deriving BEq, Inhabited, Repr
 
 structure RawBlock where
   rlp          : ByteArray
@@ -70,7 +73,7 @@ def deserializeBlock
   (rlp : ByteArray)
   : Except EVM.Exception (UInt256 × BlockHeader × Transactions × Withdrawals)
 := do
-  let (hash, header, transactionTrieRoot, ts, ws) ←
+  let (hash, header, transactionTrieRoot, ts, withdrawalTrieRoot, ws) ←
     Option.toExceptWith (.BlockException .RLP_STRUCTURES_ENCODING) do
       let .inr [headerRLP, transactionsRLP, _, withdrawalsRLP] ← oneStepRLP rlp | none
       let hash : UInt256 := .ofNat <| fromByteArrayBigEndian <| KEC headerRLP
@@ -84,12 +87,13 @@ def deserializeBlock
         Transaction.computeTrieRoot (← transactions.toArray.mapM getTrieSnd)
       let ts ← transactions.mapM deserializeRLP
       let (.inr withdrawals) ← oneStepRLP withdrawalsRLP | none
+      let withdrawalTrieRoot ← Withdrawal.computeTrieRoot withdrawals.toArray
       let ws ← withdrawals.mapM deserializeRLP
-      pure (hash, header, transactionTrieRoot, ts, ws)
+      pure (hash, header, transactionTrieRoot, ts, withdrawalTrieRoot, ws)
   let header ← parseHeader header
   let transactions ← parseTransactions (.𝕃 ts)
   let withdrawals ← parseWithdrawals (.𝕃 ws)
-  pure (hash, header, ⟨transactionTrieRoot, Array.mk transactions⟩, Array.mk withdrawals)
+  pure (hash, header, ⟨transactionTrieRoot, Array.mk transactions⟩, ⟨withdrawalTrieRoot, Array.mk withdrawals⟩)
  where
   parseWithdrawal : 𝕋 → Except EVM.Exception Withdrawal
     | .𝕃 [.𝔹 globalIndex, .𝔹 validatorIndex, .𝔹 recipient, .𝔹 amount] => do
