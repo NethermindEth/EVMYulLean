@@ -48,6 +48,7 @@ inductive BlockException where
   | INVALID_BASEFEE_PER_GAS
   | UNKNOWN_PARENT
   | INVALID_STATE_ROOT
+  | INVALID_LOG_BLOOM
 
 instance : Repr BlockException where
   reprPrec s _ :=
@@ -72,6 +73,7 @@ instance : Repr BlockException where
       | .INVALID_BASEFEE_PER_GAS => "INVALID_BASEFEE_PER_GAS"
       | .UNKNOWN_PARENT => "UNKNOWN_PARENT"
       | .INVALID_STATE_ROOT => "INVALID_STATE_ROOT"
+      | .INVALID_LOG_BLOOM => "INVALID_LOG_BLOOM"
 
 inductive TransactionException where
   | IllFormedRLP
