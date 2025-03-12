@@ -49,7 +49,7 @@ def log (testFile : System.FilePath) (testName : String) (result : TestResult) :
 /-
   Threads are scheduled on per-file basis. This granularity is not sufficient.
 
-  Cancun                               :  0m 40s | 16threads
+  Cancun                               :  0m 23s | 16threads
   Pyspecs                              :  3m  8s | 16threads (1 test failed)
   Shanghai                             :  0m  6s |  8threads
   stArgsZeroOneBalance                 :  0m 14s | 16threads
@@ -300,159 +300,53 @@ def exampleInput : ByteArray := ⟨#[
 
 def main (args : List String) : IO Unit := do
   let NumThreads : ℕ := args.head? <&> String.toNat! |>.getD 1
-  dbg_trace s!"Running tests on {NumThreads} thread{if NumThreads == 1 then "" else "s"}."
+  -- dbg_trace s!"Running tests on {NumThreads} thread{if NumThreads == 1 then "" else "s"}."
   let testFiles ←
     Array.filter isTestFile <$>
       System.FilePath.walkDir
         (enter := λ path ↦ pure <| path ∉ directoryBlacklist)
-        -- ("EthereumTests/BlockchainTests")
-        -- ("EthereumTests/BlockchainTests/GeneralStateTests/stPreCompiledContracts")
-        -- ("EthereumTests/BlockchainTests/GeneralStateTests/VMTests/vmPerformance")
-        -- ("EthereumTests/BlockchainTests/GeneralStateTests/Pyspecs")
-        -- ("EthereumTests/BlockchainTests/GeneralStateTests/Shanghai")
         ("EthereumTests/BlockchainTests/GeneralStateTests/Cancun")
-        -- ("EthereumTests/BlockchainTests/GeneralStateTests/stTimeConsuming")
-  let mut discardedFiles : Array System.FilePath := #[]
+  let mut discardedFiles : Array (System.FilePath × String) := #[]
   -- let testFiles := #[SimpleFile]
   -- let testFiles := #[BuggyFile]
   -- let testFiles := #[SpecificFile]
   -- let testFiles : Array System.FilePath := #["EthereumTests/BlockchainTests/GeneralStateTests/stZeroCallsTest/ZeroValue_CALLCODE_ToEmpty_Paris.json"]
-  let testFiles : Array System.FilePath := #["EthereumTests/BlockchainTests/GeneralStateTests/VMTests/vmPerformance/loopMul.json"]
+  -- let testFiles : Array System.FilePath := #["EthereumTests/BlockchainTests/GeneralStateTests/VMTests/vmPerformance/loopMul.json"]
 
   let mut numFailedTest := 0
   let mut numSuccess := 0
-
   let testFiles := testFiles.filter (· ∉ fileBlacklist)
-  let NumChunks := testFiles.size / NumThreads
-  let mut numRemaining := testFiles.size % NumThreads
-  dbg_trace s!"Running {testFiles.size} files; {NumChunks} per thread."
   
   if ←System.FilePath.pathExists logFile then IO.FS.removeFile logFile
-  -- dbg_trace s!"test files: {testFiles}"
+  let testJsons ← testFiles.mapM Lean.Json.fromFile
+  let testNames : Array (System.FilePath × Array String) :=
+    testJsons.zip testFiles |>.map
+      λ (json, filepath) ↦
+        match json.getObj? with
+        | .error _ => panic! "Malformed test json."
+        | .ok x => (filepath, x.toArray.map Sigma.fst)
   let mut tasks : Array (Task _) := .empty
-  for thread in [0:NumThreads] do
-    let mut files : Array System.FilePath := .empty
-    for offset in [0:NumChunks] do
-      let testFileIdx := thread * NumChunks + offset
-      files := files.push testFiles[testFileIdx]!
-    if 0 < numRemaining then
-      dbg_trace s!"huh: {NumThreads * NumChunks + numRemaining} numRemaining: {numRemaining}"
-      numRemaining := numRemaining - 1
-      files := files.push testFiles[NumThreads * NumChunks + numRemaining]!
-    dbg_trace s!"Batching: {files} on thread: {thread}."
-    tasks := tasks.push (←IO.asTask (EvmYul.Conform.processTestsOfFiles thread (whitelist := #["loopMul_d0g0v0_Cancun"]) files))
-  dbg_trace s!"Patience is a virtue..."
+  let mut thread : ℕ := 0
+  let mut tests : Array (Array (System.FilePath × String)) := .mkArray NumThreads #[]
+  dbg_trace s!"Scheduling tests for parallel execution..."
+  for (path, names) in testNames do
+    for name in names do
+      tests := tests.set! thread (tests.get! thread |>.push (path, name))
+      thread := thread + 1; thread := thread % NumThreads
+  for i in [0:NumThreads] do
+    tasks := tasks.push (←IO.asTask <| EvmYul.Conform.processTestOfFiles i (tests.get! i))
+  dbg_trace s!"Scheduled {tests.foldl (· + ·.size) 0} tests on {NumThreads} thread{if NumThreads == 1 then "" else "s"}."
+  dbg_trace s!"Running..."
   let testResults ← tasks.mapM (IO.wait · >>= IO.ofExcept)
   for (discarded, batch) in testResults do
     discardedFiles := discardedFiles.append discarded
-    for (testresults, testFile) in batch do
-      for (test, result) in testresults do
-        -- dbg_trace "ok! - testresults: {repr testresults}"
-        -- dbg_trace s!"test: {test} result: {result}"
-        log testFile test result
-        if result.isNone
-        then numSuccess := numSuccess + 1
-        else numFailedTest := numFailedTest + 1
+    for (file, test, res) in batch do
+      log file test res
+      if res.isNone
+      then numSuccess := numSuccess + 1
+      else numFailedTest := numFailedTest + 1
   let total := numFailedTest + numSuccess
   IO.println s!"Total tests: {total}"
   IO.println s!"The post was NOT equal to the resulting state: {numFailedTest}"
   IO.println s!"Succeeded: {numSuccess}"
   IO.println s!"Success rate of: {(numSuccess.toFloat / total.toFloat) * 100.0}"
-
-  IO.println s!"Files discarded along the way: {repr discardedFiles}"
-  -- let gatherMaps := testResults.map
-  --   (λ εmaps ↦ εmaps.map
-  --     (λ maps ↦ maps.foldl
-  --       (init := Batteries.RBMap.empty)
-  --       (Batteries.RBMap.mergeWith (λ _ _ m ↦ dbg_trace "Nonunique test name."; m))))
-  -- for εmap in testResults do
-  --   match εmap with
-  --     | .error err         => dbg_trace "error!"
-  --                             discardedFiles := discardedFiles.push (err.toFilePath, err)
-  --     | .ok    testresults => for (results, testFile) in testresults do
-  --                               dbg_trace "ok! - testresults: {repr testresults}"
-  --                               for (test, result) in testresults do
-  --                                 dbg_trace s!"test: {test} result: {result}"
-  --                                 log testFile test result
-  --                                 if result.isNone
-  --                                 then numSuccess := numSuccess + 1
-  --                                 else numFailedTest := numFailedTest + 1
-  -- gatherMaps.map _
-
-  
-
-    -- testResults.push (IO.ofExcept (← IO.wait task))
-
-  -- mergeWith
-
-    -- -- if fileBlacklist.contains testFile then continue
-    --   let res ←
-    --     ExceptT.run <|
-    --       EvmYul.Conform.processTestsOfFile
-    --         (whitelist :=
-    --           #[ -- "CALLBlake2f_d1g0v0_Cancun"
-    --           --   "21_tstoreCannotBeDosdOOO_d0g0v0_Cancun"
-    --           -- , "15_tstoreCannotBeDosd_d0g0v0_Cancun"
-    --           -- , "ContractCreationSpam_d0g0v0_Cancun"
-    --           -- , "static_Return50000_2_d0g0v0_Cancun"
-    --           -- , "static_Call50000_identity_d0g0v0_Cancun"
-    --           -- , "static_Call50000_identity_d1g0v0_Cancun"
-    --           -- , "static_Call50000_ecrec_d0g0v0_Cancun"
-    --           -- , "static_Call50000_ecrec_d0g0v0_Cancun"
-    --           -- , "static_Call50000_identity2_d0g0v0_Cancun"
-    --           -- , "static_Call50000_identity2_d1g0v0_Cancun"
-    --           -- , "static_LoopCallsThenRevert_d0g0v0_Cancun"
-    --           -- , "static_LoopCallsThenRevert_d0g1v0_Cancun"
-    --           -- , "static_Call50000_d0g0v0_Cancun"
-    --           -- , "static_Call50000_d1g0v0_Cancun"
-    --           -- , "static_Call50000_rip160_d0g0v0_Cancun"
-    --           -- , "static_Call50000_rip160_d1g0v0_Cancun"
-    --           -- , "loopMul_d0g0v0_Cancun" -- OOF
-    --           -- , "loopMul_d1g0v0_Cancun" -- OOF
-    --           -- , "loopMul_d2g0v0_Cancun" -- OOF
-    --           -- , "performanceTester_d1g0v0_Cancun"
-    --           -- , "performanceTester_d4g0v0_Cancun"
-    --           -- , "loopExp_d10g0v0_Cancun" -- OOF
-    --           -- , "loopExp_d11g0v0_Cancun" -- OOF
-    --           -- , "loopExp_d12g0v0_Cancun" -- OOF
-    --           -- , "loopExp_d13g0v0_Cancun"
-    --           -- , "loopExp_d14g0v0_Cancun" -- OOF
-    --           -- , "loopExp_d8g0v0_Cancun" -- OOF
-    --           -- , "loopExp_d9g0v0_Cancun" -- OOF
-    --           -- , "Return50000_2_d0g0v0_Cancun"
-    --           -- , "Call50000_identity2_d0g1v0_Cancun"
-    --           -- , "Call50000_ecrec_d0g1v0_Cancun"
-    --           -- , "Return50000_d0g1v0_Cancun"
-    --           -- ,
-    --           -- "Call50000_sha256_d0g1v0_Cancun"
-    --           -- , "Call50000_d0g1v0_Cancun"
-    --           -- , "Callcode50000_d0g1v0_Cancun"
-    --           -- , "Call50000_identity_d0g1v0_Cancun"
-    --           -- , "QuadraticComplexitySolidity_CallDataCopy_d0g1v0_Cancun"
-    --           -- , "static_Call50000_sha256_d0g0v0_Cancun"
-    --           -- , "static_Call50000_sha256_d1g0v0_Cancun"
-    --           "CALLBlake2f_MaxRounds_d0g0v0_Cancun"
-    --           ]
-    --         )
-
-    --       testFile
-    -- Except EvmYul.Conform.Exception (Batteries.RBMap String EvmYul.Conform.TestResult compare)
-  --   for res in gatherMaps do
-  --   match res with
-  --     | .error err         => dbg_trace "error!"
-  --                             discardedFiles := discardedFiles.push (testFile, err)
-  --     | .ok    testresults => dbg_trace "ok! - testresults: {repr testresults}"
-  --                             for (test, result) in testresults do
-  --                               dbg_trace s!"test: {test} result: {result}"
-  --                               log testFile test result
-  --                               if result.isNone
-  --                               then numSuccess := numSuccess + 1
-  --                               else numFailedTest := numFailedTest + 1
-
-  -- let total := numFailedTest + numSuccess
-  -- IO.println s!"Total tests: {total}"
-  -- IO.println s!"The post was NOT equal to the resulting state: {numFailedTest}"
-  -- IO.println s!"Succeeded: {numSuccess}"
-  -- IO.println s!"Success rate of: {(numSuccess.toFloat / total.toFloat) * 100.0}"
-
-  -- IO.println s!"Files discarded along the way: {repr discardedFiles}"

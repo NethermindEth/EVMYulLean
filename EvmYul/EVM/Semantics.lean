@@ -682,7 +682,6 @@ def Ξ -- Type `Ξ` using `\GX` or `\Xi`
             blocks := blocks
             genesisBlockHeader := genesisBlockHeader
         }
-      dbg_trace s!"code size: {I.code.size}"
       let result ← X debugMode f (D_J I.code ⟨0⟩) freshEvmState
       match result with
         | .success evmState' o =>
