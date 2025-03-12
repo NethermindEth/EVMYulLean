@@ -18,6 +18,12 @@ before we make it easy to reason about.
 def Substate.storageKeysCmp (sk₁ sk₂ : AccountAddress × UInt256) : Ordering :=
   lexOrd.compare sk₁ sk₂
 
+structure LogEntry where
+  address : AccountAddress
+  topics  : Array UInt256
+  data    : ByteArray
+deriving BEq, Inhabited, Repr
+
 /--
 The `Substate` `A`. Section 6.1.
 - `selfDestructSet`    `Aₛ`
@@ -33,7 +39,7 @@ structure Substate :=
   refundBalance       : UInt256
   accessedAccounts    : Batteries.RBSet AccountAddress compare
   accessedStorageKeys : Batteries.RBSet (AccountAddress × UInt256) Substate.storageKeysCmp
-  logSeries           : Array (AccountAddress × Array UInt256 × ByteArray)
+  logSeries           : Array LogEntry
   deriving BEq, Inhabited, Repr
 
 /--
@@ -63,6 +69,6 @@ def bloomFilter (a : Array ByteArray) : ByteArray  :=
 def Substate.joinLogs (substate : Substate) : Array ByteArray :=
   Array.join <|
     substate.logSeries.map
-      λ (a, as, _) ↦ (as.map UInt256.toByteArray).push a.toByteArray
+      λ ⟨a, as, _⟩ ↦ (as.map UInt256.toByteArray).push a.toByteArray
 
 end EvmYul

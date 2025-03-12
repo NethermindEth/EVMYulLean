@@ -52,7 +52,7 @@ def logOp (μ₀ μ₁ : UInt256) (t : Array UInt256) (sState : SharedState) : S
   let Iₐ := sState.executionEnv.codeOwner
   let mem := sState.memory.readWithPadding μ₀.toNat μ₁.toNat
   { sState with
-    substate.logSeries := sState.substate.logSeries.push (Iₐ, t, mem)
+    substate.logSeries := sState.substate.logSeries.push ⟨Iₐ, t, mem⟩
     activeWords := .ofNat (MachineState.M sState.activeWords.toNat μ₀.toNat μ₁.toNat)
   }
 
