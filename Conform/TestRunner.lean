@@ -649,17 +649,16 @@ instance (priority := high) : Repr PersistentAccountMap := ⟨λ m _ ↦
         result := result ++ s!"{sk} → {sv}\n"
     return result⟩
  
-def processTest (testname : System.FilePath) (entry : TestEntry) (verbose : Bool := true) : IO TestResult := do
+def processTest (thread : Nat) (testname : System.FilePath) (filepath : System.FilePath) (entry : TestEntry) (verbose : Bool := true) : IO TestResult := do
   let tα ← IO.monoMsNow
   let result := preImpliesPost entry
   let tω ← IO.monoMsNow
   -- let result ← timeit s!"{testname} took: " (pure (preImpliesPost entry)) -- WARNING: IO needed
-  dbg_trace s!"{testname} took: {(tω - tα).toFloat / 1000.0}s"
+  dbg_trace s!"#{if thread / 10 == 1 then "" else " "}{thread} {testname} FROM {System.FilePath.mk (filepath.components.drop 3 |>.intersperse "/" |>.foldl (·++·) "")} took: {(tω - tα).toFloat / 1000.0}s"
   pure <|
     match result with
     | .error err => .mkFailed s!"{repr err}"
     | .ok result => errorF <$> result
-
   where discardError : PersistentAccountMap → String := λ _ ↦ "ERROR."
         verboseError : PersistentAccountMap → String := λ σ ↦
           match entry.postState with
@@ -669,83 +668,21 @@ def processTest (testname : System.FilePath) (entry : TestEntry) (verbose : Bool
             | .Hash h =>
               s!"\npost: {EvmYul.toHex h} \nactual: {EvmYul.toHex <$> stateTrieRoot σ}"
         errorF := if verbose then verboseError else discardError
-
--- local instance : MonadLift (Except String) (Except Conform.Exception) := ⟨Except.mapError .CannotParse⟩
-
-def processTestOfFile (filepath : System.FilePath)
-                      (testName : String)
-                      (whitelist : Array String := #[])
-                      (blacklist : Array String := #[])
-                      (thread : ℕ := 0) :
-                      ExceptT Exception IO (Option TestResult) := do
-  let file ← Lean.Json.fromFile filepath
-  let test ← Except.mapError Conform.Exception.CannotParse <|
-               file.getObjValAs? TestEntry testName
-  let test := guardWhitelist test >>= guardBlacklist >>= guardCancun
-  test.elim (pure .none) (
-    dbg_trace s!"#{thread} TESTING {testName} FROM {filepath}"
-    processTest testName ·
-  )
-  where
-    guardWhitelist (test : TestEntry) : Option TestEntry :=
-      if whitelist.isEmpty then test else if testName ∈ whitelist then test else .none
-    guardBlacklist (test : TestEntry) : Option TestEntry :=
-      if testName ∈ GlobalBlacklist ++ blacklist then .none else test
-    guardCancun (test : TestEntry) : Option TestEntry :=
-      if test.network.take 6 == "Cancun" then test else .none
   
-def processTestOfFiles (thread : ℕ)
-                       (tests : Array (System.FilePath × String))
-                       (whitelist : Array String := #[])
-                       (blacklist : Array String := #[]) :
-                       IO (Array (System.FilePath × String) × Array (System.FilePath × String × TestResult)) := do
+def processTests (thread : ℕ) (tests : Array (System.FilePath × String)) :
+                 IO (Array (System.FilePath × String) × Array (System.FilePath × String × TestResult)) := do
   let mut discarded : Array (System.FilePath × String) := .empty
   let mut results : Array (System.FilePath × String × TestResult) := .empty
-  for (path, test) in tests do
-    let IOεresult := ExceptT.run <| EvmYul.Conform.processTestOfFile path test whitelist blacklist thread
-    match ← IOεresult with
-      | .error _ => discarded := discarded.push (path, test)
-      | .ok res => match res with
-                   | .none => discarded := discarded.push (path, test)
-                   | .some res => results := results.push (path, test, res)
+  for (path, testName) in tests do
+    let file ← Lean.Json.fromFile path
+    let test := Except.mapError Conform.Exception.CannotParse <| file.getObjValAs? TestEntry testName
+    match test with
+    | .error _ => dbg_trace s!"Cannot parse: {(path, testName)}"
+                  discarded := discarded.push (path, testName)
+    | .ok test => dbg_trace s!"#{if thread / 10 == 1 then "" else " "}{thread} TESTING {testName} FROM {System.FilePath.mk (path.components.drop 3 |>.intersperse "/" |>.foldl (·++·) "")}"
+                  if test.network.startsWith "Cancun"
+                  then results := results.push (path, testName, .none) -- ←processTest thread testName path test)
   return (discarded, results)
-
--- def processTestsOfFile (file : System.FilePath)
---                        (whitelist : Array String := #[])
---                        (blacklist : Array String := #[])
---                        (thread : ℕ := 0) :
---                        ExceptT Exception IO (Batteries.RBMap String TestResult compare) := do
---   let path := file
---   let file ← Lean.Json.fromFile file
---   let testMap ← Except.mapError (Conform.Exception.CannotParse path) ∘
---                 Lean.FromJson.fromJson? (α := TestMap) <| file
---   let tests := testMap.toTests
---   let cancunTests := guardCancun tests
---   let tests := guardBlacklist ∘ guardWhitelist <| cancunTests
---   tests.foldlM (init := ∅) λ acc (testname, test) ↦ do
---     dbg_trace s!"#{thread} TESTING {testname} FROM {path}"
---     pure <| acc.insert testname (←processTest testname test)
---   where
---     guardWhitelist (tests : List (String × TestEntry)) :=
---       if whitelist.isEmpty then tests else tests.filter (λ (name, _) ↦ name ∈ whitelist)
---     guardBlacklist (tests : List (String × TestEntry)) :=
---       tests.filter (λ (name, _) ↦ name ∉ GlobalBlacklist ++ blacklist)
---     guardCancun (tests : List (String × TestEntry)) :=
---       tests.filter (λ (_, test) ↦ test.network.take 6 == "Cancun")
-
--- def processTestsOfFiles (thread : ℕ)
---                         (files : Array System.FilePath)
---                         (whitelist : Array String := #[])
---                         (blacklist : Array String := #[]) :
---                         IO (Array System.FilePath × Array (Batteries.RBMap String TestResult compare × System.FilePath)) := do
---   let mut discarded : Array System.FilePath := .empty
---   let mut results : Array (Batteries.RBMap String TestResult compare × System.FilePath) := .empty
---   for file in files do
---     let IOεresult := ExceptT.run <| EvmYul.Conform.processTestsOfFile file whitelist blacklist thread
---     match ← IOεresult with
---       | .error ε => discarded := discarded.push ε.toFilePath
---       | .ok res => results := results.push (res, file)
---   return (discarded, results)
 
 end Conform
 

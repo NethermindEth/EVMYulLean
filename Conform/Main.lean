@@ -4,8 +4,6 @@ import EvmYul.FFI.ffi
 -- def TestsSubdir := "BlockchainTests"
 -- def isTestFile (file : System.FilePath) : Bool := file.extension.option false (· == "json")
 
-#check Task
-
 def SimpleFile : System.FilePath := "EthereumTests/BlockchainTests/GeneralStateTests/VMTests/vmArithmeticTest/add.json"
 -- def BuggyFile := "EthereumTests/BlockchainTests/GeneralStateTests/VMTests/vmArithmeticTest/exp.json"
 def BuggyFile : System.FilePath := "Conform/testfile.json"
@@ -47,68 +45,66 @@ def log (testFile : System.FilePath) (testName : String) (result : TestResult) :
   IO.FS.withFile logFile .append λ h ↦ h.putStrLn s!"{testFile.fileName.get!}[{testName}] - {result}\n"
 
 /-
-  Threads are scheduled on per-file basis. This granularity is not sufficient.
-
-  Cancun                               :  0m 23s | 16threads
-  Pyspecs                              :  3m  8s | 16threads (1 test failed)
-  Shanghai                             :  0m  6s |  8threads
-  stArgsZeroOneBalance                 :  0m 14s | 16threads
-  stAttackTest                         :  0m  6s |  2threads
-  stBadOpcode                          : 14m 19s | 16threads (scheduling not ideal, need per-testcase)
-  stBugs                               :  0m  4s |  5threads
-  stCallCodes                          :  0m 13s | 16threads
-  stCallCreateCallCodeTest             :  0m  9s | 16threads
-  stCallDelegateCodesCallCodeHomestead :  0m 12s | 16threads
-  stCallDelegateCodesHomestead         :  0m 10s | 16threads
-  stChainId                            :  0m  3s |  2threads
-  stCodeCopyTest                       :  0m  3s |  2threads
-  stCodeSizeLimit                      :  0m  3s |  5threads
-  stCreate2                            :  5m  5s | 16threads (_all_ slow tests in Create2Recursive, scheduled for a single thread, ouch)
-  stCreateTest                         :  1m  5s | 16threads
-  stDelegatecallTestHomestead          :  0m 10s | 16threads
-  stEIP150singleCodeGasPrices          :  1m  5s | 16threads
-  stEIP150Specific                     :  0m  9s | 14threads  
-  stEIP158Specific                     :  0m  6s |  8threads 
-  stEIP1559                            :  4m 30s | 13threads (scheduling issue)
-  stEIP2930                            :  1m  0s |  7threads (scheduling issue)
-  stEIP3607                            :  0m  7s |  5threads  
-  stExample                            :  0m 12s | 12threads 
-  stExtCodeHash                        :  0m 14s | 16threads   
-  stHomesteadSpecific                  :  0m  5s |  5threads
-  stInitCodeTest                       :  0m  6s | 16threads   
-  stLogTests                           :  0m 11s | 16threads   
-  stMemExpandingEIP150Calls            :  0m  7s |  9threads   
-  stMemoryStressTest                   :  0m 12s | 16threads   
-  stMemoryTest                         :  2m 47s | 16threads (scheduling issue)
-  stNonZeroCallsTest                   :  0m  8s | 16threads   
-  stPreCompiledContracts               :  3m 18s |  9threads  
-  stPreCompiledContracts2              :  0m 28s | 16threads   
-  stQuadraticComplexityTest            :  1m 42s | 16threads   
-  stRandom                             :  0m 32s | 16threads   
-  stRandom2                            :  0m 22s | 16threads   
-  stRecursiveCreate                    :  0m 37s |  2threads  
-  stRefundTest                         :  0m  8s | 16threads   
-  stReturnDataTest                     :  2m  2s | 16threads   
-  stRevertTest                         :  1m 53s | 16threads   
-  stSelfBalance                        :  0m 36s |  6threads
-  stShift                              :  0m  9s | 16threads   
-  stSLoadTest                          :  0m  5s |  1thread     
-  stSolidityTest                       :  0m  7s | 16threads   
-  stSpecialTest                        :  0m  9s | 15threads  
-  stSStoreTest                         :  0m 35s | 16threads   
-  stStackTests                         :         | 10threads  
-  stStaticCall                         :         | 16threads   
-  stStaticFlagEnabled                  :         | 13threads 
-  stSystemOperationsTest               :         | 16threads   
-  stTimeConsuming                      : 11m 42s | 14threads
-  stTransactionTest                    :         | 16threads     
-  stTransitionTest                     :         |  6threads  
-  stWalletTest                         :         | 16threads     
-  stZeroCallsRevert                    :         | 16threads     
-  stZeroCallsTest                      :         | 16threads     
-  stZeroKnowledge                      :         | 16threads     
-  stZeroKnowledge2                     :         | 16threads
-  VMTests                                        |      
+  Cancun                               :  0m 23s |
+  Pyspecs                              :  2m 31s | (1 test failed)
+  Shanghai                             :  0m  6s |
+  stArgsZeroOneBalance                 :  0m 14s |
+  stAttackTest                         :  0m  6s |
+  stBadOpcode                          : 10m 42s | 
+  stBugs                               :  0m  4s |
+  stCallCodes                          :  0m 13s |
+  stCallCreateCallCodeTest             :  0m  9s |
+  stCallDelegateCodesCallCodeHomestead :  0m 12s |
+  stCallDelegateCodesHomestead         :  0m 10s |
+  stChainId                            :  0m  3s |
+  stCodeCopyTest                       :  0m  3s |
+  stCodeSizeLimit                      :  0m  3s |
+  stCreate2                            :  5m  5s | 
+  stCreateTest                         :  1m  5s |
+  stDelegatecallTestHomestead          :  0m 10s |
+  stEIP150singleCodeGasPrices          :  1m  5s |
+  stEIP150Specific                     :  0m  9s |  
+  stEIP158Specific                     :  0m  6s | 
+  stEIP1559                            :  4m 30s | (scheduling issue)
+  stEIP2930                            :  1m  0s | (scheduling issue)
+  stEIP3607                            :  0m  7s |  
+  stExample                            :  0m 12s | 
+  stExtCodeHash                        :  0m 14s |   
+  stHomesteadSpecific                  :  0m  5s |
+  stInitCodeTest                       :  0m  6s |   
+  stLogTests                           :  0m 11s |   
+  stMemExpandingEIP150Calls            :  0m  7s |   
+  stMemoryStressTest                   :  0m 12s |   
+  stMemoryTest                         :  2m 47s | (scheduling issue)
+  stNonZeroCallsTest                   :  0m  8s |   
+  stPreCompiledContracts               :  3m 18s |  
+  stPreCompiledContracts2              :  0m 28s |   
+  stQuadraticComplexityTest            :  1m 42s |   
+  stRandom                             :  0m 32s |   
+  stRandom2                            :  0m 22s |   
+  stRecursiveCreate                    :  0m 37s |  
+  stRefundTest                         :  0m  8s |   
+  stReturnDataTest                     :  2m  2s |   
+  stRevertTest                         :  1m 53s |   
+  stSelfBalance                        :  0m 36s |
+  stShift                              :  0m  9s |   
+  stSLoadTest                          :  0m  5s |     
+  stSolidityTest                       :  0m  7s |   
+  stSpecialTest                        :  0m  9s |  
+  stSStoreTest                         :  0m 35s |   
+  stStackTests                         :         |  
+  stStaticCall                         :         |   
+  stStaticFlagEnabled                  :         | 
+  stSystemOperationsTest               :         |   
+  stTimeConsuming                      : 11m 42s |
+  stTransactionTest                    :         |     
+  stTransitionTest                     :         |  
+  stWalletTest                         :         |     
+  stZeroCallsRevert                    :         |     
+  stZeroCallsTest                      :         |     
+  stZeroKnowledge                      :         |     
+  stZeroKnowledge2                     :         |
+  VMTests                                        |
 
 -/
 
@@ -298,44 +294,52 @@ def exampleInput : ByteArray := ⟨#[
   1
 ]⟩
 
-def main (args : List String) : IO Unit := do
-  let NumThreads : ℕ := args.head? <&> String.toNat! |>.getD 1
-  -- dbg_trace s!"Running tests on {NumThreads} thread{if NumThreads == 1 then "" else "s"}."
+def testFiles (root               : System.FilePath)
+              (directoryBlacklist : Array System.FilePath := #[])
+              (fileBlacklist      : Array System.FilePath := #[])
+              (testBlacklist      : Array String := #[])
+              (testWhitelist      : Array String := #[])
+              (threads            : ℕ := 1) : IO Unit := do
+  let isToBeTested (testname : String) : Bool :=
+    let whitelist := testWhitelist
+    let blacklist := testBlacklist ++ EvmYul.Conform.GlobalBlacklist
+    testname ∉ blacklist ∧ (whitelist.isEmpty ∨ testname ∈ whitelist)
+
   let testFiles ←
     Array.filter isTestFile <$>
-      System.FilePath.walkDir
-        (enter := λ path ↦ pure <| path ∉ directoryBlacklist)
-        ("EthereumTests/BlockchainTests/GeneralStateTests/Cancun")
-  let mut discardedFiles : Array (System.FilePath × String) := #[]
-  -- let testFiles := #[SimpleFile]
-  -- let testFiles := #[BuggyFile]
-  -- let testFiles := #[SpecificFile]
-  -- let testFiles : Array System.FilePath := #["EthereumTests/BlockchainTests/GeneralStateTests/stZeroCallsTest/ZeroValue_CALLCODE_ToEmpty_Paris.json"]
-  -- let testFiles : Array System.FilePath := #["EthereumTests/BlockchainTests/GeneralStateTests/VMTests/vmPerformance/loopMul.json"]
+      System.FilePath.walkDir root (pure <| · ∉ directoryBlacklist)
 
+  IO.println s!"count: {testFiles.size}"
+
+  let testFiles := testFiles.filter (· ∉ fileBlacklist)
+
+  let mut discardedFiles : Array (System.FilePath × String) := #[]
   let mut numFailedTest := 0
   let mut numSuccess := 0
-  let testFiles := testFiles.filter (· ∉ fileBlacklist)
-  
+
   if ←System.FilePath.pathExists logFile then IO.FS.removeFile logFile
+
   let testJsons ← testFiles.mapM Lean.Json.fromFile
   let testNames : Array (System.FilePath × Array String) :=
     testJsons.zip testFiles |>.map
       λ (json, filepath) ↦
         match json.getObj? with
         | .error _ => panic! "Malformed test json."
-        | .ok x => (filepath, x.toArray.map Sigma.fst)
+        | .ok x => (filepath, x.toArray.map Sigma.fst |>.filter isToBeTested)  
+  
   let mut tasks : Array (Task _) := .empty
-  let mut thread : ℕ := 0
-  let mut tests : Array (Array (System.FilePath × String)) := .mkArray NumThreads #[]
+  let mut thread := 0
+  let mut tests : Array (Array (System.FilePath × String)) := .mkArray threads #[]
+
   dbg_trace s!"Scheduling tests for parallel execution..."
   for (path, names) in testNames do
     for name in names do
       tests := tests.set! thread (tests.get! thread |>.push (path, name))
-      thread := thread + 1; thread := thread % NumThreads
-  for i in [0:NumThreads] do
-    tasks := tasks.push (←IO.asTask <| EvmYul.Conform.processTestOfFiles i (tests.get! i))
-  dbg_trace s!"Scheduled {tests.foldl (· + ·.size) 0} tests on {NumThreads} thread{if NumThreads == 1 then "" else "s"}."
+      thread := thread + 1; thread := thread % threads
+  for i in [0:threads] do
+    tasks := tasks.push (←IO.asTask <| EvmYul.Conform.processTests i (tests.get! i))
+  
+  dbg_trace s!"Scheduled {tests.foldl (· + ·.size) 0} tests on {threads} thread{if threads == 1 then "" else "s"}."
   dbg_trace s!"Running..."
   let testResults ← tasks.mapM (IO.wait · >>= IO.ofExcept)
   for (discarded, batch) in testResults do
@@ -350,3 +354,31 @@ def main (args : List String) : IO Unit := do
   IO.println s!"The post was NOT equal to the resulting state: {numFailedTest}"
   IO.println s!"Succeeded: {numSuccess}"
   IO.println s!"Success rate of: {(numSuccess.toFloat / total.toFloat) * 100.0}"
+
+def main (args : List String) : IO Unit := do
+  let NumThreads : ℕ := args.head? <&> String.toNat! |>.getD 1
+
+  IO.println s!"Phase 1/3 - No performance tests.)"
+  testFiles (root := "EthereumTests/BlockchainTests/")
+            (directoryBlacklist := #["EthereumTests/BlockchainTests//GeneralStateTests/VMTests/vmPerformance"])
+            (testBlacklist := #["static_Call50000bytesContract50_2_d1g0v0_Cancun",
+                                "static_Call50000bytesContract50_2_d0g0v0_Cancun",
+                                "static_Call50000bytesContract50_3_d1g0v0_Cancun",
+                                "static_Call50000_sha256_d0g0v0_Cancun",
+                                "static_Call50000_sha256_d1g0v0_Cancun",
+                                "CALLBlake2f_MaxRounds_d0g0v0_Cancun"])
+            (threads := NumThreads)
+  
+  IO.println s!"Phase 2/3 - Performance tests only."
+  testFiles (root := "EthereumTests/BlockchainTests/GeneralStateTests/VMTests/vmPerformance/")
+            (threads := NumThreads)
+
+  IO.println s!"Phase 3/3 - Individually scheduled tests."
+  testFiles (root := "EthereumTests/BlockchainTests/")
+            (testWhitelist := #["static_Call50000bytesContract50_2_d1g0v0_Cancun",
+                                "static_Call50000bytesContract50_2_d0g0v0_Cancun",
+                                "static_Call50000bytesContract50_3_d1g0v0_Cancun",
+                                "static_Call50000_sha256_d0g0v0_Cancun",
+                                "static_Call50000_sha256_d1g0v0_Cancun",
+                                "CALLBlake2f_MaxRounds_d0g0v0_Cancun"])
+            (threads := NumThreads)

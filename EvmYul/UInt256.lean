@@ -250,7 +250,6 @@ def addMod (a b c : UInt256) : UInt256 :=
     ofNat <| Nat.mod (a.val + b.val) c.toNat
 
 def mulMod (a b c : UInt256) : UInt256 :=
-  dbg_trace "called mulMod a: {a} b: {b} c: {c}"
   -- "All intermediate calculations of this operation are **not** subject to the 2^256 modulo."
   if eq0 c then ⟨0⟩ else
     ofNat <| Nat.mod (a.val * b.val) c.toNat
