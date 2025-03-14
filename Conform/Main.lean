@@ -311,8 +311,6 @@ def testFiles (root               : System.FilePath)
     Array.filter isTestFile <$>
       System.FilePath.walkDir root (pure <| · ∉ directoryBlacklist)
 
-  IO.println s!"count: {testFiles.size}"
-
   let testFiles := testFiles.filter (· ∉ fileBlacklist)
 
   let mut discardedFiles : Array (System.FilePath × String) := #[]
@@ -369,7 +367,7 @@ def main (args : List String) : IO Unit := do
       "CALLBlake2f_MaxRounds_d0g0v0_Cancun",
       "SuicideIssue_Cancun"]
 
-  IO.println s!"Phase 1/3 - No performance tests.)"
+  IO.println s!"Phase 1/3 - No performance tests."
   testFiles (root := "EthereumTests/BlockchainTests/")
             (directoryBlacklist := #["EthereumTests/BlockchainTests//GeneralStateTests/VMTests/vmPerformance"])
             (testBlacklist := DelayFiles)
