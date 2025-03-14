@@ -336,7 +336,7 @@ def deserializeBlock
           (.ofNat <| fromByteArrayBigEndian coinbase)
           (.ofNat <| fromByteArrayBigEndian stateRoot)
           transactionsTrie
-          (.ofNat <| fromByteArrayBigEndian receiptTrie)
+          receiptTrie
           bloom
           (fromByteArrayBigEndian difficulty)
           (fromByteArrayBigEndian number)

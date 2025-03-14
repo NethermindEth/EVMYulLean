@@ -50,6 +50,7 @@ inductive BlockException where
   | INVALID_STATE_ROOT
   | INVALID_LOG_BLOOM
   | INVALID_TRANSACTIONS_ROOT
+  | INVALID_RECEIPTS_ROOT
 
 instance : Repr BlockException where
   reprPrec s _ :=
@@ -76,6 +77,7 @@ instance : Repr BlockException where
       | .INVALID_STATE_ROOT => "INVALID_STATE_ROOT"
       | .INVALID_LOG_BLOOM => "INVALID_LOG_BLOOM"
       | .INVALID_TRANSACTIONS_ROOT => "INVALID_TRANSACTIONS_ROOT"
+      | .INVALID_RECEIPTS_ROOT => "INVALID_RECEIPTS_ROOT"
 
 inductive TransactionException where
   | IllFormedRLP
