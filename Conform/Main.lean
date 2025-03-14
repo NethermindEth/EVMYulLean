@@ -340,7 +340,7 @@ def testFiles (root               : System.FilePath)
       thread := thread + 1; thread := thread % threads
   for i in [0:threads] do
     tasks := tasks.push (←IO.asTask <| EvmYul.Conform.processTests i (tests.get! i))
-  
+
   dbg_trace s!"Scheduled {tests.foldl (· + ·.size) 0} tests on {threads} thread{if threads == 1 then "" else "s"}."
   dbg_trace s!"Running..."
   let testResults ← tasks.mapM (IO.wait · >>= IO.ofExcept)
@@ -366,22 +366,20 @@ def main (args : List String) : IO Unit := do
       "static_Call50000bytesContract50_3_d1g0v0_Cancun",
       "static_Call50000_sha256_d0g0v0_Cancun",
       "static_Call50000_sha256_d1g0v0_Cancun",
-      "CALLBlake2f_MaxRounds_d0g0v0_Cancun"]
+      "CALLBlake2f_MaxRounds_d0g0v0_Cancun",
+      "SuicideIssue_Cancun"]
 
-  testFiles (root := "EthereumTests/BlockchainTests/TransitionTests")
+  IO.println s!"Phase 1/3 - No performance tests.)"
+  testFiles (root := "EthereumTests/BlockchainTests/")
+            (directoryBlacklist := #["EthereumTests/BlockchainTests//GeneralStateTests/VMTests/vmPerformance"])
+            (testBlacklist := DelayFiles)
+            (threads := NumThreads)
+  
+  IO.println s!"Phase 2/3 - Performance tests only."
+  testFiles (root := "EthereumTests/BlockchainTests/GeneralStateTests/VMTests/vmPerformance/")
             (threads := NumThreads)
 
-  -- IO.println s!"Phase 1/3 - No performance tests.)"
-  -- testFiles (root := "EthereumTests/BlockchainTests/")
-  --           (directoryBlacklist := #["EthereumTests/BlockchainTests//GeneralStateTests/VMTests/vmPerformance"])
-  --           (testBlacklist := DelayFiles)
-  --           (threads := NumThreads)
-  
-  -- IO.println s!"Phase 2/3 - Performance tests only."
-  -- testFiles (root := "EthereumTests/BlockchainTests/GeneralStateTests/VMTests/vmPerformance/")
-  --           (threads := NumThreads)
-
-  -- IO.println s!"Phase 3/3 - Individually scheduled tests."
-  -- testFiles (root := "EthereumTests/BlockchainTests/")
-  --           (testWhitelist := DelayFiles)
-  --           (threads := NumThreads)
+  IO.println s!"Phase 3/3 - Individually scheduled tests."
+  testFiles (root := "EthereumTests/BlockchainTests/")
+            (testWhitelist := DelayFiles)
+            (threads := NumThreads)
