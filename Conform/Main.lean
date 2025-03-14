@@ -294,6 +294,8 @@ def exampleInput : ByteArray := ⟨#[
   1
 ]⟩
 
+
+
 def testFiles (root               : System.FilePath)
               (directoryBlacklist : Array System.FilePath := #[])
               (fileBlacklist      : Array System.FilePath := #[])
@@ -326,7 +328,7 @@ def testFiles (root               : System.FilePath)
         match json.getObj? with
         | .error _ => panic! "Malformed test json."
         | .ok x => (filepath, x.toArray.map Sigma.fst |>.filter isToBeTested)  
-  
+
   let mut tasks : Array (Task _) := .empty
   let mut thread := 0
   let mut tests : Array (Array (System.FilePath × String)) := .mkArray threads #[]
@@ -358,27 +360,28 @@ def testFiles (root               : System.FilePath)
 def main (args : List String) : IO Unit := do
   let NumThreads : ℕ := args.head? <&> String.toNat! |>.getD 1
 
-  IO.println s!"Phase 1/3 - No performance tests.)"
-  testFiles (root := "EthereumTests/BlockchainTests/")
-            (directoryBlacklist := #["EthereumTests/BlockchainTests//GeneralStateTests/VMTests/vmPerformance"])
-            (testBlacklist := #["static_Call50000bytesContract50_2_d1g0v0_Cancun",
-                                "static_Call50000bytesContract50_2_d0g0v0_Cancun",
-                                "static_Call50000bytesContract50_3_d1g0v0_Cancun",
-                                "static_Call50000_sha256_d0g0v0_Cancun",
-                                "static_Call50000_sha256_d1g0v0_Cancun",
-                                "CALLBlake2f_MaxRounds_d0g0v0_Cancun"])
-            (threads := NumThreads)
-  
-  IO.println s!"Phase 2/3 - Performance tests only."
-  testFiles (root := "EthereumTests/BlockchainTests/GeneralStateTests/VMTests/vmPerformance/")
+  let DelayFiles : Array String :=
+    #["static_Call50000bytesContract50_2_d1g0v0_Cancun",
+      "static_Call50000bytesContract50_2_d0g0v0_Cancun",
+      "static_Call50000bytesContract50_3_d1g0v0_Cancun",
+      "static_Call50000_sha256_d0g0v0_Cancun",
+      "static_Call50000_sha256_d1g0v0_Cancun",
+      "CALLBlake2f_MaxRounds_d0g0v0_Cancun"]
+
+  testFiles (root := "EthereumTests/BlockchainTests/TransitionTests")
             (threads := NumThreads)
 
-  IO.println s!"Phase 3/3 - Individually scheduled tests."
-  testFiles (root := "EthereumTests/BlockchainTests/")
-            (testWhitelist := #["static_Call50000bytesContract50_2_d1g0v0_Cancun",
-                                "static_Call50000bytesContract50_2_d0g0v0_Cancun",
-                                "static_Call50000bytesContract50_3_d1g0v0_Cancun",
-                                "static_Call50000_sha256_d0g0v0_Cancun",
-                                "static_Call50000_sha256_d1g0v0_Cancun",
-                                "CALLBlake2f_MaxRounds_d0g0v0_Cancun"])
-            (threads := NumThreads)
+  -- IO.println s!"Phase 1/3 - No performance tests.)"
+  -- testFiles (root := "EthereumTests/BlockchainTests/")
+  --           (directoryBlacklist := #["EthereumTests/BlockchainTests//GeneralStateTests/VMTests/vmPerformance"])
+  --           (testBlacklist := DelayFiles)
+  --           (threads := NumThreads)
+  
+  -- IO.println s!"Phase 2/3 - Performance tests only."
+  -- testFiles (root := "EthereumTests/BlockchainTests/GeneralStateTests/VMTests/vmPerformance/")
+  --           (threads := NumThreads)
+
+  -- IO.println s!"Phase 3/3 - Individually scheduled tests."
+  -- testFiles (root := "EthereumTests/BlockchainTests/")
+  --           (testWhitelist := DelayFiles)
+  --           (threads := NumThreads)

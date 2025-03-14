@@ -680,8 +680,9 @@ def processTests (thread : ℕ) (tests : Array (System.FilePath × String)) :
     | .error _ => dbg_trace s!"Cannot parse: {(path, testName)}"
                   discarded := discarded.push (path, testName)
     | .ok test => dbg_trace s!"#{if thread / 10 == 1 then "" else " "}{thread} TESTING {testName} FROM {System.FilePath.mk (path.components.drop 3 |>.intersperse "/" |>.foldl (·++·) "")}"
+                  dbg_trace s!"network: {test.network}"
                   if test.network.startsWith "Cancun"
-                  then results := results.push (path, testName, .none) -- ←processTest thread testName path test)
+                  then results := results.push (path, testName, ←processTest thread testName path test)
   return (discarded, results)
 
 end Conform
