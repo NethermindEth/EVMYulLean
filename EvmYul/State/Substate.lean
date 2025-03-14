@@ -24,6 +24,19 @@ structure LogEntry where
   data    : ByteArray
 deriving BEq, Inhabited, Repr
 
+def LogEntry.to𝕋 : LogEntry → 𝕋
+  | ⟨address, topics, data⟩ =>
+    .𝕃
+      [ .𝔹 address.toByteArray
+      , .𝕃 <| topics.data.map (.𝔹 ∘ UInt256.toByteArray)
+      , .𝔹 data
+      ]
+
+abbrev LogSeries := Array LogEntry
+
+def LogSeries.to𝕋 (logSeries : LogSeries) : 𝕋 :=
+  .𝕃 (logSeries.data.map LogEntry.to𝕋)
+
 /--
 The `Substate` `A`. Section 6.1.
 - `selfDestructSet`    `Aₛ`
@@ -39,7 +52,7 @@ structure Substate :=
   refundBalance       : UInt256
   accessedAccounts    : Batteries.RBSet AccountAddress compare
   accessedStorageKeys : Batteries.RBSet (AccountAddress × UInt256) Substate.storageKeysCmp
-  logSeries           : Array LogEntry
+  logSeries           : LogSeries
   deriving BEq, Inhabited, Repr
 
 /--

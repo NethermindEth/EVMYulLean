@@ -100,7 +100,7 @@ instance : FromJson BlockHeader where
         beneficiary   := ← json.getObjValAsD! AccountAddress   "coinbase"
         stateRoot     := ← json.getObjValAsD! UInt256   "stateRoot"
         transRoot     := ← json.getObjValAsD! ByteArray "transactionsTrie"
-        receiptRoot   := ← json.getObjValAsD! UInt256   "receiptTrie"
+        receiptRoot   := ← json.getObjValAsD! ByteArray "receiptTrie"
         logsBloom     := ← json.getObjValAsD! ByteArray "bloom"
         difficulty    := ← json.getObjValAsD! ℕ         "difficulty"
         number        := ← json.getObjValAsD! ℕ         "number"

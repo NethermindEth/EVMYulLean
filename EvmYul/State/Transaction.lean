@@ -4,6 +4,7 @@ import EvmYul.UInt256
 import EvmYul.Wheels
 import EvmYul.State.TrieRoot
 import Conform.Wheels
+import EvmYul.State.Substate
 
 namespace EvmYul
 
@@ -147,5 +148,37 @@ def Transaction.computeTrieRoot (ts : Array ByteArray) : Option ByteArray := do
   match Array.mapM Transaction.toBlobs ((Array.range ts.size).zip ts) with
     | none => .none
     | some ws => (ByteArray.ofBlob (blobComputeTrieRoot ws)).toOption
+
+structure TransactionReceipt where
+  type                     : UInt8     /- R_x -/
+  statusCode               : Bool      /- R_z -/
+  cumulativeGasUsedInBlock : ℕ         /- R_u -/
+  bloomFilter              : ByteArray /- R_b -/
+  logSeries                : LogSeries /- R_l -/
+deriving BEq, Inhabited, Repr
+
+def L_R : TransactionReceipt → 𝕋
+  | ⟨_, statusCode, cumulativeGasUsedInBlock, bloomFilter, logSeries⟩ =>
+  .𝕃
+    [ if statusCode then .𝔹 (BE 1) else .𝔹 (BE 0)
+    , .𝔹 (BE cumulativeGasUsedInBlock)
+    , .𝔹 bloomFilter
+    , logSeries.to𝕋
+    ]
+
+def TransactionReceipt.toBlobs (w : ℕ × ByteArray) : Option (String × String) := do
+  let rlpᵢ ← RLP (.𝔹 (BE w.1))
+  let rlp ← w.2
+  pure (EvmYul.toHex rlpᵢ, EvmYul.toHex rlp)
+
+-- EIP-4895
+def TransactionReceipt.computeTrieRoot (ws : Array ByteArray) : Option ByteArray := do
+  match Array.mapM TransactionReceipt.toBlobs ((Array.range ws.size).zip ws) with
+    | none => .none
+    | some ws => (ByteArray.ofBlob (blobComputeTrieRoot ws)).toOption
+
+def TransactionReceipt.toTrieValue (r : TransactionReceipt) : ByteArray :=
+  let rlp := Option.get! ∘ RLP ∘ L_R <| r
+  if r.type = 0 then rlp else ⟨#[r.type]⟩ ++ rlp
 
 end EvmYul

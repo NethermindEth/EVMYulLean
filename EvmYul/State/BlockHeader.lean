@@ -31,7 +31,7 @@ structure BlockHeader where
   beneficiary   : AccountAddress
   stateRoot     : UInt256
   transRoot     : ByteArray
-  receiptRoot   : UInt256
+  receiptRoot   : ByteArray
   logsBloom     : ByteArray
   -- Officially deprecated, but checked in `wrongDifficulty_Cancun`
   difficulty    : ℕ

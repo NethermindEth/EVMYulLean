@@ -120,7 +120,7 @@ def executeTransaction
 := do
   let _TODOfuel : ℕ := s.accountMap.find? sender |>.elim ⟨0⟩ (·.balance) |>.toNat
 
-  let (ypState, substate, _, totalGasUsed) ←
+  let (ypState, substate, statusCode, totalGasUsed) ←
     EVM.Υ (debugMode := false) _TODOfuel
       s.accountMap
       header.baseFeePerGas
@@ -137,6 +137,14 @@ def executeTransaction
     { s with
       accountMap := ypState
       totalGasUsedInBlock := s.totalGasUsedInBlock + totalGasUsed.toNat
+      transactionReceipts :=
+        s.transactionReceipts.push
+          ⟨ transaction.type
+          , statusCode
+          , s.totalGasUsedInBlock + totalGasUsed.toNat
+          , bloomFilter substate.joinLogs
+          , substate.logSeries
+          ⟩
       substate
     }
   pure result
@@ -439,6 +447,12 @@ def validateBlock
   if block.transactions.trieRoot ≠ block.blockHeader.transRoot then
     throw <| .BlockException .INVALID_TRANSACTIONS_ROOT
 
+  let receiptsRoot :=
+    TransactionReceipt.computeTrieRoot <|
+      state.transactionReceipts.map TransactionReceipt.toTrieValue
+  if receiptsRoot ≠ some block.blockHeader.receiptRoot then
+    throw <| .BlockException .INVALID_RECEIPTS_ROOT
+
   pure ()
 
 def deserializeRawBlock (rawBlock : RawBlock)
@@ -555,7 +569,7 @@ def processBlocks
               trans
           executeTransaction trans S_T s' block.blockHeader
         )
-        {s with totalGasUsedInBlock := 0}
+        {s with totalGasUsedInBlock := 0, transactionReceipts := .empty}
 
     -- Withdrawals execution
     let σ := applyWithdrawals s.accountMap block.withdrawals.array
