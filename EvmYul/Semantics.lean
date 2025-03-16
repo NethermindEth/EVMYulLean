@@ -38,7 +38,7 @@ private abbrev Transformer : OperationType → Type
 
 private def dispatchInvalid (τ : OperationType) : Transformer τ :=
   match τ with
-    | .EVM => λ _ ↦ .error EVM.Exception.InvalidInstruction
+    | .EVM => λ _ ↦ .error .InvalidInstruction
     | .Yul => λ _ _ ↦ .error Yul.Exception.InvalidInstruction
 
 private def dispatchUnary (debugMode : Bool) (τ : OperationType) : Primop.Unary → Transformer τ :=
@@ -66,9 +66,14 @@ private def dispatchExecutionEnvOp (debugMode : Bool) (τ : OperationType) (op :
     | .EVM => EVM.executionEnvOp debugMode op
     | .Yul => Yul.executionEnvOp op
 
-private def dispatchMachineStateOp (τ : OperationType) (op : MachineState → UInt256) : Transformer τ :=
+private def dispatchUnaryExecutionEnvOp (debugMode : Bool) (τ : OperationType) (op : ExecutionEnv → UInt256 → UInt256) : Transformer τ :=
   match τ with
-    | .EVM => EVM.machineStateOp op
+    | .EVM => EVM.unaryExecutionEnvOp debugMode op
+    | .Yul => Yul.unaryExecutionEnvOp op
+
+private def dispatchMachineStateOp (debugMode : Bool) (τ : OperationType) (op : MachineState → UInt256) : Transformer τ :=
+  match τ with
+    | .EVM => EVM.machineStateOp debugMode op
     | .Yul => Yul.machineStateOp op
 
 private def dispatchUnaryStateOp (debugMode : Bool) (τ : OperationType) (op : State → UInt256 → State × UInt256) : Transformer τ :=
@@ -124,9 +129,9 @@ private def dispatchBinaryStateOp
     | .EVM => EVM.binaryStateOp debugMode op
     | .Yul => Yul.binaryStateOp op
 
-private def dispatchStateOp (τ : OperationType) (op : State → UInt256) : Transformer τ :=
+private def dispatchStateOp (debugMode : Bool) (τ : OperationType) (op : State → UInt256) : Transformer τ :=
   match τ with
-    | .EVM => EVM.stateOp op
+    | .EVM => EVM.stateOp debugMode op
     | .Yul => Yul.stateOp op
 
 private def dispatchLog0 (debugMode : Bool) (τ : OperationType) : Transformer τ :=
@@ -159,13 +164,13 @@ private def L (n : ℕ) := n - n / 64
 def shortInput := "01aHHABLA"
 def longInput := "Lean 4 is a reimplementation of the Lean theorem prover in Lean itself. The new compiler produces C code, and users can now implement efficient proof automation in Lean, compile it into efficient C code, and load it as a plugin. In Lean 4, users can access all internal data structures used to implement Lean by merely importing the Lean package."
 
--- example :
---   toHex (KEC shortInput.toUTF8) = "6107589dda3ff2ac99745795d1eb3ac2538f2a7a93f9ef180c33dee244592874"
--- := by native_decide
+private example :
+  toHex (KEC shortInput.toUTF8) = "6107589dda3ff2ac99745795d1eb3ac2538f2a7a93f9ef180c33dee244592874"
+:= by native_decide
 
--- example :
---   toHex (KEC longInput.toUTF8) = "596cfd6c2f8f76b8f480f5c2fc582db9089486792435f397f8286aff64d42646"
--- := by native_decide
+private example :
+  toHex (KEC longInput.toUTF8) = "596cfd6c2f8f76b8f480f5c2fc582db9089486792435f397f8286aff64d42646"
+:= by native_decide
 
 -- TODO: Yul halting for `SELFDESTRUCT`, `RETURN`, `REVERT`, `STOP`
 def step {τ : OperationType} (debugMode : Bool) (op : Operation τ) : Transformer τ := Id.run do
@@ -235,15 +240,15 @@ def step {τ : OperationType} (debugMode : Bool) (op : Operation τ) : Transform
       dispatchBinaryMachineStateOp' debugMode τ MachineState.keccak256
 
     | τ, .ADDRESS =>
-      dispatchExecutionEnvOp debugMode τ (Fin.ofNat ∘ Fin.val ∘ ExecutionEnv.codeOwner)
+      dispatchExecutionEnvOp debugMode τ (.ofNat ∘ Fin.val ∘ ExecutionEnv.codeOwner)
     | τ, .BALANCE =>
       dispatchUnaryStateOp debugMode τ EvmYul.State.balance
     | τ, .ORIGIN =>
-      dispatchExecutionEnvOp debugMode τ (Fin.ofNat ∘ Fin.val ∘ ExecutionEnv.sender)
+      dispatchExecutionEnvOp debugMode τ (.ofNat ∘ Fin.val ∘ ExecutionEnv.sender)
     | τ, .CALLER =>
-      dispatchExecutionEnvOp debugMode τ (Fin.ofNat ∘ Fin.val ∘ ExecutionEnv.source)
+      dispatchExecutionEnvOp debugMode τ (.ofNat ∘ Fin.val ∘ ExecutionEnv.source)
     | τ, .CALLVALUE =>
-      dispatchExecutionEnvOp debugMode τ (Fin.ofNat ∘ Fin.val ∘ ExecutionEnv.weiValue)
+      dispatchExecutionEnvOp debugMode τ ExecutionEnv.weiValue
     | τ, .CALLDATALOAD =>
       dispatchUnaryStateOp debugMode τ (λ s v ↦ (s, EvmYul.State.calldataload s v))
     | τ, .CALLDATASIZE =>
@@ -261,45 +266,46 @@ def step {τ : OperationType} (debugMode : Bool) (op : Operation τ) : Transform
     | τ, .EXTCODECOPY =>
       dispatchQuaternaryCopyOp debugMode τ EvmYul.SharedState.extCodeCopy'
     | τ, .RETURNDATASIZE =>
-      dispatchMachineStateOp τ EvmYul.MachineState.returndatasize
+      dispatchMachineStateOp debugMode τ EvmYul.MachineState.returndatasize
     | .EVM, .RETURNDATACOPY =>
             λ evmState ↦
         match evmState.stack.pop3 with
           | some ⟨stack', μ₀, μ₁, μ₂⟩ => do
             if debugMode then
               dbg_trace s!"called with μ₀: {μ₀} μ₁: {μ₁} μ₂: {μ₂}"
-            let .some mState' := evmState.toMachineState.returndatacopy μ₀ μ₁ μ₂
-              | .error EVM.Exception.OutOfBounds
+            let mState' := evmState.toMachineState.returndatacopy μ₀ μ₁ μ₂
             let evmState' := {evmState with toMachineState := mState'}
             .ok <| evmState'.replaceStackAndIncrPC stack'
-          | _ => .error EVM.Exception.InvalidStackSizeException
+          | _ => .error .StackUnderflow
     | .Yul, .RETURNDATACOPY =>
       λ yulState lits ↦
         match lits with
           | [a, b, c] => do
-            let .some mState' := yulState.toSharedState.toMachineState.returndatacopy a b c
-              | .error .InvalidArguments
+            let mState' := yulState.toSharedState.toMachineState.returndatacopy a b c
             .ok <| (yulState.setMachineState mState', .none)
           | _ => .error .InvalidArguments
-    | τ, .EXTCODEHASH => dispatchUnaryStateOp debugMode τ (λ s v ↦ (s, EvmYul.State.extCodeHash s v))
+    | τ, .EXTCODEHASH => dispatchUnaryStateOp debugMode τ EvmYul.State.extCodeHash
 
     | τ, .BLOCKHASH => dispatchUnaryStateOp debugMode τ (λ s v ↦ (s, EvmYul.State.blockHash s v))
-    | τ, .COINBASE => dispatchStateOp τ (Fin.ofNat ∘ Fin.val ∘ EvmYul.State.coinBase)
+    | τ, .COINBASE => dispatchStateOp debugMode τ (.ofNat ∘ Fin.val ∘ EvmYul.State.coinBase)
     | τ, .TIMESTAMP =>
-      dispatchStateOp τ EvmYul.State.timeStamp
-    | τ, .NUMBER => dispatchStateOp τ EvmYul.State.number
+      dispatchStateOp debugMode τ EvmYul.State.timeStamp
+    | τ, .NUMBER => dispatchStateOp debugMode τ EvmYul.State.number
     -- "RANDAO is a pseudorandom value generated by validators on the Ethereum consensus layer"
     -- "the details of generating the RANDAO value on the Beacon Chain is beyond the scope of this paper"
     | τ, .PREVRANDAO => dispatchExecutionEnvOp debugMode τ EvmYul.prevRandao
-    | τ, .GASLIMIT => dispatchStateOp τ EvmYul.State.gasLimit
-    | τ, .CHAINID => dispatchStateOp τ EvmYul.State.chainId
-    | τ, .SELFBALANCE => dispatchStateOp τ EvmYul.State.selfbalance
+    | τ, .GASLIMIT => dispatchStateOp debugMode τ EvmYul.State.gasLimit
+    | τ, .CHAINID => dispatchStateOp debugMode τ EvmYul.State.chainId
+    | τ, .SELFBALANCE => dispatchStateOp debugMode τ EvmYul.State.selfbalance
+    | τ, .BASEFEE => dispatchExecutionEnvOp debugMode τ EvmYul.basefee
+    | τ, .BLOBHASH => dispatchUnaryExecutionEnvOp debugMode τ blobhash
+    | τ, .BLOBBASEFEE => dispatchExecutionEnvOp debugMode τ EvmYul.ExecutionEnv.getBlobGasprice
 
     | .EVM, .POP =>
       λ evmState ↦
       match evmState.stack.pop with
         | some ⟨ s , _ ⟩ => .ok <| evmState.replaceStackAndIncrPC s
-        | _ => .error EVM.Exception.InvalidStackSizeException
+        | _ => .error .StackUnderflow
 
     | .EVM, .MLOAD => λ evmState ↦
       match evmState.stack.pop with
@@ -309,7 +315,7 @@ def step {τ : OperationType} (debugMode : Bool) (op : Operation τ) : Transform
           let (v, mState') := evmState.toMachineState.mload μ₀
           let evmState' := {evmState with toMachineState := mState'}
           .ok <| evmState'.replaceStackAndIncrPC (s.push v)
-        | _ => .error EVM.Exception.InvalidStackSizeException
+        | _ => .error .StackUnderflow
     | .Yul, .MLOAD => λ yulState lits ↦
         match lits with
           | [a] =>
@@ -326,9 +332,9 @@ def step {τ : OperationType} (debugMode : Bool) (op : Operation τ) : Transform
       dispatchBinaryStateOp debugMode τ EvmYul.State.sstore
     | τ, .TLOAD => dispatchUnaryStateOp debugMode τ EvmYul.State.tload
     | τ, .TSTORE => dispatchBinaryStateOp debugMode τ EvmYul.State.tstore
-    | τ, .MSIZE => dispatchMachineStateOp τ MachineState.msize
+    | τ, .MSIZE => dispatchMachineStateOp debugMode τ MachineState.msize
     | τ, .GAS =>
-      dispatchMachineStateOp τ MachineState.gas
+      dispatchMachineStateOp debugMode τ MachineState.gas
     | τ, .MCOPY => dispatchTernaryMachineStateOp debugMode τ MachineState.mcopy
 
     | τ, .LOG0 => dispatchLog0 debugMode τ
@@ -341,40 +347,39 @@ def step {τ : OperationType} (debugMode : Bool) (op : Operation τ) : Transform
         match lits with
           | [v, poz, len] =>
             let Iₐ := yulState.executionEnv.codeOwner
-            let nonce' : UInt256 := yulState.toState.accountMap.find? Iₐ |>.option 0 Account.nonce
+            let nonce' : UInt256 := yulState.toState.accountMap.find? Iₐ |>.option ⟨0⟩ (·.nonce)
             let s : 𝕋 := .𝔹 (toBytesBigEndian Iₐ.val).toByteArray
-            let n : 𝕋 := .𝔹 (toBytesBigEndian nonce').toByteArray
+            let n : 𝕋 := .𝔹 (toBytesBigEndian nonce'.toNat).toByteArray
             let L_A := RLP <| .𝕃 [s, n]
             match L_A with
               | none => .error .NotEncodableRLP
               | some L_A =>
                 let addr : AccountAddress :=
                   (KEC L_A).extract 12 32 /- 160 bits = 20 bytes -/
-                    |>.data.data |> fromBytesBigEndian |> Fin.ofNat
-                let (code, _) := yulState.toMachineState.readBytes poz len
+                    |> fromByteArrayBigEndian |> Fin.ofNat
+                let code := yulState.toMachineState.memory.readWithPadding poz.toNat len.toNat
                 match yulState.toState.accountMap.find? Iₐ with
-                  | none => .ok <| (yulState, some 0)
+                  | none => .ok <| (yulState, some ⟨0⟩)
                   | some ac_Iₐ =>
-                    if v < ac_Iₐ.balance then .ok <| (yulState, some 0) else
-                    let ac_Iₐ := {ac_Iₐ with balance := ac_Iₐ.balance - v, nonce := ac_Iₐ.nonce + 1}
+                    if v < ac_Iₐ.balance then .ok <| (yulState, some ⟨0⟩) else
+                    let ac_Iₐ := {ac_Iₐ with balance := ac_Iₐ.balance - v, nonce := ac_Iₐ.nonce + ⟨1⟩}
                     let v' :=
                       match yulState.toState.accountMap.find? addr with
-                        | none => 0
+                        | none => ⟨0⟩
                         | some ac_addr => ac_addr.balance
                     let newAccount : Account :=
-                      { nonce := 1
+                      { nonce := ⟨1⟩
                       , balance := v + v'
                       , code := code
                       , storage := default
                       , tstorage := default
-                      , ostorage := default
                       }
                     let yulState' :=
                       yulState.setState <|
                         yulState.toState.updateAccount addr newAccount
                         |>.updateAccount Iₐ ac_Iₐ
 
-                    .ok <| (yulState', some addr)
+                    .ok <| (yulState', some (.ofNat addr))
           | _ => .error .InvalidArguments
     | τ, .RETURN => dispatchBinaryMachineStateOp debugMode τ MachineState.evmReturn
     | τ, .REVERT => dispatchBinaryMachineStateOp debugMode τ MachineState.evmRevert
@@ -400,21 +405,21 @@ def step {τ : OperationType} (debugMode : Bool) (op : Operation τ) : Transform
                   | some σ_Iₐ  =>
                     match evmState.lookupAccount r with
                       | none =>
-                        if σ_Iₐ.balance == 0 then
+                        if σ_Iₐ.balance == ⟨0⟩ then
                           evmState.accountMap
                         else
                           evmState.accountMap.insert r
                             {(default : Account) with balance := σ_Iₐ.balance}
-                              |>.insert Iₐ {σ_Iₐ with balance := 0}
+                              |>.insert Iₐ {σ_Iₐ with balance := ⟨0⟩}
                       | some σ_r =>
                         if r ≠ Iₐ then
                           evmState.accountMap.insert r
                             {σ_r with balance := σ_r.balance + σ_Iₐ.balance}
-                              |>.insert Iₐ {σ_Iₐ with balance := 0}
+                              |>.insert Iₐ {σ_Iₐ with balance := ⟨0⟩}
                         else
                           -- if the target is the same as the contract calling `SELFDESTRUCT` that Ether will be burnt.
-                          evmState.accountMap.insert r {σ_r with balance := 0}
-                            |>.insert Iₐ {σ_Iₐ with balance := 0}
+                          evmState.accountMap.insert r {σ_r with balance := ⟨0⟩}
+                            |>.insert Iₐ {σ_Iₐ with balance := ⟨0⟩}
               let evmState' :=
                 {evmState with
                   accountMap := accountMap'
@@ -436,23 +441,29 @@ def step {τ : OperationType} (debugMode : Bool) (op : Operation τ) : Transform
                   | some σ_Iₐ  =>
                     match evmState.lookupAccount r with
                       | none =>
-                        if σ_Iₐ.balance == 0 then
+                        if σ_Iₐ.balance == ⟨0⟩ then
                           evmState.accountMap
                         else
                           evmState.accountMap.insert r
                             {(default : Account) with balance := σ_Iₐ.balance}
-                              |>.insert Iₐ {σ_Iₐ with balance := 0}
+                              |>.insert Iₐ {σ_Iₐ with balance := ⟨0⟩}
                       | some σ_r =>
+                        if r ≠ Iₐ then
                           evmState.accountMap.insert r
                             {σ_r with balance := σ_r.balance + σ_Iₐ.balance}
-                              |>.insert Iₐ {σ_Iₐ with balance := 0}
+                              |>.insert Iₐ {σ_Iₐ with balance := ⟨0⟩}
+                        else
+                          -- Note that if the target is the same as the contract
+                          -- calling SELFDESTRUCT there is no net change in balances.
+                          -- Unlike the prior specification, Ether will not be burnt in this case.
+                          evmState.accountMap
               let evmState' :=
                 {evmState with
                   accountMap := accountMap'
                   substate := A'
                 }
               .ok <| evmState'.replaceStackAndIncrPC s
-          | _ => .error EVM.Exception.InvalidStackSizeException
+          | _ => .error .StackUnderflow
     | .Yul, .SELFDESTRUCT => λ yulState lits ↦
       match lits with
         | [a] =>
@@ -472,21 +483,21 @@ def step {τ : OperationType} (debugMode : Bool) (op : Operation τ) : Transform
                   | some σ_Iₐ  =>
                     match yulState.toState.lookupAccount r with
                       | none =>
-                        if σ_Iₐ.balance == 0 then
+                        if σ_Iₐ.balance == ⟨0⟩ then
                           yulState.toState.accountMap
                         else
                           yulState.toState.accountMap.insert r
                             {(default : Account) with balance := σ_Iₐ.balance}
-                              |>.insert Iₐ {σ_Iₐ with balance := 0}
+                              |>.insert Iₐ {σ_Iₐ with balance := ⟨0⟩}
                       | some σ_r =>
                         if r ≠ Iₐ then
                           yulState.toState.accountMap.insert r
                             {σ_r with balance := σ_r.balance + σ_Iₐ.balance}
-                              |>.insert Iₐ {σ_Iₐ with balance := 0}
+                              |>.insert Iₐ {σ_Iₐ with balance := ⟨0⟩}
                         else
                           -- if the target is the same as the contract calling `SELFDESTRUCT` that Ether will be burnt.
-                          yulState.toState.accountMap.insert r {σ_r with balance := 0}
-                            |>.insert Iₐ {σ_Iₐ with balance := 0}
+                          yulState.toState.accountMap.insert r {σ_r with balance := ⟨0⟩}
+                            |>.insert Iₐ {σ_Iₐ with balance := ⟨0⟩}
               let yulState' :=
                 yulState.setState
                   { yulState.toState with accountMap := accountMap', substate := A'}
@@ -500,34 +511,33 @@ def step {τ : OperationType} (debugMode : Bool) (op : Operation τ) : Transform
             let Iₐ := yulState.executionEnv.codeOwner
             let this₀ := toBytesBigEndian Iₐ.val
             let this : List UInt8 := List.replicate (20 - this₀.length) 0 ++ this₀
-            let (code, _) := yulState.toMachineState.readBytes poz len
-            let s : List UInt8 := toBytesBigEndian ζ
+            let code := yulState.toMachineState.memory.readWithPadding poz.toNat len.toNat
+            let s : List UInt8 := toBytesBigEndian ζ.toNat
             let a₀ : List UInt8 := [0xff]
             let addr₀ := KEC <| ⟨⟨a₀ ++ this ++ s⟩⟩ ++ KEC code
-            let addr : AccountAddress := Fin.ofNat <| fromBytesBigEndian addr₀.data.data
+            let addr : AccountAddress := Fin.ofNat <| fromByteArrayBigEndian addr₀
             match yulState.toState.accountMap.find? Iₐ with
-              | none => .ok <| (yulState, some 0)
+              | none => .ok <| (yulState, some ⟨0⟩)
               | some ac_Iₐ =>
-                if v < ac_Iₐ.balance then .ok <| (yulState, some 0) else
-                let ac_Iₐ' := {ac_Iₐ with balance := ac_Iₐ.balance - v, nonce := ac_Iₐ.nonce + 1}
+                if v < ac_Iₐ.balance then .ok <| (yulState, some ⟨0⟩) else
+                let ac_Iₐ' := {ac_Iₐ with balance := ac_Iₐ.balance - v, nonce := ac_Iₐ.nonce + ⟨1⟩}
                 let v' :=
                   match yulState.toState.accountMap.find? addr with
-                    | none => 0
+                    | none => ⟨0⟩
                     | some ac_addr => ac_addr.balance
                 let newAccount : Account :=
-                  { nonce := 1
+                  { nonce := ⟨1⟩
                   , balance := v + v'
                   , code := code
                   , storage := default
                   , tstorage := default
-                  , ostorage := default
                   }
                 let yulState' :=
                   yulState.setState <|
                     yulState.toState.updateAccount addr newAccount
                       |>.updateAccount Iₐ ac_Iₐ'
 
-                .ok <| (yulState', some addr)
+                .ok <| (yulState', some (.ofNat addr))
           | _ => .error .InvalidArguments
 
     | .Yul, _ => λ _ _ ↦ default

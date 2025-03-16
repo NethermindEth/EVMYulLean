@@ -31,6 +31,7 @@ private def fromBlobString {α} (f : Blob → Except String α) : FromJson α :=
   }
 
 instance : FromJson UInt256 := fromBlobString UInt256.fromBlob?
+instance : FromJson ℕ := fromBlobString Nat.fromBlob?
 
 instance : FromJson AccountAddress := fromBlobString AccountAddress.fromBlob?
 
@@ -55,11 +56,11 @@ Why is there no handy `unfold` - because of termination issues?
 -/
 def decodeMany (code : ByteArray) : Except String Code' := do
   let mut result : Code' := #[]
-  let mut pc := 0
-  while pc < code.size do
-    let (instr, arg) ← (EVM.decode code pc |>.toExceptWith s!"Cannot decode the instruction: {code.data.get! pc}")
+  let mut pc : UInt256 := ⟨0⟩
+  while pc.toNat < code.size do
+    let (instr, arg) ← (EVM.decode code pc |>.toExceptWith s!"Cannot decode the instruction: {code.data.get! pc.toNat}")
     result := result.push (instr, Prod.fst <$> arg)
-    pc := pc + 1 + arg.option 0 Prod.snd
+    pc := pc + .ofNat (1 + arg.option 0 Prod.snd)
   pure result
 
 end _Code'
@@ -72,7 +73,7 @@ This is also applicable for `FromJson Code`, as this is an abbrev for `ByteArray
 -/
 instance : FromJson ByteArray := fromBlobString (ByteArray.ofBlob)
 
-instance : FromJson AccountEntry where
+instance : FromJson PersistentAccountState where
   fromJson? json := do
     pure {
       balance := ← json.getObjValAs? UInt256 "balance"
@@ -82,7 +83,7 @@ instance : FromJson AccountEntry where
     }
 
 instance : FromJson Pre where
-  fromJson? json := json.getObjVals? AccountAddress AccountEntry
+  fromJson? json := json.getObjVals? AccountAddress PersistentAccountState
 
 instance : FromJson Post where
   fromJson? json := json.getObjVals? AccountAddress PostEntry
@@ -95,35 +96,34 @@ instance : FromJson BlockHeader where
     try
       pure {
         parentHash    := ← json.getObjValAsD! UInt256   "parentHash"
-        ommersHash    := TODO -- TODO - Set to whatever the KEC(RLP()) evaluates to.
+        ommersHash    := ← json.getObjValAsD! UInt256   "uncleHash"
         beneficiary   := ← json.getObjValAsD! AccountAddress   "coinbase"
         stateRoot     := ← json.getObjValAsD! UInt256   "stateRoot"
-        transRoot     := TODO -- TODO - Does not seem to be used in Υ?
-        receiptRoot   := TODO -- TODO - Does not seem to be used in Υ?
+        transRoot     := ← json.getObjValAsD! ByteArray "transactionsTrie"
+        receiptRoot   := ← json.getObjValAsD! ByteArray "receiptTrie"
         logsBloom     := ← json.getObjValAsD! ByteArray "bloom"
-        difficulty    := 0  -- [deprecated] 0.
-        number        := ← json.getObjValAsD! _         "number"        <&> UInt256.toNat
-        gasLimit      := ← json.getObjValAsD! _         "gasLimit"      <&> UInt256.toNat
-        gasUsed       := ← json.getObjValAsD! _         "gasUsed"       <&> UInt256.toNat
-        timestamp     := ← json.getObjValAsD! _         "timestamp"     <&> UInt256.toNat
+        difficulty    := ← json.getObjValAsD! ℕ         "difficulty"
+        number        := ← json.getObjValAsD! ℕ         "number"
+        gasLimit      := ← json.getObjValAsD! ℕ         "gasLimit"
+        gasUsed       := ← json.getObjValAsD! ℕ         "gasUsed"
+        timestamp     := ← json.getObjValAsD! ℕ         "timestamp"
         extraData     := ← json.getObjValAsD! ByteArray "extraData"
-        minHash       := TODO -- TODO - Does not seem to be used in Υ?
-        chainId       := 1 -- (5)
         nonce         := 0 -- [deprecated] 0.
-        baseFeePerGas := ← json.getObjValAsD! _         "baseFeePerGas" <&> UInt256.toNat
+        baseFeePerGas := ← json.getObjValAsD! ℕ         "baseFeePerGas"
         parentBeaconBlockRoot := ← json.getObjValAsD! ByteArray "parentBeaconBlockRoot"
         prevRandao    := ← json.getObjValAsD! UInt256 "mixHash"
         withdrawalsRoot := ← json.getObjValAsD! ByteArray "withdrawalsRoot"
+        blobGasUsed    := ← json.getObjValAsD! UInt64 "blobGasUsed"
+        excessBlobGas    := ← json.getObjValAsD! UInt64 "excessBlobGas"
       }
     catch exct => dbg_trace s!"OOOOPSIE: {exct}\n json: {json}"
                   default
 
 instance : FromJson AccessListEntry where
   fromJson? json := do
-    pure {
-      address     := ← json.getObjValAs? AccountAddress         "address"
-      storageKeys := ← json.getObjValAs? (Array UInt256) "storageKeys"
-    }
+    let address     := ← json.getObjValAs? AccountAddress "address"
+    let storageKeys := ← json.getObjValAs? (Array UInt256) "storageKeys"
+    pure (address, storageKeys)
 
 instance : FromJson Withdrawal where
   fromJson? json := do
@@ -140,17 +140,16 @@ TODO - Currently we return `AccessListTransaction`. No idea if this is what we w
 instance : FromJson Transaction where
   fromJson? json := do
     let baseTransaction : Transaction.Base := {
-      nonce     := ← json.getObjValAsD! UInt256        "nonce"
-      gasLimit  := ← json.getObjValAsD! UInt256        "gasLimit"
-      recipient := ← match json.getObjVal? "to" with
-                     | .error _ => .ok .none
-                     | .ok ok => do let str ← ok.getStr?
-                                    if str.isEmpty then .ok .none else FromJson.fromJson? str
-      value     := ← json.getObjValAsD! UInt256        "value"
-      r         := ← json.getObjValAsD! ByteArray      "r"
-      s         := ← json.getObjValAsD! ByteArray      "s"
-      data      := ← json.getObjValAsD! ByteArray      "data"
-      dbgSender := ← json.getObjValAsD! AccountAddress        "sender"
+      nonce          := ← json.getObjValAsD! UInt256        "nonce"
+      gasLimit       := ← json.getObjValAsD! UInt256        "gasLimit"
+      recipient      := ← match json.getObjVal? "to" with
+                          | .error _ => .ok .none
+                          | .ok ok => do let str ← ok.getStr?
+                                         if str.isEmpty then .ok .none else FromJson.fromJson? str
+      value          := ← json.getObjValAsD! UInt256        "value"
+      r              := ← json.getObjValAsD! ByteArray      "r"
+      s              := ← json.getObjValAsD! ByteArray      "s"
+      data           := ← json.getObjValAsD! ByteArray      "data"
     }
 
     match json.getObjVal? "accessList" with
@@ -160,71 +159,70 @@ instance : FromJson Transaction where
         -- Any other transaction now necessarily has an access list.
         let accessListTransaction : Transaction.WithAccessList :=
           {
-            chainId    := let mainnet : Nat := 1; mainnet
-            accessList := ← FromJson.fromJson? accessList <&> accessListToRBMap
+            chainId    := ← json.getObjValAsD UInt256 "chainId" ⟨1⟩
+            accessList := ← FromJson.fromJson? accessList
             yParity    := ← json.getObjValAsD! UInt256 "v"
           }
 
         match json.getObjVal? "gasPrice" with
           | .ok gasPrice => do
-            -- dbg_trace "Constructing an access transaction."
             return .access ⟨baseTransaction, accessListTransaction, ⟨← FromJson.fromJson? gasPrice⟩⟩
           | .error _ =>
-            -- dbg_trace "Constructing an dynamic transaction."
-            return .dynamic ⟨
-                     baseTransaction,
-                     accessListTransaction,
-                     ← json.getObjValAsD! UInt256 "maxFeePerGas",
-                     ← json.getObjValAsD! UInt256 "maxPriorityFeePerGas"
-                   ⟩
-
-  where accessListToRBMap (this : AccessList) : Batteries.RBMap AccountAddress (Array UInt256) compare :=
-    this.foldl (init := ∅) λ m ⟨addr, list⟩ ↦ m.insert addr list
-
--- #eval DebuggingAndProfiling.testJsonParser Transaction r#"
---                     {
---                         "data" : "0x6001600155601080600c6000396000f3006000355415600957005b60203560003555",
---                         "gasLimit" : "0x1314e0",
---                         "gasPrice" : "0x0a",
---                         "nonce" : "0x00",
---                         "r" : "0x519086556db928a3f679b49fc6211c84896a75312c52e7e05a3b5041f59bb49d",
---                         "s" : "0x70c4b1df7933a7aa4717c13ab34cc2b02daae23ca33836652e526a6a61de0681",
---                         "sender" : "0xa94f5374fce5edbc8e2a8697c15331677e6ebf0b",
---                         "to" : "",
---                         "v" : "0x1b",
---                         "value" : "0x0186a0"
---                     }"#
+            let dynamic : DynamicFeeTransaction :=
+              ⟨ baseTransaction
+              , accessListTransaction
+              , ← json.getObjValAsD! UInt256 "maxFeePerGas"
+              , ← json.getObjValAsD! UInt256 "maxPriorityFeePerGas"
+              ⟩
+            match json.getObjVal? "maxFeePerBlobGas" with
+            | .error _ =>
+              pure <| .dynamic dynamic
+            | .ok maxFeePerBlobGas =>
+              pure <|
+                .blob
+                  ⟨ dynamic
+                  , ← FromJson.fromJson? maxFeePerBlobGas
+                  , ← json.getObjValAsD! (List ByteArray) "blobVersionedHashes"
+                  ⟩
 
 /--
 - Format₀: `EthereumTests/BlockchainTests/GeneralStateTests/VMTests/vmArithmeticTest/add.json`
 - Format₁: `EthereumTests/BlockchainTests/GeneralStateTests/Pyspecs/cancun/eip4844_blobs/invalid_static_excess_blob_gas.json`
-
-TODO -
-- `EthereumTests/BlockchainTests/GeneralStateTests/Pyspecs/cancun/eip4844_blobs/invalid_blob_tx_contract_creation.json` - ?????
 -/
-private def blockEntryOfJson (json : Json) : Except String BlockEntry := do
+private def blockOfJson (json : Json) : Except String RawBlock := do
   -- The exception, if exists, is always in the outermost object regardless of the `<Format>` (see this function's docs).
-  let exception ← json.getObjValAsD! String "expectException"
-  -- Descend to `rlp_decoded` - Format₁ if exists, Format₀ otherwise.
-  let json ← json.getObjValAsD Json "rlp_decoded" json
+  let exception ← json.getObjValAsD! (Option String) "expectException"
+  let rlp ← json.getObjValAsD! ByteArray "rlp"
   pure {
-    blockHeader  := ← json.getObjValAsD! BlockHeader  "blockHeader"
-    rlp          := ← json.getObjValAsD! Json         "rlp"
-    transactions := ← json.getObjValAsD! Transactions "transactions"
-    uncleHeaders := ← json.getObjValAsD! Json         "uncleHeaders"
-    withdrawals  := ← json.getObjValAsD! Withdrawals  "withdrawals"
-    blocknumber  := ← json.getObjValAsD  _            "blocknumber" "1" >>= tryParseBlocknumber
-    exception    := exception
+    rlp
+    exception := exception.option [] (·.splitOn "|")
   }
   where
     tryParseBlocknumber (s : String) : Except String Nat :=
       s.toNat?.elim (.error "Cannot parse `blocknumber`.") .ok
 
-instance : FromJson BlockEntry := ⟨blockEntryOfJson⟩
+instance : FromJson RawBlock := ⟨blockOfJson⟩
 
-deriving instance FromJson for TestEntry
+instance : FromJson TestEntry where
+  fromJson? json := do
+    let post : PostState ←
+      match json.getObjVal? "postStateHash" with
+        | .error _ =>
+          .Map <$> json.getObjValAsD! PersistentAccountMap "postState"
+        | .ok postStateHash =>
+          .Hash <$> FromJson.fromJson? postStateHash
+    pure {
+      info               := ← json.getObjValAs? Json "info"
+      blocks             := ← json.getObjValAs? RawBlocks "blocks"
+      genesisRLP         := ← json.getObjValAs? ByteArray "genesisRLP"
+      lastblockhash      := ← json.getObjValAs? UInt256 "lastblockhash"
+      network            := ← json.getObjValAs? String "network"
+      postState          := post
+      pre                := ← json.getObjValAs? Pre "pre"
+      sealEngine         := ← json.getObjValAs? Json "sealEngine"
+    }
 
-instance : FromJson Test where
+instance : FromJson TestMap where
   fromJson? json := json.getObjVals? String TestEntry
 
 end FromJson
@@ -232,13 +230,9 @@ end FromJson
 def testNamesOfTest (test : Lean.Json) : Except String (Array String) :=
   test.getObj? <&> (·.toArray.map Sigma.fst)
 
-namespace Test
-
-end Test
-
 section PrettyPrinter
 
-instance : ToString AccountEntry := ⟨ToString.toString ∘ repr⟩
+instance : ToString PersistentAccountState := ⟨ToString.toString ∘ repr⟩
 
 instance : ToString Pre := ⟨ToString.toString ∘ repr⟩
 

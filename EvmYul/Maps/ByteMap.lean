@@ -27,25 +27,6 @@ section RemoveLater
 
 abbrev ByteMap := Batteries.RBMap UInt256 UInt8 compare
 
--- instance : LE ((_ : UInt256) × UInt8) where
---   le lhs rhs := if lhs.1 = rhs.1 then lhs.2 ≤ rhs.2 else lhs.1 ≤ rhs.1
-
--- /-
--- Please note that these are used exclusively for conveninece of printing and computing,
--- i.e. the sorries are safe.
--- -/
-
--- instance : IsTrans ((_ : UInt256) × UInt8) (· ≤ ·) := sorry
-
--- instance : IsAntisymm ((_ : UInt256) × UInt8) (· ≤ ·) := sorry
-
--- instance : IsTotal ((_ : UInt256) × UInt8) (· ≤ ·) := sorry
-
--- instance : DecidableRel (α := (_ : UInt256) × UInt8) (· ≤ ·) :=
---   λ lhs rhs ↦ by
---   unfold LE.le instLESigmaUInt256UInt8
---   exact inferInstance
-
 end RemoveLater
 
 end EvmYul

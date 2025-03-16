@@ -14,7 +14,7 @@ namespace State
 section Instructions
 
 def incrPC (I : EVM.State) (pcΔ : ℕ := 1) : EVM.State :=
-  { I with pc := I.pc + pcΔ }
+  { I with pc := I.pc + .ofNat pcΔ }
 
 def replaceStackAndIncrPC (I : EVM.State) (s : Stack UInt256) (pcΔ : ℕ := 1) : EVM.State :=
   incrPC { I with stack := s } pcΔ
@@ -30,9 +30,6 @@ def liftState (f : EvmYul.State → EvmYul.State) : EVM.State → EVM.State :=
   liftMState (m := Id) f
 
 instance : CoeFun (EvmYul.State → EvmYul.State) (λ _ ↦ EVM.State → EVM.State) := ⟨liftState⟩
-
-def transferBalance (sender : AccountAddress) (recipient : AccountAddress) (balance : UInt256) : EVM.State → Option EVM.State :=
-  EvmYul.State.transferBalance sender recipient balance
 
 def initialiseAccount (addr : AccountAddress) : EVM.State → EVM.State :=
   EvmYul.State.initialiseAccount addr

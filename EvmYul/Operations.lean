@@ -1,5 +1,4 @@
 import EvmYul.UInt256
-import EvmYul.MachineStateOps
 import EvmYul.MachineState
 
 import Mathlib.Data.Finmap
@@ -299,6 +298,8 @@ inductive BOp : OperationType → Type where
   -/
   | protected SELFBALANCE : BOp τ
   | protected BASEFEE : BOp τ
+  | protected BLOBHASH : BOp τ
+  | protected BLOBBASEFEE : BOp τ
   deriving DecidableEq, Repr
 
 /--
@@ -632,6 +633,8 @@ abbrev GASLIMIT    {τ : OperationType} : Operation τ := .Block .GASLIMIT
 abbrev CHAINID     {τ : OperationType} : Operation τ := .Block .CHAINID
 abbrev SELFBALANCE {τ : OperationType} : Operation τ := .Block .SELFBALANCE
 abbrev BASEFEE     {τ : OperationType} : Operation τ := .Block .BASEFEE
+abbrev BLOBHASH    {τ : OperationType} : Operation τ := .Block .BLOBHASH
+abbrev BLOBBASEFEE {τ : OperationType} : Operation τ := .Block .BLOBBASEFEE
 
 abbrev POP     {τ : OperationType}   : Operation τ    := .StackMemFlow .POP
 abbrev MLOAD   {τ : OperationType}   : Operation τ    := .StackMemFlow .MLOAD
@@ -777,7 +780,7 @@ end Operation
 open EvmYul.UInt256
 
 def exp (a b : UInt256) : UInt256 :=
-  a ^ b.val
+  a ^ b
 
 abbrev fromBool := Bool.toUInt256
 
@@ -797,7 +800,7 @@ def eq (a b : UInt256) :=
   fromBool (a = b)
 
 def isZero (a : UInt256) :=
-  fromBool (a = 0)
+  fromBool (eq0 a)
 
 end EvmYul
 

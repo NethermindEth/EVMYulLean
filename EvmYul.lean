@@ -28,6 +28,8 @@ import EvmYul.EVM.Semantics
 import EvmYul.EVM.State
 import EvmYul.EVM.StateOps
 import EvmYul.EVM.PrecompiledContracts
+import EvmYul.EVM.Gas
+import EvmYul.EVM.GasConstants
 
 import EvmYul.Maps.AccountMap
 import EvmYul.Maps.ByteMap
@@ -43,6 +45,7 @@ import EvmYul.State.SubstateOps
 import EvmYul.State.Transaction
 import EvmYul.State.Withdrawal
 import EvmYul.State.TransactionOps
+import EvmYul.State.TrieRoot
 
 import EvmYul.Yul.Ast
 import EvmYul.Yul.Exception

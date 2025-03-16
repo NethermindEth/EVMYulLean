@@ -28,7 +28,8 @@ VERSIONED_HASH_VERSION_KZG = b"\x01"
 data = bytes.fromhex(sys.argv[1])
 
 if len(data) != 192:
-    raise KZGProofError
+    print('error', end = '')
+    sys.exit()
 
 versioned_hash = data[:32]
 z = Bytes32(data[32:64])
@@ -36,14 +37,20 @@ y = Bytes32(data[64:96])
 commitment = KZGCommitment(data[96:144])
 proof = Bytes48(data[144:192])
 
+if kzg_commitment_to_versioned_hash(commitment) != versioned_hash:
+    print('error', end = '')
+    sys.exit()
+
 # Verify KZG proof with z and y in big endian format
 try:
     kzg_proof_verification = verify_kzg_proof(commitment, z, y, proof)
 except Exception as e:
-    raise KZGProofError from e
+    print('error', end = '')
+    sys.exit()
 
 if not kzg_proof_verification:
-    raise KZGProofError
+    print('error', end = '')
+    sys.exit()
 
 # Return FIELD_ELEMENTS_PER_BLOB and BLS_MODULUS as padded
 # 32 byte big endian values

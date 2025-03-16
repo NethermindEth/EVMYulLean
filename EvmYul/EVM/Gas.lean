@@ -1,9 +1,7 @@
-import EvmYul.Maps.YPState
-import EvmYul.MachineState
-import EvmYul.State.Substate
-import EvmYul.State.ExecutionEnv
-import EvmYul.EVM.Exception
+import EvmYul.EVM.State
 import EvmYul.StateOps
+import EvmYul.MachineStateOps
+import EvmYul.EVM.GasConstants
 
 namespace EvmYul
 
@@ -13,51 +11,6 @@ namespace EVM
 Appendix G. Fee Schedule
 -/
 
-namespace GasConstants
-
-section FeeSchedule
-
-def Gzero : ℕ              := 0
-def Gjumpdest : ℕ          := 1
-def Gbase : ℕ              := 2
-def Gverylow : ℕ           := 3
-def Glow : ℕ               := 5
-def Gmid : ℕ               := 8
-def Ghigh : ℕ              := 10
-def Gwarmaccess : ℕ        := 100
-def Gaccesslistaddress : ℕ := 2400
-def Gaccessliststorage : ℕ := 1900
-def Gcoldaccountaccess : ℕ := 2600
-def Gcoldsload : ℕ         := 2100
-def Gsset : ℕ              := 20000
-def Gsreset : ℕ            := 2900
-def Rsclear : ℕ            := 4800
-def Gselfdestruct : ℕ      := 5000
-def Gcreate : ℕ            := 32000
-def Gcodedeposit : ℕ       := 200
-def Ginitcodeword : ℕ      := 2
-def Gcallvalue : ℕ         := 9000
-def Gcallstipend : ℕ       := 2300
-def Gnewaccount : ℕ        := 25000
-def Gexp : ℕ               := 10
-def Gexpbyte : ℕ           := 50
-def Gmemory : ℕ            := 3
-def Gtxcreate : ℕ          := 32000
-def Gtxdatazero : ℕ        := 4
-def Gtxdatanonzero : ℕ     := 16
-def Gtransaction : ℕ       := 21000
-def Glog : ℕ               := 375
-def Glogdata : ℕ           := 8
-def Glogtopic : ℕ          := 375
-def Gkeccak256 : ℕ         := 30
-def Gkeccak256word : ℕ     := 6
-def Gcopy : ℕ              := 3
-def Gblockhash : ℕ         := 20
-
-end FeeSchedule
-
-end GasConstants
-
 namespace InstructionGasGroups
 
 def Wzero : List (Operation .EVM) := [.STOP, .RETURN, .REVERT]
@@ -65,7 +18,7 @@ def Wzero : List (Operation .EVM) := [.STOP, .RETURN, .REVERT]
 def Wbase : List (Operation .EVM) := [
   .ADDRESS, .ORIGIN, .CALLER, .CALLVALUE, .CALLDATASIZE, .CODESIZE, .GASPRICE, .COINBASE,
   .TIMESTAMP, .NUMBER, .PREVRANDAO, .GASLIMIT, .CHAINID, .RETURNDATASIZE, .POP, .PC, .MSIZE, .GAS,
-  .BASEFEE, .PUSH0]
+  .BASEFEE, .BLOBBASEFEE, .PUSH0]
 
 def Wverylow : List (Operation .EVM) := [
   .ADD, .SUB, .NOT, .LT, .GT, .SLT, .SGT, .EQ, .ISZERO, .AND, .OR, .XOR, .BYTE, .SHL, .SHR, .SAR,
@@ -129,8 +82,9 @@ open GasConstants InstructionGasGroups
 /--
 (328)
 -/
-def Cₘ(a : UInt256) : UInt256 := Gmemory * a + ((a * a) / QuadraticCeofficient) -- TODO(check) - What is subject to `% 2^256` here?
-                                                                                --               Note that the YP takes an explicit floor, we have division in Nat.
+def Cₘ (a : UInt256) : ℕ :=
+  let a : ℕ := a.toNat
+  Gmemory * a + ((a * a) / QuadraticCeofficient)
   where QuadraticCeofficient : ℕ := 512
 
 /--
@@ -139,20 +93,29 @@ with the definition of `C_<>` functions that are described inline along with the
 
 It would be worth restructing everything to obtain cleaner separation of concerns.
 -/
-def Csstore (s : State) : Except EVM.Exception UInt256 := do
-  let { stack := μₛ, accountMap := σ, executionEnv.codeOwner := Iₐ, .. } := s
-  let .some { storage := σ, ostorage := σ₀, .. } := σ.find? Iₐ | throw .SenderMustExist
+def Csstore (s : EVM.State) : ℕ :=
+  let { stack := μₛ, accountMap := σ, σ₀ := σ₀, executionEnv.codeOwner := Iₐ, .. } := s
+  -- SSTORE should handle missing Iₐ
+  let { storage := σ_Iₐ, .. } := σ.find! Iₐ
   let storeAddr := μₛ[0]!
-  let v₀ := σ₀.findD storeAddr 0
-  let v := σ.findD storeAddr 0
+  let v₀ :=
+    match σ₀.find? Iₐ with
+      | none => ⟨0⟩
+      | some acc => acc.storage.findD storeAddr ⟨0⟩
+  let v := σ_Iₐ.findD storeAddr ⟨0⟩
   let v' := μₛ[1]!
-  let loadComponent := if s.substate.accessedStorageKeys.contains (Iₐ, storeAddr) then 0 else Gcoldsload
+  let loadComponent :=
+    if s.substate.accessedStorageKeys.contains (Iₐ, storeAddr) then
+      0
+    else
+      -- dbg_trace s!"({Iₐ}, {storeAddr}) not in {s.substate.accessedStorageKeys.toList}"
+      Gcoldsload
   let storeComponent := if v = v' || v₀ ≠ v           then Gwarmaccess else
-                        if v ≠ v' && v₀ = v && v₀ = 0 then Gsset else
+                        if v ≠ v' && v₀ = v && v₀ = ⟨0⟩ then Gsset else
                         /- v ≠ v' ∧ v₀ = v ∧ v₀ ≠ 0 -/     Gsreset
-  pure <| loadComponent + storeComponent
+  loadComponent + storeComponent
 
-def Ctstore : UInt256 :=
+def Ctstore : ℕ :=
   let loadComponent := 0
   let storeComponent := Gwarmaccess
   loadComponent + storeComponent
@@ -160,7 +123,7 @@ def Ctstore : UInt256 :=
 /--
 (328)
 -/
-def Caccess (a : AccountAddress) (A : Substate) : UInt256 :=
+def Caccess (a : AccountAddress) (A : Substate) : ℕ :=
   if A.accessedAccounts.contains a
   then Gwarmaccess
   else Gcoldaccountaccess
@@ -172,58 +135,85 @@ address in `σ` - is this address supposed to be obvious?
 CURRENT SOLUTION -
 We take `EVM.State`.
 -/
-def Cselfdestruct (s : EVM.State) : UInt256 :=
+def Cselfdestruct (s : EVM.State) : ℕ :=
   let r := AccountAddress.ofUInt256 s.stack[0]!
-  let { substate.accessedAccounts := Aₐ, .. } := s
-  if Aₐ.contains r then 0 else Gcoldaccountaccess
+  let { substate.accessedAccounts := Aₐ, accountMap := σ, executionEnv.codeOwner := Iₐ, .. } := s
+  let c_cold := if Aₐ.contains r then 0 else Gcoldaccountaccess
+  let c_new :=
+    if State.dead σ r ∧ (σ.find? Iₐ |>.option ⟨0⟩ (·.balance)) ≠ ⟨0⟩ then
+      Gnewaccount
+    else 0
+  Gselfdestruct + c_cold + c_new
 
 /--
 NB Assumes stack coherency.
 -/
-def Csload (μₛ : Stack UInt256) (A : Substate) (I : ExecutionEnv) : UInt256 :=
+def Csload (μₛ : Stack UInt256) (A : Substate) (I : ExecutionEnv) : ℕ :=
   if A.accessedStorageKeys.contains (I.codeOwner, μₛ[0]!)
   then Gwarmaccess
   else Gcoldsload
 
-def Ctload : UInt256 :=
+def Ctload : ℕ :=
   Gwarmaccess
 
 /--
 (331)
 -/
-def L (n : UInt256) := n.val - (n.val / 64)
+def L (n : ℕ) : ℕ := n - (n / 64)
+
+def Cnew (t : AccountAddress) (val : UInt256) (σ : AccountMap) : ℕ :=
+  if EvmYul.State.dead σ t && val != ⟨0⟩ then Gnewaccount else 0
+
+def Cxfer (val : UInt256) : ℕ :=
+  if val != ⟨0⟩ then Gcallvalue else 0
+
+def Cextra (t r : AccountAddress) (val : UInt256) (σ : AccountMap) (A : Substate) : ℕ :=
+  Caccess t A + Cxfer val + Cnew r val σ
+
+def Cgascap (t r : AccountAddress) (val g : UInt256) (σ : AccountMap) (μ : MachineState) (A : Substate) :=
+  if μ.gasAvailable.toNat >= Cextra t r val σ A then
+    min (L <| (μ.gasAvailable.toNat - Cextra t r val σ A)) g.toNat
+  else
+    g.toNat
+
+def Ccallgas (t r : AccountAddress) (val g : UInt256) (σ : AccountMap) (μ : MachineState) (A : Substate) : ℕ :=
+  match val with
+    | ⟨0⟩ => Cgascap t r val g σ μ A
+    | _ => Cgascap t r val g σ μ A + GasConstants.Gcallstipend
 
 /--
 NB Assumes stack coherence.
 -/
-def Ccall (μₛ : Stack UInt256) (σ : AccountMap) (μ : MachineState) (A : Substate) : UInt256 :=
-  Cgascap σ μ μₛ A + Cextra σ μₛ A
-  where
-    /-
-    NB Slightly redundant as we could reference the `Ccall` parameters directly,
-       but this is a bit closer to the YP for now.
-    -/
-    t := AccountAddress.ofUInt256 μₛ[1]!
-
-    Cnew (σ : AccountMap) (μₛ : Stack UInt256) :=
-      if EvmYul.State.dead σ t && μₛ[2]! != 0 then Gnewaccount else 0
-
-    Cxfer (μₛ : Stack UInt256) :=
-      if μₛ[2]! != 0 then Gcallvalue else 0
-
-    Cextra (σ : AccountMap) (μₛ : Stack UInt256) (A : Substate) :=
-      Caccess t A + Cxfer μₛ + Cnew σ μₛ
-
-    Cgascap (σ : AccountMap) (μ : MachineState) (μₛ : Stack UInt256) (A : Substate) :=
-      if μ.gasAvailable >= Cextra σ μₛ A then min (L (μ.gasAvailable - Cextra σ μₛ A)) μₛ[0]! else μₛ[0]!
-
-    Ccallgas (σ : AccountMap) (μₛ : Stack UInt256) (A : Substate) :=
-      if μₛ[2]! != 0 then Cgascap σ μ μₛ A + Gcallstipend else Cgascap σ μ μₛ A
+def Ccall (t r : AccountAddress) (val g : UInt256) (σ : AccountMap) (μ : MachineState) (A : Substate) : ℕ :=
+  Cgascap t r val g σ μ A + Cextra t r val σ A
 
 /--
 (65)
 -/
-def R (x : UInt256) : UInt256 := Ginitcodeword * (x / 32 : ℚ).ceil
+def R (x : ℕ) : ℕ := Ginitcodeword * ((x + 31) / 32)
+
+def intrinsicGas (T : Transaction) : ℕ :=
+  let g₀_data :=
+    T.base.data.foldl
+      (λ acc b ↦
+        acc +
+          if b == 0 then
+            GasConstants.Gtxdatazero
+          else GasConstants.Gtxdatanonzero
+      )
+      0
+  let g₀_create : ℕ :=
+    if T.base.recipient == none then
+      GasConstants.Gtxcreate + R (T.base.data.size)
+    else 0
+
+  let g₀_accessList : ℕ :=
+    T.getAccessList.foldl
+      (λ acc (_, s) ↦
+        acc + GasConstants.Gaccesslistaddress + s.size * GasConstants.Gaccessliststorage
+      )
+      0
+  g₀_data + g₀_create + GasConstants.Gtransaction + g₀_accessList
 
 /--
 H.1. Gas Cost - the third summand.
@@ -231,37 +221,47 @@ H.1. Gas Cost - the third summand.
 NB Stack accesses are assumed guarded here and we access with `!`.
 This is for keeping in sync with the way the YP is structures, at least for the time being.
 -/
-private def C' (s : State) (instr : Operation .EVM) : Except EVM.Exception UInt256 :=
+def C' (s : State) (instr : Operation .EVM) : ℕ :=
   let { accountMap := σ, stack := μₛ, substate := A, toMachineState := μ, executionEnv := I, ..} := s
   match instr with
     | .SSTORE => Csstore s
-    | .TSTORE => return Ctstore
-    | .EXP => let μ₁ := μₛ[1]!; return if μ₁ == 0 then Gexp else Gexp + Gexpbyte * (1 + Nat.log 256 μ₁) -- TODO(check) I think this floors by itself. cf. H.1. YP.
-    | .EXTCODECOPY => return Caccess (AccountAddress.ofUInt256 μₛ[0]!) A
-    | .LOG0 => return Glog + Glogdata * μₛ[1]!
-    | .LOG1 => return Glog + Glogdata * μₛ[1]! + Glogtopic
-    | .LOG2 => return Glog + Glogdata * μₛ[1]! + 2 * Glogtopic
-    | .LOG3 => return Glog + Glogdata * μₛ[1]! + 3 * Glogtopic
-    | .LOG4 => return Glog + Glogdata * μₛ[1]! + 4 * Glogtopic
-    | .SELFDESTRUCT => return Cselfdestruct s
-    | .CREATE => return Gcreate + R μₛ[2]!
-    | .CREATE2 => let μ₂ := μₛ[2]!; return Gcreate + Gkeccak256word * (μ₂ / 32 : ℚ).ceil + R μ₂
-    | .KECCAK256 => return Gkeccak256 + Gkeccak256word * (μₛ[1]! / 32 : ℚ).ceil
-    | .JUMPDEST => return Gjumpdest
-    | .SLOAD => return Csload μₛ A I
-    | .TLOAD => return Ctload
-    | .BLOCKHASH => return Gblockhash
-    | w => pure <|
-      if w ∈ Wcopy then Gverylow + Gcopy * (μₛ[2]! / 32 : ℚ).ceil else
+    | .TSTORE => Ctstore
+    | .EXP => let μ₁ := μₛ[1]!; if μ₁ == ⟨0⟩ then Gexp else Gexp + Gexpbyte * (1 + Nat.log 256 μ₁.toNat) -- TODO(check) I think this floors by itself. cf. H.1. YP.
+    | .EXTCODECOPY => Caccess (AccountAddress.ofUInt256 μₛ[0]!) A + Gcopy * ((μₛ[3]!.toNat + 31) / 32)
+    | .LOG0 => Glog + Glogdata * μₛ[1]!.toNat
+    | .LOG1 => Glog + Glogdata * μₛ[1]!.toNat +     Glogtopic
+    | .LOG2 => Glog + Glogdata * μₛ[1]!.toNat + 2 * Glogtopic
+    | .LOG3 => Glog + Glogdata * μₛ[1]!.toNat + 3 * Glogtopic
+    | .LOG4 => Glog + Glogdata * μₛ[1]!.toNat + 4 * Glogtopic
+    | .SELFDESTRUCT => Cselfdestruct s
+    | .CREATE => Gcreate + R μₛ[2]!.toNat
+    | .CREATE2 => let μ₂ := μₛ[2]!; Gcreate + Gkeccak256word * ((μ₂.toNat + 31) / 32) + R μ₂.toNat
+    | .KECCAK256 => Gkeccak256 + Gkeccak256word * ((μₛ[1]!.toNat + 31) / 32)
+    | .JUMPDEST => Gjumpdest
+    | .SLOAD => Csload μₛ A I
+    | .TLOAD => Ctload
+    | .BLOCKHASH => Gblockhash
+    /-
+      By `μₛ[2]` the YP means the value that is to be transferred,
+      not what happens to be on the stack at index 2. Therefore it is 0 for
+      `DELEGATECALL` and `STATICCALL`.
+    -/
+    | .CALL =>         Ccall (AccountAddress.ofUInt256 μₛ[1]!) (AccountAddress.ofUInt256 μₛ[1]!) μₛ[2]! μₛ[0]! σ μ A
+    | .CALLCODE =>     Ccall (AccountAddress.ofUInt256 μₛ[1]!)          s.executionEnv.codeOwner μₛ[2]! μₛ[0]! σ μ A
+    | .DELEGATECALL => Ccall (AccountAddress.ofUInt256 μₛ[1]!)          s.executionEnv.codeOwner    ⟨0⟩ μₛ[0]! σ μ A
+    | .STATICCALL =>   Ccall (AccountAddress.ofUInt256 μₛ[1]!) (AccountAddress.ofUInt256 μₛ[1]!)    ⟨0⟩ μₛ[0]! σ μ A
+    | .BLOBHASH => HASH_OPCODE_GAS
+    | w =>
+      if w ∈ Wcopy then Gverylow + Gcopy * ((μₛ[2]!.toNat + 31) / 32) else
       if w ∈ Wextaccount then Caccess (AccountAddress.ofUInt256 μₛ[0]!) A else
-      if w ∈ Wcall then Ccall μₛ σ μ A else
+      -- if w ∈ Wcall then Ccall μₛ σ μ A else
       if w ∈ Wzero then Gzero else
       if w ∈ Wbase then Gbase else
       if w ∈ Wverylow then Gverylow else
       if w ∈ Wlow then Glow else
       if w ∈ Wmid then Gmid else
       if w ∈ Whigh then Ghigh else
-      dbg_trace s!"TODO - C called with an unknown instruction: {w.pretty}"; 42
+        0
 
 /--
 H.1. Gas Cost
@@ -269,9 +269,30 @@ H.1. Gas Cost
 NB this differs ever so slightly from how it is defined in the YP, please refer to
 `EVM/Semantics.lean`, function `X` for further discussion.
 -/
-def C (s : EVM.State) (μ'ᵢ : UInt256) (instr : Operation .EVM) : Except EVM.Exception UInt256 := do
-  let { toMachineState := μ, ..} := s
-  pure <| Cₘ μ'ᵢ - Cₘ μ.activeWords + (← C' s instr)
+
+def memoryExpansionCost (s : EVM.State) (instr : Operation .EVM) : ℕ :=
+  Cₘ μᵢ' - Cₘ s.toMachineState.activeWords
+ where
+  μᵢ' : UInt256 :=
+    match instr with
+      | .KECCAK256 => .ofNat <| MachineState.M s.toMachineState.activeWords.toNat s.stack[0]!.toNat s.stack[1]!.toNat
+      | .CALLDATACOPY | .CODECOPY => .ofNat <| MachineState.M s.toMachineState.activeWords.toNat s.stack[0]!.toNat s.stack[2]!.toNat
+      | .MCOPY => .ofNat <| MachineState.M s.toMachineState.activeWords.toNat (max s.stack[0]!.toNat s.stack[1]!.toNat) s.stack[2]!.toNat
+      | .EXTCODECOPY => .ofNat <| MachineState.M s.toMachineState.activeWords.toNat s.stack[1]!.toNat s.stack[3]!.toNat
+      | .RETURNDATACOPY => .ofNat <| MachineState.M s.toMachineState.activeWords.toNat s.stack[0]!.toNat s.stack[2]!.toNat
+      | .MLOAD | .MSTORE => .ofNat <| MachineState.M s.toMachineState.activeWords.toNat s.stack[0]!.toNat 32
+      | .MSTORE8 => .ofNat <| MachineState.M s.toMachineState.activeWords.toNat s.stack[0]!.toNat 1
+      | .LOG0 | .LOG1 | .LOG2 | .LOG3 | .LOG4 =>
+        .ofNat <| MachineState.M s.toMachineState.activeWords.toNat s.stack[0]!.toNat s.stack[1]!.toNat
+      | .CREATE | .CREATE2 => .ofNat <| MachineState.M s.toMachineState.activeWords.toNat s.stack[1]!.toNat s.stack[2]!.toNat
+      | .CALL | .CALLCODE =>
+        let m : ℕ := MachineState.M s.toMachineState.activeWords.toNat s.stack[3]!.toNat s.stack[4]!.toNat
+        .ofNat <| MachineState.M m s.stack[5]!.toNat s.stack[6]!.toNat
+      | .DELEGATECALL | .STATICCALL =>
+        let m : ℕ:= MachineState.M s.toMachineState.activeWords.toNat s.stack[2]!.toNat s.stack[3]!.toNat
+        .ofNat <| MachineState.M m s.stack[4]!.toNat s.stack[5]!.toNat
+      | .RETURN | .REVERT => .ofNat <| MachineState.M s.toMachineState.activeWords.toNat s.stack[0]!.toNat s.stack[1]!.toNat
+      | _ => s.toMachineState.activeWords
 
 end Gas
 

@@ -28,9 +28,20 @@ structure ExecutionEnv :=
   header    : BlockHeader
   depth     : ℕ
   perm      : Bool
+  blobVersionedHashes : List ByteArray
   deriving DecidableEq, Inhabited, Repr
 
 def prevRandao (e : ExecutionEnv) : UInt256 :=
   e.header.prevRandao
+
+def basefee (e : ExecutionEnv) : UInt256 :=
+  .ofNat e.header.baseFeePerGas
+
+def ExecutionEnv.getBlobGasprice (e : ExecutionEnv) : UInt256 :=
+  .ofNat e.header.getBlobGasprice
+
+def blobhash (e : ExecutionEnv) (i : UInt256) : UInt256 :=
+  e.blobVersionedHashes[i.toNat]?.option ⟨0⟩
+    (.ofNat ∘ fromByteArrayBigEndian)
 
 end EvmYul

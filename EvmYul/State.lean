@@ -5,6 +5,8 @@ import EvmYul.State.ExecutionEnv
 import EvmYul.State.Substate
 import EvmYul.State.Account
 import EvmYul.State.Block
+import EvmYul.State.Substate
+import EvmYul.State.Transaction
 
 import EvmYul.Maps.AccountMap
 
@@ -19,24 +21,21 @@ The `State`. Section 9.3.
 - `accountMap`   `σ`
 - `substate`     `A`
 - `executionEnv` `I`
-- `remainingGas` `g`
+- `totalGasUsedInBlock` `Υᵍ`
 -/
 structure State where
-  accountMap    : AccountMap
-  remainingGas  : ℕ
-  substate      : Substate
-  executionEnv  : ExecutionEnv
-
-  -- Instead of keeping a map from `parentHash` to `Block`, we instead store the blocks we need.
-  blocks        : List Block
-
-  -- TODO(Keccak Stuff + I guess this will be gone so no need to nuke the `Finmap` just now
-  keccakMap     : Batteries.RBMap (List UInt256) UInt256 compare
-  keccakRange   : List UInt256
-  usedRange     : Batteries.RBSet UInt256 compare
-  hashCollision : Bool
-
-  createdAccounts : Batteries.RBSet AccountAddress compare
+  accountMap          : AccountMap
+  σ₀                  : AccountMap
+  totalGasUsedInBlock : ℕ
+  transactionReceipts  : Array TransactionReceipt
+  substate            : Substate
+  executionEnv        : ExecutionEnv
+  blocks              : ProcessedBlocks
+  genesisBlockHeader  : BlockHeader
+  createdAccounts     : Batteries.RBSet AccountAddress compare
 deriving BEq, Inhabited, Repr
+
+def State.blockHashes (self : State) : Array UInt256 :=
+  self.blocks.map ProcessedBlock.hash
 
 end EvmYul

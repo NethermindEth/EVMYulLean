@@ -9,7 +9,7 @@ namespace EvmYul
 
 namespace EVM
 
-def Transformer := EVM.State → Except EVM.Exception EVM.State
+def Transformer := EVM.State → Except EVM.ExecutionException EVM.State
 
 def execUnOp (debugMode : Bool) (f : Primop.Unary) : Transformer :=
   λ s ↦
@@ -19,17 +19,19 @@ def execUnOp (debugMode : Bool) (f : Primop.Unary) : Transformer :=
           dbg_trace s!"called with μ₀: {μ₀}"
         .ok <| s.replaceStackAndIncrPC (stack.push <| f μ₀)
       | _ =>
-        .error .InvalidStackSizeException
+        .error .StackUnderflow
 
 def execBinOp (debugMode : Bool) (f : Primop.Binary) : Transformer :=
   λ s ↦
     match s.stack.pop2 with
       | some ⟨stack, μ₀, μ₁⟩ => Id.run do
+        let result := f μ₀ μ₁
         if debugMode then
           dbg_trace s!"called with μ₀: {μ₀} μ₁: {μ₁}"
-        .ok <| s.replaceStackAndIncrPC (stack.push <| f μ₀ μ₁)
+          dbg_trace s!"result: {result}"
+        .ok <| s.replaceStackAndIncrPC (stack.push result)
       | _ =>
-        .error .InvalidStackSizeException
+        .error .StackUnderflow
 
 def execTriOp (debugMode : Bool) (f : Primop.Ternary) : Transformer :=
   λ s ↦
@@ -39,7 +41,7 @@ def execTriOp (debugMode : Bool) (f : Primop.Ternary) : Transformer :=
           dbg_trace s!"called with μ₀: {μ₀} μ₁: {μ₁} μ₂: {μ₂}"
         .ok <| s.replaceStackAndIncrPC (stack.push <| f μ₀ μ₁ μ₂)
       | _ =>
-        .error .InvalidStackSizeException
+        .error .StackUnderflow
 
 def execQuadOp (debugMode : Bool) (f : Primop.Quaternary) : Transformer :=
   λ s ↦
@@ -49,7 +51,7 @@ def execQuadOp (debugMode : Bool) (f : Primop.Quaternary) : Transformer :=
           dbg_trace s!"called with μ₀: {μ₀} μ₁: {μ₁} μ₂: {μ₂} μ₃: {μ₃}"
         .ok <| s.replaceStackAndIncrPC (stack.push <| f μ₀ μ₁ μ₂ μ₃)
       | _ =>
-        .error .InvalidStackSizeException
+        .error .StackUnderflow
 
 def executionEnvOp (debugMode : Bool) (op : ExecutionEnv → UInt256) : Transformer :=
   λ evmState ↦ Id.run do
@@ -59,10 +61,23 @@ def executionEnvOp (debugMode : Bool) (op : ExecutionEnv → UInt256) : Transfor
     .ok <|
       evmState.replaceStackAndIncrPC (evmState.stack.push result)
 
-def machineStateOp (op : MachineState → UInt256) : Transformer :=
+def unaryExecutionEnvOp (debugMode : Bool) (op : ExecutionEnv → UInt256 → UInt256) : Transformer :=
   λ evmState ↦
+    match evmState.stack.pop with
+    | some ⟨ s , μ₀⟩ => Id.run do
+      let result := op evmState.executionEnv μ₀
+      if debugMode then
+        dbg_trace s!"result: {result}"
+      .ok <|
+        evmState.replaceStackAndIncrPC (s.push result)
+    | _ => .error .StackUnderflow
+
+def machineStateOp (debugMode : Bool) (op : MachineState → UInt256) : Transformer :=
+  λ evmState ↦ Id.run do
+    let result := op evmState.toMachineState
+    if debugMode then dbg_trace s!"got result: {result}"
     .ok <|
-      evmState.replaceStackAndIncrPC (evmState.stack.push <| op evmState.toMachineState)
+      evmState.replaceStackAndIncrPC (evmState.stack.push result)
 
 def binaryMachineStateOp
   (debugMode : Bool)
@@ -77,7 +92,7 @@ def binaryMachineStateOp
       let mState' := op evmState.toMachineState μ₀ μ₁
       let evmState' := {evmState with toMachineState := mState'}
       .ok <| evmState'.replaceStackAndIncrPC s
-    | _ => .error EVM.Exception.InvalidStackSizeException
+    | _ => .error .StackUnderflow
 
 def binaryMachineStateOp'
   (debugMode : Bool)
@@ -92,7 +107,7 @@ def binaryMachineStateOp'
       let (val, mState') := op evmState.toMachineState μ₀ μ₁
       let evmState' := {evmState with toMachineState := mState'}
       .ok <| evmState'.replaceStackAndIncrPC (s.push val)
-    | _ => .error EVM.Exception.InvalidStackSizeException
+    | _ => .error .StackUnderflow
 
 def ternaryMachineStateOp
   (debugMode : Bool)
@@ -107,7 +122,7 @@ def ternaryMachineStateOp
       let mState' := op evmState.toMachineState μ₀ μ₁ μ₂
       let evmState' := {evmState with toMachineState := mState'}
       .ok <| evmState'.replaceStackAndIncrPC s
-    | _ => .error EVM.Exception.InvalidStackSizeException
+    | _ => .error .StackUnderflow
 
 def binaryStateOp
   (debugMode : Bool)
@@ -122,10 +137,11 @@ def binaryStateOp
       let state' := op evmState.toState μ₀ μ₁
       let evmState' := {evmState with toState := state'}
       .ok <| evmState'.replaceStackAndIncrPC s
-    | _ => .error EVM.Exception.InvalidStackSizeException
+    | _ => .error .StackUnderflow
 
-def stateOp (op : EvmYul.State → UInt256) : Transformer :=
-  λ evmState ↦
+def stateOp (debugMode : Bool) (op : EvmYul.State → UInt256) : Transformer :=
+  λ evmState ↦ Id.run do
+    if debugMode then dbg_trace s!"got result: {op evmState.toState}";
     .ok <|
       evmState.replaceStackAndIncrPC (evmState.stack.push <| op evmState.toState)
 
@@ -141,8 +157,9 @@ def unaryStateOp
             dbg_trace s!"called with μ₀: {μ₀}"
           let (state', b) := op evmState.toState μ₀
           let evmState' := {evmState with toState := state'}
+          if debugMode then dbg_trace s!"got result: {b}"
           .ok <| evmState'.replaceStackAndIncrPC (stack'.push b)
-        | _ => .error EVM.Exception.InvalidStackSizeException
+        | _ => .error .StackUnderflow
 
 def ternaryCopyOp
   (debugMode : Bool)
@@ -157,7 +174,7 @@ def ternaryCopyOp
       let sState' := op evmState.toSharedState μ₀ μ₁ μ₂
       let evmState' := { evmState with toSharedState := sState'}
       .ok <| evmState'.replaceStackAndIncrPC stack'
-    | _ => .error EVM.Exception.InvalidStackSizeException
+    | _ => .error .StackUnderflow
 
 def quaternaryCopyOp
   (debugMode : Bool)
@@ -172,9 +189,9 @@ def quaternaryCopyOp
           let sState' := op evmState.toSharedState μ₀ μ₁ μ₂ μ₃
           let evmState' := { evmState with toSharedState := sState'}
           .ok <| evmState'.replaceStackAndIncrPC stack'
-        | _ => .error EVM.Exception.InvalidStackSizeException
+        | _ => .error .StackUnderflow
 
-private def evmLogOp (evmState : State) (μ₀ μ₁ : UInt256) (t : List UInt256) : State :=
+private def evmLogOp (evmState : State) (μ₀ μ₁ : UInt256) (t : Array UInt256) : State :=
   let sharedState' := SharedState.logOp μ₀ μ₁ t evmState.toSharedState
   { evmState with toSharedState := sharedState'}
 
@@ -184,9 +201,9 @@ def log0Op (debugMode : Bool) : Transformer :=
       | some ⟨stack', μ₀, μ₁⟩ => Id.run do
         if debugMode then
           dbg_trace s!"called with μ₀: {μ₀} μ₁: {μ₁}"
-        let evmState' := evmLogOp evmState μ₀ μ₁ []
+        let evmState' := evmLogOp evmState μ₀ μ₁ #[]
         .ok <| evmState'.replaceStackAndIncrPC stack'
-      | _ => .error EVM.Exception.InvalidStackSizeException
+      | _ => .error .StackUnderflow
 
 def log1Op (debugMode : Bool) : Transformer :=
   λ evmState ↦
@@ -194,9 +211,9 @@ def log1Op (debugMode : Bool) : Transformer :=
       | some ⟨stack', μ₀, μ₁, μ₂⟩ => Id.run do
         if debugMode then
           dbg_trace s!"called with μ₀: {μ₀} μ₁: {μ₁}"
-        let evmState' := evmLogOp evmState μ₀ μ₁ [μ₂]
+        let evmState' := evmLogOp evmState μ₀ μ₁ #[μ₂]
         .ok <| evmState'.replaceStackAndIncrPC stack'
-      | _ => .error EVM.Exception.InvalidStackSizeException
+      | _ => .error .StackUnderflow
 
 def log2Op (debugMode : Bool) : Transformer :=
   λ evmState ↦
@@ -204,9 +221,9 @@ def log2Op (debugMode : Bool) : Transformer :=
       | some ⟨stack', μ₀, μ₁, μ₂, μ₃⟩ => Id.run do
         if debugMode then
           dbg_trace s!"called with μ₀: {μ₀} μ₁: {μ₁} μ₂: {μ₂}  μ₃: {μ₃}"
-        let evmState' := evmLogOp evmState μ₀ μ₁ [μ₂, μ₃]
+        let evmState' := evmLogOp evmState μ₀ μ₁ #[μ₂, μ₃]
         .ok <| evmState'.replaceStackAndIncrPC stack'
-      | _ => .error EVM.Exception.InvalidStackSizeException
+      | _ => .error .StackUnderflow
 
 def log3Op (debugMode : Bool) : Transformer :=
   λ evmState ↦
@@ -214,9 +231,9 @@ def log3Op (debugMode : Bool) : Transformer :=
       | some ⟨stack', μ₀, μ₁, μ₂, μ₃, μ₄⟩ => Id.run do
         if debugMode then
           dbg_trace s!"called with μ₀: {μ₀} μ₁: {μ₁} μ₂: {μ₂}  μ₃: {μ₃} μ₄: {μ₄}"
-        let evmState' := evmLogOp evmState μ₀ μ₁ [μ₂, μ₃, μ₄]
+        let evmState' := evmLogOp evmState μ₀ μ₁ #[μ₂, μ₃, μ₄]
         .ok <| evmState'.replaceStackAndIncrPC stack'
-      | _ => .error EVM.Exception.InvalidStackSizeException
+      | _ => .error .StackUnderflow
 
 def log4Op (debugMode : Bool) : Transformer :=
   λ evmState ↦
@@ -224,9 +241,9 @@ def log4Op (debugMode : Bool) : Transformer :=
       | some ⟨stack', μ₀, μ₁, μ₂, μ₃, μ₄, μ₅⟩ => Id.run do
         if debugMode then
           dbg_trace s!"called with μ₀: {μ₀} μ₁: {μ₁} μ₂: {μ₂}  μ₃: {μ₃} μ₄: {μ₄} μ₅: {μ₅}"
-        let evmState' := evmLogOp evmState μ₀ μ₁ [μ₂, μ₃, μ₄, μ₅]
+        let evmState' := evmLogOp evmState μ₀ μ₁ #[μ₂, μ₃, μ₄, μ₅]
         .ok <| evmState'.replaceStackAndIncrPC stack'
-      | _ => .error EVM.Exception.InvalidStackSizeException
+      | _ => .error .StackUnderflow
 
 end EVM
 

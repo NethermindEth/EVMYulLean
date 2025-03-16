@@ -99,7 +99,7 @@ def lookup! (var : Identifier) : Yul.State → Literal
   | Checkpoint (.Continue _ store) => (store.lookup var).get!
   | Checkpoint (.Break _ store) => (store.lookup var).get!
   | Checkpoint (.Leave _ store) => (store.lookup var).get!
-  | _ => 0
+  | _ => ⟨0⟩
 
 -- ============================================================================
 --  STATE NOTATION

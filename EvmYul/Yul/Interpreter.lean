@@ -133,7 +133,7 @@ mutual
         let s₁ := exec fuel stmt s
         exec fuel (.Block stmts) s₁
 
-      | .Let vars => List.foldr (λ var s ↦ s.insert var 0) s vars
+      | .Let vars => List.foldr (λ var s ↦ s.insert var ⟨0⟩) s vars
 
       | .LetEq var rhs =>
         let (s, val) := eval fuel rhs s
@@ -153,7 +153,7 @@ mutual
 
       | .If cond body =>
         let (s, cond) := eval fuel cond s
-        if cond ≠ 0 then exec fuel (.Block body) s else s
+        if cond ≠ ⟨0⟩ then exec fuel (.Block body) s else s
 
       -- "Expressions that are also statements (i.e. at the block level) have
       -- to evaluate to zero values."
@@ -197,7 +197,7 @@ mutual
       | 1 => s.diverge
       | fuel + 1 + 1 =>
         let (s₁, x) := eval fuel cond (👌s)
-        if x = 0
+        if x = ⟨0⟩
           then s₁✏️⟦s⟧?
           else
             let s₂ := exec fuel (.Block body) s₁

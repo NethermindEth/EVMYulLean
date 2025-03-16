@@ -5,6 +5,7 @@ import Lean.Data.Json
 import EvmYul.Operations
 import EvmYul.Wheels
 import EvmYul.State.Withdrawal
+import EvmYul.State.Block
 
 import EvmYul.EVM.State
 
@@ -20,20 +21,11 @@ section Model
 
 open Lean
 
-abbrev AddrMap (α : Type) [Inhabited α] := Batteries.RBMap AccountAddress α compare
-abbrev Storage := Batteries.RBMap UInt256 UInt256 compare
-
-def Storage.toFinmap (self : Storage) : Finmap (λ _ : UInt256 ↦ UInt256) :=
-  self.foldl (init := ∅) λ acc k v ↦ acc.insert (UInt256.ofNat k.1) v
-
-def Storage.toEvmYulStorage (self : Storage) : EvmYul.Storage :=
-  self.foldl (init := ∅) λ acc k v ↦ acc.insert (UInt256.ofNat k.1) v
-
 def AddrMap.keys {α : Type} [Inhabited α] (self : AddrMap α) : Multiset AccountAddress :=
   .ofList <| self.toList.map Prod.fst
 
 instance : LE ((_ : UInt256) × UInt256) where
-  le lhs rhs := if lhs.1 = rhs.1 then lhs.2 ≤ rhs.2 else lhs.1 ≤ rhs.1
+  le lhs rhs := if lhs.1.val = rhs.1.val then lhs.2.val ≤ rhs.2.val else lhs.1.val ≤ rhs.1.val
 
 instance : IsTrans ((_ : UInt256) × UInt256) (· ≤ ·) where
   trans a b c h₁ h₂ := by
@@ -64,23 +56,13 @@ instance : DecidableRel (α := (_ : UInt256) × UInt256) (· ≤ ·) :=
     unfold LE.le instLESigmaUInt256_conform; simp
     aesop (config := {warnOnNonterminal := false}) <;> exact inferInstance
 
--- def Storage.ofFinmap (m : EvmYul.Storage) : Storage :=
---   Lean.RBMap.ofList <| m.toList.map λ (k, v) ↦ (k, v)
-
 abbrev Code := ByteArray
 
-structure AccountEntry :=
-  nonce   : UInt256
-  balance : UInt256
-  storage : Storage
-  code    : ByteArray
-  deriving Inhabited, Repr, BEq
+abbrev Pre := PersistentAccountMap
 
-abbrev Pre := AddrMap AccountEntry
+abbrev PostEntry := PersistentAccountState
 
-abbrev PostEntry := AccountEntry
-
-abbrev Post := AddrMap PostEntry
+abbrev Post := PersistentAccountMap
 
 abbrev Transactions := Array Transaction
 
@@ -91,18 +73,6 @@ TODO - Temporary.
 -/
 private local instance : Repr Json := ⟨λ s _ ↦ Json.pretty s⟩
 
-structure BlockEntry :=
-  blockHeader  : BlockHeader
-  rlp          : Json
-  transactions : Transactions
-  uncleHeaders : Json
-  withdrawals  : Withdrawals
-  exception    : String -- TODO - I am guessing there is a closed set of these to turn into a sum.
-  blocknumber  : Nat
-  deriving Inhabited, Repr
-
-abbrev Blocks := Array BlockEntry
-
 /--
 In theory, parts of the TestEntry could deserialise immediately into the underlying `EVM.State`.
 
@@ -110,24 +80,26 @@ This would be ever so slightly cleaner, but before we understand the exact corre
 between all of the test file entires and the states, we sometimes keep a 'parsing model' *and*
 an EVM model and write translations between them where convenient.
 -/
+
+inductive PostState :=
+  | Hash : ByteArray → PostState
+  | Map : Post → PostState
+  deriving Inhabited
+
 structure TestEntry :=
   info               : Json := ""
-  blocks             : Blocks
-  genesisBlockHeader : Json := ""
-  genesisRLP         : Json := ""
-  lastblockhash      : Json := ""
-  network            : Json := ""
-  postState          : Post
+  blocks             : RawBlocks
+  genesisRLP         : ByteArray
+  lastblockhash      : UInt256
+  network            : String
+  postState          : PostState
   pre                : Pre
   sealEngine         : Json := ""
   deriving Inhabited
 
-abbrev Test := Batteries.RBMap String TestEntry compare
+abbrev TestMap := Batteries.RBMap String TestEntry compare
 
-structure AccessListEntry :=
-  address     : AccountAddress
-  storageKeys : Array UInt256
-  deriving Inhabited, Repr
+abbrev AccessListEntry := AccountAddress × Array UInt256
 
 abbrev AccessList := Array AccessListEntry
 

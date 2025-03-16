@@ -5,7 +5,6 @@ import Batteries
 import EvmYul.Maps.ByteMap
 import EvmYul.UInt256
 import Batteries.Data.HashMap
-import EvmYul.MachineMemory
 
 namespace EvmYul
 
@@ -26,8 +25,7 @@ The partial shared `MachineState` `μ`. Section 9.4.1.
 structure MachineState where
   gasAvailable        : UInt256
   activeWords         : UInt256
-  activeWordsWritten  : UInt256
-  memory              : Memory
+  memory              : ByteArray
   returnData          : ByteArray
   H_return            : ByteArray
   deriving Inhabited

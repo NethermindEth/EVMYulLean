@@ -7,11 +7,20 @@ import EvmYul.Wheels
 namespace EvmYul
 
 /--
-  (142) `π ≡ {1, 2, 3, 4, 5, 6, 7, 8, 9}`
+  Precompiled contract addresses.
+  (142) `π ≡ {1, 2, 3, 4, 5, 6, 7, 8, 9, 10}`
 -/
-def π : Batteries.RBSet AccountAddress compare := Batteries.RBSet.ofList ((List.range 10).tail.map Fin.ofNat) compare
+def π : Batteries.RBSet AccountAddress compare :=
+  Batteries.RBSet.ofList ((List.range 11).tail.map Fin.ofNat) compare
 
 inductive ToExecute := | Code (code : ByteArray) | Precompiled (precompiled : AccountAddress)
+
+structure PersistentAccountState :=
+  nonce    : UInt256
+  balance  : UInt256
+  storage  : Storage
+  code     : ByteArray
+deriving BEq, Inhabited, Repr
 
 /--
 The `Account` data. Section 4.1.
@@ -24,24 +33,20 @@ Suppose `a` is some address.
 In the yellow paper it is supposed to be a 256-bit hash of the root node of
 a Merkle Tree. KEVM implemets it as just an key/value map.
 - `storage`  -- σ[a]_s.
-- `tstorage` -- Added in EIP-1153
+- `tstorage` -- Transiont storage; added in EIP-1153
 - `codeHash` -- σ[a]_c.
 
 For now, we assume no global map `GM` with which `GM[code_hash] ≡ code`.
 - `code`
-
-- `ostorage` holds `σ₀`, not a part of the YP
 -/
-structure Account :=
-  nonce    : UInt256
-  balance  : UInt256
-  storage  : Storage
-  ostorage : Storage
+structure Account extends PersistentAccountState where
   tstorage : Storage
-  code     : ByteArray
 deriving BEq, Inhabited, Repr
 
+def PersistentAccountState.codeHash (self : PersistentAccountState) : UInt256 :=
+  .ofNat <| fromByteArrayBigEndian (KEC self.code)
+
 def Account.codeHash (self : Account) : UInt256 :=
-  fromBytesBigEndian (KEC self.code).data.data
+  self.toPersistentAccountState.codeHash
 
 end EvmYul

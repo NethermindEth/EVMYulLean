@@ -30,34 +30,54 @@ namespace EvmYul
 
 section RemoveLater
 
-abbrev AccountMap := Batteries.RBMap AccountAddress Account compare
+abbrev AddrMap (α : Type) [Inhabited α] := Batteries.RBMap AccountAddress α compare
+abbrev AccountMap := AddrMap Account
+abbrev PersistentAccountMap := AddrMap PersistentAccountState
+def AccountMap.toPersistentAccountMap (a : AccountMap) : PersistentAccountMap :=
+  a.mapVal (λ _ acc ↦ acc.toPersistentAccountState)
+
+def AccountMap.increaseBalance (σ : AccountMap) (addr : AccountAddress) (amount : UInt256)
+  : AccountMap
+:=
+  match σ.find? addr with
+    | none => σ.insert addr {(default : Account) with balance := amount}
+    | some acc => σ.insert addr {acc with balance := acc.balance + amount}
 
 def toExecute (σ : AccountMap) (t : AccountAddress) : ToExecute :=
-  if /- t is a precompiled account -/ 1 ≤ t && t ≤ 9 then
+  if /- t is a precompiled account -/ t ∈ π then
     ToExecute.Precompiled t
   else Id.run do
     -- We use the code directly without an indirection a'la `codeMap[t]`.
     let .some tDirect := σ.find? t | ToExecute.Code default
     ToExecute.Code tDirect.code
 
--- instance : LE ((_ : Address) × Account) where
---   le lhs rhs := if lhs.1 = rhs.1 then lhs.2 ≤ rhs.2 else lhs.1 ≤ rhs.1
+def L_S (σ : PersistentAccountMap) : Array (ByteArray × ByteArray) :=
+  σ.foldl
+    (λ arr (addr : AccountAddress) acc ↦
+      arr.push (p addr acc)
+    )
+    .empty
+ where
+  p (addr : AccountAddress) (acc : PersistentAccountState) : ByteArray × ByteArray :=
+    (KEC addr.toByteArray, rlp acc)
+  rlp (acc : PersistentAccountState) :=
+    Option.get! <|
+      RLP <|
+        .𝕃
+          [ .𝔹 (BE acc.nonce.toNat)
+          , .𝔹 (BE acc.balance.toNat)
+          , .𝔹 <| (computeTrieRoot acc.storage).getD .empty
+          , .𝔹 acc.codeHash.toByteArray
+          ]
 
--- /-
--- Please note that these are used exclusively for conveninece of printing and computing,
--- i.e. the sorries are safe.
--- -/
-
--- instance : IsTrans ((_ : Address) × Account) (· ≤ ·) := sorry
-
--- instance : IsAntisymm ((_ : Address) × Account) (· ≤ ·) := sorry
-
--- instance : IsTotal ((_ : Address) × Account) (· ≤ ·) := sorry
-
--- instance : DecidableRel (α := (_ : Address) × Account) (· ≤ ·) :=
---   λ lhs rhs ↦ by
---     unfold LE.le instLESigmaAddressAccount
---     exact inferInstance
+def stateTrieRoot (σ : PersistentAccountMap) : Option ByteArray :=
+  let a := Array.map toBlobPair (L_S σ)
+  (ByteArray.ofBlob (blobComputeTrieRoot a)).toOption
+ where
+  toBlobPair entry : String × String :=
+    let b₁ := EvmYul.toHex entry.1
+    let b₂ := EvmYul.toHex entry.2
+    (b₁, b₂)
 
 end RemoveLater
 
