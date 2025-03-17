@@ -30,8 +30,8 @@ structure BlockHeader where
   ommersHash    : UInt256
   beneficiary   : AccountAddress
   stateRoot     : UInt256
-  transRoot     : UInt256
-  receiptRoot   : UInt256
+  transRoot     : ByteArray
+  receiptRoot   : ByteArray
   logsBloom     : ByteArray
   -- Officially deprecated, but checked in `wrongDifficulty_Cancun`
   difficulty    : ℕ

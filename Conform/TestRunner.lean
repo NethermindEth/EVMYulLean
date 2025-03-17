@@ -19,54 +19,7 @@ namespace EvmYul
 
 namespace Conform
 
-def VerySlowTests : Array String :=
-  #[
-    -- "CALLBlake2f_MaxRounds_d0g0v0_Cancun" -- Didn't finish even when given tens of hours
-    -- TODO: The following tests take a long time but are passing.
-  --   "21_tstoreCannotBeDosdOOO_d0g0v0_Cancun"
-  -- , "15_tstoreCannotBeDosd_d0g0v0_Cancun"
-  -- , "ContractCreationSpam_d0g0v0_Cancun"
-  -- , "static_Return50000_2_d0g0v0_Cancun"
-  -- , "static_Call50000_identity_d0g0v0_Cancun"
-  -- , "static_Call50000_identity_d1g0v0_Cancun"
-  -- , "static_Call50000_ecrec_d0g0v0_Cancun"
-  -- , "static_Call50000_ecrec_d1g0v0_Cancun"
-  -- , "static_Call50000_identity2_d0g0v0_Cancun"
-  -- , "static_Call50000_identity2_d1g0v0_Cancun"
-  -- , "static_LoopCallsThenRevert_d0g0v0_Cancun"
-  -- , "static_LoopCallsThenRevert_d0g1v0_Cancun"
-  -- , "static_Call50000_d0g0v0_Cancun"
-  -- , "static_Call50000_d1g0v0_Cancun"
-  -- , "static_Call50000_rip160_d0g0v0_Cancun"
-  -- , "static_Call50000_rip160_d1g0v0_Cancun"
-  -- , "loopMul_d0g0v0_Cancun"
-  -- , "loopMul_d1g0v0_Cancun"
-  -- , "loopMul_d2g0v0_Cancun"
-  -- , "performanceTester_d1g0v0_Cancun"
-  -- , "performanceTester_d4g0v0_Cancun"
-  -- , "loopExp_d10g0v0_Cancun"
-  -- , "loopExp_d11g0v0_Cancun"
-  -- , "loopExp_d12g0v0_Cancun"
-  -- , "loopExp_d13g0v0_Cancun"
-  -- , "loopExp_d14g0v0_Cancun"
-  -- , "loopExp_d8g0v0_Cancun"
-  -- , "loopExp_d9g0v0_Cancun"
-  -- , "Return50000_2_d0g1v0_Cancun"
-  -- , "Call50000_identity2_d0g1v0_Cancun"
-  -- , "Call50000_ecrec_d0g1v0_Cancun"
-  -- , "Return50000_d0g1v0_Cancun"
-  -- -- , "Call50000_sha256_d0g1v0_Cancun"
-  -- , "Call50000_d0g1v0_Cancun"
-  -- , "Callcode50000_d0g1v0_Cancun"
-  -- , "Call50000_identity_d0g1v0_Cancun"
-  -- , "QuadraticComplexitySolidity_CallDataCopy_d0g1v0_Cancun"
-  -- , "static_Call50000_sha256_d0g0v0_Cancun"
-  -- , "static_Call50000_sha256_d1g0v0_Cancun"
-  -- , "src/GeneralStateTestsFiller/Pyspecs/cancun/eip1153_tstore/test_tstorage.py::test_run_until_out_of_gas[fork_Cancun-blockchain_test-tstore"
-  -- , "src/GeneralStateTestsFiller/Pyspecs/cancun/eip1153_tstore/test_tstorage.py::test_run_until_out_of_gas[fork_Cancun-blockchain_test-tstore_tload"
-  -- , "src/GeneralStateTestsFiller/Pyspecs/cancun/eip1153_tstore/test_tstorage.py::test_run_until_out_of_gas[fork_Cancun-blockchain_test-tstore_wide_address_space"
-  -- , "DelegateCallSpam_Cancun"
-  ]
+def VerySlowTests : Array String := #[]
 
 def GlobalBlacklist : Array String := VerySlowTests
 
@@ -167,7 +120,7 @@ def executeTransaction
 := do
   let _TODOfuel : ℕ := s.accountMap.find? sender |>.elim ⟨0⟩ (·.balance) |>.toNat
 
-  let (ypState, _, _, totalGasUsed) ←
+  let (ypState, substate, statusCode, totalGasUsed) ←
     EVM.Υ (debugMode := false) _TODOfuel
       s.accountMap
       header.baseFeePerGas
@@ -184,6 +137,15 @@ def executeTransaction
     { s with
       accountMap := ypState
       totalGasUsedInBlock := s.totalGasUsedInBlock + totalGasUsed.toNat
+      transactionReceipts :=
+        s.transactionReceipts.push
+          ⟨ transaction.type
+          , statusCode
+          , s.totalGasUsedInBlock + totalGasUsed.toNat
+          , bloomFilter substate.joinLogs
+          , substate.logSeries
+          ⟩
+      substate
     }
   pure result
 
@@ -436,7 +398,7 @@ def validateBlock
 
   let MAX_BLOB_GAS_PER_BLOCK := 786432
   -- TODO: Move to `validateTransaction`?
-  let blobGasUsed ← block.transactions.foldlM (init := 0) λ blobSum t ↦ do
+  let blobGasUsed ← block.transactions.array.foldlM (init := 0) λ blobSum t ↦ do
     let blobSum := blobSum + getTotalBlobGas t
     if blobSum > MAX_BLOB_GAS_PER_BLOCK then
       throw <| .TransactionException .TYPE_3_TX_MAX_BLOB_GAS_ALLOWANCE_EXCEEDED
@@ -467,10 +429,7 @@ def validateBlock
   if blobGasUsed > MAX_BLOB_GAS_PER_BLOCK then
     throw <| .BlockException .BLOB_GAS_USED_ABOVE_LIMIT
 
-  if
-    Withdrawal.computeTrieRoot block.withdrawals
-      ≠ block.blockHeader.withdrawalsRoot
-  then
+  if block.withdrawals.trieRoot ≠ block.blockHeader.withdrawalsRoot then
     throw <| .BlockException .INVALID_WITHDRAWALS_ROOT
 
   -- TODO: Integrate this with the `postState` comparison.
@@ -480,6 +439,20 @@ def validateBlock
     |> .ofNat
   if block.blockHeader.stateRoot ≠ computedStateHash then
     throw <| .BlockException .INVALID_STATE_ROOT
+
+  let expectedBloom := block.blockHeader.logsBloom
+  let actualBloom := bloomFilter state.substate.joinLogs
+  if expectedBloom ≠ actualBloom then
+    throw <| .BlockException .INVALID_LOG_BLOOM
+  if block.transactions.trieRoot ≠ block.blockHeader.transRoot then
+    throw <| .BlockException .INVALID_TRANSACTIONS_ROOT
+
+  let receiptsRoot :=
+    TransactionReceipt.computeTrieRoot <|
+      state.transactionReceipts.map TransactionReceipt.toTrieValue
+  if receiptsRoot ≠ some block.blockHeader.receiptRoot then
+    throw <| .BlockException .INVALID_RECEIPTS_ROOT
+
   pure ()
 
 def deserializeRawBlock (rawBlock : RawBlock)
@@ -585,7 +558,7 @@ def processBlocks
 
     -- Transactions execution
     let s ←
-      block.transactions.foldlM
+      block.transactions.array.foldlM
         (λ s' trans ↦ do
           let S_T ←
             validateTransaction
@@ -596,10 +569,10 @@ def processBlocks
               trans
           executeTransaction trans S_T s' block.blockHeader
         )
-        {s with totalGasUsedInBlock := 0}
+        {s with totalGasUsedInBlock := 0, transactionReceipts := .empty}
 
     -- Withdrawals execution
-    let σ := applyWithdrawals s.accountMap block.withdrawals
+    let σ := applyWithdrawals s.accountMap block.withdrawals.array
 
     pure { s with accountMap := σ }
 

@@ -167,69 +167,105 @@ inductive 𝕋 :=
   | 𝕃 : (List 𝕋) → 𝕋
   deriving Repr, BEq
 
-mutual
 
-partial def deserializeListRLP (rlp : ByteArray) : Option (List 𝕋) := do
-  if rlp.isEmpty then pure []
-  else
-    let (headLen, head) ← deserializeRLP₀ rlp
-    let tail ← deserializeListRLP (rlp.readWithoutPadding headLen rlp.size)
-    pure <| head :: tail
-
-partial def deserializeRLP₀ (rlp : ByteArray) : Option (ℕ × 𝕋) :=
+def lengthRLP (rlp : ByteArray) : Option ℕ :=
   let len := rlp.size
   if len = 0 then
     none
   else
     let rlp₀ := rlp.get! 0
     if rlp₀ ≤ 0x7f then
-      let data := .𝔹 ⟨#[rlp₀]⟩
-      some (1, data)
+      some 1
     else
       let strLen := rlp₀.toNat - 0x80
       if rlp₀ ≤ 0xb7 ∧ len > strLen then
-        let data := .𝔹 (rlp.readWithoutPadding 1 strLen)
-        some (1 + strLen, data)
+        some (1 + strLen)
       else
         let lenOfStrLen := rlp₀.toNat - 0xb7
         if rlp₀ ≤ 0xbf ∧ len > lenOfStrLen + strLen then
           let strLen :=
             EvmYul.fromByteArrayBigEndian
               (rlp.readWithoutPadding 1 lenOfStrLen)
-          let data := .𝔹 (rlp.readWithoutPadding (1 + lenOfStrLen) strLen)
-          some (1 + lenOfStrLen + strLen, data)
+          some (1 + lenOfStrLen + strLen)
         else
           let listLen := rlp₀.toNat - 0xc0
           if rlp₀ ≤ 0xf7 ∧ len > listLen then do
-            let list ← deserializeListRLP (rlp.readWithoutPadding 1 listLen)
-            some (1 + listLen, .𝕃 list)
+            some (1 + listLen)
           else
             let lenOfListLen := rlp₀.toNat - 0xf7
             let listLen :=
               EvmYul.fromByteArrayBigEndian
                 (rlp.readWithoutPadding 1 lenOfListLen)
             if len > lenOfListLen + listLen then do
-              let list ← deserializeListRLP (rlp.readWithoutPadding (1 + lenOfListLen) listLen)
-              some (1 + lenOfListLen + listLen, .𝕃 list)
+              some (1 + lenOfListLen + listLen)
             else
               none
 
-end
+partial def separateListRLP (rlp : ByteArray) : Option (List ByteArray) := do
+  if rlp.isEmpty then pure []
+  else
+    let headLen ← lengthRLP rlp
+    let head := rlp.readWithoutPadding 0 headLen
+    let tail ← separateListRLP (rlp.readWithoutPadding headLen rlp.size)
+    pure <| head :: tail
 
-partial def deserializeRLP (rlp : ByteArray) : Option 𝕋 :=
-  (deserializeRLP₀ rlp).map Prod.snd
+def oneStepRLP (rlp : ByteArray) : Option (Sum ByteArray (List ByteArray)) :=
+  let len := rlp.size
+  if len = 0 then
+    none
+  else
+    let rlp₀ := rlp.get! 0
+    if rlp₀ ≤ 0x7f then
+      let data := .inl ⟨#[rlp₀]⟩
+      some data
+    else
+      let strLen := rlp₀.toNat - 0x80
+      if rlp₀ ≤ 0xb7 ∧ len > strLen then
+        let data := .inl (rlp.readWithoutPadding 1 strLen)
+        some data
+      else
+        let lenOfStrLen := rlp₀.toNat - 0xb7
+        if rlp₀ ≤ 0xbf ∧ len > lenOfStrLen + strLen then
+          let strLen :=
+            EvmYul.fromByteArrayBigEndian
+              (rlp.readWithoutPadding 1 lenOfStrLen)
+          let data := .inl (rlp.readWithoutPadding (1 + lenOfStrLen) strLen)
+          some data
+        else
+          let listLen := rlp₀.toNat - 0xc0
+          if rlp₀ ≤ 0xf7 ∧ len > listLen then do
+            let list ← separateListRLP (rlp.readWithoutPadding 1 listLen)
+            some <| .inr list
+          else
+            let lenOfListLen := rlp₀.toNat - 0xf7
+            let listLen :=
+              EvmYul.fromByteArrayBigEndian
+                (rlp.readWithoutPadding 1 lenOfListLen)
+            if len > lenOfListLen + listLen then do
+              let list ← separateListRLP (rlp.readWithoutPadding (1 + lenOfListLen) listLen)
+              some <| .inr list
+            else
+              none
 
--- private example : deserializeRLP₀ .empty == none := by native_decide
--- private example : deserializeRLP₀ ⟨#[0]⟩ == some (1, .𝔹 ⟨#[0]⟩) := by native_decide
--- private example : deserializeRLP₀ ⟨#[127]⟩ == some (1, .𝔹 ⟨#[127]⟩) := by native_decide
--- private example : deserializeRLP₀ ⟨#[128]⟩ == some (1, .𝔹 .empty) := by native_decide
+partial def deserializeRLP (rlp : ByteArray) : Option 𝕋 := do
+  match ← oneStepRLP rlp with
+    | .inl byteArray =>
+      some (.𝔹 byteArray)
+    | .inr list =>
+      let l ← list.mapM deserializeRLP
+      some (.𝕃 l)
+
+-- private example : deserializeRLP .empty == none := by native_decide
+-- private example : deserializeRLP ⟨#[0]⟩ == some (.𝔹 ⟨#[0]⟩) := by native_decide
+-- private example : deserializeRLP ⟨#[127]⟩ == some (.𝔹 ⟨#[127]⟩) := by native_decide
+-- private example : deserializeRLP ⟨#[128]⟩ == some (.𝔹 .empty) := by native_decide
 -- private example :
---   deserializeRLP₀ (⟨#[128 + 55]⟩ ++ ByteArray.zeroes ⟨55⟩) ==
---     some (56, .𝔹 (ByteArray.zeroes ⟨55⟩))
+--   deserializeRLP (⟨#[128 + 55]⟩ ++ ByteArray.zeroes ⟨55⟩) ==
+--     some (.𝔹 (ByteArray.zeroes ⟨55⟩))
 --   := by native_decide
 -- private example :
---   deserializeRLP₀ (⟨#[183 + 1, 56]⟩ ++ ByteArray.zeroes ⟨56⟩) ==
---     some (58, .𝔹 (ByteArray.zeroes ⟨56⟩))
+--   deserializeRLP (⟨#[183 + 1, 56]⟩ ++ ByteArray.zeroes ⟨56⟩) ==
+--     some (.𝔹 (ByteArray.zeroes ⟨56⟩))
 --   := by native_decide
 
 -- private example :
