@@ -34,15 +34,15 @@ private def success (result : Batteries.RBMap String EvmYul.Conform.TestResult c
   let (succeeded, failed) := result.partition (λ _ v ↦ v.isNone)
   (succeeded.keys, failed.keys)
 
-def logFile : System.FilePath := "tests.txt"
+def logFile (phase : ℕ) : System.FilePath := s!"tests_{phase}.txt"
 
 open EvmYul.Conform in
 instance : ToString TestResult where
   toString tr := tr.elim "Success." id
 
 open EvmYul.Conform in
-def log (testFile : System.FilePath) (testName : String) (result : TestResult) : IO Unit :=
-  IO.FS.withFile logFile .append λ h ↦ h.putStrLn s!"{testFile.fileName.get!}[{testName}] - {result}\n"
+def log (testFile : System.FilePath) (testName : String) (result : TestResult) (phase : ℕ := 0) : IO Unit :=
+  IO.FS.withFile (logFile phase) .append λ h ↦ h.putStrLn s!"{testFile.fileName.get!}[{testName}] - {result}\n"
 
 /-
   Cancun                               :  0m 23s |
@@ -301,6 +301,7 @@ def testFiles (root               : System.FilePath)
               (fileBlacklist      : Array System.FilePath := #[])
               (testBlacklist      : Array String := #[])
               (testWhitelist      : Array String := #[])
+              (phase              : ℕ)
               (threads            : ℕ := 1) : IO Unit := do
   let isToBeTested (testname : String) : Bool :=
     let whitelist := testWhitelist
@@ -317,7 +318,7 @@ def testFiles (root               : System.FilePath)
   let mut numFailedTest := 0
   let mut numSuccess := 0
 
-  if ←System.FilePath.pathExists logFile then IO.FS.removeFile logFile
+  if ←System.FilePath.pathExists (logFile phase) then IO.FS.removeFile (logFile phase)
 
   let testJsons ← testFiles.mapM Lean.Json.fromFile
   let testNames : Array (System.FilePath × Array String) :=
@@ -345,7 +346,7 @@ def testFiles (root               : System.FilePath)
   for (discarded, batch) in testResults do
     discardedFiles := discardedFiles.append discarded
     for (file, test, res) in batch do
-      log file test res
+      log file test res phase
       if res.isNone
       then numSuccess := numSuccess + 1
       else numFailedTest := numFailedTest + 1
@@ -371,13 +372,16 @@ def main (args : List String) : IO Unit := do
   testFiles (root := "EthereumTests/BlockchainTests/")
             (directoryBlacklist := #["EthereumTests/BlockchainTests//GeneralStateTests/VMTests/vmPerformance"])
             (testBlacklist := DelayFiles)
+            (phase := 1)
             (threads := NumThreads)
   
   IO.println s!"Phase 2/3 - Performance tests only."
   testFiles (root := "EthereumTests/BlockchainTests/GeneralStateTests/VMTests/vmPerformance/")
+            (phase := 2)
             (threads := NumThreads)
 
   IO.println s!"Phase 3/3 - Individually scheduled tests."
   testFiles (root := "EthereumTests/BlockchainTests/")
             (testWhitelist := DelayFiles)
+            (phase := 3)
             (threads := NumThreads)
