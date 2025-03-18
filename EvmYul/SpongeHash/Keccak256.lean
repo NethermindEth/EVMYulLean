@@ -13,9 +13,6 @@ open Vector
 
 abbrev SHA3SR : Type := Array UInt64
 
-instance : Coe Bool (Fin 2) := ⟨(if · then 1 else 0)⟩
-instance : Coe (Fin 2) Bool := ⟨(·.1 == 1)⟩
-
 def Rounds : Nat := 24
 
 def NumLanes : Nat := 25
@@ -83,10 +80,6 @@ def keccakF'' (s : SHA3SR) : SHA3SR :=
 def keccakF (state : SHA3SR) : SHA3SR :=
   (·.2) <| Array.foldl1 (·∘·) (⟨List.replicate Rounds f⟩) (0, state)
     where f : Nat × SHA3SR → Nat × SHA3SR := λ (r, s) ↦ (r.succ, ι r ∘ χ ∘ π ∘ ρ <| θ s)
-
-def bytesOfList (l : List (Fin 2)) : List UInt8 :=
-  l.toChunks 8 |>.map λ bits ↦ bits.zip (List.iota 8 |>.map Nat.pred) |>.foldl (init := 0)
-    λ acc (bit, exp) ↦ acc + (UInt8.ofNat <| bit.val * 2^exp)
 
 namespace Absorb
 

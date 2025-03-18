@@ -162,15 +162,13 @@ def exampleInput : ByteArray := ⟨#[
   1
 ]⟩
 
-
-
 def testFiles (root               : System.FilePath)
               (directoryBlacklist : Array System.FilePath := #[])
               (fileBlacklist      : Array System.FilePath := #[])
               (testBlacklist      : Array String := #[])
               (testWhitelist      : Array String := #[])
               (phase              : ℕ)
-              (threads            : ℕ := 1) : IO Unit := do
+              (threads            : ℕ := 1) : IO (Nat × Nat) := do
   let isToBeTested (testname : String) : Bool :=
     let whitelist := testWhitelist
     let blacklist := testBlacklist ++ EvmYul.Conform.GlobalBlacklist
@@ -218,11 +216,12 @@ def testFiles (root               : System.FilePath)
       if res.isNone
       then numSuccess := numSuccess + 1
       else numFailedTest := numFailedTest + 1
-  let total := numFailedTest + numSuccess
-  IO.println s!"Total tests: {total}"
-  IO.println s!"The post was NOT equal to the resulting state: {numFailedTest}"
-  IO.println s!"Succeeded: {numSuccess}"
-  IO.println s!"Success rate of: {(numSuccess.toFloat / total.toFloat) * 100.0}"
+  return (numSuccess, numFailedTest)
+  -- let total := numFailedTest + numSuccess
+  -- IO.println s!"Total tests: {total}"
+  -- IO.println s!"The post was NOT equal to the resulting state: {numFailedTest}"
+  -- IO.println s!"Succeeded: {numSuccess}"
+  -- IO.println s!"Success rate of: {(numSuccess.toFloat / total.toFloat) * 100.0}"
 
 def main (args : List String) : IO Unit := do
   let NumThreads : ℕ := args.head? <&> String.toNat! |>.getD 1
@@ -235,21 +234,51 @@ def main (args : List String) : IO Unit := do
       "static_Call50000_sha256_d1g0v0_Cancun",
       "CALLBlake2f_MaxRounds_d0g0v0_Cancun",
       "SuicideIssue_Cancun"]
+  
+  -- let normalise (path : System.FilePath) : System.FilePath :=
+  --   ⟨path.components.filter (not ∘ String.isEmpty) |>.intersperse "/" |>.foldl (init := "") (· ++ ·)⟩
+
+  -- let topLevelDirectories (root : System.FilePath) : IO (Array System.FilePath) := do
+  --   let testFiles ←
+  --     Array.filterM (λ path ↦ do pure ((←System.FilePath.isDir (normalise path)) &&
+  --                                      (normalise path).components.length == 4)) <$>
+  --       System.FilePath.walkDir root
+  --   testFiles
+  
+  -- let mut phase : ℕ := 0
+  -- for tld in ←topLevelDirectories ("EthereumTests/BlockchainTests/GeneralStateTests/") do
+  --   dbg_trace s!"tld: {tld}"
+  --   if tld.components.getLast! ∈ [
+  --     "Cancun", "Pyspecs", "Shanghai", "stBadOpcode", "stStackTests",
+  --     "stCallCodes", "stCallCreateCallCodeTest", "stCallDelegateCodesCallCodeHomestead",
+  --     "stCreateTest", "stEIP2930", "stExample", "stExtCodeHash", "stMemoryTest",
+  --     "stPreCompiledContracts", "stRandom2", "stRevertTest", "stSelfBalance",
+  --     "stSLoadTest", "stSolidityTest", "stStaticCall", "stStaticFlagEnabled",
+  --     "stTimeConsuming", "stTransitionTest", "stWalletTest", "stZeroCallsTest"
+  --   ]
+  --   then dbg_trace s!"skip {tld}"; continue
+  --   let (success, failure) ← testFiles (root := tld) (phase := phase) (threads := NumThreads)
+  --   phase := phase + 1
+  --   IO.FS.writeFile (s!"{tld.components.getLast!}.txt") s!"{tld}\nTotal tests: {success + failure}\nThe post was NOT equal to the resulting state: {failure}\nSucceeded: {success}\nSuccess rate of: {(success.toFloat / (failure + success).toFloat) * 100.0}"
+
+  let printResults (result : ℕ × ℕ) : IO Unit := do
+    let (success, failure) := result
+    IO.println s!"Total tests: {success + failure}\nThe post was NOT equal to the resulting state: {failure}\nSucceeded: {success}\nSuccess rate of: {(success.toFloat / (failure + success).toFloat) * 100.0}"
 
   IO.println s!"Phase 1/3 - No performance tests."
   testFiles (root := "EthereumTests/BlockchainTests/")
             (directoryBlacklist := #["EthereumTests/BlockchainTests//GeneralStateTests/VMTests/vmPerformance"])
             (testBlacklist := DelayFiles)
             (phase := 1)
-            (threads := NumThreads)
+            (threads := NumThreads) >>= printResults
   
   IO.println s!"Phase 2/3 - Performance tests only."
   testFiles (root := "EthereumTests/BlockchainTests/GeneralStateTests/VMTests/vmPerformance/")
             (phase := 2)
-            (threads := NumThreads)
+            (threads := NumThreads) >>= printResults
 
   IO.println s!"Phase 3/3 - Individually scheduled tests."
   testFiles (root := "EthereumTests/BlockchainTests/")
             (testWhitelist := DelayFiles)
             (phase := 3)
-            (threads := NumThreads)
+            (threads := NumThreads) >>= printResults

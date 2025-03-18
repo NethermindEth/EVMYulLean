@@ -43,7 +43,7 @@ def buildFFILib (pkg : Package) (repo : GitRepo) (fileName : String) : FetchM (B
   let oFile := pkg.buildDir / fileName |>.addExtension "o"
   let includeArgs := #["-I", repo.dir.toString]
   let weakArgs := includeArgs
-  buildO oFile srcJob weakArgs #[] compiler getLeanTrace
+  buildO oFile srcJob weakArgs #["-fPIC"] compiler getLeanTrace
 
 def buildSha256Obj (pkg : Package) (fileName : String) := do
   buildFFILib pkg (← (←cloneSha2.fetch).await).1 fileName

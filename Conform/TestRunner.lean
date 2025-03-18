@@ -623,11 +623,11 @@ instance (priority := high) : Repr PersistentAccountMap := ⟨λ m _ ↦
     return result⟩
  
 def processTest (thread : Nat) (testname : System.FilePath) (filepath : System.FilePath) (entry : TestEntry) (verbose : Bool := true) : IO TestResult := do
-  let tα ← IO.monoMsNow
+  -- let tα ← IO.monoMsNow
   let result := preImpliesPost entry
-  let tω ← IO.monoMsNow
+  -- let tω ← IO.monoMsNow
   -- let result ← timeit s!"{testname} took: " (pure (preImpliesPost entry)) -- WARNING: IO needed
-  dbg_trace s!"#{if thread / 10 == 1 then "" else " "}{thread} {testname} FROM {System.FilePath.mk (filepath.components.drop 3 |>.intersperse "/" |>.foldl (·++·) "")} took: {(tω - tα).toFloat / 1000.0}s"
+  -- dbg_trace s!"#{if thread / 10 == 1 then "" else " "}{thread} {testname} FROM {System.FilePath.mk (filepath.components.drop 3 |>.intersperse "/" |>.foldl (·++·) "")} took: {(tω - tα).toFloat / 1000.0}s"
   pure <|
     match result with
     | .error err => .mkFailed s!"{repr err}"
@@ -652,7 +652,7 @@ def processTests (thread : ℕ) (tests : Array (System.FilePath × String)) :
     match test with
     | .error _ => dbg_trace s!"Cannot parse: {(path, testName)}"
                   discarded := discarded.push (path, testName)
-    | .ok test => dbg_trace s!"#{if thread / 10 == 1 then "" else " "}{thread} TESTING {testName} FROM {System.FilePath.mk (path.components.drop 3 |>.intersperse "/" |>.foldl (·++·) "")}"
+    | .ok test => -- dbg_trace s!"#{if thread / 10 == 1 then "" else " "}{thread} TESTING {testName} FROM {System.FilePath.mk (path.components.drop 3 |>.intersperse "/" |>.foldl (·++·) "")}"
                   if test.network.startsWith "Cancun"
                   then results := results.push (path, testName, ←processTest thread testName path test)
   return (discarded, results)
