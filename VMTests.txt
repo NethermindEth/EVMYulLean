@@ -1,5 +1,0 @@
-EthereumTests/BlockchainTests/GeneralStateTests//VMTests
-Total tests: 651
-The post was NOT equal to the resulting state: 0
-Succeeded: 651
-Success rate of: 100.000000
