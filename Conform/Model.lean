@@ -68,17 +68,10 @@ abbrev Transactions := Array Transaction
 
 abbrev Withdrawals := Array Withdrawal
 
-/--
-TODO - Temporary.
--/
 private local instance : Repr Json := ⟨λ s _ ↦ Json.pretty s⟩
 
 /--
 In theory, parts of the TestEntry could deserialise immediately into the underlying `EVM.State`.
-
-This would be ever so slightly cleaner, but before we understand the exact correlation
-between all of the test file entires and the states, we sometimes keep a 'parsing model' *and*
-an EVM model and write translations between them where convenient.
 -/
 
 inductive PostState :=

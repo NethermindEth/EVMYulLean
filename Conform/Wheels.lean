@@ -10,7 +10,7 @@ def getObjValAs!
   (self : Json) (α : Type) (key : String) [Inhabited α] [FromJson α] : α :=
   match self.getObjValAs? α key with
           | .error _ => panic! s!"Expected the key {key} in the map."
-          | .ok pre => pre
+          | .ok pre  => pre
 
 /--
 Turn non-existance of the key into default initialisation.

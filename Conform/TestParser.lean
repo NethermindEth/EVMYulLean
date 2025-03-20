@@ -19,9 +19,6 @@ section FromJson
 
 open Lean (FromJson Json)
 
-/--
-Sorries are often
--/
 @[deprecated]
 scoped notation "TODO" => default
 
@@ -38,39 +35,6 @@ instance : FromJson AccountAddress := fromBlobString AccountAddress.fromBlob?
 instance : FromJson Storage where
   fromJson? json := json.getObjVals? UInt256 UInt256
 
-section _Code'
--- The `_Code'` section is auxiliary and the functionality inside is currently unused.
-
-/--
-We probably want to fetch/decode on demand, as such, `Conform.Code` can be a `ByteArray`.
-Keep this around for potential convenience.
--/
-abbrev Code' := Array (Operation .EVM × Option UInt256)
-
-/--
-Decode `ByteArray` to an array of `Operation`s. Considering we do decoding on demand,
-this is only kept around for potential conveninece.
-
-TODO: This is essentially `unfold` with `f := EVM.decode code`.
-Why is there no handy `unfold` - because of termination issues?
--/
-def decodeMany (code : ByteArray) : Except String Code' := do
-  let mut result : Code' := #[]
-  let mut pc : UInt256 := ⟨0⟩
-  while pc.toNat < code.size do
-    let (instr, arg) ← (EVM.decode code pc |>.toExceptWith s!"Cannot decode the instruction: {code.data.get! pc.toNat}")
-    result := result.push (instr, Prod.fst <$> arg)
-    pc := pc + .ofNat (1 + arg.option 0 Prod.snd)
-  pure result
-
-end _Code'
-
-
-/--
-TODO - Is this right for both `Code` and general `ByteArray`s?
-
-This is also applicable for `FromJson Code`, as this is an abbrev for `ByteArray`.
--/
 instance : FromJson ByteArray := fromBlobString (ByteArray.ofBlob)
 
 instance : FromJson PersistentAccountState where
@@ -88,36 +52,33 @@ instance : FromJson Pre where
 instance : FromJson Post where
   fromJson? json := json.getObjVals? AccountAddress PostEntry
 
-/--
-TODO: We parse ℕ-valued scalars as though they were at most UInt256; could need changing.
--/
 instance : FromJson BlockHeader where
   fromJson? json := do
     try
       pure {
-        parentHash    := ← json.getObjValAsD! UInt256   "parentHash"
-        ommersHash    := ← json.getObjValAsD! UInt256   "uncleHash"
-        beneficiary   := ← json.getObjValAsD! AccountAddress   "coinbase"
-        stateRoot     := ← json.getObjValAsD! UInt256   "stateRoot"
-        transRoot     := ← json.getObjValAsD! ByteArray "transactionsTrie"
-        receiptRoot   := ← json.getObjValAsD! ByteArray "receiptTrie"
-        logsBloom     := ← json.getObjValAsD! ByteArray "bloom"
-        difficulty    := ← json.getObjValAsD! ℕ         "difficulty"
-        number        := ← json.getObjValAsD! ℕ         "number"
-        gasLimit      := ← json.getObjValAsD! ℕ         "gasLimit"
-        gasUsed       := ← json.getObjValAsD! ℕ         "gasUsed"
-        timestamp     := ← json.getObjValAsD! ℕ         "timestamp"
-        extraData     := ← json.getObjValAsD! ByteArray "extraData"
-        nonce         := 0 -- [deprecated] 0.
-        baseFeePerGas := ← json.getObjValAsD! ℕ         "baseFeePerGas"
-        parentBeaconBlockRoot := ← json.getObjValAsD! ByteArray "parentBeaconBlockRoot"
-        prevRandao    := ← json.getObjValAsD! UInt256 "mixHash"
-        withdrawalsRoot := ← json.getObjValAsD! ByteArray "withdrawalsRoot"
-        blobGasUsed    := ← json.getObjValAsD! UInt64 "blobGasUsed"
-        excessBlobGas    := ← json.getObjValAsD! UInt64 "excessBlobGas"
+        parentHash            := ← json.getObjValAsD! UInt256        "parentHash"
+        ommersHash            := ← json.getObjValAsD! UInt256        "uncleHash"
+        beneficiary           := ← json.getObjValAsD! AccountAddress "coinbase"
+        stateRoot             := ← json.getObjValAsD! UInt256        "stateRoot"
+        transRoot             := ← json.getObjValAsD! ByteArray      "transactionsTrie"
+        receiptRoot           := ← json.getObjValAsD! ByteArray      "receiptTrie"
+        logsBloom             := ← json.getObjValAsD! ByteArray      "bloom"
+        difficulty            := ← json.getObjValAsD! ℕ              "difficulty"
+        number                := ← json.getObjValAsD! ℕ              "number"
+        gasLimit              := ← json.getObjValAsD! ℕ              "gasLimit"
+        gasUsed               := ← json.getObjValAsD! ℕ              "gasUsed"
+        timestamp             := ← json.getObjValAsD! ℕ              "timestamp"
+        extraData             := ← json.getObjValAsD! ByteArray      "extraData"
+        nonce                 := 0 -- [deprecated] 0.
+        baseFeePerGas         := ← json.getObjValAsD! ℕ              "baseFeePerGas"
+        parentBeaconBlockRoot := ← json.getObjValAsD! ByteArray      "parentBeaconBlockRoot"
+        prevRandao            := ← json.getObjValAsD! UInt256        "mixHash"
+        withdrawalsRoot       := ← json.getObjValAsD! ByteArray      "withdrawalsRoot"
+        blobGasUsed           := ← json.getObjValAsD! UInt64         "blobGasUsed"
+        excessBlobGas         := ← json.getObjValAsD! UInt64         "excessBlobGas"
       }
-    catch exct => dbg_trace s!"OOOOPSIE: {exct}\n json: {json}"
-                  default
+    catch ε => dbg_trace s!"Cannot parse BlockHeader: {ε}\n json: {json}"
+               default
 
 instance : FromJson AccessListEntry where
   fromJson? json := do
@@ -128,28 +89,25 @@ instance : FromJson AccessListEntry where
 instance : FromJson Withdrawal where
   fromJson? json := do
     pure {
-      index     := ← json.getObjValAs? UInt64         "index"
-      validatorIndex := ← json.getObjValAs? UInt64 "validatorIndex"
-      address := ← json.getObjValAs? AccountAddress "address"
-      amount := ← json.getObjValAs? UInt64 "amount"
+      index          := ← json.getObjValAs? UInt64         "index"
+      validatorIndex := ← json.getObjValAs? UInt64         "validatorIndex"
+      address        := ← json.getObjValAs? AccountAddress "address"
+      amount         := ← json.getObjValAs? UInt64         "amount"
     }
 
-/--
-TODO - Currently we return `AccessListTransaction`. No idea if this is what we want.
--/
 instance : FromJson Transaction where
   fromJson? json := do
     let baseTransaction : Transaction.Base := {
-      nonce          := ← json.getObjValAsD! UInt256        "nonce"
-      gasLimit       := ← json.getObjValAsD! UInt256        "gasLimit"
+      nonce          := ← json.getObjValAsD! UInt256 "nonce"
+      gasLimit       := ← json.getObjValAsD! UInt256 "gasLimit"
       recipient      := ← match json.getObjVal? "to" with
                           | .error _ => .ok .none
                           | .ok ok => do let str ← ok.getStr?
                                          if str.isEmpty then .ok .none else FromJson.fromJson? str
-      value          := ← json.getObjValAsD! UInt256        "value"
-      r              := ← json.getObjValAsD! ByteArray      "r"
-      s              := ← json.getObjValAsD! ByteArray      "s"
-      data           := ← json.getObjValAsD! ByteArray      "data"
+      value          := ← json.getObjValAsD! UInt256   "value"
+      r              := ← json.getObjValAsD! ByteArray "r"
+      s              := ← json.getObjValAsD! ByteArray "s"
+      data           := ← json.getObjValAsD! ByteArray "data"
     }
 
     match json.getObjVal? "accessList" with
@@ -163,7 +121,6 @@ instance : FromJson Transaction where
             accessList := ← FromJson.fromJson? accessList
             yParity    := ← json.getObjValAsD! UInt256 "v"
           }
-
         match json.getObjVal? "gasPrice" with
           | .ok gasPrice => do
             return .access ⟨baseTransaction, accessListTransaction, ⟨← FromJson.fromJson? gasPrice⟩⟩

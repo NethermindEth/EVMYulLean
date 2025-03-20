@@ -67,8 +67,6 @@ extern_lib libleanffi pkg := do
   buildStaticLib (pkg.nativeLibDir / name) #[sha256O, keccak256, ffiO]
 
 lean_lib «Conform»
-  
--- lean_lib «sha2»
 
 @[default_target]
 lean_lib «EvmYul»

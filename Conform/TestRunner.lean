@@ -23,6 +23,8 @@ def VerySlowTests : Array String := #[]
 
 def GlobalBlacklist : Array String := VerySlowTests
 
+abbrev TestId : Type := System.FilePath × String
+
 def PersistentAccountMap.toAccountMap (self : PersistentAccountMap) : AccountMap :=
   self.foldl addAccount default
   where addAccount s addr acc :=
@@ -278,9 +280,6 @@ def validateTransaction
         pure <| Fin.ofNat <| fromByteArrayBigEndian <|
           (KEC s).extract 12 32 /- 160 bits = 20 bytes -/
       | .error s => throw <| .SenderRecoverError s
-  -- if S_T != expectedSender then
-  --   dbg_trace s!"Recovered sender ({EvmYul.toHex S_T.toByteArray}) ≠ expected sender ({EvmYul.toHex expectedSender.toByteArray})"
-  -- dbg_trace s!"Looking for S_T: {S_T} in: σ: {repr σ}"
 
   -- "Also, with a slight abuse of notation ... "
   let (senderCode, senderNonce, senderBalance) :=
@@ -607,11 +606,6 @@ def preImpliesPost (entry : TestEntry)
         else
           pure .none
 
--- local instance : MonadLift (Except EVM.Exception) (Except Conform.Exception) := ⟨Except.mapError .EVMError⟩
--- vvvvvvvvvvvvvv DO NOT DELETE PLEASE vvvvvvvvvvvvvvvvvv
-def DONOTDELETEMEFORNOW : AccountMap := Batteries.RBMap.ofList [(1, { dflt with storage := Batteries.RBMap.ofList [(⟨44⟩, ⟨45⟩), (⟨46⟩, ⟨47⟩)] compare }), (3, default)] compare
-  where dflt : Account := default
-
 instance (priority := high) : Repr PersistentAccountMap := ⟨λ m _ ↦
   Id.run do
     let mut result := ""
@@ -622,12 +616,14 @@ instance (priority := high) : Repr PersistentAccountMap := ⟨λ m _ ↦
         result := result ++ s!"{sk} → {sv}\n"
     return result⟩
  
-def processTest (thread : Nat) (testname : System.FilePath) (filepath : System.FilePath) (entry : TestEntry) (verbose : Bool := true) : IO TestResult := do
-  -- let tα ← IO.monoMsNow
+def processTest (entry : TestEntry) (isTimed : Option (Nat × TestId) := .none) (verbose := true) : IO TestResult := do
+  let tα ← if isTimed.isSome then IO.monoMsNow else pure 0
   let result := preImpliesPost entry
-  -- let tω ← IO.monoMsNow
-  -- let result ← timeit s!"{testname} took: " (pure (preImpliesPost entry)) -- WARNING: IO needed
-  -- dbg_trace s!"#{if thread / 10 == 1 then "" else " "}{thread} {testname} FROM {System.FilePath.mk (filepath.components.drop 3 |>.intersperse "/" |>.foldl (·++·) "")} took: {(tω - tα).toFloat / 1000.0}s"
+  let tω ← if isTimed.isSome then IO.monoMsNow else pure 0
+  if let .some (thread, filepath, testname) := isTimed then
+    IO.eprint s!"#{if thread / 10 == 1 then "" else " "}{thread} "
+    IO.eprint s!"{testname} FROM {System.FilePath.mk (filepath.components.drop 3 |>.intersperse "/" |>.foldl (·++·) "")} "
+    IO.eprintln s!"took: {(tω - tα).toFloat / 1000.0}s"
   pure <|
     match result with
     | .error err => .mkFailed s!"{repr err}"
@@ -641,20 +637,19 @@ def processTest (thread : Nat) (testname : System.FilePath) (filepath : System.F
             | .Hash h =>
               s!"\npost: {EvmYul.toHex h} \nactual: {EvmYul.toHex <$> stateTrieRoot σ}"
         errorF := if verbose then verboseError else discardError
-  
-def processTests (thread : ℕ) (tests : Array (System.FilePath × String)) :
-                 IO (Array (System.FilePath × String) × Array (System.FilePath × String × TestResult)) := do
-  let mut discarded : Array (System.FilePath × String) := .empty
-  let mut results : Array (System.FilePath × String × TestResult) := .empty
-  for (path, testName) in tests do
+
+def processTests (tests : Array TestId) (isTimed : Option Nat := .none) :
+                 IO (Array TestId × Array (TestId × TestResult)) := do
+  let mut discarded : Array TestId := .empty
+  let mut results : Array (TestId × TestResult) := .empty
+  for testId@(path, testName) in tests do
     let file ← Lean.Json.fromFile path
     let test := Except.mapError Conform.Exception.CannotParse <| file.getObjValAs? TestEntry testName
     match test with
-    | .error _ => dbg_trace s!"Cannot parse: {(path, testName)}"
-                  discarded := discarded.push (path, testName)
-    | .ok test => -- dbg_trace s!"#{if thread / 10 == 1 then "" else " "}{thread} TESTING {testName} FROM {System.FilePath.mk (path.components.drop 3 |>.intersperse "/" |>.foldl (·++·) "")}"
-                  if test.network.startsWith "Cancun"
-                  then results := results.push (path, testName, ←processTest thread testName path test)
+    | .error _ => IO.eprintln s!"Cannot parse: {testId}"
+                  discarded := discarded.push testId
+    | .ok test => if test.network.startsWith "Cancun"
+                  then results := results.push (testId, ←processTest test <| isTimed <&> (·, testId))
   return (discarded, results)
 
 end Conform
