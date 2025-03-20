@@ -161,17 +161,6 @@ private def dispatchLog4 (debugMode : Bool) (τ : OperationType) : Transformer �
 
 private def L (n : ℕ) := n - n / 64
 
-def shortInput := "01aHHABLA"
-def longInput := "Lean 4 is a reimplementation of the Lean theorem prover in Lean itself. The new compiler produces C code, and users can now implement efficient proof automation in Lean, compile it into efficient C code, and load it as a plugin. In Lean 4, users can access all internal data structures used to implement Lean by merely importing the Lean package."
-
--- private example :
---   toHex (KEC shortInput.toUTF8) = "6107589dda3ff2ac99745795d1eb3ac2538f2a7a93f9ef180c33dee244592874"
--- := by native_decide
-
--- private example :
---   toHex (KEC longInput.toUTF8) = "596cfd6c2f8f76b8f480f5c2fc582db9089486792435f397f8286aff64d42646"
--- := by native_decide
-
 -- TODO: Yul halting for `SELFDESTRUCT`, `RETURN`, `REVERT`, `STOP`
 def step {τ : OperationType} (debugMode : Bool) (op : Operation τ) : Transformer τ := Id.run do
   let log : Id Unit :=

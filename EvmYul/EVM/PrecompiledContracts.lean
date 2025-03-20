@@ -51,37 +51,6 @@ def Ξ_ECREC
             .empty
     (true, σ, g - .ofNat gᵣ, A, o)
 
-def longInput := "Lean 4 is a reimplementation of the Lean theorem prover in Lean itself. The new compiler produces C code, and users can now implement efficient proof automation in Lean, compile it into efficient C code, and load it as a plugin. In Lean 4, users can access all internal data structures used to implement Lean by merely importing the Lean package."
--- Example taken from EllipticCurves.lean
-private def ecrecOutput :=
-  let (_, _, _, _, o) :=
-    Ξ_ECREC
-      default
-      ⟨3000⟩
-      default
-      { (default : ExecutionEnv) with
-        inputData := h ++ v ++ r ++ s
-      }
-  o
- where
-  h :=
-    UInt256.toByteArray ⟨0x9a59efbc471b53491c8038fd5d5fe3be0a229873302bafba90c19fbe7d7c7f35⟩
-  v :=
-    UInt256.toByteArray ⟨0x1b⟩
-  r :=
-    UInt256.toByteArray ⟨0xd40b91381e1eeca34f4858a79ff4f3165066f93a76ba0f067848a962312f18ef⟩
-  s :=
-    UInt256.toByteArray ⟨0x0e86fce48de10c6b4e07b0a175877bc824bbf6d2089a50f3b11e24ad0d5c8173⟩
-
--- private example :
---   ecrecOutput
---     =
---   (ByteArray.ofBlob
---     "0000000000000000000000000bed7abd61247635c1973eb38474a2516ed1d884"
---   ).toOption
--- :=
---   by native_decide
-
 def Ξ_SHA256
   (σ : AccountMap)
   (g : UInt256)
@@ -105,22 +74,6 @@ def Ξ_SHA256
           dbg_trace s!"Ξ_SHA56 failed: {e}"
           .empty
     (true, σ, g - .ofNat gᵣ, A, o)
-
-private def shaOutput :=
-  let (_, _, _, _, o) :=
-    Ξ_SHA256
-      default
-      ⟨3000⟩
-      default
-      { (default : ExecutionEnv) with
-        inputData := longInput.toUTF8
-      }
-  o
--- private example :
---   EvmYul.toHex shaOutput
---     =
---   "4dbbf25c7844e6087e0a6948a71949c0ae2d46e75c16859457c430b8ce2d72ae"
--- := by native_decide
 
 def Ξ_RIP160
   (σ : AccountMap)
@@ -146,21 +99,6 @@ def Ξ_RIP160
           .empty
     (true, σ, g - .ofNat gᵣ, A, o)
 
-private def ripOutput :=
-  let (_, _, _, _, o) :=
-    Ξ_RIP160
-      default
-      ⟨3000⟩
-      default
-      { (default : ExecutionEnv) with
-        inputData := longInput.toUTF8
-      }
-  o
--- private example :
---   EvmYul.toHex ripOutput = "0000000000000000000000005cff4c1668e5542c74a609a3146427c28e51ff5a"
--- := by native_decide
-
-
 def Ξ_ID
   (σ : AccountMap)
   (g : UInt256)
@@ -179,21 +117,6 @@ def Ξ_ID
   else
     let o := I.inputData
     (true, σ, g - .ofNat gᵣ, A, o)
-
-private def idOutput :=
-  let (_, _, _, _, o) :=
-    Ξ_ID
-      default
-      ⟨3000⟩
-      default
-      { (default : ExecutionEnv) with
-        inputData := longInput.toUTF8
-      }
-  o
-
-private example :
-  idOutput = longInput.toUTF8
-:= by native_decide
 
 def nat_of_slice
   (B: ByteArray)
@@ -269,7 +192,6 @@ def Ξ_EXPMOD
           else
             ByteArray.empty
         expmod_zeroes ++ expmod_base
-
     (true, σ, g - .ofNat gᵣ, A, o)
 
 private def expmodOutput :=
@@ -289,12 +211,6 @@ private def expmodOutput :=
   B : ByteArray := ⟨#[1, 0]⟩ -- 2^8
   E : ByteArray := ⟨#[2]⟩
   M : ByteArray := ⟨#[100]⟩
-
--- private example :
---   expmodOutput
---     = ⟨#[65536 % 100]⟩ -- (2^8) ^ 2 % 10
--- :=
---   by native_decide
 
 def Ξ_BN_ADD
   (σ : AccountMap)
@@ -389,9 +305,6 @@ private def bn_mulOutput :=
   y₁ : ByteArray := UInt256.toByteArray ⟨2⟩
   n  : ByteArray := UInt256.toByteArray ⟨2⟩
 
--- (0, 0) + (1, 2) + (1, 2) = 2 * (1, 2)
--- private example : bn_addOutput₁ = bn_mulOutput := by native_decide
-
 def Ξ_SNARKV
   (σ : AccountMap)
   (g : UInt256)
@@ -428,10 +341,6 @@ private def snarkvOutput :=
   x : ByteArray := UInt256.toByteArray ⟨1⟩
   y : ByteArray := UInt256.toByteArray ⟨2⟩
 
--- private example :
---   snarkvOutput.size = 32 ∧ (fromByteArrayBigEndian snarkvOutput) ∈ [0, 1]
--- := by native_decide
-
 def Ξ_BLAKE2_F
   (σ : AccountMap)
   (g : UInt256)
@@ -453,29 +362,6 @@ def Ξ_BLAKE2_F
       | .error e =>
         dbg_trace s!"Ξ_BLAKE2_F failed: {e}"
         (false, ∅, ⟨0⟩, A, .empty)
-
-def blake2_fInput :=
-  ByteArray.ofBlob "0000000048c9bdf267e6096a3ba7ca8485ae67bb2bf894fe72f36e3cf1361d5f3af54fa5d182e6ad7f520e511f6c3e2b8c68059b6bbd41fbabd9831f79217e1319cde05b61626300000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000300000000000000000000000000000001"
-  |>.toOption.getD .empty
-
--- private def blake2_fOutput :=
---   let (_, _, _, _, o) :=
---     Ξ_BLAKE2_F
---       default
---       ⟨42949672970⟩
---       default
---       { (default : ExecutionEnv) with
---         inputData := blake2_fInput
---       }
---   o
-
--- -- Example taken from
--- -- https://eips.ethereum.org/EIPS/eip-152
--- private example :
---   blake2_fOutput
---     =
---   (ByteArray.ofBlob "08c9bcf367e6096a3ba7ca8485ae67bb2bf894fe72f36e3cf1361d5f3af54fa5d282e6ad7f520e511f6c3e2b8c68059b9442be0454267ce079217e1319cde05b").toOption
--- := by native_decide
 
 def Ξ_PointEval
   (σ : AccountMap)

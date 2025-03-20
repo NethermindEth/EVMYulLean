@@ -30,7 +30,7 @@ instance : Repr ExecutionException where
 inductive BlockException where
   | INCORRECT_EXCESS_BLOB_GAS
   | INCORRECT_BLOB_GAS_USED
-  | INCORRECT_BLOCK_FORMAT -- TODO: No "Cancun" test needs this
+  | INCORRECT_BLOCK_FORMAT -- No "Cancun" test needs this
   | BLOB_GAS_USED_ABOVE_LIMIT
   | INVALID_WITHDRAWALS_ROOT
   | IMPORT_IMPOSSIBLE_UNCLES_OVER_PARIS
@@ -101,9 +101,8 @@ inductive TransactionException where
   | GASLIMIT_PRICE_PRODUCT_OVERFLOW
   | RLP_INVALID_VALUE
 
-/-
-  TODO
-    TYPE_NOT_SUPPORTED
+/--
+  TYPE_NOT_SUPPORTED - No "Cancun" test needs this
 -/
 instance : Repr TransactionException where
   reprPrec s _ :=
@@ -130,7 +129,6 @@ instance : Repr TransactionException where
       | .GASLIMIT_PRICE_PRODUCT_OVERFLOW => "GASLIMIT_PRICE_PRODUCT_OVERFLOW"
       | .RLP_INVALID_VALUE => "RLP_INVALID_VALUE"
 
--- TODO - fix / cleanup.
 inductive Exception where
   | ExecutionException :     ExecutionException → Exception
   | NotEncodableRLP :                             Exception

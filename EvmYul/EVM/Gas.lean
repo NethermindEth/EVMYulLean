@@ -95,7 +95,6 @@ It would be worth restructing everything to obtain cleaner separation of concern
 -/
 def Csstore (s : EVM.State) : ℕ :=
   let { stack := μₛ, accountMap := σ, σ₀ := σ₀, executionEnv.codeOwner := Iₐ, .. } := s
-  -- SSTORE should handle missing Iₐ
   let { storage := σ_Iₐ, .. } := σ.find! Iₐ
   let storeAddr := μₛ[0]!
   let v₀ :=
@@ -108,9 +107,8 @@ def Csstore (s : EVM.State) : ℕ :=
     if s.substate.accessedStorageKeys.contains (Iₐ, storeAddr) then
       0
     else
-      -- dbg_trace s!"({Iₐ}, {storeAddr}) not in {s.substate.accessedStorageKeys.toList}"
       Gcoldsload
-  let storeComponent := if v = v' || v₀ ≠ v           then Gwarmaccess else
+  let storeComponent := if v = v' || v₀ ≠ v             then Gwarmaccess else
                         if v ≠ v' && v₀ = v && v₀ = ⟨0⟩ then Gsset else
                         /- v ≠ v' ∧ v₀ = v ∧ v₀ ≠ 0 -/     Gsreset
   loadComponent + storeComponent
@@ -254,14 +252,13 @@ def C' (s : State) (instr : Operation .EVM) : ℕ :=
     | w =>
       if w ∈ Wcopy then Gverylow + Gcopy * ((μₛ[2]!.toNat + 31) / 32) else
       if w ∈ Wextaccount then Caccess (AccountAddress.ofUInt256 μₛ[0]!) A else
-      -- if w ∈ Wcall then Ccall μₛ σ μ A else
       if w ∈ Wzero then Gzero else
       if w ∈ Wbase then Gbase else
       if w ∈ Wverylow then Gverylow else
       if w ∈ Wlow then Glow else
       if w ∈ Wmid then Gmid else
       if w ∈ Whigh then Ghigh else
-        0
+      0
 
 /--
 H.1. Gas Cost
