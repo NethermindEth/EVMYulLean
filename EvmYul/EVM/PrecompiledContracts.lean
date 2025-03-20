@@ -1,3 +1,5 @@
+import Mathlib.Data.Nat.Log
+
 import EvmYul.Maps.AccountMap
 import EvmYul.UInt256
 import EvmYul.State.Substate
@@ -45,7 +47,7 @@ def Ξ_ECREC
       else
         match ECDSARECOVER h ⟨#[.ofNat v' - 27]⟩ r s with
           | .ok s =>
-              ffi.ByteArray.zeroes ⟨12⟩ ++ (KEC s).extract 12 32
+              ffi.ByteArray.zeroes ⟨12⟩ ++ (ffi.KEC s).extract 12 32
           | .error e =>
             dbg_trace s!"Ξ_ECREC failed: {e}"
             .empty

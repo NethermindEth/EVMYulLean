@@ -9,17 +9,17 @@ namespace EVM
 
 /--
 The EVM `State` (extends EvmYul.SharedState).
-- `pc`         `pc`- The program counter.
+- `pc`         `pc`
 - `stack`      `s`
+- `execLength` - Length of execution.
 -/
-structure State extends EvmYul.SharedState :=
+structure State extends EvmYul.SharedState where
   pc    : UInt256
   stack : Stack UInt256
-  -- TODO: temporary
   execLength : ℕ
   deriving Inhabited
 
-inductive ExecutionResult (S : Type) :=
+inductive ExecutionResult (S : Type) where
   | success (state : S) (o : ByteArray)
   | revert (g : UInt256) (o : ByteArray)
 

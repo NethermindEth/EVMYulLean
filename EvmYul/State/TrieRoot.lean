@@ -17,7 +17,7 @@ def blobComputeTrieRoot (ws : Array (String × String)) : String :=
     let entropy' ← IO.monoNanosNow
     let inputFile := s!"EvmYul/EllipticCurvesPy/trieInput_{entropy}{entropy'}.txt"
     IO.FS.withFile inputFile .write λ h ↦
-      forM ws.data λ s ↦ do
+      forM ws.toList λ s ↦ do
         h.putStrLn s.1
         h.putStrLn s.2
     let result ← IO.Process.run (pythonCommandOfInput inputFile ws)

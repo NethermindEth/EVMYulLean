@@ -8,7 +8,7 @@ namespace Yul
 /--
 The partial Yul `MachineState` `μ`.
 -/
-structure MachineState extends EvmYul.MachineState :=
+structure MachineState extends EvmYul.MachineState where
   varStore : VarStore
 deriving Inhabited
 

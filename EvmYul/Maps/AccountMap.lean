@@ -59,7 +59,7 @@ def L_S (σ : PersistentAccountMap) : Array (ByteArray × ByteArray) :=
     .empty
  where
   p (addr : AccountAddress) (acc : PersistentAccountState) : ByteArray × ByteArray :=
-    (KEC addr.toByteArray, rlp acc)
+    (ffi.KEC addr.toByteArray, rlp acc)
   rlp (acc : PersistentAccountState) :=
     Option.get! <|
       RLP <|

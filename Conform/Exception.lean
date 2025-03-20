@@ -9,7 +9,7 @@ namespace Conform
 - `CannotParse`          - The `Json` of a test is malformed. `why` is the reason. 
 - `InvalidTestStructure` - The structure of tests has been violated. `why` is the reason. 
 -/
-inductive Exception :=
+inductive Exception where
   | CannotParse (why : String)
   | InvalidTestStructure (why : String)
   deriving Repr

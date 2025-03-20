@@ -53,7 +53,7 @@ def idNoAntiquot.formatter : Formatter := do
   Formatter.checkKind identKind
   let Syntax.ident info _ idn _ ← getCur
     | throwError m!"not an ident: {← getCur}"
-  Formatter.pushToken info idn.toString
+  Formatter.pushToken info idn.toString true
   goLeft
 
 @[combinator_parenthesizer idNoAntiquot]

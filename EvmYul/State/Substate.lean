@@ -28,14 +28,14 @@ def LogEntry.to𝕋 : LogEntry → 𝕋
   | ⟨address, topics, data⟩ =>
     .𝕃
       [ .𝔹 address.toByteArray
-      , .𝕃 <| topics.data.map (.𝔹 ∘ UInt256.toByteArray)
+      , .𝕃 <| topics.toList.map (.𝔹 ∘ UInt256.toByteArray)
       , .𝔹 data
       ]
 
 abbrev LogSeries := Array LogEntry
 
 def LogSeries.to𝕋 (logSeries : LogSeries) : 𝕋 :=
-  .𝕃 (logSeries.data.map LogEntry.to𝕋)
+  .𝕃 (logSeries.toList.map LogEntry.to𝕋)
 
 /--
 The `Substate` `A`. Section 6.1.
@@ -46,7 +46,7 @@ The `Substate` `A`. Section 6.1.
 - `accessedStorageKey` `Aₖ`
 - `logSeries`          `Aₗ`
 -/
-structure Substate :=
+structure Substate where
   selfDestructSet     : Batteries.RBSet AccountAddress compare
   touchedAccounts     : Batteries.RBSet AccountAddress compare
   refundBalance       : UInt256
@@ -71,7 +71,7 @@ def bloomFilter (a : Array ByteArray) : ByteArray  :=
     let newByte := bytes256[byteIndex]! ||| mask
     bytes256.set! byteIndex newByte
   bitIndices (x : ByteArray) : List ℕ :=
-    let kec := KEC x
+    let kec := ffi.KEC x
     let lowOrder11Bits := λ b ↦ b &&& (1<<<11 - 1)
     [ kec.readWithPadding 0 2
     , kec.readWithPadding 2 2
@@ -80,7 +80,7 @@ def bloomFilter (a : Array ByteArray) : ByteArray  :=
   set3Bits acc b := bitIndices b |>.foldl setBit acc
 
 def Substate.joinLogs (substate : Substate) : Array ByteArray :=
-  Array.join <|
+  Array.flatten <|
     substate.logSeries.map
       λ ⟨a, as, _⟩ ↦ (as.map UInt256.toByteArray).push a.toByteArray
 

@@ -74,12 +74,12 @@ private local instance : Repr Json := ⟨λ s _ ↦ Json.pretty s⟩
 In theory, parts of the TestEntry could deserialise immediately into the underlying `EVM.State`.
 -/
 
-inductive PostState :=
+inductive PostState where
   | Hash : ByteArray → PostState
   | Map : Post → PostState
   deriving Inhabited
 
-structure TestEntry :=
+structure TestEntry where
   info               : Json := ""
   blocks             : RawBlocks
   genesisRLP         : ByteArray

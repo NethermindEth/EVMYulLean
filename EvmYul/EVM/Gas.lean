@@ -1,3 +1,5 @@
+import Mathlib.Data.Nat.Log
+
 import EvmYul.EVM.State
 import EvmYul.StateOps
 import EvmYul.MachineStateOps

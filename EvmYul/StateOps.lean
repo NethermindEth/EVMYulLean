@@ -19,9 +19,6 @@ def addAccessedStorageKey (self : State) (sk : AccountAddress × UInt256) : Stat
 
 /--
 DEAD(σ, a). Section 4.1., equation 15.
-
-def accountExists (self : State) (addr : AccountAddress) : Bool := self.accountMap.lookup addr |>.isSome
-TODO - some conundrum about the mismatch of particulars of states from YP, maybe this should not be here
 -/
 def dead (σ : AccountMap) (addr : AccountAddress) : Bool :=
   σ.find? addr |>.option True Account.emptyAccount
@@ -111,9 +108,6 @@ def chainId (_ : State) : UInt256 := .ofNat EvmYul.chainId
 def selfbalance (self : State) : UInt256 :=
   Batteries.RBMap.find? self.accountMap self.executionEnv.codeOwner |>.elim ⟨0⟩ (·.balance)
 
-/--
-TODO: `Account` also has `code`. Recheck.
--/
 def setCode (self : State) (code : ByteArray) : State :=
   { self with executionEnv.code := code }
 

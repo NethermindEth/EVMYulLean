@@ -76,7 +76,7 @@ def deserializeBlock
   let (hash, header, transactionTrieRoot, ts, withdrawalTrieRoot, ws) ←
     Option.toExceptWith (.BlockException .RLP_STRUCTURES_ENCODING) do
       let .inr [headerRLP, transactionsRLP, _, withdrawalsRLP] ← oneStepRLP rlp | none
-      let hash : UInt256 := .ofNat <| fromByteArrayBigEndian <| KEC headerRLP
+      let hash : UInt256 := .ofNat <| fromByteArrayBigEndian <| ffi.KEC headerRLP
       let header ← deserializeRLP headerRLP
       let (.inr transactions) ← oneStepRLP transactionsRLP | none
       let getTrieSnd (t : ByteArray) : Option ByteArray := do
@@ -132,7 +132,6 @@ def deserializeBlock
     | _ =>
       dbg_trace "RLP error: parseBlobVersionHash"
       throw <| .BlockException .RLP_STRUCTURES_ENCODING
-  -- TODO: factor out `Transaction` parts parsing (e.g. Transaction.Base)
   parseTransaction : 𝕋 → Except EVM.Exception Transaction
     | .𝔹 typePlusPayload => -- Transaction type > 0
       match deserializeRLP (typePlusPayload.extract 1 typePlusPayload.size) with

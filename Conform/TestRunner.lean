@@ -96,8 +96,6 @@ section
 This section exists for debugging / testing mostly. It's somewhat ad-hoc.
 -/
 
-notation "TODO" => default
-
 private def almostBEqButNotQuiteEvmYulState (s₁ s₂ : PersistentAccountMap) : Except String Bool := do
   if s₁ == s₂ then .ok true else throw "state mismatch"
 
@@ -120,10 +118,10 @@ def executeTransaction
   (header : BlockHeader)
   : Except EVM.Exception EVM.State
 := do
-  let _TODOfuel : ℕ := s.accountMap.find? sender |>.elim ⟨0⟩ (·.balance) |>.toNat
+  let _fuel : ℕ := s.accountMap.find? sender |>.elim ⟨0⟩ (·.balance) |>.toNat
 
   let (ypState, substate, statusCode, totalGasUsed) ←
-    EVM.Υ (debugMode := false) _TODOfuel
+    EVM.Υ _fuel
       s.accountMap
       header.baseFeePerGas
       header
@@ -134,7 +132,6 @@ def executeTransaction
 
   -- as EIP 4788 (https://eips.ethereum.org/EIPS/eip-4788).
 
-  -- TODO - I think we do this tuple → EVM.State conversion reasonably often, factor out?
   let result : EVM.State :=
     { s with
       accountMap := ypState
@@ -271,14 +268,14 @@ def validateTransaction
 
   let h_T := -- (318)
     match T with
-      | .legacy _ => KEC T_RLP
-      | _ => KEC <| ByteArray.mk #[T.type] ++ T_RLP
+      | .legacy _ => ffi.KEC T_RLP
+      | _ => ffi.KEC <| ByteArray.mk #[T.type] ++ T_RLP
 
   let (S_T : AccountAddress) ← -- (323)
     match ECDSARECOVER h_T (ByteArray.mk #[.ofNat v]) T.base.r T.base.s with
       | .ok s =>
         pure <| Fin.ofNat <| fromByteArrayBigEndian <|
-          (KEC s).extract 12 32 /- 160 bits = 20 bytes -/
+          (ffi.KEC s).extract 12 32 /- 160 bits = 20 bytes -/
       | .error s => throw <| .SenderRecoverError s
 
   -- "Also, with a slight abuse of notation ... "
@@ -396,7 +393,6 @@ def validateBlock
 := do
 
   let MAX_BLOB_GAS_PER_BLOCK := 786432
-  -- TODO: Move to `validateTransaction`?
   let blobGasUsed ← block.transactions.array.foldlM (init := 0) λ blobSum t ↦ do
     let blobSum := blobSum + getTotalBlobGas t
     if blobSum > MAX_BLOB_GAS_PER_BLOCK then
@@ -431,7 +427,6 @@ def validateBlock
   if block.withdrawals.trieRoot ≠ block.blockHeader.withdrawalsRoot then
     throw <| .BlockException .INVALID_WITHDRAWALS_ROOT
 
-  -- TODO: Integrate this with the `postState` comparison.
   let computedStateHash : UInt256 :=
     stateTrieRoot state.accountMap.toPersistentAccountMap
     |>.option 0 fromByteArrayBigEndian
@@ -525,10 +520,10 @@ def processBlocks
         | none => pure s₀
         | some roots =>
           let beaconRootsAddressCode := roots.code
-          let _TODOfuel := 2^14
+          let _fuel := 2^14
           -- the call does not count against the block’s gas limit
           let beaconCallResult :=
-            EVM.Θ (debugMode := false) _TODOfuel
+            EVM.Θ _fuel
               []
               .empty
               s₀.genesisBlockHeader

@@ -68,10 +68,10 @@ def testFiles (root               : System.FilePath)
   IO.println s!"Scheduling tests for parallel execution..."
   for (path, names) in testNames do
     for name in names do
-      tests := tests.set! thread (tests.get! thread |>.push (path, name))
+      tests := tests.set! thread (tests[thread]! |>.push (path, name))
       thread := thread + 1; thread := thread % threads
   for i in [0:threads] do
-    tasks := tasks.push (←IO.asTask <| EvmYul.Conform.processTests (tests.get! i) (if timed then .some i else .none))
+    tasks := tasks.push (←IO.asTask <| EvmYul.Conform.processTests tests[i]! (if timed then .some i else .none))
 
   IO.println s!"Scheduled {tests.foldl (· + ·.size) 0} tests on {threads} thread{if threads == 1 then "" else "s"}."
   IO.println s!"Running..."
@@ -103,27 +103,21 @@ def main (args : List String) : IO Unit := do
     IO.println s!"The post was NOT equal to the resulting state: {failure}"
     IO.println s!"Succeeded: {success}"
     IO.println s!"Success rate of: {(success.toFloat / (failure + success).toFloat) * 100.0}"
-
+    
   IO.println s!"Phase 1/3 - No performance tests."
-  testFiles (root := "EthereumTests/BlockchainTests/GeneralStateTests/Cancun")
+  testFiles (root := "EthereumTests/BlockchainTests/")
+            (directoryBlacklist := #["EthereumTests/BlockchainTests//GeneralStateTests/VMTests/vmPerformance"])
+            (testBlacklist := DelayFiles)
             (phase := 1)
-            (threads := NumThreads) 
-            (timed := true) >>= printResults
-
-  -- IO.println s!"Phase 1/3 - No performance tests."
-  -- testFiles (root := "EthereumTests/BlockchainTests/")
-  --           (directoryBlacklist := #["EthereumTests/BlockchainTests//GeneralStateTests/VMTests/vmPerformance"])
-  --           (testBlacklist := DelayFiles)
-  --           (phase := 1)
-  --           (threads := NumThreads) >>= printResults
+            (threads := NumThreads) >>= printResults
   
-  -- IO.println s!"Phase 2/3 - Performance tests only."
-  -- testFiles (root := "EthereumTests/BlockchainTests/GeneralStateTests/VMTests/vmPerformance/")
-  --           (phase := 2)
-  --           (threads := NumThreads) >>= printResults
+  IO.println s!"Phase 2/3 - Performance tests only."
+  testFiles (root := "EthereumTests/BlockchainTests/GeneralStateTests/VMTests/vmPerformance/")
+            (phase := 2)
+            (threads := NumThreads) >>= printResults
 
-  -- IO.println s!"Phase 3/3 - Individually scheduled tests."
-  -- testFiles (root := "EthereumTests/BlockchainTests/")
-  --           (testWhitelist := DelayFiles)
-  --           (phase := 3)
-  --           (threads := NumThreads) >>= printResults
+  IO.println s!"Phase 3/3 - Individually scheduled tests."
+  testFiles (root := "EthereumTests/BlockchainTests/")
+            (testWhitelist := DelayFiles)
+            (phase := 3)
+            (threads := NumThreads) >>= printResults

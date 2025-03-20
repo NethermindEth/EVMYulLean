@@ -21,7 +21,6 @@ open Batteries (RBMap RBSet)
 - `r`         `r`
 - `s`         `s`
 - `data`      `d/i`
-TODO: In case of recipient = none, it means contract creation and data should be treated as init?
 -/
 structure Transaction.Base where
   nonce           : UInt256

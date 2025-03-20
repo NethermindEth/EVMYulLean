@@ -1,5 +1,4 @@
 import Mathlib.Data.Finmap
-import Mathlib.Init.Data.List.Lemmas
 
 import EvmYul.Yul.Ast
 import EvmYul.Yul.State
@@ -36,7 +35,7 @@ def multifill' (vars : List Identifier) : Yul.State × List Literal → Yul.Stat
 TODO: Temporary EvmYul artefact with separate primop implementations.
 -/
 abbrev primCall (s : Yul.State) (prim : Operation .Yul) (args : List Literal) :=
-  step (debugMode := false) prim s args |>.toOption.map (λ (s, lit) ↦ (s, lit.toList)) |>.getD default
+  step prim s args |>.toOption.map (λ (s, lit) ↦ (s, lit.toList)) |>.getD default
 
 mutual
   def evalTail (fuel : Nat) (args : List Expr) : Yul.State × Literal → Yul.State × List Literal
@@ -53,7 +52,7 @@ mutual
         evalTail fuel args (eval fuel arg s)
   termination_by fuel + sizeOf args
   decreasing_by
-    all_goals simp_wf; try simp_arith
+    all_goals simp_wf; try simp +arith
     try apply Expr.zero_lt_sizeOf
 
   /--
@@ -67,7 +66,7 @@ mutual
   termination_by fuel + sizeOf f
   decreasing_by
     all_goals simp_wf
-    simp_arith
+    simp +arith
     apply FunctionDefinition.sizeOf_body_succ_lt_sizeOf
 
   -- Safe to call `List.head!` on return values, because the compiler throws an
@@ -120,7 +119,7 @@ mutual
   decreasing_by
     all_goals
     simp_wf
-    try simp_arith
+    try simp +arith
     try apply Expr.zero_lt_sizeOf_List
 
   /--
@@ -182,7 +181,7 @@ mutual
   decreasing_by
     all_goals
     simp_wf
-    try simp_arith
+    try simp +arith
     try apply le_add_right
     try apply List.zero_lt_sizeOf
     try apply Expr.zero_lt_sizeOf
@@ -216,7 +215,7 @@ mutual
   decreasing_by
     all_goals
     simp_wf
-    simp_arith
+    simp +arith
 
 end
 

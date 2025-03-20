@@ -13,9 +13,9 @@ namespace EvmYul
 def π : Batteries.RBSet AccountAddress compare :=
   Batteries.RBSet.ofList ((List.range 11).tail.map Fin.ofNat) compare
 
-inductive ToExecute := | Code (code : ByteArray) | Precompiled (precompiled : AccountAddress)
+inductive ToExecute where | Code (code : ByteArray) | Precompiled (precompiled : AccountAddress)
 
-structure PersistentAccountState :=
+structure PersistentAccountState where
   nonce    : UInt256
   balance  : UInt256
   storage  : Storage
@@ -44,7 +44,7 @@ structure Account extends PersistentAccountState where
 deriving BEq, Inhabited, Repr
 
 def PersistentAccountState.codeHash (self : PersistentAccountState) : UInt256 :=
-  .ofNat <| fromByteArrayBigEndian (KEC self.code)
+  .ofNat <| fromByteArrayBigEndian (ffi.KEC self.code)
 
 def Account.codeHash (self : Account) : UInt256 :=
   self.toPersistentAccountState.codeHash

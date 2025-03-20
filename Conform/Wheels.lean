@@ -48,41 +48,6 @@ namespace EvmYul
 
 namespace Conform
 
-def HexPrefix := "0x"
-
-def TargetSchedule := "Cancun"
-
-def isHexDigitChar (c : Char) : Bool :=
-  '0' <= c && c <= '9' || 'a' <= c.toLower && c.toLower <= 'f'
-
-def Blob := String
-
-instance : Inhabited Blob := inferInstanceAs (Inhabited String)
-
-def Blob.toString : Blob → String := λ blob ↦ blob
-
-instance : ToString Blob := ⟨Blob.toString⟩
-
-def getBlob? (s : String) : Except String Blob :=
-  if isHex s then
-    let rest := s.drop HexPrefix.length
-    if rest.any (not ∘ isHexDigitChar)
-    then .error "Blobs must consist of valid hex digits."
-    else .ok rest.toLower
-  else .error "Input does not begin with 0x."
-  where
-    isHex (s : String) := s.startsWith HexPrefix
-
-def getBlob! (s : String) : Blob := getBlob? s |>.toOption.get!
-
-def toHex (c : Char) : Except String Nat :=
-  if '0' ≤ c ∧ c ≤ '9'
-  then .ok <| c.toString.toNat!
-  else if 'a' ≤ c.toLower ∧ c.toLower ≤ 'f'
-        then let Δ := c.toLower.toNat - 'a'.toNat
-            .ok <| 10 + Δ
-        else .error s!"Not a hex digit: {c}"
-
 end Conform
 
 section WithConform
@@ -93,7 +58,7 @@ namespace UInt256
 
 def fromBlob? (blob : Blob) : Except String UInt256 :=
   .ofNat <$> ((·.1) <| blob.foldr (init := (.ok 0, 0)) λ digit (acc, exp) ↦
-    (do pure <| (←acc) + (16 ^ exp) * (←Conform.toHex digit), exp + 1))
+    (do pure <| (←acc) + (16 ^ exp) * (←cToHex? digit), exp + 1))
 
 def fromBlob! (blob : Blob) : UInt256 := fromBlob? blob |>.toOption.get!
 
@@ -101,7 +66,7 @@ end UInt256
 
 def Nat.fromBlob? (blob : Blob) : Except String ℕ :=
   ((·.1) <| blob.foldr (init := (.ok 0, 0)) λ digit (acc, exp) ↦
-    (do pure <| (←acc) + (16 ^ exp) * (←Conform.toHex digit), exp + 1))
+    (do pure <| (←acc) + (16 ^ exp) * (←cToHex? digit), exp + 1))
 
 namespace AccountAddress
 
@@ -135,16 +100,6 @@ end
 end DebuggingAndProfiling
 
 end EvmYul
-
-open EvmYul.Conform (toHex) in
-def UInt8.ofHex? : List Char → Except String UInt8
-  | [] => pure 0
-  | [msb, lsb] => do pure ∘ UInt8.ofNat <| (← toHex msb) * 16 + (← toHex lsb)
-  | _ => throw "Need two hex digits for every byte."
-
-def ByteArray.ofBlob (self : EvmYul.Conform.Blob) : Except String ByteArray := do
-  let chunks ← self.toList.toChunks 2 |>.mapM UInt8.ofHex?
-  pure ⟨chunks.toArray⟩
 
 def computeToList! {α}
                    [LE α] [IsTrans α (· ≤ ·)] [IsAntisymm α (· ≤ ·)] [IsTotal α (· ≤ ·)]

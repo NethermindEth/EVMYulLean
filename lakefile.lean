@@ -1,15 +1,15 @@
 import Lake
-open Lake DSL
+open Lake DSL System
 
 require mathlib from git
-  "https://github.com/leanprover-community/mathlib4.git"@"f0957a7575317490107578ebaee9efaf8e62a4ab"
+  "https://github.com/leanprover-community/mathlib4.git"@"v4.18.0-rc1"
 
 package «evmyul» {
   moreLeanArgs := #["-DautoImplicit=false"]
   moreServerOptions := #[⟨`DautoImplicit, false⟩]
 }
 
-def cloneWithCache (pkg : NPackage _package.name) (dirname url : String) : FetchM (BuildJob GitRepo) := do
+def cloneWithCache (pkg : NPackage _package.name) (dirname url : String) : FetchM (Job GitRepo) := do
   let repoDir : GitRepo := ⟨pkg.dir / dirname⟩
   if !(← repoDir.dir.pathExists) then dbg_trace s!"Cloning: {url}"; GitRepo.clone url repoDir
   return pure repoDir
@@ -18,17 +18,17 @@ target cloneSha2 pkg : GitRepo := cloneWithCache pkg "sha2" "https://github.com/
 
 target cloneKeccak256 pkg : GitRepo := cloneWithCache pkg "keccak256" "https://github.com/brainhub/SHA3IUF.git"
 
-def inputTextFile (path : FilePath) : SpawnM (BuildJob FilePath) :=
-  Job.async <| (path, ·) <$> computeTrace (TextFilePath.mk path)
+-- def inputTextFile (path : FilePath) : SpawnM (BuildJob FilePath) :=
+--   Job.async <| (path, ·) <$> computeTrace (TextFilePath.mk path)
 
-def hash256CDir (hash256repo : GitRepo) : System.FilePath :=
+def hash256CDir (hash256repo : GitRepo) : FilePath :=
   hash256repo.dir
 
 abbrev compiler := "cc"
 
 target ffi.o pkg : FilePath := do
-  let (sha2, _) ← (←cloneSha2.fetch).await
-  let (keccak256, _) ← (←cloneKeccak256.fetch).await
+  let sha2 ← (←cloneSha2.fetch).await
+  let keccak256 ← (←cloneKeccak256.fetch).await
   let oFile := pkg.buildDir / "ffi.o"
   let srcJob ← inputTextFile <| pkg.dir / "EvmYul" / "FFI" / "ffi.c"
   let weakArgs := #[
@@ -38,7 +38,7 @@ target ffi.o pkg : FilePath := do
   ]
   buildO oFile srcJob weakArgs #["-fPIC"] compiler getLeanTrace
 
-def buildFFILib (pkg : Package) (repo : GitRepo) (fileName : String) : FetchM (BuildJob FilePath) := do
+def buildFFILib (pkg : Package) (repo : GitRepo) (fileName : String) : FetchM (Job FilePath) := do
   let srcJob ← inputTextFile $ repo.dir / fileName |>.addExtension "c"
   let oFile := pkg.buildDir / fileName |>.addExtension "o"
   let includeArgs := #["-I", repo.dir.toString]

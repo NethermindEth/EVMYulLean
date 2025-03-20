@@ -58,5 +58,4 @@ import EvmYul.Yul.StateOps
 import EvmYul.Yul.Wheels
 import EvmYul.Yul.YulNotation
 
-import EvmYul.SpongeHash.Wheels
 import EvmYul.SpongeHash.Keccak256

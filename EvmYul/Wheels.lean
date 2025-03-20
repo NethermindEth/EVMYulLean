@@ -103,7 +103,7 @@ def Option.toExceptWith {α β : Type} (dflt : β) (x : Option α) : Except β �
 
 def ByteArray.get? (self : ByteArray) (n : Nat) : Option UInt8 :=
   if h : n < self.size
-  then self.get ⟨n, h⟩
+  then self.get n h
   else .none
 
 partial def Nat.toHex (n : Nat) : String :=
@@ -140,6 +140,50 @@ def ByteArray.extract' (a : ByteArray) (b e : Nat) : ByteArray :=
   then a.extract b e -- NB only when `b` and `e` are sufficiently small
   else ⟨⟨a.toList.drop b |>.take (e - b)⟩⟩
 
+def HexPrefix := "0x"
+
+def TargetSchedule := "Cancun"
+
+def isHexDigitChar (c : Char) : Bool :=
+  '0' <= c && c <= '9' || 'a' <= c.toLower && c.toLower <= 'f'
+
+def cToHex? (c : Char) : Except String Nat :=
+  if '0' ≤ c ∧ c ≤ '9'
+  then .ok <| c.toString.toNat!
+  else if 'a' ≤ c.toLower ∧ c.toLower ≤ 'f'
+        then let Δ := c.toLower.toNat - 'a'.toNat
+            .ok <| 10 + Δ
+        else .error s!"Not a hex digit: {c}"
+
+def ofHex? : List Char → Except String UInt8
+  | [] => pure 0
+  | [msb, lsb] => do pure ∘ UInt8.ofNat <| (← cToHex? msb) * 16 + (← cToHex? lsb)
+  | _ => throw "Need two hex digits for every byte."
+
+def Blob := String
+
+instance : Inhabited Blob := inferInstanceAs (Inhabited String)
+
+def Blob.toString : Blob → String := λ blob ↦ blob
+
+instance : ToString Blob := ⟨Blob.toString⟩
+
+def getBlob? (s : String) : Except String Blob :=
+  if isHex s then
+    let rest := s.drop HexPrefix.length
+    if rest.any (not ∘ isHexDigitChar)
+    then .error "Blobs must consist of valid hex digits."
+    else .ok rest.toLower
+  else .error "Input does not begin with 0x."
+  where
+    isHex (s : String) := s.startsWith HexPrefix
+
+def getBlob! (s : String) : Blob := getBlob? s |>.toOption.get!
+
+def ByteArray.ofBlob (self : Blob) : Except String ByteArray := do
+  let chunks ← self.toList.toChunks 2 |>.mapM ofHex?
+  pure ⟨chunks.toArray⟩
+
 def ByteArray.readBytes (source : ByteArray) (start size : ℕ) : ByteArray :=
   let read :=
     if start < 2^64 && size < 2^64 then
@@ -162,7 +206,7 @@ def ByteArray.readWithPadding (source : ByteArray) (addr len : ℕ) : ByteArray 
     let read := source.readWithoutPadding addr len
     read ++ ffi.ByteArray.zeroes ⟨len - read.size⟩
 
-inductive 𝕋 :=
+inductive 𝕋 where
   | 𝔹 : ByteArray → 𝕋
   | 𝕃 : (List 𝕋) → 𝕋
   deriving Repr, BEq
@@ -255,24 +299,6 @@ partial def deserializeRLP (rlp : ByteArray) : Option 𝕋 := do
       let l ← list.mapM deserializeRLP
       some (.𝕃 l)
 
--- private example : deserializeRLP .empty == none := by native_decide
--- private example : deserializeRLP ⟨#[0]⟩ == some (.𝔹 ⟨#[0]⟩) := by native_decide
--- private example : deserializeRLP ⟨#[127]⟩ == some (.𝔹 ⟨#[127]⟩) := by native_decide
--- private example : deserializeRLP ⟨#[128]⟩ == some (.𝔹 .empty) := by native_decide
--- private example :
---   deserializeRLP (⟨#[128 + 55]⟩ ++ ByteArray.zeroes ⟨55⟩) ==
---     some (.𝔹 (ByteArray.zeroes ⟨55⟩))
---   := by native_decide
--- private example :
---   deserializeRLP (⟨#[183 + 1, 56]⟩ ++ ByteArray.zeroes ⟨56⟩) ==
---     some (.𝔹 (ByteArray.zeroes ⟨56⟩))
---   := by native_decide
-
--- private example :
---   deserializeRLP₀ (⟨#[192 + 3, 0, 127, 128]⟩) ==
---     some (4, 𝕋.𝕃 [𝕋.𝔹 ⟨#[0x00]⟩, 𝕋.𝔹 ⟨#[0x7f]⟩, 𝕋.𝔹 .empty])
---   := by native_decide
-
 private def R_b (x : ByteArray) : Option ByteArray :=
   if x.size = 1 ∧ x.get! 0 < 128 then some x
   else
@@ -313,136 +339,6 @@ def RLP (t : 𝕋) : Option ByteArray :=
 
 end
 
--- private def data₁ : 𝕋 := .𝔹 (EvmYul.toBytesBigEndian 123456789).toByteArray
--- private def rlp₁ : ByteArray := BE 0x84075bcd15
--- -- private example : RLP data₁ == rlp₁ := by native_decide
--- -- private example : deserializeRLP rlp₁ == data₁ := by native_decide
-
--- private def data₂ : 𝕋 := .𝔹 .empty
--- private def rlp₂ : ByteArray := ByteArray.mk #[0x80]
--- -- private example : RLP data₂ == rlp₂ := by  native_decide
--- -- private example : deserializeRLP rlp₂ == data₂ := by  native_decide
-
--- private def data₃ : 𝕋 := .𝔹 (ByteArray.mk #[0x78])
--- private def rlp₃ : ByteArray := ByteArray.mk #[0x78]
--- private example : RLP data₃ == rlp₃ := by native_decide
--- private example : deserializeRLP rlp₃ == data₃:= by native_decide
-
--- private def data₄ : 𝕋 := .𝔹 (ByteArray.mk #[0x80])
--- private def rlp₄ : ByteArray := ByteArray.mk #[0x81, 0x80]
--- private example : RLP data₄ == rlp₄ := by native_decide
-
--- private def data₅ : 𝕋 := .𝔹 (ByteArray.mk #[0x83])
--- private def rlp₅ : ByteArray := ByteArray.mk #[0x81, 0x83]
--- private example : RLP data₅ == rlp₅ := by  native_decide
--- private example : deserializeRLP rlp₅ == data₅ := by native_decide
-
--- private def fiftyFiveBytes : List UInt8 := List.replicate 55 0x83
--- private def data₆ : 𝕋 := .𝔹 ⟨⟨fiftyFiveBytes⟩⟩
--- private def rlp₆ : ByteArray := ⟨⟨0xB7 :: fiftyFiveBytes⟩⟩
--- private example : RLP data₆ == rlp₆ := by  native_decide
--- private example : deserializeRLP rlp₆ == data₆ := by  native_decide
-
--- private def largeBytes : List UInt8 := List.replicate (2^20) 0x83
--- private example :
---   RLP (.𝔹 ⟨⟨largeBytes⟩⟩) == some ⟨⟨0xBA :: 0x10 :: 0x00 :: 0x00 :: largeBytes⟩⟩
--- := by  native_decide
-
--- private def data₇ : 𝕋 := .𝔹 (BE 0)
--- private def rlp₇ : ByteArray := ByteArray.mk #[0x80]
--- private example : RLP data₇ == rlp₇ := by  native_decide
--- private example : deserializeRLP rlp₇ == data₇ := by  native_decide
-
--- private def data₈ : 𝕋 := .𝔹 (BE 255)
--- private def rlp₈ : ByteArray := ByteArray.mk #[0x81, 0xff]
--- private example : RLP data₈ == rlp₈ := by native_decide
--- private example : deserializeRLP rlp₈ == data₈ := by native_decide
-
--- private def data₉ : 𝕋 := .𝕃 []
--- private def rlp₉ : ByteArray := ByteArray.mk #[0xC0]
--- private example : RLP data₉ == rlp₉ := by native_decide
--- private example : deserializeRLP rlp₉ == data₉ := by native_decide
-
--- private def hello : Array UInt8 := #[104, 101, 108, 108, 111]
--- private def how : Array UInt8 := #[104, 111, 119]
--- private def are : Array UInt8 := #[97, 114, 101]
--- private def you : Array UInt8 := #[121, 111, 117]
--- private def doing : Array UInt8 := #[100, 111, 105, 110, 103]
-
--- private def data₁₀ : 𝕋 := .𝕃 [.𝔹 (ByteArray.mk hello)]
--- private def rlp₁₀ : ByteArray := ByteArray.mk (#[0xC6, 0x85] ++ hello)
--- private example : RLP data₁₀ == rlp₁₀ := by native_decide
--- private example : deserializeRLP rlp₁₀ == data₁₀ := by native_decide
-
--- private def data₁₁ : 𝕋 := .𝕃 [.𝔹 (BE 255)]
--- private def rlp₁₁ : ByteArray := ByteArray.mk #[0xC2, 0x81, 0xff]
--- private example : RLP data₁₁ == rlp₁₁ := by native_decide
--- private example : deserializeRLP rlp₁₁ == data₁₁ := by native_decide
-
--- private def data₁₂ : 𝕋 := .𝕃 (List.replicate 5 (.𝔹 ⟨hello⟩) ++ List.replicate 5 (.𝔹 (BE 35)))
--- private def rlp₁₂ : ByteArray :=
---   ByteArray.mk
---     ( #[0xE3]
---       ++ #[0x85] ++ hello
---       ++ #[0x85] ++ hello
---       ++ #[0x85] ++ hello
---       ++ #[0x85] ++ hello
---       ++ #[0x85] ++ hello
---       ++ #[35, 35, 35, 35, 35]
---     )
--- private example : RLP data₁₂ == rlp₁₂ := by native_decide
--- private example : deserializeRLP rlp₁₂ == data₁₂ := by native_decide
-
--- private def data₁₃ : 𝕋 := .𝕃 (List.replicate 10 (.𝔹 (BE 35)) ++ List.replicate 10 (.𝔹 ⟨hello⟩))
--- private def rlp₁₃ : ByteArray :=
---   ByteArray.mk
---     ( #[0xF8] ++ #[70]
---       ++ #[35, 35, 35, 35, 35, 35, 35, 35, 35, 35]
---       ++ #[0x85] ++ hello
---       ++ #[0x85] ++ hello
---       ++ #[0x85] ++ hello
---       ++ #[0x85] ++ hello
---       ++ #[0x85] ++ hello
---       ++ #[0x85] ++ hello
---       ++ #[0x85] ++ hello
---       ++ #[0x85] ++ hello
---       ++ #[0x85] ++ hello
---       ++ #[0x85] ++ hello
---     )
--- private example : RLP data₁₃ == rlp₁₃ := by native_decide
--- private example : deserializeRLP rlp₁₃ == data₁₃ := by native_decide
-
--- private def nestedSequence : 𝕋 :=
---   .𝕃
---     [ .𝔹 ⟨hello⟩
---     , .𝔹 (BE 255)
---     , .𝕃 [.𝔹 ⟨how⟩, .𝕃 [.𝔹 ⟨are⟩, .𝔹 ⟨you⟩, .𝕃 [.𝔹 ⟨doing⟩]]]
---     ]
--- private def data₁₄ : 𝕋 := nestedSequence
--- private def rlp₁₄ : ByteArray :=
---   ByteArray.mk
---     ( #[0xdd, 0x85]
---       ++ hello
---       ++ #[0x81, 0xff, 0xd4, 0x83]
---       ++ how
---       ++ #[0xcf, 0x83]
---       ++ are
---       ++ #[0x83]
---       ++ you
---       ++ #[0xc6, 0x85]
---       ++ doing
---       )
--- private example : RLP data₁₄ == rlp₁₄ := by native_decide
--- private example : deserializeRLP rlp₁₄ == data₁₄ := by native_decide
-
--- private def willFail₁ : 𝕋 := .𝔹 (BE 123)
--- private def willFail₂ : 𝕋 :=
---   .𝕃
---     [ .𝔹 ⟨hello⟩
---     , .𝔹 (BE 255)
---     , .𝕃 [.𝔹 ⟨how⟩, .𝕃 [.𝔹 ⟨are⟩, .𝕃 [.𝔹 ⟨you⟩, .𝔹 (BE 123)]]]
---     ]
-
 def myByteArray : ByteArray := ⟨#[1, 2, 3]⟩
 
 def ByteArray.write
@@ -468,9 +364,3 @@ def ByteArray.write
         (dest ++ destPadding)
         destAddr
         (practicalLen + sourcePaddingLength)
-
--- private example : ByteArray.empty.write inf myByteArray 5 inf = myByteArray := by native_decide
--- private example : ByteArray.empty.write inf myByteArray 1 inf = ⟨#[1, 0, 0]⟩ := by native_decide
--- private example : myByteArray.write 2 myByteArray 0 inf = ⟨#[3, 0, 0]⟩ := by native_decide
--- private example : myByteArray.write inf myByteArray 0 inf = ⟨#[0, 0, 0]⟩ := by native_decide
--- private example : myByteArray.write 0 myByteArray 1 1 = ⟨#[1, 1, 3]⟩ := by native_decide

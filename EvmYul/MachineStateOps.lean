@@ -116,7 +116,7 @@ end ReturnData
 
 def keccak256 (self : MachineState) (mstart s : UInt256) : UInt256 × MachineState :=
   let bytes := self.memory.readWithPadding mstart.toNat s.toNat
-  let kec := KEC bytes
+  let kec := ffi.KEC bytes
   let newMachineState :=
     { self with activeWords := .ofNat (M self.activeWords.toNat mstart.toNat s.toNat) }
   (.ofNat (fromByteArrayBigEndian kec), newMachineState)

@@ -19,9 +19,6 @@ section FromJson
 
 open Lean (FromJson Json)
 
-@[deprecated]
-scoped notation "TODO" => default
-
 private def fromBlobString {α} (f : Blob → Except String α) : FromJson α :=
   {
     fromJson? := λ json ↦ json.getStr? >>= (getBlob? · >>= f)

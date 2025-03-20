@@ -24,6 +24,8 @@ import EvmYul.Wheels
 import EvmYul.State.TrieRoot
 import EvmYul.SpongeHash.Keccak256
 
+import EvmYul.FFI.ffi
+
 namespace EvmYul
 
 section RemoveLater
@@ -37,7 +39,7 @@ def Storage.toEvmYulStorage (self : Storage) : EvmYul.Storage :=
   self.foldl (init := ∅) λ acc k v ↦ acc.insert (UInt256.ofNat k.1) v
 
 def toBlobs (pair : UInt256 × UInt256) : Option (String × String) := do
-  let kec := KEC pair.1.toByteArray
+  let kec := ffi.KEC pair.1.toByteArray
   let rlp ← RLP (.𝔹 (BE pair.2.toNat))
   pure (EvmYul.toHex kec, EvmYul.toHex rlp)
 

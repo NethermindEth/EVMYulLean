@@ -17,7 +17,7 @@ The execution envorinment `I` `ExecutionEnv`. Section 9.3.
 - `depth`     `Iₑ`
 - `perm`      `I_w`
 -/
-structure ExecutionEnv :=
+structure ExecutionEnv where
   codeOwner : AccountAddress
   sender    : AccountAddress
   source    : AccountAddress

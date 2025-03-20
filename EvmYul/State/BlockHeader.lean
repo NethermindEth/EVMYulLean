@@ -19,7 +19,7 @@ namespace EvmYul
 `gasUsed`       `g`
 `timestamp`     `s`
 `extraData`     `x`
-`chainId`       `n` TODO ????
+`chainId`       `n` 
 `nonce`         `n` [deprecated]
 `baseFeePerGas` `f`
 `withdrawalsRoot` (EIP-4895)
@@ -103,7 +103,5 @@ def BlockHeader.getBlobGasprice (h : BlockHeader) : ℕ :=
     MIN_BASE_FEE_PER_BLOB_GAS
     h.excessBlobGas.toNat
     BLOB_BASE_FEE_UPDATE_FRACTION
-
-attribute [deprecated] BlockHeader.nonce
 
 end EvmYul
