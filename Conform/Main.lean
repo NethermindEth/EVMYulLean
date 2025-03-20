@@ -103,7 +103,7 @@ def main (args : List String) : IO Unit := do
     IO.println s!"The post was NOT equal to the resulting state: {failure}"
     IO.println s!"Succeeded: {success}"
     IO.println s!"Success rate of: {(success.toFloat / (failure + success).toFloat) * 100.0}"
-    
+
   IO.println s!"Phase 1/3 - No performance tests."
   testFiles (root := "EthereumTests/BlockchainTests/")
             (directoryBlacklist := #["EthereumTests/BlockchainTests//GeneralStateTests/VMTests/vmPerformance"])
