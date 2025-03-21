@@ -59,5 +59,7 @@ Conform/
 
 To execute conformance tests, make sure the `EthereumTests` directory is the appropriate git submodule and run:
 ```
-lake exec conform
+lake exec conform <NUM_THREADS> 2> out_discard.txt
 ```
+where `<NUM_THREADS>` is the number of threads running conformance tests in parallel. Note that the default is `1`.
+We recommend redirecting `stderr` into a file to not pollute the output.
