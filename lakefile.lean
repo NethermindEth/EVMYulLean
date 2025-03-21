@@ -18,9 +18,6 @@ target cloneSha2 pkg : GitRepo := cloneWithCache pkg "sha2" "https://github.com/
 
 target cloneKeccak256 pkg : GitRepo := cloneWithCache pkg "keccak256" "https://github.com/brainhub/SHA3IUF.git"
 
--- def inputTextFile (path : FilePath) : SpawnM (BuildJob FilePath) :=
---   Job.async <| (path, ·) <$> computeTrace (TextFilePath.mk path)
-
 def hash256CDir (hash256repo : GitRepo) : FilePath :=
   hash256repo.dir
 
