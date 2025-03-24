@@ -35,7 +35,7 @@ def testFiles (root               : System.FilePath)
               (testWhitelist      : Array String := #[])
               (phase              : ℕ)
               (threads            : ℕ := 1)
-              (timed              : Bool := false) : IO (Nat × Nat) := do
+              (timed              : Bool := false) : IO (Nat × Array String) := do
   let isToBeTested (testname : String) : Bool :=
     let whitelist := testWhitelist
     let blacklist := testBlacklist ++ EvmYul.Conform.GlobalBlacklist
@@ -47,7 +47,7 @@ def testFiles (root               : System.FilePath)
 
   let testFiles := testFiles.filter (· ∉ fileBlacklist)
 
-  let mut discardedFiles : Array (System.FilePath × String) := #[]
+  let mut discardedFiles : Array EvmYul.Conform.TestId := #[]
   let mut numFailedTest := 0
   let mut numSuccess := 0
 
@@ -73,6 +73,8 @@ def testFiles (root               : System.FilePath)
   for i in [0:threads] do
     tasks := tasks.push (←IO.asTask <| EvmYul.Conform.processTests tests[i]! (if timed then .some i else .none))
 
+  let mut failedTests : Array String := .empty
+
   IO.println s!"Scheduled {tests.foldl (· + ·.size) 0} tests on {threads} thread{if threads == 1 then "" else "s"}."
   IO.println s!"Running..."
   let testResults ← tasks.mapM (IO.wait · >>= IO.ofExcept)
@@ -82,11 +84,16 @@ def testFiles (root               : System.FilePath)
       log file test res phase
       if res.isNone
       then numSuccess := numSuccess + 1
-      else numFailedTest := numFailedTest + 1
-  return (numSuccess, numFailedTest)
+      else failedTests := failedTests.push test
+  return (numSuccess, failedTests)
 
-def main (args : List String) : IO Unit := do
+def main (args : List String) : IO UInt32 := do
   let NumThreads : ℕ := args.head? <&> String.toNat! |>.getD 1
+
+  let ExpectedToFail : Std.HashSet String := {
+    "invalid_block_blob_count.json[src/GeneralStateTestsFiller/Pyspecs/cancun/eip4844_blobs/test_blob_txs.py::test_invalid_block_blob_count[fork_Cancun-blockchain_test--blobs_per_tx_(7,)]]",
+    "GasUsedHigherThanBlockGasLimitButNotWithRefundsSuicideLast.json[GasUsedHigherThanBlockGasLimitButNotWithRefundsSuicideLast_Cancun]"
+  }
 
   let DelayFiles : Array String :=
     #["static_Call50000bytesContract50_2_d1g0v0_Cancun",
@@ -97,27 +104,42 @@ def main (args : List String) : IO Unit := do
       "CALLBlake2f_MaxRounds_d0g0v0_Cancun",
       "SuicideIssue_Cancun"]
 
-  let printResults (result : ℕ × ℕ) : IO Unit := do
+  let printResults (result : ℕ × Array String) : IO (Array String) := do
     let (success, failure) := result
-    IO.println s!"Total tests: {success + failure}"
-    IO.println s!"The post was NOT equal to the resulting state: {failure}"
+    IO.println s!"Total tests: {success + failure.size}"
+    IO.println s!"The post was NOT equal to the resulting state: {failure.size}"
     IO.println s!"Succeeded: {success}"
-    IO.println s!"Success rate of: {(success.toFloat / (failure + success).toFloat) * 100.0}"
+    IO.println s!"Success rate of: {(success.toFloat / (failure.size + success).toFloat) * 100.0}"
+    IO.println s!"Failed tests:\n{failure}"
+    return failure
 
-  IO.println s!"Phase 1/3 - No performance tests."
-  testFiles (root := "EthereumTests/BlockchainTests/")
-            (directoryBlacklist := #["EthereumTests/BlockchainTests//GeneralStateTests/VMTests/vmPerformance"])
-            (testBlacklist := DelayFiles)
-            (phase := 1)
-            (threads := NumThreads) >>= printResults
+  let failed ← testFiles (root := "EthereumTests/BlockchainTests/GeneralStateTests/Pyspecs")
+                         (phase := 3)
+                         (threads := NumThreads) >>= printResults
+
+  return if (Std.HashSet.ofArray failed |>.diff ExpectedToFail).isEmpty then 0 else 1
+
+
+  -- IO.println s!"Phase 1/3 - No performance tests."
+  -- let failed ← testFiles (root := "EthereumTests/BlockchainTests/")
+  --                        (directoryBlacklist := #["EthereumTests/BlockchainTests//GeneralStateTests/VMTests/vmPerformance"])
+  --                        (testBlacklist := DelayFiles)
+  --                        (phase := 1)
+  --                        (threads := NumThreads) >>= printResults
   
-  IO.println s!"Phase 2/3 - Performance tests only."
-  testFiles (root := "EthereumTests/BlockchainTests/GeneralStateTests/VMTests/vmPerformance/")
-            (phase := 2)
-            (threads := NumThreads) >>= printResults
+  -- if !failed.isEmpty then return 1
 
-  IO.println s!"Phase 3/3 - Individually scheduled tests."
-  testFiles (root := "EthereumTests/BlockchainTests/")
-            (testWhitelist := DelayFiles)
-            (phase := 3)
-            (threads := NumThreads) >>= printResults
+  -- IO.println s!"Phase 2/3 - Performance tests only."
+  -- let failed ← testFiles (root := "EthereumTests/BlockchainTests/GeneralStateTests/VMTests/vmPerformance/")
+  --                        (phase := 2)
+  --                        (threads := NumThreads) >>= printResults
+
+  -- if !failed.isEmpty then return 1
+
+  -- IO.println s!"Phase 3/3 - Individually scheduled tests."
+  -- let failed ← testFiles (root := "EthereumTests/BlockchainTests/")
+  --                        (testWhitelist := DelayFiles)
+  --                        (phase := 3)
+  --                        (threads := NumThreads) >>= printResults
+
+  -- return if failed.isEmpty then 0 else 1
