@@ -113,33 +113,23 @@ def main (args : List String) : IO UInt32 := do
     IO.println s!"Failed tests:\n{failure}"
     return failure
 
-  let failed ← testFiles (root := "EthereumTests/BlockchainTests/GeneralStateTests/Pyspecs")
-                         (phase := 3)
-                         (threads := NumThreads) >>= printResults
-
-  return if (Std.HashSet.ofArray failed |>.diff ExpectedToFail).isEmpty then 0 else 1
-
-
-  -- IO.println s!"Phase 1/3 - No performance tests."
-  -- let failed ← testFiles (root := "EthereumTests/BlockchainTests/")
-  --                        (directoryBlacklist := #["EthereumTests/BlockchainTests//GeneralStateTests/VMTests/vmPerformance"])
-  --                        (testBlacklist := DelayFiles)
-  --                        (phase := 1)
-  --                        (threads := NumThreads) >>= printResults
+  IO.println s!"Phase 1/3 - No performance tests."
+  let failed₁ ← testFiles (root := "EthereumTests/BlockchainTests/")
+                          (directoryBlacklist := #["EthereumTests/BlockchainTests//GeneralStateTests/VMTests/vmPerformance"])
+                          (testBlacklist := DelayFiles)
+                          (phase := 1)
+                          (threads := NumThreads) >>= printResults
   
-  -- if !failed.isEmpty then return 1
+  IO.println s!"Phase 2/3 - Performance tests only."
+  let failed₂ ← testFiles (root := "EthereumTests/BlockchainTests/GeneralStateTests/VMTests/vmPerformance/")
+                          (phase := 2)
+                          (threads := NumThreads) >>= printResults
 
-  -- IO.println s!"Phase 2/3 - Performance tests only."
-  -- let failed ← testFiles (root := "EthereumTests/BlockchainTests/GeneralStateTests/VMTests/vmPerformance/")
-  --                        (phase := 2)
-  --                        (threads := NumThreads) >>= printResults
 
-  -- if !failed.isEmpty then return 1
+  IO.println s!"Phase 3/3 - Individually scheduled tests."
+  let failed₃ ← testFiles (root := "EthereumTests/BlockchainTests/")
+                          (testWhitelist := DelayFiles)
+                          (phase := 3)
+                          (threads := NumThreads) >>= printResults
 
-  -- IO.println s!"Phase 3/3 - Individually scheduled tests."
-  -- let failed ← testFiles (root := "EthereumTests/BlockchainTests/")
-  --                        (testWhitelist := DelayFiles)
-  --                        (phase := 3)
-  --                        (threads := NumThreads) >>= printResults
-
-  -- return if failed.isEmpty then 0 else 1
+  return if (Std.HashSet.ofArray (failed₁ ++ failed₂ ++ failed₃) |>.diff ExpectedToFail).isEmpty then 0 else 1
