@@ -48,7 +48,6 @@ def testFiles (root               : System.FilePath)
   let testFiles := testFiles.filter (· ∉ fileBlacklist)
 
   let mut discardedFiles : Array EvmYul.Conform.TestId := #[]
-  let mut numFailedTest := 0
   let mut numSuccess := 0
 
   if ←System.FilePath.pathExists (logFile phase) then IO.FS.removeFile (logFile phase)
