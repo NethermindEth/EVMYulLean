@@ -93,6 +93,10 @@ def nproc : IO Nat := do
 def main (args : List String) : IO UInt32 := do
   let NumThreads : ℕ := args.head? <&> String.toNat! |>.getD (←nproc)
 
+  if !(←System.FilePath.pathExists "EthereumTests") then
+    dbg_trace s!"Cloning EthereumTests into a submodule." 
+    discard <| IO.Process.run {cmd := "git", args := #["submodule", "update", "--init"]}
+
   let ExpectedToFail : Std.HashSet String := {
     "invalid_block_blob_count.json[src/GeneralStateTestsFiller/Pyspecs/cancun/eip4844_blobs/test_blob_txs.py::test_invalid_block_blob_count[fork_Cancun-blockchain_test--blobs_per_tx_(7,)]]",
     "GasUsedHigherThanBlockGasLimitButNotWithRefundsSuicideLast.json[GasUsedHigherThanBlockGasLimitButNotWithRefundsSuicideLast_Cancun]"

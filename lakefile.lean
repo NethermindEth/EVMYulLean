@@ -56,10 +56,6 @@ extern_lib libleanffi pkg := do
   -- our own `ffi.c`
   let ffiO ← ffi.o.fetch
 
-  if !(←System.FilePath.pathExists "EthereumTests") then
-    dbg_trace s!"Cloning EthereumTests into a submodule." 
-    discard <| IO.Process.run {cmd := "git", args := #["submodule", "update", "--init"]}
-
   let name := nameToStaticLib "leanffi"
   buildStaticLib (pkg.nativeLibDir / name) #[sha256O, keccak256, ffiO]
 
