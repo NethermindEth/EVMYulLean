@@ -11,8 +11,6 @@ import EvmYul.EVM.State
 
 import Conform.Wheels
 
-import Mathlib.Tactic
-
 namespace EvmYul
 
 namespace Conform
