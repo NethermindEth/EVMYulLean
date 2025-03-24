@@ -86,8 +86,12 @@ def testFiles (root               : System.FilePath)
       else failedTests := failedTests.push test
   return (numSuccess, failedTests)
 
+def nproc : IO Nat := do
+  let out ← IO.Process.output {cmd := "nproc", stdin := .null}
+  return out.stdout.trim.toNat? |>.getD 1
+
 def main (args : List String) : IO UInt32 := do
-  let NumThreads : ℕ := args.head? <&> String.toNat! |>.getD 1
+  let NumThreads : ℕ := args.head? <&> String.toNat! |>.getD (←nproc)
 
   let ExpectedToFail : Std.HashSet String := {
     "invalid_block_blob_count.json[src/GeneralStateTestsFiller/Pyspecs/cancun/eip4844_blobs/test_blob_txs.py::test_invalid_block_blob_count[fork_Cancun-blockchain_test--blobs_per_tx_(7,)]]",
