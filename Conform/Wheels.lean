@@ -109,3 +109,17 @@ def computeToList! {α}
 def Batteries.RBMap.partition {α β : Type} {cmp : α → α → Ordering}
   (t : Batteries.RBMap α β cmp) (p : α → β → Bool) : Batteries.RBMap α β cmp × Batteries.RBMap α β cmp :=
   (t.filter p, t.filter (λ k v ↦ not (p k v)))
+
+namespace Std
+
+namespace HashSet
+
+def diff {α : Type} [DecidableEq α] [Hashable α] (a b : HashSet α) : HashSet α := Id.run do
+  let mut res := a
+  for elem in b do
+    res := res.erase elem
+  return res
+
+end HashSet
+
+end Std
