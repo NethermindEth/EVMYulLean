@@ -11,5 +11,9 @@ pkgs.mkShell {
     python312Packages.pycryptodome
     python312Packages.eth-typing
     python312Packages.py-ecc
+    pkgs.openssl
   ];
+  shellHook = ''
+    export LD_LIBRARY_PATH=${pkgs.openssl.out}/lib:$LD_LIBRARY_PATH
+  '';
 }

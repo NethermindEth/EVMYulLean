@@ -1,7 +1,10 @@
 import sys
 import hashlib
 import ctypes
-ctypes.CDLL("libssl.so").OSSL_PROVIDER_load(None, b"legacy")
+import ctypes.util
+
+libssl_path = ctypes.util.find_library("ssl")
+ctypes.CDLL(libssl_path).OSSL_PROVIDER_load(None, b"legacy")
 
 from base_types import Bytes
 
