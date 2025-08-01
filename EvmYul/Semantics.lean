@@ -19,9 +19,46 @@ import EvmYul.MachineStateOps
 
 import EvmYul.SpongeHash.Keccak256
 
+--
+
+import Mathlib.Data.BitVec
+import Mathlib.Data.Array.Defs
+import Mathlib.Data.Finmap
+import Mathlib.Data.List.Defs
+import EvmYul.Data.Stack
+
+import EvmYul.Maps.AccountMap
+import EvmYul.Maps.AccountMap
+
+import EvmYul.State.AccountOps
+import EvmYul.State.ExecutionEnv
+import EvmYul.State.Substate
+import EvmYul.State.TransactionOps
+
+import EvmYul.EVM.Exception
+import EvmYul.EVM.Gas
+import EvmYul.EVM.GasConstants
+import EvmYul.EVM.State
+import EvmYul.EVM.StateOps
+import EvmYul.EVM.Exception
+import EvmYul.EVM.Instr
+import EvmYul.EVM.PrecompiledContracts
+
+import EvmYul.Operations
+import EvmYul.Pretty
+import EvmYul.SharedStateOps
+import EvmYul.Wheels
+import EvmYul.EllipticCurves
+import EvmYul.UInt256
+import EvmYul.MachineState
+
+--
+
 namespace EvmYul
 
 section Semantics
+
+open Stack
 
 /--
 `Transformer` is the primop-evaluating semantic function type for `Yul` and `EVM`.
@@ -146,23 +183,40 @@ private def dispatchLog1 (τ : OperationType) : Transformer τ :=
 
 private def dispatchLog2 (τ : OperationType) : Transformer τ :=
   match τ with
-    | .EVM => EVM.log2Op 
+    | .EVM => EVM.log2Op
     | .Yul => Yul.log2Op
 
 private def dispatchLog3 (τ : OperationType) : Transformer τ :=
   match τ with
-    | .EVM => EVM.log3Op 
+    | .EVM => EVM.log3Op
     | .Yul => Yul.log3Op
 
 private def dispatchLog4 (τ : OperationType) : Transformer τ :=
   match τ with
-    | .EVM => EVM.log4Op 
+    | .EVM => EVM.log4Op
     | .Yul => Yul.log4Op
 
 private def L (n : ℕ) := n - n / 64
 
+def dup (n : ℕ) : Transformer .EVM :=
+  λ s ↦
+  let top := s.stack.take n
+  if top.length = n then
+    .ok <| s.replaceStackAndIncrPC (top.getLast! :: s.stack)
+  else
+    .error .StackUnderflow
+
+def swap (n : ℕ) : Transformer .EVM :=
+  λ s ↦
+  let top := s.stack.take (n + 1)
+  let bottom := s.stack.drop (n + 1)
+  if List.length top = (n + 1) then
+    .ok <| s.replaceStackAndIncrPC (top.getLast! :: top.tail!.dropLast ++ [top.head!] ++ bottom)
+  else
+    .error .StackUnderflow
+
 -- TODO: Yul halting for `SELFDESTRUCT`, `RETURN`, `REVERT`, `STOP`
-def step {τ : OperationType} (op : Operation τ) : Transformer τ := Id.run do
+def step {τ : OperationType} (op : Operation τ) (arg : Option (UInt256 × Nat) := .none) : Transformer τ := Id.run do
   let log : Id Unit :=
     match τ with
       | .EVM => dbg_trace op.pretty; pure ()
@@ -525,6 +579,60 @@ def step {τ : OperationType} (op : Operation τ) : Transformer τ := Id.run do
           | _ => .error .InvalidArguments
 
     | .Yul, _ => λ _ _ ↦ default
+    | .EVM, .Push .PUSH0 => λ evmState =>
+        .ok <|
+          evmState.replaceStackAndIncrPC (evmState.stack.push ⟨0⟩)
+    | .EVM, .Push _ => λ evmState => do
+        let some (arg, argWidth) := arg | .error .StackUnderflow
+        .ok <| evmState.replaceStackAndIncrPC (evmState.stack.push arg) (pcΔ := argWidth.succ)
+    | .EVM, .JUMP => λ evmState => do
+        match evmState.stack.pop with
+          | some ⟨stack , μ₀⟩ =>
+            let newPc := μ₀
+            .ok <| {evmState with pc := newPc, stack := stack}
+          | _ => .error .StackUnderflow
+    | .EVM, .JUMPI => λ evmState => do
+        match evmState.stack.pop2 with
+          | some ⟨stack , μ₀, μ₁⟩ =>
+            let newPc := if μ₁ != ⟨0⟩ then μ₀ else evmState.pc + ⟨1⟩
+            .ok <| {evmState with pc := newPc, stack := stack}
+          | _ => .error .StackUnderflow
+    | .EVM, .PC => λ evmState =>
+        .ok <| evmState.replaceStackAndIncrPC (evmState.stack.push evmState.pc)
+    | .EVM, .JUMPDEST => λ evmState => do
+        .ok <| evmState.incrPC
+    | .EVM, .DUP1 => dup 1
+    | .EVM, .DUP2 => dup 2
+    | .EVM, .DUP3 => dup 3
+    | .EVM, .DUP4 => dup 4
+    | .EVM, .DUP5 => dup 5
+    | .EVM, .DUP6 => dup 6
+    | .EVM, .DUP7 => dup 7
+    | .EVM, .DUP8 => dup 8
+    | .EVM, .DUP9 => dup 9
+    | .EVM, .DUP10 => dup 10
+    | .EVM, .DUP11 => dup 11
+    | .EVM, .DUP12 => dup 12
+    | .EVM, .DUP13 => dup 13
+    | .EVM, .DUP14 => dup 14
+    | .EVM, .DUP15 => dup 15
+    | .EVM, .DUP16 => dup 16
+    | .EVM, .SWAP1 => swap 1
+    | .EVM, .SWAP2 => swap 2
+    | .EVM, .SWAP3 => swap 3
+    | .EVM, .SWAP4 => swap 4
+    | .EVM, .SWAP5 => swap 5
+    | .EVM, .SWAP6 => swap 6
+    | .EVM, .SWAP7 => swap 7
+    | .EVM, .SWAP8 => swap 8
+    | .EVM, .SWAP9 => swap 9
+    | .EVM, .SWAP10 => swap 10
+    | .EVM, .SWAP11 => swap 11
+    | .EVM, .SWAP12 => swap 12
+    | .EVM, .SWAP13 => swap 13
+    | .EVM, .SWAP14 => swap 14
+    | .EVM, .SWAP15 => swap 15
+    | .EVM, .SWAP16 => swap 16
     | .EVM, _ => λ _ ↦ default
 
 end Semantics

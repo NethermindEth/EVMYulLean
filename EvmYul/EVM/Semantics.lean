@@ -232,69 +232,8 @@ def step (fuel : ℕ) (gasCost : ℕ) (instr : Option (Operation .EVM × Option 
         | .none => fetchInstr evmState.toState.executionEnv evmState.pc
         | .some (instr, arg) => pure (instr, arg)
     let evmState := { evmState with execLength := evmState.execLength + 1 }
+    -- EVLYul.step instr {evmState with { gasAvailable := if tracking_gas then evmState.gasAvailable - UInt256.ofNat gasCost else evmState.gasAvailable}}
     match instr with
-      | .Push .PUSH0 =>
-        let evmState := {evmState with gasAvailable := evmState.gasAvailable - UInt256.ofNat gasCost}
-        .ok <|
-          evmState.replaceStackAndIncrPC (evmState.stack.push ⟨0⟩)
-      | .Push _ => do
-        let evmState := {evmState with gasAvailable := evmState.gasAvailable - UInt256.ofNat gasCost}
-        let some (arg, argWidth) := arg | .error .StackUnderflow
-        .ok <| evmState.replaceStackAndIncrPC (evmState.stack.push arg) (pcΔ := argWidth.succ)
-      | .JUMP =>
-        let evmState := {evmState with gasAvailable := evmState.gasAvailable - UInt256.ofNat gasCost}
-        match evmState.stack.pop with
-          | some ⟨stack , μ₀⟩ =>
-            let newPc := μ₀
-            .ok <| {evmState with pc := newPc, stack := stack}
-          | _ => .error .StackUnderflow
-      | .JUMPI =>
-        let evmState := {evmState with gasAvailable := evmState.gasAvailable - UInt256.ofNat gasCost}
-        match evmState.stack.pop2 with
-          | some ⟨stack , μ₀, μ₁⟩ =>
-            let newPc := if μ₁ != ⟨0⟩ then μ₀ else evmState.pc + ⟨1⟩
-            .ok <| {evmState with pc := newPc, stack := stack}
-          | _ => .error .StackUnderflow
-      | .PC =>
-        let evmState := {evmState with gasAvailable := evmState.gasAvailable - UInt256.ofNat gasCost}
-        .ok <| evmState.replaceStackAndIncrPC (evmState.stack.push evmState.pc)
-      | .JUMPDEST =>
-        let evmState := {evmState with gasAvailable := evmState.gasAvailable - UInt256.ofNat gasCost}
-        .ok evmState.incrPC
-
-      | .DUP1 => dup 1 {evmState with gasAvailable := evmState.gasAvailable - UInt256.ofNat gasCost}
-      | .DUP2 => dup 2 {evmState with gasAvailable := evmState.gasAvailable - UInt256.ofNat gasCost}
-      | .DUP3 => dup 3 {evmState with gasAvailable := evmState.gasAvailable - UInt256.ofNat gasCost}
-      | .DUP4 => dup 4 {evmState with gasAvailable := evmState.gasAvailable - UInt256.ofNat gasCost}
-      | .DUP5 => dup 5 {evmState with gasAvailable := evmState.gasAvailable - UInt256.ofNat gasCost}
-      | .DUP6 => dup 6 {evmState with gasAvailable := evmState.gasAvailable - UInt256.ofNat gasCost}
-      | .DUP7 => dup 7 {evmState with gasAvailable := evmState.gasAvailable - UInt256.ofNat gasCost}
-      | .DUP8 => dup 8 {evmState with gasAvailable := evmState.gasAvailable - UInt256.ofNat gasCost}
-      | .DUP9 => dup 9 {evmState with gasAvailable := evmState.gasAvailable - UInt256.ofNat gasCost}
-      | .DUP10 => dup 10 {evmState with gasAvailable := evmState.gasAvailable - UInt256.ofNat gasCost}
-      | .DUP11 => dup 11 {evmState with gasAvailable := evmState.gasAvailable - UInt256.ofNat gasCost}
-      | .DUP12 => dup 12 {evmState with gasAvailable := evmState.gasAvailable - UInt256.ofNat gasCost}
-      | .DUP13 => dup 13 {evmState with gasAvailable := evmState.gasAvailable - UInt256.ofNat gasCost}
-      | .DUP14 => dup 14 {evmState with gasAvailable := evmState.gasAvailable - UInt256.ofNat gasCost}
-      | .DUP15 => dup 15 {evmState with gasAvailable := evmState.gasAvailable - UInt256.ofNat gasCost}
-      | .DUP16 => dup 16 {evmState with gasAvailable := evmState.gasAvailable - UInt256.ofNat gasCost}
-
-      | .SWAP1 => swap 1 {evmState with gasAvailable := evmState.gasAvailable - UInt256.ofNat gasCost}
-      | .SWAP2 => swap 2 {evmState with gasAvailable := evmState.gasAvailable - UInt256.ofNat gasCost}
-      | .SWAP3 => swap 3 {evmState with gasAvailable := evmState.gasAvailable - UInt256.ofNat gasCost}
-      | .SWAP4 => swap 4 {evmState with gasAvailable := evmState.gasAvailable - UInt256.ofNat gasCost}
-      | .SWAP5 => swap 5 {evmState with gasAvailable := evmState.gasAvailable - UInt256.ofNat gasCost}
-      | .SWAP6 => swap 6 {evmState with gasAvailable := evmState.gasAvailable - UInt256.ofNat gasCost}
-      | .SWAP7 => swap 7 {evmState with gasAvailable := evmState.gasAvailable - UInt256.ofNat gasCost}
-      | .SWAP8 => swap 8 {evmState with gasAvailable := evmState.gasAvailable - UInt256.ofNat gasCost}
-      | .SWAP9 => swap 9 {evmState with gasAvailable := evmState.gasAvailable - UInt256.ofNat gasCost}
-      | .SWAP10 => swap 10 {evmState with gasAvailable := evmState.gasAvailable - UInt256.ofNat gasCost}
-      | .SWAP11 => swap 11 {evmState with gasAvailable := evmState.gasAvailable - UInt256.ofNat gasCost}
-      | .SWAP12 => swap 12 {evmState with gasAvailable := evmState.gasAvailable - UInt256.ofNat gasCost}
-      | .SWAP13 => swap 13 {evmState with gasAvailable := evmState.gasAvailable - UInt256.ofNat gasCost}
-      | .SWAP14 => swap 14 {evmState with gasAvailable := evmState.gasAvailable - UInt256.ofNat gasCost}
-      | .SWAP15 => swap 15 {evmState with gasAvailable := evmState.gasAvailable - UInt256.ofNat gasCost}
-      | .SWAP16 => swap 16 {evmState with gasAvailable := evmState.gasAvailable - UInt256.ofNat gasCost}
       | .CREATE =>
         let evmState := {evmState with gasAvailable := evmState.gasAvailable - UInt256.ofNat gasCost}
         match evmState.stack.pop3 with
@@ -483,8 +422,7 @@ def step (fuel : ℕ) (gasCost : ℕ) (instr : Option (Operation .EVM × Option 
         let μ'ₛ := stack.push x -- μ′s[0] ≡ x
         let evmState' := state'.replaceStackAndIncrPC μ'ₛ
         .ok evmState'
-      | instr =>
-        EvmYul.step instr {evmState with gasAvailable := evmState.gasAvailable - UInt256.ofNat gasCost}
+      | instr => EvmYul.step instr arg {evmState with gasAvailable := evmState.gasAvailable - UInt256.ofNat gasCost}
 
 /--
   Iterative progression of `step`
@@ -538,7 +476,7 @@ def X (fuel : ℕ) (validJumps : Array UInt256) (evmState : State)
 
         if (w = .SSTORE) ∧ evmState.gasAvailable.toNat ≤ GasConstants.Gcallstipend then
           .error .OutOfGass
-      
+
         if
           w.isCreate ∧ evmState.stack.getD 2 ⟨0⟩ > ⟨49152⟩
         then
