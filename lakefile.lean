@@ -2,7 +2,7 @@ import Lake
 open Lake DSL System
 
 require mathlib from git
-  "https://github.com/leanprover-community/mathlib4.git"@"v4.18.0-rc1"
+  "https://github.com/leanprover-community/mathlib4.git"@"v4.19.0"
 
 package «evmyul» {
   moreLeanArgs := #["-DautoImplicit=false"]
@@ -57,7 +57,7 @@ extern_lib libleanffi pkg := do
   let ffiO ← ffi.o.fetch
 
   if !(←System.FilePath.pathExists "EthereumTests") then
-    dbg_trace s!"Cloning EthereumTests into a submodule." 
+    dbg_trace s!"Cloning EthereumTests into a submodule."
     discard <| IO.Process.run {cmd := "git", args := #["submodule", "update", "--init"]}
 
   let name := nameToStaticLib "leanffi"
