@@ -15,7 +15,7 @@ namespace EvmYul
 def π : Batteries.RBSet AccountAddress compare :=
   Batteries.RBSet.ofList ((List.range 11).tail.map Fin.ofNat) compare
 
-inductive ToExecute where | Code (code : ByteArray) | Precompiled (precompiled : AccountAddress)
+inductive ToExecute where | Code (code : ByteArray ⊕ Yul.Ast.Stmt) | Precompiled (precompiled : AccountAddress)
 
 structure PersistentAccountState where
   nonce    : UInt256
