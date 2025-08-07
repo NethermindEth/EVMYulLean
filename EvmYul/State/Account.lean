@@ -46,7 +46,13 @@ structure Account extends PersistentAccountState where
 deriving BEq, Inhabited, Repr
 
 def PersistentAccountState.codeHash (self : PersistentAccountState) : UInt256 :=
-  .ofNat <| fromByteArrayBigEndian (ffi.KEC self.code)
+  match self.code with
+  | Sum.inl code => .ofNat <| fromByteArrayBigEndian (ffi.KEC code)
+  | Sum.inr code =>
+    .ofNat <| fromByteArrayBigEndian (ffi.KEC (toString (repr code)).toUTF8)
+    -- This gives us a codeHash for Yul code, however it is not the actual codeHash
+    --   because that would require compiling the Yul code to bytecode,
+    --   which we do not do here.
 
 def Account.codeHash (self : Account) : UInt256 :=
   self.toPersistentAccountState.codeHash
