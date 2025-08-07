@@ -30,7 +30,9 @@ def updateTransientStorage (self : Account) (k v : UInt256) : Account :=
 EMPTY(σ, a). Section 4.1., equation 14.
 -/
 def emptyAccount (self : Account) : Bool :=
-  self.code.isEmpty ∧ self.nonce = ⟨0⟩ ∧ self.balance = ⟨0⟩
+  match self.code with
+  | Sum.inl code => code.isEmpty ∧ self.nonce = ⟨0⟩ ∧ self.balance = ⟨0⟩
+  | Sum.inr _ => false -- A Yul statement cannot be empty.
 
 def addBalance (self : Account) (balance : UInt256) : Option Account :=
   let overflow : Bool := self.balance + balance < self.balance
