@@ -4,6 +4,8 @@ import EvmYul.SpongeHash.Keccak256
 import EvmYul.UInt256
 import EvmYul.Wheels
 
+import EvmYul.Yul.Ast
+
 namespace EvmYul
 
 /--
@@ -19,7 +21,7 @@ structure PersistentAccountState where
   nonce    : UInt256
   balance  : UInt256
   storage  : Storage
-  code     : ByteArray
+  code     : ByteArray ⊕ Yul.Ast.Stmt
 deriving BEq, Inhabited, Repr
 
 /--
