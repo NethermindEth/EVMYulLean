@@ -563,12 +563,20 @@ def Ξ -- Type `Ξ` using `\GX` or `\Xi`
             blocks := blocks
             genesisBlockHeader := genesisBlockHeader
         }
-      let result ← X f (D_J I.code ⟨0⟩) freshEvmState
-      match result with
-        | .success evmState' o =>
-          let finalGas := evmState'.gasAvailable
-          .ok (ExecutionResult.success (evmState'.createdAccounts, evmState'.accountMap, finalGas, evmState'.substate) o)
-        | .revert g' o => .ok (ExecutionResult.revert g' o)
+      match I.code with
+        | Sum.inl code =>
+          let result ← X f (D_J code ⟨0⟩) freshEvmState
+          match result with
+            | .success evmState' o =>
+              let finalGas := evmState'.gasAvailable
+              .ok (ExecutionResult.success (evmState'.createdAccounts, evmState'.accountMap, finalGas, evmState'.substate) o)
+            | .revert g' o => .ok (ExecutionResult.revert g' o)
+        | Sum.inr stmt =>
+          match Yul.exec f stmt (.Ok freshEvmState.toSharedState ∅) with
+            | .Ok sharedState _ =>
+              .ok (ExecutionResult.success (sharedState.createdAccounts, sharedState.accountMap, sharedState.gasAvailable, sharedState.substate) .empty)
+            | .OutOfFuel => .error .OutOfFuel
+            | .Checkpoint _ => .error .InvalidYulExecution
 
 def Lambda
   (fuel : ℕ)
