@@ -108,7 +108,7 @@ def chainId (_ : State) : UInt256 := .ofNat EvmYul.chainId
 def selfbalance (self : State) : UInt256 :=
   Batteries.RBMap.find? self.accountMap self.executionEnv.codeOwner |>.elim ⟨0⟩ (·.balance)
 
-def setCode (self : State) (code : ByteArray) : State :=
+def setCode (self : State) (code : ByteArray ⊕ Yul.Ast.Stmt) : State :=
   { self with executionEnv.code := code }
 
 end Blocks
