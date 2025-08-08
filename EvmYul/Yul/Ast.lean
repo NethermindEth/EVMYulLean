@@ -62,6 +62,11 @@ mutual
     deriving Inhabited, BEq, Repr
 end
 
+def byteArrayOfStmt (code : Stmt) : ByteArray := (toString (repr code)).toUTF8
+  /- This gives us a placeholder byteArray for Yul code, however it is
+      not the actual byteArray because that would require compiling
+      the Yul code to bytecode, which we do not do here. -/
+
 namespace FunctionDefinition
 
 def params : FunctionDefinition → List Identifier
