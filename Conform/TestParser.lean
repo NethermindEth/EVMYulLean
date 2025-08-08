@@ -38,9 +38,9 @@ instance : FromJson PersistentAccountState where
   fromJson? json := do
     pure {
       balance := ← json.getObjValAs? UInt256 "balance"
-      nonce   := ← json.getObjValAs? UInt256 "nonce"
-      code    := ← json.getObjValAs? Code    "code"
-      storage := ← json.getObjValAs? Storage "storage"
+      nonce   := ← json.getObjValAs? UInt256   "nonce"
+      code    := Sum.inl (← json.getObjValAs? Code "code") -- We only have tests with bytecode, not Yul.
+      storage := ← json.getObjValAs? Storage   "storage"
     }
 
 instance : FromJson Pre where

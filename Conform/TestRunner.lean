@@ -284,9 +284,9 @@ def validateTransaction
       | some sender => (sender.code, sender.nonce, sender.balance)
       | none =>
         dbg_trace s!"could not find sender {EvmYul.toHex S_T.toByteArray}"
-        (.empty, ⟨0⟩, ⟨0⟩)
+        (Sum.inl .empty, ⟨0⟩, ⟨0⟩)
 
-  if senderCode ≠ .empty then throw <| .TransactionException .SENDER_NOT_EOA
+  if senderCode.getLeft? ≠ (.some .empty) then throw <| .TransactionException .SENDER_NOT_EOA
   if T.base.nonce < senderNonce then
     throw <| .TransactionException .NONCE_MISMATCH_TOO_LOW
   if T.base.nonce > senderNonce then
@@ -610,7 +610,7 @@ instance (priority := high) : Repr PersistentAccountMap := ⟨λ m _ ↦
       for (sk, sv) in v.storage do
         result := result ++ s!"{sk} → {sv}\n"
     return result⟩
- 
+
 def processTest (entry : TestEntry) (isTimed : Option (Nat × TestId) := .none) (verbose := true) : IO TestResult := do
   let tα ← if isTimed.isSome then IO.monoMsNow else pure 0
   let result := preImpliesPost entry
