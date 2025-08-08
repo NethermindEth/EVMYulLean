@@ -408,7 +408,7 @@ def step {τ : OperationType} (op : Operation τ) (arg : Option (UInt256 × Nat)
                     let newAccount : Account :=
                       { nonce := ⟨1⟩
                       , balance := v + v'
-                      , code := code
+                      , code := Sum.inl code
                       , storage := default
                       , tstorage := default
                       }
@@ -566,7 +566,7 @@ def step {τ : OperationType} (op : Operation τ) (arg : Option (UInt256 × Nat)
                 let newAccount : Account :=
                   { nonce := ⟨1⟩
                   , balance := v + v'
-                  , code := code
+                  , code := Sum.inl code
                   , storage := default
                   , tstorage := default
                   }
