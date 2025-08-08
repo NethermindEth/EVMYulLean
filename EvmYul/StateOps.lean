@@ -67,7 +67,7 @@ section CodeCopy
 
 def extCodeSize (self : State) (a : UInt256) : State × UInt256 :=
   let addr := AccountAddress.ofUInt256 a
-  let s := self.lookupAccount addr |>.option ⟨0⟩ (.ofNat ∘ ByteArray.size ∘ (·.code))
+  let s := self.lookupAccount addr |>.option ⟨0⟩ (.ofNat ∘ ByteArray.size ∘ byteArrayOfCode ∘ (·.code))
   (self.addAccessedAccount addr, s)
 
 def extCodeHash (self : State) (v : UInt256) : State × UInt256 :=
