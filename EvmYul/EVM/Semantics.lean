@@ -619,7 +619,7 @@ def Lambda
   let (i, createdAccounts) :=
     if
       existentAccount.nonce ≠ ⟨0⟩
-        || existentAccount.code.size ≠ 0
+        || (byteArrayOfCode existentAccount.code).size ≠ 0
         || existentAccount.storage != default
     then
       (⟨#[0xfe]⟩, createdAccounts)
