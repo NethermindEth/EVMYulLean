@@ -13,6 +13,7 @@ inductive ExecutionException where
   | StackUnderflow
   | InvalidMemoryAccess
   | StaticModeViolation
+  | InvalidYulExecution
 deriving BEq
 
 instance : Repr ExecutionException where
@@ -26,6 +27,7 @@ instance : Repr ExecutionException where
       | .StackUnderflow => "StackUnderflow"
       | .InvalidMemoryAccess => "InvalidMemoryAccess"
       | .StaticModeViolation => "StaticModeViolation"
+      | .InvalidYulExecution => "InvalidYulExecution"
 
 inductive BlockException where
   | INCORRECT_EXCESS_BLOB_GAS
