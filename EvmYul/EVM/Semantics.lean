@@ -663,7 +663,7 @@ def Lambda
     , source    := s
     , weiValue  := v
     , inputData := default
-    , code      := i
+    , code      := Sum.inl i
     , gasPrice  := p.toNat
     , header    := H
     , depth     := e.toNat
@@ -683,7 +683,7 @@ def Lambda
       let F : Bool := Id.run do -- (118)
         let F₀ : Bool :=
           match σ.find? a with
-          | .some ac => ac.code ≠ .empty ∨ ac.nonce ≠ ⟨0⟩
+          | .some ac => byteArrayOfCode ac.code ≠ .empty ∨ ac.nonce ≠ ⟨0⟩
           | .none => false
         let F₂ : Bool := gStarStar.toNat < c
         let MAX_CODE_SIZE := 24576
@@ -694,7 +694,7 @@ def Lambda
       let σ' : AccountMap := -- (115)
         if F then σ else
           let newAccount' := σStarStar.findD a default
-          σStarStar.insert a {newAccount' with code := returnedData}
+          σStarStar.insert a {newAccount' with code := Sum.inl returnedData}
 
       -- (114)
       let g' := if F then 0 else gStarStar.toNat - c
