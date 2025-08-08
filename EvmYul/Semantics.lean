@@ -298,7 +298,10 @@ def step {τ : OperationType} (op : Operation τ) (arg : Option (UInt256 × Nat)
     | τ, .CALLDATACOPY =>
       dispatchTernaryCopyOp τ .calldatacopy
     | τ, .CODESIZE =>
-      dispatchExecutionEnvOp τ (.ofNat ∘ ByteArray.size ∘ ExecutionEnv.code)
+      dispatchExecutionEnvOp τ (.ofNat ∘ ByteArray.size ∘ byteArrayOfCode ∘ ExecutionEnv.code)
+      /- This uses a placeholder byteArray for Yul code, however it is
+           not the actual byteArray because that would require compiling
+           the Yul code to bytecode, which we do not do here. -/
     | τ, .CODECOPY =>
       dispatchTernaryCopyOp τ .codeCopy
     | τ, .GASPRICE =>
