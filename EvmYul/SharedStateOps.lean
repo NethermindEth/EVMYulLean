@@ -27,11 +27,15 @@ def calldatacopy (self : SharedState) (mstart datastart size : UInt256) : Shared
   }
 
 def codeCopy (self : SharedState) (mstart cstart size : UInt256) : SharedState :=
-  { self with
-    memory := self.executionEnv.code.write cstart.toNat self.memory mstart.toNat size.toNat
-    activeWords :=
-      .ofNat (MachineState.M self.activeWords.toNat mstart.toNat size.toNat)
-  }
+  match self.executionEnv.code with
+    | Sum.inl code =>
+      { self with
+        memory := code.write cstart.toNat self.memory mstart.toNat size.toNat
+        activeWords :=
+          .ofNat (MachineState.M self.activeWords.toNat mstart.toNat size.toNat)
+      }
+    | Sum.inr _ => self
+      -- TODO: Unsure what the semantics of codeCopy is for Yul code.
 
 def extCodeCopy' (self : SharedState) (acc mstart cstart size : UInt256) : SharedState :=
   let mstart := mstart.toNat
