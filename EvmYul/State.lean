@@ -33,7 +33,7 @@ structure State where
   blocks              : ProcessedBlocks
   genesisBlockHeader  : BlockHeader
   createdAccounts     : Batteries.RBSet AccountAddress compare
-deriving BEq, Inhabited, Repr
+deriving Inhabited, Repr
 
 def State.blockHashes (self : State) : Array UInt256 :=
   self.blocks.map ProcessedBlock.hash

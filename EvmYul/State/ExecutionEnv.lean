@@ -1,6 +1,7 @@
 import EvmYul.Wheels
 import EvmYul.UInt256
 import EvmYul.State.BlockHeader
+import EvmYul.Yul.Ast
 
 namespace EvmYul
 
@@ -23,13 +24,13 @@ structure ExecutionEnv where
   source    : AccountAddress
   weiValue  : UInt256
   inputData : ByteArray
-  code      : ByteArray
+  code      : (ByteArray ⊕ Yul.Ast.Stmt)
   gasPrice  : ℕ
   header    : BlockHeader
   depth     : ℕ
   perm      : Bool
   blobVersionedHashes : List ByteArray
-  deriving DecidableEq, Inhabited, Repr
+  deriving Inhabited, Repr
 
 def prevRandao (e : ExecutionEnv) : UInt256 :=
   e.header.prevRandao
