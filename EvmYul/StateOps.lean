@@ -7,6 +7,8 @@ import EvmYul.State
 import EvmYul.Wheels
 import EvmYul.EVM.GasConstants
 
+import EvmYul.Yul.Ast
+
 namespace EvmYul
 
 namespace State
@@ -67,7 +69,12 @@ section CodeCopy
 
 def extCodeSize (self : State) (a : UInt256) : State × UInt256 :=
   let addr := AccountAddress.ofUInt256 a
-  let s := self.lookupAccount addr |>.option ⟨0⟩ (.ofNat ∘ ByteArray.size ∘ (·.code))
+  let s := self.lookupAccount addr |>.option ⟨0⟩ (.ofNat ∘ ByteArray.size ∘ (
+    fun acc ↦
+      match acc.code with
+      | Sum.inl code => code
+      | Sum.inr code => Yul.Ast.byteArrayOfStmt code
+  ))
   (self.addAccessedAccount addr, s)
 
 def extCodeHash (self : State) (v : UInt256) : State × UInt256 :=
