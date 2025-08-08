@@ -38,7 +38,7 @@ def extCodeCopy' (self : SharedState) (acc mstart cstart size : UInt256) : Share
   let cstart := cstart.toNat
   let size := size.toNat
   let addr := AccountAddress.ofUInt256 acc
-  let b : ByteArray := self.toState.lookupAccount addr |>.option .empty (·.code)
+  let b : ByteArray := self.toState.lookupAccount addr |>.option .empty (byteArrayOfCode ·.code)
   { self with
     memory := b.write cstart self.memory mstart size
     substate := .addAccessedAccount self.toState.substate addr
