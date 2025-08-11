@@ -1,6 +1,7 @@
 import Lean.Data.Json
 import EvmYul.UInt256
 import EvmYul.Wheels
+import Batteries.Data.RBMap
 
 import Mathlib.Data.Multiset.Sort
 

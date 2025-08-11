@@ -6,7 +6,7 @@ require mathlib from git
 
 package «evmyul» {
   moreLeanArgs := #["-DautoImplicit=false"]
-  moreServerOptions := #[⟨`DautoImplicit, false⟩]
+  moreServerOptions := #[⟨`autoImplicit, false⟩]
 }
 
 def cloneWithCache (pkg : NPackage _package.name) (dirname url : String) : FetchM (Job GitRepo) := do
