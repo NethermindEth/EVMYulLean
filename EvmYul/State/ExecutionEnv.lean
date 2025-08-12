@@ -1,6 +1,7 @@
 import EvmYul.Wheels
 import EvmYul.UInt256
 import EvmYul.State.BlockHeader
+import EvmYul.Yul.Ast
 
 namespace EvmYul
 
@@ -17,19 +18,37 @@ The execution envorinment `I` `ExecutionEnv`. Section 9.3.
 - `depth`     `Iₑ`
 - `perm`      `I_w`
 -/
-structure ExecutionEnv where
+structure ExecutionEnv (τ : OperationType) where
   codeOwner : AccountAddress
   sender    : AccountAddress
   source    : AccountAddress
   weiValue  : UInt256
   inputData : ByteArray
-  code      : ByteArray
+  code      : match τ with
+                | .EVM => ByteArray
+                | .Yul => Yul.Ast.Stmt
   gasPrice  : ℕ
   header    : BlockHeader
   depth     : ℕ
   perm      : Bool
   blobVersionedHashes : List ByteArray
-  deriving DecidableEq, Inhabited, Repr
+
+instance {τ} : Inhabited (ExecutionEnv τ) where
+  default := {
+    codeOwner := default
+    sender := default
+    source := default
+    weiValue := default
+    inputData := default
+    code := match τ with
+              | .EVM => default
+              | .Yul => default
+    gasPrice := default
+    header := default
+    depth := default
+    perm := default
+    blobVersionedHashes := default
+  }
 
 def prevRandao (e : ExecutionEnv) : UInt256 :=
   e.header.prevRandao
