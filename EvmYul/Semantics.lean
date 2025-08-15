@@ -558,6 +558,7 @@ def step {τ : OperationType} (op : Operation τ) (arg : Option (UInt256 × Nat)
     | .EVM, .SWAP15 => swap 15
     | .EVM, .SWAP16 => swap 16
     | .EVM, _ => λ _ ↦ default
+    | .Yul, .POP => λ yulState _ ↦ .ok (yulState, .none) -- POP is a no-op for Yul as it discards the value only as a hint to the compiler.
     | .Yul, _ => λ _ _ ↦ default
 
 end Semantics
