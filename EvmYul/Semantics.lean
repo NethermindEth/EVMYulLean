@@ -503,7 +503,6 @@ def step {τ : OperationType} (op : Operation τ) (arg : Option (UInt256 × Nat)
               .ok <| (yulState', none)
         | _ => .error .InvalidArguments
     | τ, .INVALID => dispatchInvalid τ
-    | .Yul, _ => λ _ _ ↦ default
     | .EVM, .Push .PUSH0 => λ evmState =>
         .ok <|
           evmState.replaceStackAndIncrPC (evmState.stack.push ⟨0⟩)
@@ -559,6 +558,7 @@ def step {τ : OperationType} (op : Operation τ) (arg : Option (UInt256 × Nat)
     | .EVM, .SWAP15 => swap 15
     | .EVM, .SWAP16 => swap 16
     | .EVM, _ => λ _ ↦ default
+    | .Yul, _ => λ _ _ ↦ default
 
 end Semantics
 
