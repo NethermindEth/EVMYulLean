@@ -148,7 +148,7 @@ def Cselfdestruct (s : EVM.State) : ℕ :=
 /--
 NB Assumes stack coherency.
 -/
-def Csload (μₛ : Stack UInt256) (A : Substate) (I : ExecutionEnv) : ℕ :=
+def Csload (μₛ : Stack UInt256) (A : Substate) (I : ExecutionEnv .EVM) : ℕ :=
   if A.accessedStorageKeys.contains (I.codeOwner, μₛ[0]!)
   then Gwarmaccess
   else Gcoldsload
@@ -161,22 +161,22 @@ def Ctload : ℕ :=
 -/
 def L (n : ℕ) : ℕ := n - (n / 64)
 
-def Cnew (t : AccountAddress) (val : UInt256) (σ : AccountMap) : ℕ :=
+def Cnew (t : AccountAddress) (val : UInt256) (σ : AccountMap .EVM) : ℕ :=
   if EvmYul.State.dead σ t && val != ⟨0⟩ then Gnewaccount else 0
 
 def Cxfer (val : UInt256) : ℕ :=
   if val != ⟨0⟩ then Gcallvalue else 0
 
-def Cextra (t r : AccountAddress) (val : UInt256) (σ : AccountMap) (A : Substate) : ℕ :=
+def Cextra (t r : AccountAddress) (val : UInt256) (σ : AccountMap .EVM) (A : Substate) : ℕ :=
   Caccess t A + Cxfer val + Cnew r val σ
 
-def Cgascap (t r : AccountAddress) (val g : UInt256) (σ : AccountMap) (μ : MachineState) (A : Substate) :=
+def Cgascap (t r : AccountAddress) (val g : UInt256) (σ : AccountMap .EVM) (μ : MachineState) (A : Substate) :=
   if μ.gasAvailable.toNat >= Cextra t r val σ A then
     min (L <| (μ.gasAvailable.toNat - Cextra t r val σ A)) g.toNat
   else
     g.toNat
 
-def Ccallgas (t r : AccountAddress) (val g : UInt256) (σ : AccountMap) (μ : MachineState) (A : Substate) : ℕ :=
+def Ccallgas (t r : AccountAddress) (val g : UInt256) (σ : AccountMap .EVM) (μ : MachineState) (A : Substate) : ℕ :=
   match val with
     | ⟨0⟩ => Cgascap t r val g σ μ A
     | _ => Cgascap t r val g σ μ A + GasConstants.Gcallstipend
@@ -184,7 +184,7 @@ def Ccallgas (t r : AccountAddress) (val g : UInt256) (σ : AccountMap) (μ : Ma
 /--
 NB Assumes stack coherence.
 -/
-def Ccall (t r : AccountAddress) (val g : UInt256) (σ : AccountMap) (μ : MachineState) (A : Substate) : ℕ :=
+def Ccall (t r : AccountAddress) (val g : UInt256) (σ : AccountMap .EVM) (μ : MachineState) (A : Substate) : ℕ :=
   Cgascap t r val g σ μ A + Cextra t r val σ A
 
 /--

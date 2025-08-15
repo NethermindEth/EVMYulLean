@@ -17,7 +17,7 @@ def multifill (vars : List Identifier) (vals : List Literal) : Yul.State → Yul
   | s => s
 
 -- | Overwrite the EvmYul.Yul.State state of some state.
-def setSharedState (sharedState : EvmYul.SharedState) : Yul.State → Yul.State
+def setSharedState (sharedState : EvmYul.SharedState .Yul) : Yul.State → Yul.State
   | Ok _ store => Ok sharedState store
   | s => s
 
@@ -25,7 +25,7 @@ def setMachineState (mstate : EvmYul.MachineState) : Yul.State → Yul.State
   | Ok sstate store => Ok {sstate with toMachineState := mstate} store
   | s => s
 
-def setState (state : EvmYul.State) : Yul.State → Yul.State
+def setState (state : EvmYul.State .Yul) : Yul.State → Yul.State
   | Ok sstate store => Ok {sstate with toState := state} store
   | s => s
 
@@ -105,11 +105,11 @@ def lookup! (var : Identifier) : Yul.State → Literal
 --  STATE NOTATION
 -- ============================================================================
 
-def toSharedState : State → EvmYul.SharedState
+def toSharedState : State → EvmYul.SharedState .Yul
   | Ok s _ => s
   | _ => default
 
-def executionEnv : State → EvmYul.ExecutionEnv
+def executionEnv : State → EvmYul.ExecutionEnv .Yul
   | Ok s _ => s.executionEnv
   | _ => default
 
@@ -117,7 +117,7 @@ def toMachineState : State → EvmYul.MachineState
   | Ok s _ => s.toMachineState
   | _ => default
 
-def toState : State → EvmYul.State
+def toState : State → EvmYul.State .Yul
   | Ok s _ => s.toState
   | _ => default
 

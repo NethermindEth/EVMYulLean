@@ -13,7 +13,7 @@ The EVM `State` (extends EvmYul.SharedState).
 - `stack`      `s`
 - `execLength` - Length of execution.
 -/
-structure State extends EvmYul.SharedState where
+structure State extends EvmYul.SharedState .EVM where
   pc    : UInt256
   stack : Stack UInt256
   execLength : ℕ

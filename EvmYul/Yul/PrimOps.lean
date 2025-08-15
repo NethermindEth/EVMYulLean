@@ -33,10 +33,10 @@ def execQuadOp (f : Primop.Quaternary) : Transformer
   | s, [a, b, c, d] => .ok (s, f a b c d)
   | _, _            => throw .InvalidArguments
 
-def executionEnvOp (op : ExecutionEnv → UInt256) : Transformer :=
+def executionEnvOp (op : ExecutionEnv .Yul → UInt256) : Transformer :=
   λ yulState _ ↦ .ok (yulState, .some <| op yulState.executionEnv)
 
-def unaryExecutionEnvOp (op : ExecutionEnv → UInt256 → UInt256) : Transformer :=
+def unaryExecutionEnvOp (op : ExecutionEnv .Yul → UInt256 → UInt256) : Transformer :=
   λ yulState lits ↦
     match lits with
     | [a] => .ok (yulState, .some <| op yulState.executionEnv a)
@@ -76,7 +76,7 @@ def ternaryMachineStateOp
     | _ => .error .InvalidArguments
 
 def binaryStateOp
-  (op : EvmYul.State → UInt256 → UInt256 → EvmYul.State) : Transformer
+  (op : EvmYul.State .Yul → UInt256 → UInt256 → EvmYul.State .Yul) : Transformer
 := λ yulState lits ↦
   match lits with
     | [a, b] =>
@@ -85,10 +85,10 @@ def binaryStateOp
       .ok <| (yulState', none)
     | _ => .error .InvalidArguments
 
-def stateOp (op : EvmYul.State → UInt256) : Transformer :=
+def stateOp (op : EvmYul.State .Yul → UInt256) : Transformer :=
   λ yulState _ ↦ .ok (yulState, .some <| op yulState.toState)
 
-def unaryStateOp (op : EvmYul.State → UInt256 → EvmYul.State × UInt256) : Transformer :=
+def unaryStateOp (op : EvmYul.State .Yul → UInt256 → EvmYul.State .Yul × UInt256) : Transformer :=
   λ yulState lits ↦
       match lits with
         | [lit] =>
@@ -98,7 +98,7 @@ def unaryStateOp (op : EvmYul.State → UInt256 → EvmYul.State × UInt256) : T
           .ok (yulState', some b)
         | _ => .error .InvalidArguments
 
-def ternaryCopyOp (op : SharedState → UInt256 → UInt256 → UInt256 → SharedState) :
+def ternaryCopyOp (op : SharedState .Yul → UInt256 → UInt256 → UInt256 → SharedState .Yul) :
   Transformer
 := λ yulState lits ↦
   match lits with
@@ -109,7 +109,7 @@ def ternaryCopyOp (op : SharedState → UInt256 → UInt256 → UInt256 → Shar
     | _ => .error .InvalidArguments
 
 def quaternaryCopyOp
-  (op : SharedState → UInt256 → UInt256 → UInt256 → UInt256 → SharedState) :
+  (op : SharedState .Yul → UInt256 → UInt256 → UInt256 → UInt256 → SharedState .Yul) :
   Transformer
 := λ yulState lits ↦
   match lits with

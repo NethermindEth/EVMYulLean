@@ -49,17 +49,17 @@ def Withdrawal.computeTrieRoot (ws : Array ByteArray) : Option ByteArray := do
     | some ws => (ByteArray.ofBlob (blobComputeTrieRoot ws)).toOption
 
 def applyWithdrawals
-  (σ : AccountMap)
+  (σ : AccountMap .EVM)
   (ws : Array Withdrawal)
     :
-  AccountMap
+  AccountMap .EVM
 :=
   ws.foldl applyWithdrawal σ
  where
-  applyWithdrawal (σ : AccountMap) (w : Withdrawal) : AccountMap :=
+  applyWithdrawal (σ : AccountMap .EVM) (w : Withdrawal) : AccountMap .EVM :=
     if w.amount <= 0 then σ else
       match σ.find? w.address with
         | none =>
-          σ.insert w.address {(default : Account) with balance := .ofNat <| w.amount.toFin.val * 10^9}
+          σ.insert w.address {(default : Account .EVM) with balance := .ofNat <| w.amount.toFin.val * 10^9}
         | some ac =>
           σ.insert w.address {ac with balance := .ofNat <| ac.balance.toNat + w.amount.toFin.val * 10^9}

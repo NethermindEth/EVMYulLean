@@ -38,8 +38,8 @@ abbrev DeserializedBlocks := Array DeserializedBlock
 structure ProcessedBlock where
   hash        : UInt256
   blockHeader : BlockHeader
-  σ           : AccountMap
-deriving BEq, Inhabited, Repr
+  σ           : AccountMap .EVM
+deriving Inhabited
 
 abbrev ProcessedBlocks := Array ProcessedBlock
 

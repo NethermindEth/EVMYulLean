@@ -15,7 +15,11 @@ namespace EvmYul
 def π : Batteries.RBSet AccountAddress compare :=
   Batteries.RBSet.ofList ((List.range 11).tail.map (Fin.ofNat _)) compare
 
-inductive ToExecute where | Code (code : ByteArray) | Precompiled (precompiled : AccountAddress)
+inductive ToExecute (τ : OperationType) where
+  | Code (code : match τ with
+                   | .EVM => ByteArray
+                   | .Yul => Yul.Ast.Stmt)
+  | Precompiled (precompiled : AccountAddress)
 
 structure PersistentAccountState (τ : OperationType) where
   nonce    : UInt256
@@ -24,6 +28,15 @@ structure PersistentAccountState (τ : OperationType) where
   code     : match τ with
               | .EVM => ByteArray
               | .Yul => Yul.Ast.Stmt
+
+instance {τ} : BEq (PersistentAccountState τ) where
+  beq a b :=
+       a.nonce == b.nonce
+    && a.balance == b.balance
+    && a.storage == b.storage
+    && (match τ with
+          | .EVM => a.code == b.code
+          | .Yul => a.code == b.code)
 
 instance {τ} : Inhabited (PersistentAccountState τ) where
   default := {
@@ -54,7 +67,7 @@ For now, we assume no global map `GM` with which `GM[code_hash] ≡ code`.
 -/
 structure Account (τ : OperationType) extends PersistentAccountState τ where
   tstorage : Storage
-deriving Inhabited
+deriving BEq, Inhabited
 
 def PersistentAccountState.codeHash (self : PersistentAccountState .EVM) : UInt256 :=
   .ofNat <| fromByteArrayBigEndian (ffi.KEC self.code)

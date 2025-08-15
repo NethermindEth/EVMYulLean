@@ -50,16 +50,16 @@ instance {τ} : Inhabited (ExecutionEnv τ) where
     blobVersionedHashes := default
   }
 
-def prevRandao (e : ExecutionEnv) : UInt256 :=
+def prevRandao {τ} (e : ExecutionEnv τ) : UInt256 :=
   e.header.prevRandao
 
-def basefee (e : ExecutionEnv) : UInt256 :=
+def basefee {τ} (e : ExecutionEnv τ) : UInt256 :=
   .ofNat e.header.baseFeePerGas
 
-def ExecutionEnv.getBlobGasprice (e : ExecutionEnv) : UInt256 :=
+def ExecutionEnv.getBlobGasprice {τ} (e : ExecutionEnv τ) : UInt256 :=
   .ofNat e.header.getBlobGasprice
 
-def blobhash (e : ExecutionEnv) (i : UInt256) : UInt256 :=
+def blobhash {τ} (e : ExecutionEnv τ) (i : UInt256) : UInt256 :=
   e.blobVersionedHashes[i.toNat]?.option ⟨0⟩
     (.ofNat ∘ fromByteArrayBigEndian)
 

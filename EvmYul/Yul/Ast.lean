@@ -59,6 +59,7 @@ mutual
     | Continue : Stmt
     | Break : Stmt
     | Leave : Stmt
+    deriving BEq, Inhabited
 end
 
 namespace FunctionDefinition

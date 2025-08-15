@@ -44,13 +44,13 @@ def execQuadOp (f : Primop.Quaternary) : Transformer :=
       | _ =>
         .error .StackUnderflow
 
-def executionEnvOp (op : ExecutionEnv → UInt256) : Transformer :=
+def executionEnvOp (op : ExecutionEnv .EVM → UInt256) : Transformer :=
   λ evmState ↦ Id.run do
     let result := op evmState.executionEnv
     .ok <|
       evmState.replaceStackAndIncrPC (evmState.stack.push result)
 
-def unaryExecutionEnvOp (op : ExecutionEnv → UInt256 → UInt256) : Transformer :=
+def unaryExecutionEnvOp (op : ExecutionEnv .EVM → UInt256 → UInt256) : Transformer :=
   λ evmState ↦
     match evmState.stack.pop with
     | some ⟨ s , μ₀⟩ => Id.run do
@@ -102,7 +102,7 @@ def ternaryMachineStateOp
     | _ => .error .StackUnderflow
 
 def binaryStateOp
-  (op : EvmYul.State → UInt256 → UInt256 → EvmYul.State)
+  (op : EvmYul.State .EVM → UInt256 → UInt256 → EvmYul.State .EVM)
     :
   Transformer
 := λ evmState ↦
@@ -113,13 +113,13 @@ def binaryStateOp
       .ok <| evmState'.replaceStackAndIncrPC s
     | _ => .error .StackUnderflow
 
-def stateOp (op : EvmYul.State → UInt256) : Transformer :=
+def stateOp (op : EvmYul.State .EVM → UInt256) : Transformer :=
   λ evmState ↦ Id.run do
     .ok <|
       evmState.replaceStackAndIncrPC (evmState.stack.push <| op evmState.toState)
 
 def unaryStateOp
-  (op : EvmYul.State → UInt256 → EvmYul.State × UInt256)
+  (op : EvmYul.State .EVM → UInt256 → EvmYul.State .EVM × UInt256)
     :
   Transformer
 := λ evmState ↦
@@ -131,7 +131,7 @@ def unaryStateOp
         | _ => .error .StackUnderflow
 
 def ternaryCopyOp
-  (op : SharedState → UInt256 → UInt256 → UInt256 → SharedState)
+  (op : SharedState .EVM → UInt256 → UInt256 → UInt256 → SharedState .EVM)
     :
   Transformer
 := λ evmState ↦
@@ -143,7 +143,7 @@ def ternaryCopyOp
     | _ => .error .StackUnderflow
 
 def quaternaryCopyOp
-  (op : SharedState → UInt256 → UInt256 → UInt256 → UInt256 → SharedState)
+  (op : SharedState .EVM → UInt256 → UInt256 → UInt256 → UInt256 → SharedState .EVM)
     :
   Transformer
 :=  λ evmState ↦

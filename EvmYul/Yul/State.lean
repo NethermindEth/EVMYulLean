@@ -15,9 +15,9 @@ A jump in control flow containing a checkpoint of the state at jump-time.
 - `Leave`   : evm `return` was encountered
 -/
 inductive Jump where
-  | Continue : EvmYul.SharedState → VarStore → Jump
-  | Break    : EvmYul.SharedState → VarStore → Jump
-  | Leave    : EvmYul.SharedState → VarStore → Jump
+  | Continue : EvmYul.SharedState .Yul → VarStore → Jump
+  | Break    : EvmYul.SharedState .Yul → VarStore → Jump
+  | Leave    : EvmYul.SharedState .Yul → VarStore → Jump
 
 /--
 The Yul `State`.
@@ -28,7 +28,7 @@ The Yul `State`.
 The definition is ever so slightly off due to historical reasons.
 -/
 inductive State where
-  | Ok         : EvmYul.SharedState → VarStore → State
+  | Ok         : EvmYul.SharedState .Yul → VarStore → State
   | OutOfFuel  : State
   | Checkpoint : Jump → State
 
@@ -37,7 +37,7 @@ instance : Inhabited State where
 
 namespace State
 
-def sharedState : State → EvmYul.SharedState
+def sharedState : State → EvmYul.SharedState .Yul
   | Ok sharedState _ => sharedState
   | _ => default
 

@@ -11,66 +11,66 @@ namespace EvmYul
 
 namespace State
 
-def addAccessedAccount (self : State) (addr : AccountAddress) : State :=
+def addAccessedAccount {τ} (self : State τ) (addr : AccountAddress) : State τ :=
   { self with substate := self.substate.addAccessedAccount addr }
 
-def addAccessedStorageKey (self : State) (sk : AccountAddress × UInt256) : State :=
+def addAccessedStorageKey {τ} (self : State τ) (sk : AccountAddress × UInt256) : State τ :=
   { self with substate := self.substate.addAccessedStorageKey sk }
 
 /--
 DEAD(σ, a). Section 4.1., equation 15.
 -/
-def dead (σ : AccountMap) (addr : AccountAddress) : Bool :=
+def dead {τ} (σ : AccountMap τ) (addr : AccountAddress) : Bool :=
   σ.find? addr |>.option True Account.emptyAccount
 
-def accountExists (self : State) (addr : AccountAddress) : Bool := self.accountMap.find? addr |>.isSome
+def accountExists {τ} (self : State τ) (addr : AccountAddress) : Bool := self.accountMap.find? addr |>.isSome
 
-def lookupAccount (self : State) (addr : AccountAddress) : Option Account :=
+def lookupAccount {τ} (self : State τ) (addr : AccountAddress) : Option (Account τ) :=
   self.accountMap.find? addr
 
-def updateAccount (addr : AccountAddress) (act : Account) (self : State) : State :=
+def updateAccount {τ} (addr : AccountAddress) (act : Account τ) (self : State τ) : State τ :=
   { self with accountMap := self.accountMap.insert addr act }
 
-def setAccount (self : State) (addr : AccountAddress) (acc : Account) : State :=
+def setAccount {τ} (self : State τ) (addr : AccountAddress) (acc : Account τ) : State τ :=
   { self with accountMap := self.accountMap.insert addr acc }
 
-def setSelfAccount (self : State) (acc : Account := default) : State :=
+def setSelfAccount {τ} (self : State τ) (acc : Account τ := default) : State τ :=
   self.setAccount self.executionEnv.codeOwner acc
 
-def updateAccount! (self : State) (addr : AccountAddress) (f : Account → Account) : State :=
+def updateAccount! {τ} (self : State τ) (addr : AccountAddress) (f : Account τ → Account τ) : State τ :=
   let acc! := self.lookupAccount addr |>.getD default
   self.setAccount addr (f acc!)
 
-def updateSelfAccount! (self : State) : (Account → Account) → State :=
+def updateSelfAccount! {τ} (self : State τ) : (Account τ → Account τ) → State τ :=
   self.updateAccount! self.executionEnv.codeOwner
 
-def balance (self : State) (k : UInt256) : State × UInt256 :=
+def balance {τ} (self : State τ) (k : UInt256) : State τ × UInt256 :=
   let addr := AccountAddress.ofUInt256 k
   (self.addAccessedAccount addr, self.accountMap.find? addr |>.elim ⟨0⟩ (·.balance))
 
-def initialiseAccount (addr : AccountAddress) (self : State) : State :=
+def initialiseAccount (addr : AccountAddress) (self : State .EVM) : State .EVM :=
   if self.accountExists addr then self else self.updateAccount addr default
 
-def calldataload (self : State) (v : UInt256) : UInt256 :=
+def calldataload {τ} (self : State τ) (v : UInt256) : UInt256 :=
   uInt256OfByteArray <| self.executionEnv.inputData.readBytes v.toNat 32
 
-def setNonce! (self : State) (addr : AccountAddress) (nonce : UInt256) : State :=
+def setNonce! {τ} (self : State τ) (addr : AccountAddress) (nonce : UInt256) : State τ :=
   self.updateAccount! addr (λ acc ↦ { acc with nonce := nonce })
 
-def setSelfNonce! (self : State) (nonce : UInt256) : State :=
+def setSelfNonce! {τ} (self : State τ) (nonce : UInt256) : State τ :=
   self.setNonce! self.executionEnv.codeOwner nonce
 
-def selfStorage! (self : State) : Storage :=
+def selfStorage! {τ} (self : State τ) : Storage :=
   self.lookupAccount self.executionEnv.codeOwner |>.getD default |>.storage
 
 section CodeCopy
 
-def extCodeSize (self : State) (a : UInt256) : State × UInt256 :=
+def extCodeSize (self : State .EVM) (a : UInt256) : State .EVM × UInt256 :=
   let addr := AccountAddress.ofUInt256 a
   let s := self.lookupAccount addr |>.option ⟨0⟩ (.ofNat ∘ ByteArray.size ∘ (·.code))
   (self.addAccessedAccount addr, s)
 
-def extCodeHash (self : State) (v : UInt256) : State × UInt256 :=
+def extCodeHash (self : State .EVM) (v : UInt256) : State .EVM × UInt256 :=
   let addr := AccountAddress.ofUInt256 v
   let newState := self.addAccessedAccount addr
   if dead self.accountMap addr then (newState, ⟨0⟩) else
@@ -81,53 +81,53 @@ end CodeCopy
 
 section Blocks
 
-def blockHash (self : State) (blockNumber : UInt256) : UInt256 :=
+def blockHash {τ} (self : State τ) (blockNumber : UInt256) : UInt256 :=
   let v := self.executionEnv.header.number
   if v ≤ blockNumber.toNat || blockNumber.toNat + 256 < v then ⟨0⟩
   else
     let hashes := self.blockHashes
     hashes.getD blockNumber.toNat ⟨0⟩
 
-def coinBase (self : State) : AccountAddress :=
+def coinBase {τ} (self : State τ) : AccountAddress :=
   self.executionEnv.header.beneficiary
 
-def timeStamp (self : State) : UInt256 :=
+def timeStamp {τ} (self : State τ) : UInt256 :=
   .ofNat self.executionEnv.header.timestamp
 
-def number (self : State) : UInt256 :=
+def number {τ} (self : State τ) : UInt256 :=
   .ofNat self.executionEnv.header.number
 
-def difficulty (self : State) : UInt256 :=
+def difficulty {τ} (self : State τ) : UInt256 :=
   .ofNat self.executionEnv.header.difficulty
 
-def gasLimit (self : State) : UInt256 :=
+def gasLimit {τ} (self : State τ) : UInt256 :=
   .ofNat self.executionEnv.header.gasLimit
 
-def chainId (_ : State) : UInt256 := .ofNat EvmYul.chainId
+def chainId {τ} (_ : State τ) : UInt256 := .ofNat EvmYul.chainId
 
-def selfbalance (self : State) : UInt256 :=
+def selfbalance {τ} (self : State τ) : UInt256 :=
   Batteries.RBMap.find? self.accountMap self.executionEnv.codeOwner |>.elim ⟨0⟩ (·.balance)
 
-def setCode (self : State) (code : ByteArray) : State :=
+def setCode (self : State .EVM) (code : ByteArray) : State .EVM :=
   { self with executionEnv.code := code }
 
 end Blocks
 
 section Storage
 
-def setStorage! (self : State) (addr : AccountAddress) (strg : Storage) : State :=
+def setStorage! {τ} (self : State τ) (addr : AccountAddress) (strg : Storage) : State τ :=
   self.updateAccount! addr (λ acc ↦ { acc with storage := strg })
 
-def setSelfStorage! (self : State) : Storage → State :=
+def setSelfStorage! {τ} (self : State τ) : Storage → State τ :=
   self.setStorage! self.executionEnv.codeOwner
 
-def sload (self : State) (spos : UInt256) : State × UInt256 :=
+def sload {τ} (self : State τ) (spos : UInt256) : State τ × UInt256 :=
   let Iₐ := self.executionEnv.codeOwner
   let v := self.lookupAccount Iₐ |>.option ⟨0⟩ (Account.lookupStorage (k := spos))
   let state' := self.addAccessedStorageKey (Iₐ, spos)
   (state', v)
 
-def sstore (self : State) (spos sval : UInt256) : State :=
+def sstore {τ} (self : State τ) (spos sval : UInt256) : State τ :=
   let Iₐ := self.executionEnv.codeOwner
   let { storage := σ_Iₐ, .. } := self.accountMap.find! Iₐ
   let v₀ :=
@@ -162,12 +162,12 @@ def sstore (self : State) (spos sval : UInt256) : State :=
         |>.addAccessedStorageKey (Iₐ, spos)
     { self' with substate.refundBalance := newAᵣ }
 
-def tload (self : State) (spos : UInt256) : State × UInt256 :=
+def tload {τ} (self : State τ) (spos : UInt256) : State τ × UInt256 :=
   let Iₐ := self.executionEnv.codeOwner
   let v := self.lookupAccount Iₐ |>.option ⟨0⟩ (Account.lookupTransientStorage (k := spos))
   (self, v)
 
-def tstore (self : State) (spos sval : UInt256) : State :=
+def tstore {τ} (self : State τ) (spos sval : UInt256) : State τ :=
   let Iₐ := self.executionEnv.codeOwner
   self.lookupAccount Iₐ |>.option self λ acc ↦
     self.updateAccount Iₐ (acc.updateTransientStorage spos sval)

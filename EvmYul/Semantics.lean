@@ -98,12 +98,12 @@ private def dispatchQuartiary (τ : OperationType) : Primop.Quaternary → Trans
     | .EVM => EVM.execQuadOp
     | .Yul => Yul.execQuadOp
 
-private def dispatchExecutionEnvOp (τ : OperationType) (op : ExecutionEnv → UInt256) : Transformer τ :=
+private def dispatchExecutionEnvOp (τ : OperationType) (op : ExecutionEnv τ → UInt256) : Transformer τ :=
   match τ with
     | .EVM => EVM.executionEnvOp op
     | .Yul => Yul.executionEnvOp op
 
-private def dispatchUnaryExecutionEnvOp (τ : OperationType) (op : ExecutionEnv → UInt256 → UInt256) : Transformer τ :=
+private def dispatchUnaryExecutionEnvOp (τ : OperationType) (op : ExecutionEnv τ → UInt256 → UInt256) : Transformer τ :=
   match τ with
     | .EVM => EVM.unaryExecutionEnvOp op
     | .Yul => Yul.unaryExecutionEnvOp op
@@ -113,13 +113,13 @@ private def dispatchMachineStateOp (τ : OperationType) (op : MachineState → U
     | .EVM => EVM.machineStateOp op
     | .Yul => Yul.machineStateOp op
 
-private def dispatchUnaryStateOp (τ : OperationType) (op : State → UInt256 → State × UInt256) : Transformer τ :=
+private def dispatchUnaryStateOp (τ : OperationType) (op : State τ → UInt256 → State τ × UInt256) : Transformer τ :=
   match τ with
     | .EVM => EVM.unaryStateOp op
     | .Yul => Yul.unaryStateOp op
 
 private def dispatchTernaryCopyOp
- (τ : OperationType) (op : SharedState → UInt256 → UInt256 → UInt256 → SharedState) :
+ (τ : OperationType) (op : SharedState τ → UInt256 → UInt256 → UInt256 → SharedState τ) :
   Transformer τ
 :=
   match τ with
@@ -127,7 +127,7 @@ private def dispatchTernaryCopyOp
     | .Yul => Yul.ternaryCopyOp op
 
 private def dispatchQuaternaryCopyOp
- (τ : OperationType) (op : SharedState → UInt256 → UInt256 → UInt256 → UInt256 → SharedState) :
+ (τ : OperationType) (op : SharedState τ → UInt256 → UInt256 → UInt256 → UInt256 → SharedState τ) :
   Transformer τ
 :=
   match τ with
@@ -159,14 +159,14 @@ private def dispatchBinaryMachineStateOp'
     | .Yul => Yul.binaryMachineStateOp' op
 
 private def dispatchBinaryStateOp
- (τ : OperationType) (op : State → UInt256 → UInt256 → State) :
+ (τ : OperationType) (op : State τ → UInt256 → UInt256 → State τ) :
   Transformer τ
 :=
   match τ with
     | .EVM => EVM.binaryStateOp op
     | .Yul => Yul.binaryStateOp op
 
-private def dispatchStateOp (τ : OperationType) (op : State → UInt256) : Transformer τ :=
+private def dispatchStateOp (τ : OperationType) (op : State τ → UInt256) : Transformer τ :=
   match τ with
     | .EVM => EVM.stateOp op
     | .Yul => Yul.stateOp op
@@ -297,16 +297,16 @@ def step {τ : OperationType} (op : Operation τ) (arg : Option (UInt256 × Nat)
       dispatchExecutionEnvOp τ (.ofNat ∘ ByteArray.size ∘ ExecutionEnv.inputData)
     | τ, .CALLDATACOPY =>
       dispatchTernaryCopyOp τ .calldatacopy
-    | τ, .CODESIZE =>
-      dispatchExecutionEnvOp τ (.ofNat ∘ ByteArray.size ∘ ExecutionEnv.code)
-    | τ, .CODECOPY =>
-      dispatchTernaryCopyOp τ .codeCopy
+    | .EVM, .CODESIZE =>
+      dispatchExecutionEnvOp .EVM (.ofNat ∘ ByteArray.size ∘ ExecutionEnv.code)
+    | .EVM, .CODECOPY =>
+      dispatchTernaryCopyOp .EVM .codeCopy
     | τ, .GASPRICE =>
       dispatchExecutionEnvOp τ (.ofNat ∘ ExecutionEnv.gasPrice)
-    | τ, .EXTCODESIZE =>
-      dispatchUnaryStateOp τ EvmYul.State.extCodeSize
-    | τ, .EXTCODECOPY =>
-      dispatchQuaternaryCopyOp τ EvmYul.SharedState.extCodeCopy'
+    | .EVM, .EXTCODESIZE =>
+      dispatchUnaryStateOp .EVM EvmYul.State.extCodeSize
+    | .EVM, .EXTCODECOPY =>
+      dispatchQuaternaryCopyOp .EVM EvmYul.SharedState.extCodeCopy'
     | τ, .RETURNDATASIZE =>
       dispatchMachineStateOp τ EvmYul.MachineState.returndatasize
     | .EVM, .RETURNDATACOPY =>
@@ -324,7 +324,7 @@ def step {τ : OperationType} (op : Operation τ) (arg : Option (UInt256 × Nat)
             let mState' := yulState.toSharedState.toMachineState.returndatacopy a b c
             .ok <| (yulState.setMachineState mState', .none)
           | _ => .error .InvalidArguments
-    | τ, .EXTCODEHASH => dispatchUnaryStateOp τ EvmYul.State.extCodeHash
+    | .EVM, .EXTCODEHASH => dispatchUnaryStateOp .EVM EvmYul.State.extCodeHash
 
     | τ, .BLOCKHASH => dispatchUnaryStateOp τ (λ s v ↦ (s, EvmYul.State.blockHash s v))
     | τ, .COINBASE => dispatchStateOp τ (.ofNat ∘ Fin.val ∘ EvmYul.State.coinBase)
@@ -380,45 +380,6 @@ def step {τ : OperationType} (op : Operation τ) (arg : Option (UInt256 × Nat)
     | τ, .LOG2 => dispatchLog2 τ
     | τ, .LOG3 => dispatchLog3 τ
     | τ, .LOG4 => dispatchLog4 τ
-
-    | .Yul, .CREATE => λ yulState lits ↦
-        match lits with
-          | [v, poz, len] =>
-            let Iₐ := yulState.executionEnv.codeOwner
-            let nonce' : UInt256 := yulState.toState.accountMap.find? Iₐ |>.option ⟨0⟩ (·.nonce)
-            let s : 𝕋 := .𝔹 (toBytesBigEndian Iₐ.val).toByteArray
-            let n : 𝕋 := .𝔹 (toBytesBigEndian nonce'.toNat).toByteArray
-            let L_A := RLP <| .𝕃 [s, n]
-            match L_A with
-              | none => .error .NotEncodableRLP
-              | some L_A =>
-                let addr : AccountAddress :=
-                  (ffi.KEC L_A).extract 12 32 /- 160 bits = 20 bytes -/
-                    |> fromByteArrayBigEndian |> Fin.ofNat _
-                let code := yulState.toMachineState.memory.readWithPadding poz.toNat len.toNat
-                match yulState.toState.accountMap.find? Iₐ with
-                  | none => .ok <| (yulState, some ⟨0⟩)
-                  | some ac_Iₐ =>
-                    if v < ac_Iₐ.balance then .ok <| (yulState, some ⟨0⟩) else
-                    let ac_Iₐ := {ac_Iₐ with balance := ac_Iₐ.balance - v, nonce := ac_Iₐ.nonce + ⟨1⟩}
-                    let v' :=
-                      match yulState.toState.accountMap.find? addr with
-                        | none => ⟨0⟩
-                        | some ac_addr => ac_addr.balance
-                    let newAccount : Account :=
-                      { nonce := ⟨1⟩
-                      , balance := v + v'
-                      , code := code
-                      , storage := default
-                      , tstorage := default
-                      }
-                    let yulState' :=
-                      yulState.setState <|
-                        yulState.toState.updateAccount addr newAccount
-                        |>.updateAccount Iₐ ac_Iₐ
-
-                    .ok <| (yulState', some (.ofNat addr))
-          | _ => .error .InvalidArguments
     | τ, .RETURN => dispatchBinaryMachineStateOp τ MachineState.evmReturn
     | τ, .REVERT => dispatchBinaryMachineStateOp τ MachineState.evmRevert
     | .EVM, .SELFDESTRUCT =>
@@ -447,7 +408,7 @@ def step {τ : OperationType} (op : Operation τ) (arg : Option (UInt256 × Nat)
                           evmState.accountMap
                         else
                           evmState.accountMap.insert r
-                            {(default : Account) with balance := σ_Iₐ.balance}
+                            {(default : Account .EVM) with balance := σ_Iₐ.balance}
                               |>.insert Iₐ {σ_Iₐ with balance := ⟨0⟩}
                       | some σ_r =>
                         if r ≠ Iₐ then
@@ -483,7 +444,7 @@ def step {τ : OperationType} (op : Operation τ) (arg : Option (UInt256 × Nat)
                           evmState.accountMap
                         else
                           evmState.accountMap.insert r
-                            {(default : Account) with balance := σ_Iₐ.balance}
+                            {(default : Account .EVM) with balance := σ_Iₐ.balance}
                               |>.insert Iₐ {σ_Iₐ with balance := ⟨0⟩}
                       | some σ_r =>
                         if r ≠ Iₐ then
@@ -525,7 +486,7 @@ def step {τ : OperationType} (op : Operation τ) (arg : Option (UInt256 × Nat)
                           yulState.toState.accountMap
                         else
                           yulState.toState.accountMap.insert r
-                            {(default : Account) with balance := σ_Iₐ.balance}
+                            {(default : Account .Yul) with balance := σ_Iₐ.balance}
                               |>.insert Iₐ {σ_Iₐ with balance := ⟨0⟩}
                       | some σ_r =>
                         if r ≠ Iₐ then
@@ -542,42 +503,6 @@ def step {τ : OperationType} (op : Operation τ) (arg : Option (UInt256 × Nat)
               .ok <| (yulState', none)
         | _ => .error .InvalidArguments
     | τ, .INVALID => dispatchInvalid τ
-
-    | .Yul, .CREATE2 => λ yulState lits ↦
-        match lits with
-          | [v, poz, len, ζ] =>
-            let Iₐ := yulState.executionEnv.codeOwner
-            let this₀ := toBytesBigEndian Iₐ.val
-            let this : List UInt8 := List.replicate (20 - this₀.length) 0 ++ this₀
-            let code := yulState.toMachineState.memory.readWithPadding poz.toNat len.toNat
-            let s : List UInt8 := toBytesBigEndian ζ.toNat
-            let a₀ : List UInt8 := [0xff]
-            let addr₀ := ffi.KEC <| ⟨⟨a₀ ++ this ++ s⟩⟩ ++ ffi.KEC code
-            let addr : AccountAddress := Fin.ofNat _ <| fromByteArrayBigEndian addr₀
-            match yulState.toState.accountMap.find? Iₐ with
-              | none => .ok <| (yulState, some ⟨0⟩)
-              | some ac_Iₐ =>
-                if v < ac_Iₐ.balance then .ok <| (yulState, some ⟨0⟩) else
-                let ac_Iₐ' := {ac_Iₐ with balance := ac_Iₐ.balance - v, nonce := ac_Iₐ.nonce + ⟨1⟩}
-                let v' :=
-                  match yulState.toState.accountMap.find? addr with
-                    | none => ⟨0⟩
-                    | some ac_addr => ac_addr.balance
-                let newAccount : Account :=
-                  { nonce := ⟨1⟩
-                  , balance := v + v'
-                  , code := code
-                  , storage := default
-                  , tstorage := default
-                  }
-                let yulState' :=
-                  yulState.setState <|
-                    yulState.toState.updateAccount addr newAccount
-                      |>.updateAccount Iₐ ac_Iₐ'
-
-                .ok <| (yulState', some (.ofNat addr))
-          | _ => .error .InvalidArguments
-
     | .Yul, _ => λ _ _ ↦ default
     | .EVM, .Push .PUSH0 => λ evmState =>
         .ok <|
