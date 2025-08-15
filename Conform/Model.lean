@@ -56,11 +56,11 @@ instance : DecidableRel (α := (_ : UInt256) × UInt256) (· ≤ ·) :=
 
 abbrev Code := ByteArray
 
-abbrev Pre := PersistentAccountMap
+abbrev Pre := PersistentAccountMap .EVM
 
-abbrev PostEntry := PersistentAccountState
+abbrev PostEntry := PersistentAccountState .EVM
 
-abbrev Post := PersistentAccountMap
+abbrev Post := PersistentAccountMap .EVM
 
 abbrev Transactions := Array Transaction
 

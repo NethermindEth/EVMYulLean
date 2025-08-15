@@ -34,7 +34,7 @@ instance : FromJson Storage where
 
 instance : FromJson ByteArray := fromBlobString (ByteArray.ofBlob)
 
-instance : FromJson PersistentAccountState where
+instance : FromJson (PersistentAccountState .EVM) where
   fromJson? json := do
     pure {
       balance := ← json.getObjValAs? UInt256 "balance"
@@ -44,7 +44,7 @@ instance : FromJson PersistentAccountState where
     }
 
 instance : FromJson Pre where
-  fromJson? json := json.getObjVals? AccountAddress PersistentAccountState
+  fromJson? json := json.getObjVals? AccountAddress (PersistentAccountState .EVM)
 
 instance : FromJson Post where
   fromJson? json := json.getObjVals? AccountAddress PostEntry
@@ -162,7 +162,7 @@ instance : FromJson TestEntry where
     let post : PostState ←
       match json.getObjVal? "postStateHash" with
         | .error _ =>
-          .Map <$> json.getObjValAsD! PersistentAccountMap "postState"
+          .Map <$> json.getObjValAsD! (PersistentAccountMap .EVM) "postState"
         | .ok postStateHash =>
           .Hash <$> FromJson.fromJson? postStateHash
     pure {
@@ -186,7 +186,7 @@ def testNamesOfTest (test : Lean.Json) : Except String (Array String) :=
 
 section PrettyPrinter
 
-instance : ToString PersistentAccountState := ⟨ToString.toString ∘ repr⟩
+instance : ToString (PersistentAccountState .EVM) := ⟨ToString.toString ∘ repr⟩
 
 instance : ToString Pre := ⟨ToString.toString ∘ repr⟩
 

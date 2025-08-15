@@ -25,10 +25,10 @@ def GlobalBlacklist : Array String := VerySlowTests
 
 abbrev TestId : Type := System.FilePath × String
 
-def PersistentAccountMap.toAccountMap (self : PersistentAccountMap) : AccountMap :=
+def PersistentAccountMap.toAccountMap (self : PersistentAccountMap .EVM) : AccountMap .EVM :=
   self.foldl addAccount default
   where addAccount s addr acc :=
-    let account : Account :=
+    let account : Account .EVM :=
       {
         tstorage := ∅
         nonce    := acc.nonce
@@ -38,10 +38,10 @@ def PersistentAccountMap.toAccountMap (self : PersistentAccountMap) : AccountMap
       }
     s.insert addr account
 
-def PersistentAccountMap.toEVMState (self : PersistentAccountMap) : EVM.State :=
+def PersistentAccountMap.toEVMState (self : PersistentAccountMap .EVM) : EVM.State :=
   self.foldl addAccount default
   where addAccount s addr acc :=
-    let account : Account :=
+    let account : Account .EVM :=
       {
         tstorage := ∅
         nonce    := acc.nonce
@@ -70,8 +70,8 @@ TODO - This should be a generic map complement, but we are not trying to write a
 
 Now that this is not a `Finmap`, this is probably defined somewhere in the API, fix later.
 -/
-def storageComplement (m₁ m₂ : PersistentAccountMap) : PersistentAccountMap := Id.run do
-  let mut result : PersistentAccountMap := m₁
+def storageComplement (m₁ m₂ : PersistentAccountMap .EVM) : PersistentAccountMap .EVM := Id.run do
+  let mut result : PersistentAccountMap .EVM := m₁
   for ⟨k₂, v₂⟩ in m₂.toList do
     match m₁.find? k₂ with
     | .none => continue
@@ -87,7 +87,7 @@ Effectively `m₁ / m₂ × m₂ / m₁`.
 
 Now that this is not a `Finmap`, this is probably defined somewhere in the API, fix later.
 -/
-def storageΔ (m₁ m₂ : PersistentAccountMap) : PersistentAccountMap × PersistentAccountMap :=
+def storageΔ (m₁ m₂ : PersistentAccountMap .EVM) : PersistentAccountMap .EVM × PersistentAccountMap .EVM :=
   (storageComplement m₁ m₂, storageComplement m₂ m₁)
 
 section
@@ -96,7 +96,7 @@ section
 This section exists for debugging / testing mostly. It's somewhat ad-hoc.
 -/
 
-private def almostBEqButNotQuiteEvmYulState (s₁ s₂ : PersistentAccountMap) : Except String Bool := do
+private def almostBEqButNotQuiteEvmYulState (s₁ s₂ : PersistentAccountMap .EVM) : Except String Bool := do
   if s₁ == s₂ then .ok true else throw "state mismatch"
 
 /--
@@ -105,7 +105,7 @@ NB it is ever so slightly more convenient to be in `Except String Bool` here rat
 This is morally `s₁ == s₂` except we get a convenient way to both tune what is being compared
 as well as report fine grained errors.
 -/
-private def almostBEqButNotQuite (s₁ s₂ : PersistentAccountMap) : Except String Bool := do
+private def almostBEqButNotQuite (s₁ s₂ : PersistentAccountMap .EVM) : Except String Bool := do
   discard <| almostBEqButNotQuiteEvmYulState s₁ s₂
   pure true -- Yes, we never return false, because we throw along the way. Yes, this is `Option`.
 
@@ -192,7 +192,7 @@ def validateHeaderBeforeTransactions
   pure parent
 
 def validateTransaction
-  (σ : AccountMap)
+  (σ : AccountMap .EVM)
   (chainId : ℕ)
   (header : BlockHeader)
   (totalGasUsedInBlock : ℕ)
@@ -577,13 +577,13 @@ def processBlocks
 NB we can throw away the final state if it coincided with the expected one, hence `.none`.
 -/
 def preImpliesPost (entry : TestEntry)
-  : Except EVM.Exception (Option PersistentAccountMap)
+  : Except EVM.Exception (Option (PersistentAccountMap .EVM))
 := do
     let resultState ← processBlocks entry.pre entry.blocks entry.genesisRLP
     let lastAccountMap :=
       resultState.blocks.findRev? (·.hash == entry.lastblockhash)
       |>.option resultState.accountMap ProcessedBlock.σ
-    let result : PersistentAccountMap :=
+    let result : PersistentAccountMap .EVM :=
       lastAccountMap.foldl
         (λ r addr ⟨⟨nonce, balance, storage, code⟩, _, _⟩ ↦ r.insert addr ⟨nonce, balance, storage, code⟩) default
     let persistentAccountMap := resultState.accountMap.toPersistentAccountMap
@@ -601,7 +601,7 @@ def preImpliesPost (entry : TestEntry)
         else
           pure .none
 
-instance (priority := high) : Repr PersistentAccountMap := ⟨λ m _ ↦
+instance (priority := high) : Repr (PersistentAccountMap .EVM) := ⟨λ m _ ↦
   Id.run do
     let mut result := ""
     for (k, v) in m do
@@ -623,8 +623,8 @@ def processTest (entry : TestEntry) (isTimed : Option (Nat × TestId) := .none) 
     match result with
     | .error err => .mkFailed s!"{repr err}"
     | .ok result => errorF <$> result
-  where discardError : PersistentAccountMap → String := λ _ ↦ "ERROR."
-        verboseError : PersistentAccountMap → String := λ σ ↦
+  where discardError : PersistentAccountMap .EVM → String := λ _ ↦ "ERROR."
+        verboseError : PersistentAccountMap .EVM → String := λ σ ↦
           match entry.postState with
             | .Map post =>
               let (postSubActual, actualSubPost) := storageΔ post σ
