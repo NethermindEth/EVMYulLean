@@ -29,6 +29,14 @@ structure PersistentAccountState (τ : OperationType) where
               | .EVM => ByteArray
               | .Yul => Yul.Ast.Stmt
 
+instance {τ} [Repr (match τ with | .EVM => ByteArray | .Yul => Yul.Ast.Stmt)] : Repr (PersistentAccountState τ) where
+  reprPrec s _ :=
+    let codeFmt :=
+      match τ with
+      | .EVM => reprPrec s.code 0
+      | .Yul => reprPrec s.code 0
+    s!"PersistentAccountState(nonce: {reprPrec s.nonce 0}, balance: {reprPrec s.balance 0}, storage: {reprPrec s.storage 0}, code: {codeFmt})"
+
 instance {τ} : BEq (PersistentAccountState τ) where
   beq a b :=
        a.nonce == b.nonce
