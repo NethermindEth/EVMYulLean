@@ -18,18 +18,21 @@ abbrev Literal := UInt256
 -- 2^160 https://www.wolframalpha.com/input?i=2%5E160
 def AccountAddress.size : Nat := 1461501637330902918203684832716283019655932542976
 
+instance : NeZero AccountAddress.size where
+  out := (by unfold AccountAddress.size; simp)
+
 abbrev AccountAddress : Type := Fin AccountAddress.size
 
 instance : Ord AccountAddress where
   compare a₁ a₂ := compare a₁.val a₂.val
 
-instance : Inhabited AccountAddress := ⟨Fin.ofNat 0⟩
+instance : Inhabited AccountAddress := ⟨Fin.ofNat _ 0⟩
 
 namespace AccountAddress
 
-def ofNat (n : ℕ) : AccountAddress := Fin.ofNat n
-def ofUInt256 (v : UInt256) : AccountAddress := Fin.ofNat (v.val % AccountAddress.size)
-instance {n : Nat} : OfNat AccountAddress n := ⟨Fin.ofNat n⟩
+def ofNat (n : ℕ) : AccountAddress := Fin.ofNat _ n
+def ofUInt256 (v : UInt256) : AccountAddress := Fin.ofNat _ (v.val % AccountAddress.size)
+instance {n : Nat} : OfNat AccountAddress n := ⟨Fin.ofNat _ n⟩
 
 def toByteArray (a : AccountAddress) : ByteArray :=
   let b := BE a

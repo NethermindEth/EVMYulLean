@@ -17,6 +17,9 @@ namespace EvmYul
 def UInt256.size : ℕ :=
   115792089237316195423570985008687907853269984665640564039457584007913129639936
 
+instance : NeZero UInt256.size where
+  out := (by unfold UInt256.size; simp)
+
 structure UInt256 where
   val : Fin UInt256.size
   deriving BEq, Ord
@@ -27,14 +30,14 @@ instance : ToString UInt256 where
 namespace UInt256
 
 def ofNat (n : ℕ) : UInt256 := Id.run do
-  ⟨Fin.ofNat n⟩
+  ⟨Fin.ofNat _ n⟩
 
 def toNat (u : UInt256) : ℕ := u.val.val
 
 instance : Repr UInt256 where
   reprPrec n _ := repr n.toNat
 
-instance {n : ℕ} : OfNat (Fin UInt256.size) n := ⟨Fin.ofNat n⟩
+instance {n : ℕ} : OfNat (Fin UInt256.size) n := ⟨Fin.ofNat _ n⟩
 instance : Inhabited UInt256 := ⟨ofNat 0⟩
 
 end UInt256
@@ -97,7 +100,7 @@ instance : Preorder UInt256 where
   le_refl := by intro; apply Nat.le_refl
   le_trans := by intro _ _ _ h₁ h₂ ; apply Nat.le_trans h₁ h₂
   lt := fun a b => a ≤ b ∧ ¬b ≤ a
-  lt_iff_le_not_le := by intros; rfl
+  lt_iff_le_not_ge := by intros; rfl
 
 def complement (a : UInt256) : UInt256 := ⟨0 - (a.val + 1)⟩
 

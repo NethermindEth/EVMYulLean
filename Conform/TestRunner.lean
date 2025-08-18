@@ -274,7 +274,7 @@ def validateTransaction
   let (S_T : AccountAddress) ← -- (323)
     match ECDSARECOVER h_T (ByteArray.mk #[.ofNat v]) T.base.r T.base.s with
       | .ok s =>
-        pure <| Fin.ofNat <| fromByteArrayBigEndian <|
+        pure <| Fin.ofNat _ <| fromByteArrayBigEndian <|
           (ffi.KEC s).extract 12 32 /- 160 bits = 20 bytes -/
       | .error s => throw <| .SenderRecoverError s
 
