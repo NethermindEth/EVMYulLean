@@ -141,6 +141,13 @@ mutual
       | .LetCall vars f args => execCall fuel f vars (reverse' (evalArgs fuel args.reverse s))
 
       | .LetPrimCall vars prim args => execPrimCall prim vars (reverse' (evalArgs fuel args.reverse s))
+      
+      | .ExternalCall vars accountAddress functionName args =>
+        match fuel with
+          | 0 => .OutOfFuel
+          | .succ fuel' =>
+            let f : FunctionDefinition := (s.sharedState.accountMap.findD accountAddress default).code.lookup functionName |>.getD default
+            execCall fuel' f vars (reverse' (evalArgs fuel' args.reverse s))
 
       | .Assign var rhs =>
         let (s, x) := eval fuel rhs s

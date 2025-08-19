@@ -33,6 +33,7 @@ instance : ToString PrimOp := ⟨stringOfPrimOp⟩
 mutual
   inductive FunctionDefinition where
     | Def : List Identifier → List Identifier → List Stmt → FunctionDefinition
+  deriving BEq, Inhabited
 
   inductive Expr where
     | PrimCall : PrimOp → List Expr → Expr
@@ -48,6 +49,7 @@ mutual
     | LetEq : Identifier → Expr → Stmt
     | LetCall : List Identifier → FunctionDefinition → List Expr → Stmt
     | LetPrimCall : List Identifier → PrimOp → List Expr → Stmt
+    | ExternalCall : List Identifier → AccountAddress → String → List Expr → Stmt
     | Assign : Identifier → Expr → Stmt
     | AssignCall : List Identifier → FunctionDefinition → List Expr → Stmt
     | AssignPrimCall : List Identifier → PrimOp → List Expr → Stmt

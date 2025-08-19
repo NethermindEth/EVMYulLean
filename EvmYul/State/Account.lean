@@ -17,8 +17,8 @@ def π : Batteries.RBSet AccountAddress compare :=
 
 inductive ToExecute (τ : OperationType) where
   | Code (code : match τ with
-                   | .EVM => ByteArray
-                   | .Yul => Yul.Ast.Stmt)
+                  | .EVM => ByteArray
+                  | .Yul => Finmap (fun (_ : String) ↦ Yul.Ast.FunctionDefinition))
   | Precompiled (precompiled : AccountAddress)
 
 structure PersistentAccountState (τ : OperationType) where
@@ -27,15 +27,19 @@ structure PersistentAccountState (τ : OperationType) where
   storage  : Storage
   code     : match τ with
               | .EVM => ByteArray
-              | .Yul => Yul.Ast.Stmt
+              | .Yul => Finmap (fun (_ : String) ↦ Yul.Ast.FunctionDefinition)
 
-instance {τ} [Repr (match τ with | .EVM => ByteArray | .Yul => Yul.Ast.Stmt)] : Repr (PersistentAccountState τ) where
+instance {τ} [Repr (match τ with | .EVM => ByteArray | .Yul => Finmap (fun (_ : String) ↦ Yul.Ast.FunctionDefinition))] : Repr (PersistentAccountState τ) where
   reprPrec s _ :=
     let codeFmt :=
       match τ with
       | .EVM => reprPrec s.code 0
       | .Yul => reprPrec s.code 0
     s!"PersistentAccountState(nonce: {reprPrec s.nonce 0}, balance: {reprPrec s.balance 0}, storage: {reprPrec s.storage 0}, code: {codeFmt})"
+
+-- instance : BEq (Finmap (fun (_ : String) ↦ Yul.Ast.FunctionDefinition)) where
+--   beq a b := a.keys == b.keys &&
+--       a.all (λ k _ => a.lookup k == b.lookup k)
 
 instance {τ} : BEq (PersistentAccountState τ) where
   beq a b :=
@@ -44,7 +48,8 @@ instance {τ} : BEq (PersistentAccountState τ) where
     && a.storage == b.storage
     && (match τ with
           | .EVM => a.code == b.code
-          | .Yul => a.code == b.code)
+          | .Yul => (a.code.keys == b.code.keys &&
+                       a.code.all (λ k _ => a.code.lookup k == b.code.lookup k)))
 
 instance {τ} : Inhabited (PersistentAccountState τ) where
   default := {
