@@ -663,7 +663,7 @@ def Lambda
   let lₐ ← L_A s n ζ i
   let a : AccountAddress := -- (94) (95)
     (ffi.KEC lₐ).extract 12 32 /- 160 bits = 20 bytes -/
-      |> fromByteArrayBigEndian |> Fin.ofNat
+      |> fromByteArrayBigEndian |> Fin.ofNat _
 
   -- A* (97)
   let AStar := A.addAccessedAccount a

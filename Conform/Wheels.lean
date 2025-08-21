@@ -1,6 +1,7 @@
 import Lean.Data.Json
 import EvmYul.UInt256
 import EvmYul.Wheels
+import Batteries.Data.RBMap
 
 import Mathlib.Data.Multiset.Sort
 
@@ -70,7 +71,7 @@ def Nat.fromBlob? (blob : Blob) : Except String ℕ :=
 
 namespace AccountAddress
 
-def fromBlob? (s : Blob) : Except String AccountAddress := (Fin.ofNat ·.toNat) <$> UInt256.fromBlob? s
+def fromBlob? (s : Blob) : Except String AccountAddress := (Fin.ofNat _ ·.toNat) <$> UInt256.fromBlob? s
 
 def fromBlob! (blob : Blob) : AccountAddress := fromBlob? blob |>.toOption.get!
 

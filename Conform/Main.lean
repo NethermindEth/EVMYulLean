@@ -62,7 +62,7 @@ def testFiles (root               : System.FilePath)
 
   let mut tasks : Array (Task _) := .empty
   let mut thread := 0
-  let mut tests : Array (Array (System.FilePath × String)) := .mkArray threads #[]
+  let mut tests : Array (Array (System.FilePath × String)) := .replicate threads #[]
 
   IO.println s!"Scheduling tests for parallel execution..."
   for (path, names) in testNames do
