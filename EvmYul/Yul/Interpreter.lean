@@ -147,6 +147,14 @@ mutual
 
         | .LetPrimCall vars prim args => execPrimCall prim vars (reverse' (evalArgs fuel' args.reverse s))
         
+        -- For .ExternalCall (still WIP):
+          -- vars: as usual
+          -- accountAddress: the address of the contract to call
+          -- v: As expected by calldataload (StateOps.lean)
+          -- args: The list of expressions to be parsed as arguments to the function.
+          --       Not done via calldata for now.
+          -- The intention is to either create LetExternalCall/AssignExternalCall/ExprStmtExternalCall
+          --   or, ideally, incorporate it when consolidating the other Let/Assign/ExprStmt
         | .ExternalCall vars accountAddress v args =>
             let calldata := State.calldataload s.toState v
             let yulContract := (s.sharedState.accountMap.findD accountAddress default).code
