@@ -49,7 +49,7 @@ mutual
     | LetEq : Identifier → Expr → Stmt
     | LetCall : List Identifier → FunctionDefinition → List Expr → Stmt
     | LetPrimCall : List Identifier → PrimOp → List Expr → Stmt
-    | ExternalCall : List Identifier → AccountAddress → String → List Expr → Stmt
+    | ExternalCall : List Identifier → AccountAddress → UInt256 → List Expr → Stmt
     | Assign : Identifier → Expr → Stmt
     | AssignCall : List Identifier → FunctionDefinition → List Expr → Stmt
     | AssignPrimCall : List Identifier → PrimOp → List Expr → Stmt
@@ -63,6 +63,43 @@ mutual
     | Leave : Stmt
     deriving BEq, Inhabited, Repr
 end
+
+abbrev yulFunctionName := String
+
+structure YulContract where
+  dispatcher : Finmap (fun (_ : UInt256) ↦ yulFunctionName)
+  functions : Finmap (fun (_ : yulFunctionName) ↦ Yul.Ast.FunctionDefinition)
+  deriving Inhabited
+
+instance : Repr YulContract where
+  reprPrec _ _ := "YulContract" -- TODO: implement an actual `reprPrec` for YulContract
+
+instance : BEq YulContract where
+  beq a b := 
+    a.dispatcher == b.dispatcher
+    && (a.functions.keys == b.functions.keys &&
+        a.functions.all (λ k _ => a.functions.lookup k == b.functions.lookup k))
+
+abbrev contractCode (τ : OperationType) :=
+  match τ with
+    | OperationType.EVM => ByteArray
+    | OperationType.Yul => YulContract
+
+instance {τ} : BEq (contractCode τ) where
+  beq a b := (match τ with
+              | .EVM => a == b
+              | .Yul => a == b)
+
+instance {τ} : Inhabited (contractCode τ) where
+  default := (match τ with
+                | .EVM => default
+                | .Yul => default)
+              
+instance {τ} : Repr (contractCode τ) where
+  reprPrec a _ := (match τ with
+                     | .EVM => reprPrec a 0
+                     | .Yul => reprPrec a 0)
+
 
 namespace FunctionDefinition
 
