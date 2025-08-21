@@ -312,7 +312,7 @@ private lemma toBytes'_le {k : ℕ} (h : n < 2 ^ (8 * k)) : (toBytes' n).length 
     | .zero => simp [toBytes']
     | .succ n =>
       unfold toBytes'
-      simp [Nat.succ_le_succ_iff]
+      simp
       apply ih (Nat.div_lt_of_lt_mul _)
       rw [Nat.mul_succ, Nat.pow_add] at h
       linarith

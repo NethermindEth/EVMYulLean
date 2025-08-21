@@ -163,7 +163,7 @@ private def L (n : ℕ) := n - n / 64
 
 -- TODO: Yul halting for `SELFDESTRUCT`, `RETURN`, `REVERT`, `STOP`
 def step {τ : OperationType} (op : Operation τ) : Transformer τ := Id.run do
-  let log : Id Unit :=
+  let _ : Id Unit := -- For debug logging
     match τ with
       | .EVM => dbg_trace op.pretty; pure ()
       | .Yul => pure ()
