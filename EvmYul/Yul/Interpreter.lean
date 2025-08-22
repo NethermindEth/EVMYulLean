@@ -143,36 +143,34 @@ mutual
           let (s, val) := eval fuel' rhs s
           s.insert var val
 
-        | .LetCall vars f args => execCall fuel' f vars (reverse' (evalArgs fuel' args.reverse s))
+        | .LetCall vars yulFunctionName args => 
+            let yulContract := (s.sharedState.accountMap.findD s.toSharedState.executionEnv.codeOwner default).code -- TODO: Decide how to handle if an account is not found
+            let f := (yulContract.functions.lookup yulFunctionName) |>.getD default -- TODO: Decide how to handle if a function is not found
+            execCall fuel' f vars (reverse' (evalArgs fuel' args.reverse s))
 
         | .LetPrimCall vars prim args => execPrimCall prim vars (reverse' (evalArgs fuel' args.reverse s))
         
-        -- For .ExternalCall (still WIP):
-          -- vars: as usual
-          -- accountAddress: the address of the contract to call
-          -- v: As expected by calldataload (StateOps.lean)
-          -- args: The list of expressions to be parsed as arguments to the function.
-          --       Not done via calldata for now.
-          -- The intention is to either create LetExternalCall/AssignExternalCall/ExprStmtExternalCall
-          --   or, ideally, incorporate it when consolidating the other Let/Assign/ExprStmt
-        | .ExternalCall vars accountAddress v args =>
-            let calldata := State.calldataload s.toState v
-            let yulContract := (s.sharedState.accountMap.findD accountAddress default).code
-            match yulContract.dispatcher.lookup calldata with
-              | .some fName =>
-                  match (yulContract.functions.lookup fName) with
-                    | .some f => execCall fuel' f vars (reverse' (evalArgs fuel' args.reverse s))
-                    | .none => default -- TODO: Decide how to handle if a function is not found
-              | .none => default -- TODO: Decide how to handle if a contract is not found
-
+        | .LetExternalCall vars accountAddress yulFunctionName args =>
+            let yulContract := (s.sharedState.accountMap.findD accountAddress default).code -- TODO: Decide how to handle if an account is not found
+            let f := (yulContract.functions.lookup yulFunctionName) |>.getD default -- TODO: Decide how to handle if a function is not found
+            execCall fuel' f vars (reverse' (evalArgs fuel' args.reverse s))
+                
         | .Assign var rhs =>
           let (s, x) := eval fuel' rhs s
           s.insert var x
 
-        | .AssignCall vars f args => execCall fuel' f vars (reverse' (evalArgs fuel' args.reverse s))
+        | .AssignCall vars yulFunctionName args => 
+            let yulContract := (s.sharedState.accountMap.findD s.toSharedState.executionEnv.codeOwner default).code -- TODO: Decide how to handle if an account is not found
+            let f := (yulContract.functions.lookup yulFunctionName) |>.getD default -- TODO: Decide how to handle if a function is not found
+            execCall fuel' f vars (reverse' (evalArgs fuel' args.reverse s))
 
         | .AssignPrimCall vars prim args => execPrimCall prim vars (reverse' (evalArgs fuel' args.reverse s))
 
+        | .AssignExternalCall vars accountAddress yulFunctionName args =>
+            let yulContract := (s.sharedState.accountMap.findD accountAddress default).code -- TODO: Decide how to handle if an account is not found
+            let f := (yulContract.functions.lookup yulFunctionName) |>.getD default -- TODO: Decide how to handle if a function is not found
+            execCall fuel' f vars (reverse' (evalArgs fuel' args.reverse s))
+        
         | .If cond body =>
           let (s, cond) := eval fuel' cond s
           if cond ≠ ⟨0⟩ then exec fuel' (.Block body) s else s
@@ -183,8 +181,15 @@ mutual
         -- (https://docs.soliditylang.org/en/latest/yul.html#restrictions-on-the-grammar)
         --
         -- Thus, we cannot have literals or variables on the RHS.
-        | .ExprStmtCall f args => execCall fuel' f [] (reverse' (evalArgs fuel' args.reverse s))
+        | .ExprStmtCall yulFunctionName args => 
+            let yulContract := (s.sharedState.accountMap.findD s.toSharedState.executionEnv.codeOwner default).code -- TODO: Decide how to handle if an account is not found
+            let f := (yulContract.functions.lookup yulFunctionName) |>.getD default -- TODO: Decide how to handle if a function is not found
+            execCall fuel' f [] (reverse' (evalArgs fuel' args.reverse s))
         | .ExprStmtPrimCall prim args => execPrimCall prim [] (reverse' (evalArgs fuel' args.reverse s))
+        | .ExprExternalCall accountAddress yulFunctionName args =>
+            let yulContract := (s.sharedState.accountMap.findD accountAddress default).code -- TODO: Decide how to handle if an account is not found
+            let f := (yulContract.functions.lookup yulFunctionName) |>.getD default -- TODO: Decide how to handle if a function is not found
+            execCall fuel' f [] (reverse' (evalArgs fuel' args.reverse s))
 
         | .Switch cond cases' default' =>
 

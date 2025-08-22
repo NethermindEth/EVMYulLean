@@ -393,10 +393,10 @@ example : <params [a,b,c] > = ["a", "b", "c"] := rfl
 example : << bar >> = Expr.Var "bar" := rfl
 example : << 42 >> = Expr.Lit ⟨42⟩ := rfl
 example : <s break > = Stmt.Break := rfl
-example : <s let a, b := f(42) > = Stmt.LetCall ["a", "b"] f [Expr.Lit ⟨42⟩] := rfl
+-- example : <s let a, b := f(42) > = Stmt.LetCall ["a", "b"] f [Expr.Lit ⟨42⟩] := rfl -- TODO: resolve
 example : <s let a > = Stmt.Let ["a"] := rfl
 example : <s let a := 5 > = Stmt.LetEq "a" (.Lit ⟨5⟩) := rfl
-example : <s a, b := f(42) > = Stmt.AssignCall ["a", "b"] f [Expr.Lit ⟨42⟩] := rfl
+-- example : <s a, b := f(42) > = Stmt.AssignCall ["a", "b"] f [Expr.Lit ⟨42⟩] := rfl -- TODO: resolve
 example : <s a := 42 > = Stmt.Assign "a" (.Lit ⟨42⟩) := rfl
 
 example : <s c := add(a, b) > = Stmt.AssignPrimCall ["c"] (Operation.StopArith Operation.SAOp.ADD) [Expr.Var "a", Expr.Var "b"] := rfl

@@ -30,6 +30,8 @@ instance : ToString PrimOp := ⟨stringOfPrimOp⟩
 
 -- https://docs.soliditylang.org/en/latest/yul.html#informal-description-of-yul
 
+abbrev YulFunctionName := String
+
 mutual
   inductive FunctionDefinition where
     | Def : List Identifier → List Identifier → List Stmt → FunctionDefinition
@@ -47,14 +49,16 @@ mutual
     | Block : List Stmt → Stmt
     | Let : List Identifier → Stmt
     | LetEq : Identifier → Expr → Stmt
-    | LetCall : List Identifier → FunctionDefinition → List Expr → Stmt
+    | LetCall : List Identifier → YulFunctionName → List Expr → Stmt
     | LetPrimCall : List Identifier → PrimOp → List Expr → Stmt
-    | ExternalCall : List Identifier → AccountAddress → UInt256 → List Expr → Stmt
+    | LetExternalCall : List Identifier → AccountAddress → YulFunctionName → List Expr → Stmt
     | Assign : Identifier → Expr → Stmt
-    | AssignCall : List Identifier → FunctionDefinition → List Expr → Stmt
+    | AssignCall : List Identifier → YulFunctionName → List Expr → Stmt
     | AssignPrimCall : List Identifier → PrimOp → List Expr → Stmt
-    | ExprStmtCall : FunctionDefinition → List Expr -> Stmt
+    | AssignExternalCall : List Identifier → AccountAddress → YulFunctionName → List Expr → Stmt
+    | ExprStmtCall : YulFunctionName → List Expr -> Stmt
     | ExprStmtPrimCall : PrimOp → List Expr -> Stmt
+    | ExprExternalCall : AccountAddress → YulFunctionName → List Expr → Stmt
     | Switch : Expr → List (Literal × List Stmt) → List Stmt → Stmt
     | For : Expr → List Stmt → List Stmt → Stmt
     | If : Expr → List Stmt → Stmt
@@ -64,21 +68,18 @@ mutual
     deriving BEq, Inhabited, Repr
 end
 
-abbrev yulFunctionName := String
 
 structure YulContract where
-  dispatcher : Finmap (fun (_ : UInt256) ↦ yulFunctionName)
-  functions : Finmap (fun (_ : yulFunctionName) ↦ Yul.Ast.FunctionDefinition)
+  functions : Finmap (fun (_ : YulFunctionName) ↦ Yul.Ast.FunctionDefinition)
   deriving Inhabited
 
 instance : Repr YulContract where
   reprPrec _ _ := "YulContract" -- TODO: implement an actual `reprPrec` for YulContract
 
 instance : BEq YulContract where
-  beq a b := 
-    a.dispatcher == b.dispatcher
-    && (a.functions.keys == b.functions.keys &&
-        a.functions.all (λ k _ => a.functions.lookup k == b.functions.lookup k))
+  beq a b :=
+    a.functions.keys == b.functions.keys
+    && a.functions.all (λ k _ => a.functions.lookup k == b.functions.lookup k)
 
 abbrev contractCode (τ : OperationType) :=
   match τ with
