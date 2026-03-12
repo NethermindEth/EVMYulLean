@@ -48,6 +48,12 @@ def buildSha256Obj (pkg : Package) (fileName : String) := do
 def buildKeccak256Obj (pkg : Package) (fileName : String) := do
   buildFFILib pkg (← (←cloneKeccak256.fetch).await).1 fileName
 
+extern_lib blake2_ffi_rs pkg := do
+  proc { cmd := "cargo", args := #["build", "--release"],
+         cwd := pkg.dir / "EvmYul" / "FFI" / "blake2-ffi-rs" } (quiet := true)
+  let libName := nameToStaticLib "blake2_ffi_rs"
+  inputBinFile $ pkg.dir / "EvmYul" / "FFI" / "blake2-ffi-rs" / "target" / "release" / libName
+
 extern_lib libleanffi pkg := do
   -- In the static lib we include:
   -- the `sha-256` library itself

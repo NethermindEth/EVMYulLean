@@ -13,7 +13,6 @@ import EvmYul.RIP160
 import EvmYul.BN_ADD
 import EvmYul.BN_MUL
 import EvmYul.SNARKV
-import EvmYul.BLAKE2_F
 import EvmYul.PointEval
 
 import EvmYul.FFI.ffi
