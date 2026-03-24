@@ -1,8 +1,11 @@
 use lean_ffi::object::{LeanBorrowed, LeanByteArray, LeanOwned};
 use revm_precompile::blake2::algo::compress;
+use ripemd::Digest;
 
 #[unsafe(no_mangle)]
-pub extern "C" fn blake2compressb64(input: LeanByteArray<LeanBorrowed<'_>>) -> LeanByteArray<LeanOwned> {
+pub extern "C" fn blake2compressb64(
+    input: LeanByteArray<LeanBorrowed<'_>>,
+) -> LeanByteArray<LeanOwned> {
     let data = input.as_bytes();
     // Parse 213-byte input: rounds[4] + h[64] + m[128] + t[16] + f[1]
     let rounds = u32::from_be_bytes(data[0..4].try_into().unwrap());
@@ -26,5 +29,16 @@ pub extern "C" fn blake2compressb64(input: LeanByteArray<LeanBorrowed<'_>>) -> L
     for (i, &val) in h.iter().enumerate() {
         output[i * 8..(i + 1) * 8].copy_from_slice(&val.to_le_bytes());
     }
+    LeanByteArray::from_bytes(&output)
+}
+
+#[unsafe(no_mangle)]
+pub extern "C" fn ripemd160_hash(
+    input: LeanByteArray<LeanBorrowed<'_>>,
+) -> LeanByteArray<LeanOwned> {
+    let mut hasher = ripemd::Ripemd160::new();
+    hasher.update(input.as_bytes());
+    let mut output = [0u8; 32];
+    hasher.finalize_into((&mut output[12..]).into());
     LeanByteArray::from_bytes(&output)
 }

@@ -483,14 +483,6 @@ dependencies = [
 ]
 
 [[package]]
-name = "blake2-ffi-rs"
-version = "0.1.0"
-dependencies = [
- "lean-ffi",
- "revm-precompile",
-]
-
-[[package]]
 name = "block-buffer"
 version = "0.10.4"
 source = "registry+https://github.com/rust-lang/crates.io-index"
@@ -852,6 +844,15 @@ checksum = "c0b50bfb653653f9ca9095b427bed08ab8d75a137839d9ad64eb11810d5b6393"
 dependencies = [
  "rand_core 0.6.4",
  "subtle",
+]
+
+[[package]]
+name = "ffi-rs"
+version = "0.1.0"
+dependencies = [
+ "lean-ffi",
+ "revm-precompile",
+ "ripemd",
 ]
 
 [[package]]

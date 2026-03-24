@@ -14,6 +14,9 @@ def BLAKE2 (d : ByteArray) : Except String ByteArray := do
   if d[212]! ∉ [0, 1].map Nat.toUInt8 then throw s!"bad flag: {d[212]!}"
   return BLAKE2Compress d
 
+@[extern "ripemd160_hash"]
+opaque RIP160 (input : @& ByteArray) : ByteArray
+
 @[extern "memset_zero"]
 opaque ByteArray.zeroes (n : USize) : ByteArray
 

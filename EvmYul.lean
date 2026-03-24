@@ -13,7 +13,6 @@ import EvmYul.EllipticCurves
 import EvmYul.PerformIO
 
 import EvmYul.SHA256
-import EvmYul.RIP160
 import EvmYul.BN_ADD
 import EvmYul.BN_MUL
 import EvmYul.SNARKV

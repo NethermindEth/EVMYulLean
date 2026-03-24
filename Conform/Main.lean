@@ -91,8 +91,10 @@ def nproc : IO Nat := do
   return out.stdout.trim.toNat? |>.getD 1
 
 def main (args : List String) : IO UInt32 := do
-  let NumThreads : ℕ := args.head? <&> String.toNat! |>.getD (←nproc)
-  let cliWhitelist : Array String := (args.drop 1).toArray
+  let (NumThreads, cliWhitelist) ← do
+    match args.head? >>= String.toNat? with
+    | some n => pure (n, (args.drop 1).toArray)
+    | none   => pure (←nproc, args.toArray)
 
   let printResults (result : ℕ × Array String) : IO (Array String) := do
     let (success, failure) := result
