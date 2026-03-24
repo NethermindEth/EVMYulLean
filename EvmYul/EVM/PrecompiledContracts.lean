@@ -9,11 +9,9 @@ import EvmYul.Wheels
 
 import EvmYul.EllipticCurves
 import EvmYul.SHA256
-import EvmYul.RIP160
 import EvmYul.BN_ADD
 import EvmYul.BN_MUL
 import EvmYul.SNARKV
-import EvmYul.BLAKE2_F
 import EvmYul.PointEval
 
 import EvmYul.FFI.ffi
@@ -93,12 +91,7 @@ def Ξ_RIP160
   if g.toNat < gᵣ then
     (false, ∅, ⟨0⟩, A, .empty)
   else
-    let o :=
-      match RIP160 I.calldata with
-        | .ok s => s
-        | .error e =>
-          dbg_trace s!"Ξ_RIP160 failed: {e}"
-          .empty
+    let o := ffi.RIP160 I.calldata
     (true, σ, g - .ofNat gᵣ, A, o)
 
 def Ξ_ID

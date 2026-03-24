@@ -91,7 +91,27 @@ def nproc : IO Nat := do
   return out.stdout.trim.toNat? |>.getD 1
 
 def main (args : List String) : IO UInt32 := do
-  let NumThreads : ℕ := args.head? <&> String.toNat! |>.getD (←nproc)
+  let (NumThreads, cliWhitelist) ← do
+    match args.head? >>= String.toNat? with
+    | some n => pure (n, (args.drop 1).toArray)
+    | none   => pure (←nproc, args.toArray)
+
+  let printResults (result : ℕ × Array String) : IO (Array String) := do
+    let (success, failure) := result
+    IO.println s!"Total tests: {success + failure.size}"
+    IO.println s!"The post was NOT equal to the resulting state: {failure.size}"
+    IO.println s!"Succeeded: {success}"
+    IO.println s!"Success rate of: {(success.toFloat / (failure.size + success).toFloat) * 100.0}"
+    IO.println s!"Failed tests:\n{failure}"
+    return failure
+
+  if !cliWhitelist.isEmpty then
+    IO.println s!"Running filtered tests: {cliWhitelist}"
+    let failed ← testFiles (root := "EthereumTests/BlockchainTests/")
+                            (testWhitelist := cliWhitelist)
+                            (phase := 1)
+                            (threads := NumThreads) >>= printResults
+    return if failed.isEmpty then 0 else 1
 
   let ExpectedToFail : Std.HashSet String := {
     "invalid_block_blob_count.json[src/GeneralStateTestsFiller/Pyspecs/cancun/eip4844_blobs/test_blob_txs.py::test_invalid_block_blob_count[fork_Cancun-blockchain_test--blobs_per_tx_(7,)]]",
@@ -107,22 +127,13 @@ def main (args : List String) : IO UInt32 := do
       "CALLBlake2f_MaxRounds_d0g0v0_Cancun",
       "SuicideIssue_Cancun"]
 
-  let printResults (result : ℕ × Array String) : IO (Array String) := do
-    let (success, failure) := result
-    IO.println s!"Total tests: {success + failure.size}"
-    IO.println s!"The post was NOT equal to the resulting state: {failure.size}"
-    IO.println s!"Succeeded: {success}"
-    IO.println s!"Success rate of: {(success.toFloat / (failure.size + success).toFloat) * 100.0}"
-    IO.println s!"Failed tests:\n{failure}"
-    return failure
-
   IO.println s!"Phase 1/3 - No performance tests."
   let failed₁ ← testFiles (root := "EthereumTests/BlockchainTests/")
                           (directoryBlacklist := #["EthereumTests/BlockchainTests//GeneralStateTests/VMTests/vmPerformance"])
                           (testBlacklist := DelayFiles)
                           (phase := 1)
                           (threads := NumThreads) >>= printResults
-  
+
   IO.println s!"Phase 2/3 - Performance tests only."
   let failed₂ ← testFiles (root := "EthereumTests/BlockchainTests/GeneralStateTests/VMTests/vmPerformance/")
                           (phase := 2)
