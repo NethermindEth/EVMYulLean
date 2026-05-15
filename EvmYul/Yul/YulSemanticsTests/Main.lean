@@ -1385,6 +1385,20 @@ def test₁₂ :=
           ]))
   showExecVar "ok" stmt callRevertState
 
+def selfdestructState : State :=
+  match callRevertState with
+  | .Ok sharedState _ => .Ok sharedState ((∅ : VarStore).insert "after" ⟨0⟩)
+  | s => s
+
+def test₁₃ :=
+  let stmt : Stmt :=
+    .Block
+      [ .ExprStmtCall
+          (.Call (Sum.inl (.System (.SELFDESTRUCT))) [.Lit auditCalleeAddressUInt256])
+      , .Assign ["after"] (.Lit ⟨1⟩)
+      ]
+  showVar? "after" (execTopLevel 99 stmt selfdestructState)
+
 
 end Yul
 
@@ -1407,3 +1421,4 @@ def main : IO Unit := do
   IO.println (s!"test₁₀: {test₁₀} -- " ++ (if s!"{test₁₀}" = "UnknownIdentifier: x" then "Success" else "Failure"))
   IO.println (s!"test₁₁: {test₁₁} -- " ++ (if s!"{test₁₁}" = "0" then "Success" else "Failure"))
   IO.println (s!"test₁₂: {test₁₂} -- " ++ (if s!"{test₁₂}" = "0" then "Success" else "Failure"))
+  IO.println (s!"test₁₃: {test₁₃} -- " ++ (if s!"{test₁₃}" = "0" then "Success" else "Failure"))

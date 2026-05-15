@@ -215,7 +215,6 @@ def swap (n : ℕ) : Transformer .EVM :=
   else
     .error .StackUnderflow
 
--- TODO: Yul halting for `SELFDESTRUCT`
 def step {τ : OperationType} (op : Operation τ) (arg : Option (UInt256 × Nat) := .none) : Transformer τ := Id.run do
   let _ : Id Unit := -- For debug logging
     match τ with
@@ -510,7 +509,7 @@ def step {τ : OperationType} (op : Operation τ) (arg : Option (UInt256 × Nat)
               let yulState' :=
                 yulState.setState
                   { yulState.toState with accountMap := accountMap', substate := A'}
-              .ok <| (yulState', none)
+              .error (Yul.Exception.YulHalt yulState' ⟨0⟩)
         | _ => .error .InvalidArguments
     | τ, .INVALID => dispatchInvalid τ
     | .EVM, .Push .PUSH0 => λ evmState =>

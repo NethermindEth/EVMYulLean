@@ -99,4 +99,4 @@ These tests are defined in `EvmYul/Yul/YulSemanticsTests/Main.lean`.
 
 ## SELFDESTRUCT
 
-- Halting for `SELFDESTRUCT` is not implemented and the semantics for `SELFDESTRUCT` have limitations, such as not triggering the fallback function in a contract that is the recipient of the ether from the contract the self-destructs. We may remove the semantics for `SELFDESTRUCT` once its status changes from deprecated to not being supported.
+- Yul `SELFDESTRUCT` halts execution after applying the modelled account and substate effects. The semantics for `SELFDESTRUCT` still have limitations, such as not triggering the fallback function in a contract that is the recipient of the ether from the contract the self-destructs. We may remove the semantics for `SELFDESTRUCT` once its status changes from deprecated to not being supported.
