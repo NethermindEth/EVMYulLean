@@ -273,7 +273,7 @@ partial def translateStmt (stmt : TSyntax `stmt) : TermElabM Term :=
       let (lit, cs) := litCase; `(($lit, [$cs,*]))
     let switchCases ← lits.zip cases |>.mapM f
     let dflt ← match dflts with
-                 | .none => `([.Break])
+                 | .none => `([])
                  | .some dflts => `([$(←dflts.mapM translateStmt),*])
     `(Stmt.Switch $expr [$switchCases,*] $dflt)
 
@@ -309,7 +309,7 @@ partial def translateStmt (stmt : TSyntax `stmt) : TermElabM Term :=
   | `(stmt| $ids:ident,* := $expr:expr) => do
     let ids' := (ids : TSyntaxArray _).map translateIdent
     let expr ← translateExpr expr
-    `(Stmt.Let [$ids',*] (.some $expr))
+    `(Stmt.Assign [$ids',*] $expr)
 
   -- ExprStmt
   | `(stmt| $expr:expr) => do
@@ -373,10 +373,10 @@ example : <s break > = Stmt.Break := rfl
 example : <s let a, b := f(42) > = Stmt.Let ["a", "b"] (.some (.Call (Sum.inr "f") [Expr.Lit ⟨42⟩])) := rfl
 example : <s let a > = Stmt.Let ["a"] .none := rfl
 example : <s let a := 5 > = Stmt.Let ["a"] (.some (.Lit ⟨5⟩)) := rfl
-example : <s a, b := f(42) > = Stmt.Let ["a", "b"] (.some (.Call (Sum.inr "f") [Expr.Lit ⟨42⟩])) := rfl
-example : <s a := 42 > = Stmt.Let ["a"] (.some (.Lit ⟨42⟩)) := rfl
+example : <s a, b := f(42) > = Stmt.Assign ["a", "b"] (.Call (Sum.inr "f") [Expr.Lit ⟨42⟩]) := rfl
+example : <s a := 42 > = Stmt.Assign ["a"] (.Lit ⟨42⟩) := rfl
 
-example : <s c := add(a, b) > = Stmt.Let ["c"] (.some (Expr.Call (Sum.inl (Operation.StopArith Operation.SAOp.ADD)) [Expr.Var "a", Expr.Var "b"])) := rfl
+example : <s c := add(a, b) > = Stmt.Assign ["c"] (Expr.Call (Sum.inl (Operation.StopArith Operation.SAOp.ADD)) [Expr.Var "a", Expr.Var "b"]) := rfl
 example : <s let c := sub(a, b) > = Stmt.Let ["c"] (.some (Expr.Call (Sum.inl (Operation.StopArith Operation.SAOp.SUB)) [Expr.Var "a", Expr.Var "b"])) := rfl
 example : <s let a := 5 > = Stmt.Let ["a"] (.some (.Lit ⟨5⟩)) := rfl
 example : <s {} >
@@ -437,6 +437,11 @@ example : <s
   case 42 { continue }
   default { break }
 > = Stmt.Switch (Expr.Var "a") [(⟨42⟩, [.Continue])] [.Break] := rfl
+
+example : <s
+  switch 1
+  case 2 {}
+> = Stmt.Switch (.Lit ⟨1⟩) [(⟨2⟩, [])] [] := rfl
 
 example : <s let a, b, c > = Stmt.Let ["a", "b", "c"] .none := rfl
 example : <s revert(0, 0) > = Stmt.ExprStmtCall (.Call (Sum.inl (.System (.REVERT))) [(Expr.Lit ⟨0⟩), (Expr.Lit ⟨0⟩)]) := rfl

@@ -1244,6 +1244,177 @@ def test₅ :=
   | .error e => repr e
   | .ok s => s!"{s.toSharedState.accountMap.toList.map (fun (a : AccountAddress × Account .Yul) => repr a.1 ++ " " ++ repr a.2.storage.toList)}"
 
+def test₆ :=
+  let stmt : Stmt :=
+    .Switch (.Lit ⟨1⟩)
+      [(⟨1⟩, [])]
+      [.ExprStmtCall
+        (.Call (Sum.inl (.System (.REVERT))) [.Lit ⟨0⟩, .Lit ⟨0⟩])]
+  match exec 99 stmt .none stateEg₁ with
+  | .error e => repr e
+  | .ok _ => "selected"
+
+def showVar? (name : Identifier) : State → String
+  | .Ok _ store =>
+    match store.lookup name with
+    | .some value => toString value.toNat
+    | .none => "none"
+  | .Checkpoint _ => "checkpoint"
+  | .OutOfFuel => "out-of-fuel"
+
+def showExecVar (name : Identifier) (stmt : Stmt) (s : State) : String :=
+  match exec 99 stmt .none s with
+  | .error e => toString (repr e)
+  | .ok s => showVar? name s
+
+def showExecMode (stmt : Stmt) (s : State) : String :=
+  match exec 99 stmt .none s with
+  | .error e => toString (repr e)
+  | .ok (.Ok _ _) => "regular"
+  | .ok (.Checkpoint (.Break _ _)) => "break"
+  | .ok (.Checkpoint (.Continue _ _)) => "continue"
+  | .ok (.Checkpoint (.Leave _ _)) => "leave"
+  | .ok .OutOfFuel => "out-of-fuel"
+
+def test₇ :=
+  let stmt : Stmt :=
+    .Block
+      [ .Block [.Let ["x"] (.some (.Lit ⟨1⟩))]
+      , .Let ["y"] (.some (.Var "x"))
+      ]
+  showExecVar "y" stmt stateEg₁
+
+def test₈ :=
+  let stmt : Stmt :=
+    .Block
+      [ .Let ["x"] (.some (.Lit ⟨1⟩))
+      , .Block [.Let ["x"] (.some (.Lit ⟨2⟩))]
+      , .Let ["y"] (.some (.Var "x"))
+      ]
+  showExecVar "y" stmt stateEg₁
+
+def stateWithX : State :=
+  .Ok stateEg₁.toSharedState ((∅ : VarStore).insert "x" ⟨1⟩)
+
+def test₉ :=
+  showExecVar "x" (.Assign ["x"] (.Lit ⟨2⟩)) stateWithX
+
+def test₁₀ :=
+  showExecVar "x" (.Assign ["x"] (.Lit ⟨2⟩)) stateEg₁
+
+def auditAddressUInt256 : UInt256 := ⟨100⟩
+def auditCalleeAddressUInt256 : UInt256 := ⟨101⟩
+def auditAddress := AccountAddress.ofUInt256 auditAddressUInt256
+def auditCalleeAddress := AccountAddress.ofUInt256 auditCalleeAddressUInt256
+
+def auditStateWithContract (code : YulContract) : State :=
+  let account : Account .Yul :=
+    { code := code
+    , balance := ⟨1000⟩
+    , nonce := ⟨0⟩
+    , storage := ∅
+    , tstorage := ∅
+    }
+  let accountMap : AccountMap .Yul := (∅ : AccountMap .Yul).insert auditAddress account
+  let sharedState : SharedState .Yul :=
+    { (Inhabited.default : SharedState .Yul) with
+      accountMap := accountMap
+      executionEnv :=
+        { (Inhabited.default : ExecutionEnv .Yul) with
+          codeOwner := auditAddress
+          code := code
+          perm := true
+        }
+    }
+  .Ok sharedState ∅
+
+def returnInitContract : YulContract :=
+  { dispatcher := .Block []
+  , functions :=
+      (∅ : Finmap (fun (_ : YulFunctionName) ↦ Yul.Ast.FunctionDefinition))
+        |>.insert "f" (.Def [] ["r"] [])
+  }
+
+def test₁₁ :=
+  let stmt : Stmt := .Let ["x"] (.some (.Call (Sum.inr "f") []))
+  showExecVar "x" stmt (auditStateWithContract returnInitContract)
+
+def callRevertState : State :=
+  let callerCode : YulContract :=
+    { dispatcher := .Block []
+    , functions := ∅
+    }
+  let calleeCode : YulContract :=
+    { dispatcher :=
+        .ExprStmtCall
+          (.Call (Sum.inl (.System (.REVERT))) [.Lit ⟨0⟩, .Lit ⟨0⟩])
+    , functions := ∅
+    }
+  let callerAccount : Account .Yul :=
+    { code := callerCode
+    , balance := ⟨1000⟩
+    , nonce := ⟨0⟩
+    , storage := ∅
+    , tstorage := ∅
+    }
+  let calleeAccount : Account .Yul :=
+    { code := calleeCode
+    , balance := ⟨0⟩
+    , nonce := ⟨0⟩
+    , storage := ∅
+    , tstorage := ∅
+    }
+  let accountMap : AccountMap .Yul :=
+    ((∅ : AccountMap .Yul).insert auditAddress callerAccount)
+      |>.insert auditCalleeAddress calleeAccount
+  let sharedState : SharedState .Yul :=
+    { (Inhabited.default : SharedState .Yul) with
+      accountMap := accountMap
+      executionEnv :=
+        { (Inhabited.default : ExecutionEnv .Yul) with
+          codeOwner := auditAddress
+          code := callerCode
+          perm := true
+        }
+    }
+  .Ok sharedState ∅
+
+def test₁₂ :=
+  let stmt : Stmt :=
+    .Let ["ok"]
+      (.some
+        (.Call (Sum.inl (.System (.CALL)))
+          [ .Lit ⟨100000⟩
+          , .Lit auditCalleeAddressUInt256
+          , .Lit ⟨7⟩
+          , .Lit ⟨0⟩
+          , .Lit ⟨0⟩
+          , .Lit ⟨0⟩
+          , .Lit ⟨0⟩
+          ]))
+  showExecVar "ok" stmt callRevertState
+
+def selfdestructState : State :=
+  match callRevertState with
+  | .Ok sharedState _ => .Ok sharedState ((∅ : VarStore).insert "after" ⟨0⟩)
+  | s => s
+
+def test₁₃ :=
+  let stmt : Stmt :=
+    .Block
+      [ .ExprStmtCall
+          (.Call (Sum.inl (.System (.SELFDESTRUCT))) [.Lit auditCalleeAddressUInt256])
+      , .Assign ["after"] (.Lit ⟨1⟩)
+      ]
+  showVar? "after" (execTopLevel 99 stmt selfdestructState)
+
+def test₁₄ :=
+  let stmt : Stmt := <s
+    switch 1
+    case 2 {}
+  >
+  showExecMode stmt stateEg₁
+
 
 end Yul
 
@@ -1259,3 +1430,12 @@ def main : IO Unit := do
   IO.println (s!"test₃: {test₃} -- " ++ (if s!"{test₃}" = "StaticModeViolation" then "Success" else "Failure"))
   IO.println (s!"test₄: {test₄} -- " ++ (if s!"{test₄}" = "[1 [], 2 [(0, 5)], 3 [], 4 []]" then "Success" else "Failure"))
   IO.println (s!"test₅: {test₅} -- " ++ (if s!"{test₅}" = "[1 [], 2 [(0, 5)], 3 [], 4 []]" then "Success" else "Failure"))
+  IO.println (s!"test₆: {test₆} -- " ++ (if s!"{test₆}" = "selected" then "Success" else "Failure"))
+  IO.println (s!"test₇: {test₇} -- " ++ (if s!"{test₇}" = "UnknownIdentifier: x" then "Success" else "Failure"))
+  IO.println (s!"test₈: {test₈} -- " ++ (if s!"{test₈}" = "DuplicateDeclaration: x" then "Success" else "Failure"))
+  IO.println (s!"test₉: {test₉} -- " ++ (if s!"{test₉}" = "2" then "Success" else "Failure"))
+  IO.println (s!"test₁₀: {test₁₀} -- " ++ (if s!"{test₁₀}" = "UnknownIdentifier: x" then "Success" else "Failure"))
+  IO.println (s!"test₁₁: {test₁₁} -- " ++ (if s!"{test₁₁}" = "0" then "Success" else "Failure"))
+  IO.println (s!"test₁₂: {test₁₂} -- " ++ (if s!"{test₁₂}" = "0" then "Success" else "Failure"))
+  IO.println (s!"test₁₃: {test₁₃} -- " ++ (if s!"{test₁₃}" = "0" then "Success" else "Failure"))
+  IO.println (s!"test₁₄: {test₁₄} -- " ++ (if s!"{test₁₄}" = "regular" then "Success" else "Failure"))

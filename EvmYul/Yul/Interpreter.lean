@@ -37,6 +37,51 @@ def multifill' (vars : List Identifier) : Except Yul.Exception (State × List Li
   | .ok (s, rets) => .ok (s.multifill vars rets)
   | .error e => .error e
 
+def firstDuplicate? : List Identifier → Option Identifier
+  | [] => .none
+  | var :: vars =>
+    if vars.contains var then .some var else firstDuplicate? vars
+
+def firstDeclared? (s : State) (vars : List Identifier) : Option Identifier :=
+  vars.find? (fun var => (s.lookup? var).isSome)
+
+def firstUndeclared? (s : State) (vars : List Identifier) : Option Identifier :=
+  vars.find? (fun var => (s.lookup? var).isNone)
+
+def checkDeclaration (s : State) (vars : List Identifier) : Except Yul.Exception Unit :=
+  match firstDuplicate? vars with
+  | .some var => .error (.DuplicateDeclaration var)
+  | .none =>
+    match firstDeclared? s vars with
+    | .some var => .error (.DuplicateDeclaration var)
+    | .none => .ok ()
+
+def checkAssignment (s : State) (vars : List Identifier) : Except Yul.Exception Unit :=
+  match firstDuplicate? vars with
+  | .some _ => .error .InvalidArguments
+  | .none =>
+    match firstUndeclared? s vars with
+    | .some var => .error (.UnknownIdentifier var)
+    | .none => .ok ()
+
+def restoreRevertedContractCallState (s₀ s₂ : State) (outOffset outSize : Literal) :
+    Except Yul.Exception (State × List Literal) :=
+  match s₀ with
+  | .OutOfFuel => .error .OutOfFuel
+  | .Checkpoint j => .ok (.Checkpoint j, [⟨0⟩])
+  | .Ok sharedState₀ varstore =>
+    let returnData := s₂.toMachineState.H_return
+    let memory₃ :=
+      returnData.copySlice 0 s₀.toMachineState.memory outOffset.toNat
+        (min outSize.toNat returnData.size)
+    let sharedState₃ :=
+      { sharedState₀ with
+        memory := memory₃
+        returnData := returnData
+        H_return := ByteArray.empty
+      }
+    .ok (.Ok sharedState₃ varstore, [⟨0⟩])
+
 def setStatic (s : State) (p : Bool) : State :=
   match s with
   | .OutOfFuel => .OutOfFuel
@@ -59,6 +104,19 @@ def buildContractCallEmptyReturnState (s₀ : State) (accountMap₁ : Option (Ac
                                              returnData := ByteArray.empty,
                                              accountMap := accountMap₁.getD s₀.toSharedState.accountMap }
       .ok (.Ok sharedState₁ varstore, [v])
+
+/--
+  `selectSwitchCase` returns the first switch case body whose literal matches
+  the evaluated switch condition, or the default body if no case matches.
+
+  This matches Solidity/Yul switch control flow: non-selected case and default
+  bodies are not executed.
+-/
+def selectSwitchCase (cond : Literal) (defaultBody : List Stmt) :
+    List (Literal × List Stmt) → List Stmt
+  | [] => defaultBody
+  | ((val, stmts) :: cases') =>
+      if val = cond then stmts else selectSwitchCase cond defaultBody cases'
 
 mutual
 
@@ -130,6 +188,8 @@ def primCall (fuel : ℕ) (s₀ : State) (prim : Operation .Yul) (args : List Li
                                                         H_return := ByteArray.empty
                                                     }
                                 .ok (.Ok sharedState₃ varstore, [⟨1⟩])
+                          | .error (.Revert s₂) =>
+                            restoreRevertedContractCallState s₀ s₂ outOffset outSize
                           | .error e => .error e
                           | .ok (s₂, _) =>
                             
@@ -222,6 +282,8 @@ def primCall (fuel : ℕ) (s₀ : State) (prim : Operation .Yul) (args : List Li
                                                       executionEnv := executionEnv₃
                                                   }
                               .ok (setStatic (.Ok sharedState₃ varstore) s₀.executionEnv.perm, [⟨1⟩])
+                          | .error (.Revert s₂) =>
+                              restoreRevertedContractCallState s₀ s₂ outOffset outSize
                           | .error e => .error e
                           | .ok (s₂, _) =>
                         
@@ -307,6 +369,8 @@ def primCall (fuel : ℕ) (s₀ : State) (prim : Operation .Yul) (args : List Li
                                                     }
                                 .ok (.Ok sharedState₃ varstore, [⟨1⟩])
 
+                          | .error (.Revert s₂) =>
+                            restoreRevertedContractCallState s₀ s₂ outOffset outSize
                           | .error e => .error e
                           | .ok (s₂, _) =>                            
                             let memory₃ := s₂.toMachineState.H_return.copySlice 0 s₀.toMachineState.memory outOffset.toNat (min outSize.toNat s₂.toMachineState.H_return.size)
@@ -381,6 +445,8 @@ def primCall (fuel : ℕ) (s₀ : State) (prim : Operation .Yul) (args : List Li
                                                     executionEnv := executionEnv₃
                                                 }
                             .ok (.Ok sharedState₃ varstore, [⟨1⟩])
+                        | .error (.Revert s₂) =>
+                          restoreRevertedContractCallState s₀ s₂ outOffset outSize
                         | .error e => .error e
                         | .ok (s₂, _) =>                        
                         let memory₃ := s₂.toMachineState.H_return.copySlice 0 s₀.toMachineState.memory outOffset.toNat (min outSize.toNat s₂.toMachineState.H_return.size)
@@ -449,7 +515,7 @@ def primCall (fuel : ℕ) (s₀ : State) (prim : Operation .Yul) (args : List Li
           match fOpt with
           | .none => .error (.MissingContractFunction (yulFunctionNameOption.getD ".none"))
           | .some f =>
-            let s₁ := 👌 s.initcall f.params args
+            let s₁ := 👌 s.initcall f.params f.rets args
             match exec fuel' (.Block f.body) codeOverride s₁ with
               | .error e => .error e
               | .ok s₂ =>
@@ -466,7 +532,7 @@ def primCall (fuel : ℕ) (s₀ : State) (prim : Operation .Yul) (args : List Li
       | 0 => .error .OutOfFuel
       | .succ fuel' =>
           let f := FunctionDefinition.Def [] [] [s.executionEnv.code.dispatcher]
-          let s₁ := 👌 s.initcall f.params []
+          let s₁ := 👌 s.initcall f.params f.rets []
           match exec fuel' (.Block f.body) codeOverride s₁ with
           | .error e => .error e
           | .ok s₂ =>
@@ -499,31 +565,24 @@ def primCall (fuel : ℕ) (s₀ : State) (prim : Operation .Yul) (args : List Li
       | .succ fuel' => multifill' vars (call fuel' args yulFunctionName codeOverride s)
     | .error e => .error e
 
-  /--
-    `execSwitchCases` executes each case of a `switch` statement.
-  -/
-  def execSwitchCases (fuel : Nat) (codeOverride : Option YulContract) (s : State) : List (Literal × List Stmt) → Except Yul.Exception (List (Literal × (Except Yul.Exception State)))
-    | [] => .ok []
-    | ((val, stmts) :: cases') =>
-      match fuel with
-      | 0 => .error .OutOfFuel
-      | .succ fuel' => 
-        match exec fuel' (.Block stmts) codeOverride s with
-          | .error (.YulHalt s₂ v) =>
-            match execSwitchCases fuel' codeOverride s cases' with
-            | .error e => .error e
-            | .ok s₃ =>
-              .ok ((val, .error (.YulHalt s₂ v)) :: s₃)
-          | .error e =>
-              match execSwitchCases fuel' codeOverride s cases' with
-              | .error e => .error e
-              | .ok s₃ =>
-                .ok ((val, .error e) :: s₃)
-          | .ok s₂ =>
-            match execSwitchCases fuel' codeOverride s cases' with
-            | .error e => .error e
-            | .ok s₃ =>
-              .ok ((val, .ok s₂) :: s₃)
+  def evalValues (fuel : Nat) (expr : Expr) (codeOverride : Option YulContract) (s : State) : Except Yul.Exception (State × List Literal) :=
+    match fuel with
+    | 0 => .error .OutOfFuel
+    | .succ fuel' =>
+        match expr with
+        | .Call (Sum.inl prim) args =>
+          match reverse' (evalArgs fuel' args.reverse codeOverride s) with
+          | .ok (s, args) => primCall fuel' s prim args
+          | .error e => .error e
+        | .Call (Sum.inr yulFunctionName) args =>
+          match reverse' (evalArgs fuel' args.reverse codeOverride s) with
+          | .ok (s, args) => call fuel' args yulFunctionName codeOverride s
+          | .error e => .error e
+        | .Var id =>
+          match s.lookup? id with
+          | .some val => .ok (s, [val])
+          | .none => .error (.UnknownIdentifier id)
+        | .Lit val => .ok (s, [val])
 
   /--
     `eval` evaluates an expression.
@@ -531,24 +590,22 @@ def primCall (fuel : ℕ) (s₀ : State) (prim : Operation .Yul) (args : List Li
     - calls evaluated here are assumed to have coarity 1
   -/
   def eval (fuel : Nat) (expr : Expr) (codeOverride : Option YulContract) (s : State) : Except Yul.Exception (State × Literal) :=
+    head' (evalValues fuel expr codeOverride s)
+
+  def execSeq (fuel : Nat) (stmts : List Stmt) (codeOverride : Option YulContract) (s : State) : Except Yul.Exception State :=
     match fuel with
     | 0 => .error .OutOfFuel
     | .succ fuel' =>
-        match expr with
-
-        -- We hit these two cases (`PrimCall` and `Call`) when evaluating:
-        --
-        --  1. f()                 (expression statements)
-        --  2. g(f())              (calls in function arguments)
-        --  3. if f() {...}        (if conditions)
-        --  4. for {...} f() ...   (for conditions)
-        --  5. switch f() ...      (switch conditions)
-
-        | .Call (Sum.inl prim) args => evalPrimCall fuel' prim (reverse' (evalArgs fuel' args.reverse codeOverride s))
-        | .Call (Sum.inr yulFunctionName) args        =>
-          evalCall fuel' yulFunctionName codeOverride (reverse' (evalArgs fuel' args.reverse codeOverride s))
-        | .Var id             => .ok (s, s[id]!)
-        | .Lit val            => .ok (s, val)
+      match stmts with
+      | [] => .ok s
+      | stmt :: stmts =>
+        match exec fuel' stmt codeOverride s with
+        | .error e => .error e
+        | .ok s₁ =>
+          match s₁ with
+          | .Ok _ _ => execSeq fuel' stmts codeOverride s₁
+          | .OutOfFuel => .ok s₁
+          | .Checkpoint _ => .ok s₁
 
   /--
     `exec` executs a single statement.
@@ -558,24 +615,23 @@ def primCall (fuel : ℕ) (s₀ : State) (prim : Operation .Yul) (args : List Li
     | 0 => .error .OutOfFuel
     | .succ fuel' =>
       match stmt with
-        | .Block [] => .ok s
-        | .Block (stmt :: stmts) =>
-          let s₁ := exec fuel' stmt codeOverride s
-          match s₁ with
-            | .error e => .error e
-            | .ok s₁ => exec fuel' (.Block stmts) codeOverride s₁
+        | .Block stmts =>
+          match execSeq fuel' stmts codeOverride s with
+          | .error e => .error e
+          | .ok s₁ => .ok (s₁.restrictStoreTo s.store)
 
         | .Let vars exprOption =>
+          match checkDeclaration s vars with
+          | .error e => .error e
+          | .ok () =>
             match exprOption with
-              | .none => .ok (List.foldr (λ var s ↦ s.insert var ⟨0⟩) s vars)
-              | .some expr =>
-                match expr with
-                  | .Call (Sum.inl prim) args =>
-                    execPrimCall fuel' prim vars (reverse' (evalArgs fuel' args.reverse codeOverride s))
-                  | .Call (Sum.inr yulFunctionName) args =>
-                    execCall fuel' yulFunctionName vars codeOverride (reverse' (evalArgs fuel' args.reverse codeOverride s))
-                  | .Var identifier => .ok (s.insert vars.head! s[identifier]!) -- It should be safe to call head! here if the Yul code is parsed correctly.
-                  | .Lit literal => .ok (s.insert vars.head! literal) -- It should be safe to call head! here if the Yul code is parsed correctly.
+            | .none => .ok (s.zeroFill vars)
+            | .some expr => multifill' vars (evalValues fuel' expr codeOverride s)
+
+        | .Assign vars expr =>
+          match checkAssignment s vars with
+          | .error e => .error e
+          | .ok () => multifill' vars (evalValues fuel' expr codeOverride s)
 
         | .If cond body =>
           match eval fuel' cond codeOverride s with
@@ -599,13 +655,7 @@ def primCall (fuel : ℕ) (s₀ : State) (prim : Operation .Yul) (args : List Li
           match eval fuel' cond codeOverride s with
             | .error e => .error e
             | .ok (s₁, cond) =>
-              match execSwitchCases fuel' codeOverride s₁ cases' with
-              | .error e => .error e  
-              | .ok branches =>
-                match exec fuel' (.Block default') codeOverride s₁ with
-                | .error e => .error e
-                | .ok s₂ =>
-                  (List.foldr (λ (valᵢ, sᵢ) s ↦ if valᵢ = cond then sᵢ else s) (.ok s₂) branches)
+              exec fuel' (.Block (selectSwitchCase cond default' cases')) codeOverride s₁
 
         -- A `Break` or `Continue` in the pre or post is a compiler error,
         -- so we assume it can't happen and don't modify the state in these
@@ -659,8 +709,10 @@ def execTopLevel (fuel : Nat) (stmt : Stmt) (s : State) : State :=
     | .error (.MissingContract _) => default
     | .error (.MissingContractFunction _) => default -- We do not model fallback functions
     | .error .InvalidExpression => default
+    | .error (.UnknownIdentifier _) => default
+    | .error (.DuplicateDeclaration _) => default
     | .error .YulEXTCODESIZENotImplemented => default
-    | .error .Revert => s
+    | .error (.Revert _) => s
     | .error (.YulHalt s _) => s
     | .ok s => s
 
