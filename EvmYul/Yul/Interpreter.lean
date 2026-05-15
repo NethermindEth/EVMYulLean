@@ -60,6 +60,19 @@ def buildContractCallEmptyReturnState (s₀ : State) (accountMap₁ : Option (Ac
                                              accountMap := accountMap₁.getD s₀.toSharedState.accountMap }
       .ok (.Ok sharedState₁ varstore, [v])
 
+/--
+  `selectSwitchCase` returns the first switch case body whose literal matches
+  the evaluated switch condition, or the default body if no case matches.
+
+  This matches Solidity/Yul switch control flow: non-selected case and default
+  bodies are not executed.
+-/
+def selectSwitchCase (cond : Literal) (defaultBody : List Stmt) :
+    List (Literal × List Stmt) → List Stmt
+  | [] => defaultBody
+  | ((val, stmts) :: cases') =>
+      if val = cond then stmts else selectSwitchCase cond defaultBody cases'
+
 mutual
 
 def primCall (fuel : ℕ) (s₀ : State) (prim : Operation .Yul) (args : List Literal) : Except Yul.Exception (State × List Literal) :=
@@ -500,32 +513,6 @@ def primCall (fuel : ℕ) (s₀ : State) (prim : Operation .Yul) (args : List Li
     | .error e => .error e
 
   /--
-    `execSwitchCases` executes each case of a `switch` statement.
-  -/
-  def execSwitchCases (fuel : Nat) (codeOverride : Option YulContract) (s : State) : List (Literal × List Stmt) → Except Yul.Exception (List (Literal × (Except Yul.Exception State)))
-    | [] => .ok []
-    | ((val, stmts) :: cases') =>
-      match fuel with
-      | 0 => .error .OutOfFuel
-      | .succ fuel' => 
-        match exec fuel' (.Block stmts) codeOverride s with
-          | .error (.YulHalt s₂ v) =>
-            match execSwitchCases fuel' codeOverride s cases' with
-            | .error e => .error e
-            | .ok s₃ =>
-              .ok ((val, .error (.YulHalt s₂ v)) :: s₃)
-          | .error e =>
-              match execSwitchCases fuel' codeOverride s cases' with
-              | .error e => .error e
-              | .ok s₃ =>
-                .ok ((val, .error e) :: s₃)
-          | .ok s₂ =>
-            match execSwitchCases fuel' codeOverride s cases' with
-            | .error e => .error e
-            | .ok s₃ =>
-              .ok ((val, .ok s₂) :: s₃)
-
-  /--
     `eval` evaluates an expression.
 
     - calls evaluated here are assumed to have coarity 1
@@ -599,13 +586,7 @@ def primCall (fuel : ℕ) (s₀ : State) (prim : Operation .Yul) (args : List Li
           match eval fuel' cond codeOverride s with
             | .error e => .error e
             | .ok (s₁, cond) =>
-              match execSwitchCases fuel' codeOverride s₁ cases' with
-              | .error e => .error e  
-              | .ok branches =>
-                match exec fuel' (.Block default') codeOverride s₁ with
-                | .error e => .error e
-                | .ok s₂ =>
-                  (List.foldr (λ (valᵢ, sᵢ) s ↦ if valᵢ = cond then sᵢ else s) (.ok s₂) branches)
+              exec fuel' (.Block (selectSwitchCase cond default' cases')) codeOverride s₁
 
         -- A `Break` or `Continue` in the pre or post is a compiler error,
         -- so we assume it can't happen and don't modify the state in these

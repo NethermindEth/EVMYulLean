@@ -1244,6 +1244,16 @@ def test₅ :=
   | .error e => repr e
   | .ok s => s!"{s.toSharedState.accountMap.toList.map (fun (a : AccountAddress × Account .Yul) => repr a.1 ++ " " ++ repr a.2.storage.toList)}"
 
+def test₆ :=
+  let stmt : Stmt :=
+    .Switch (.Lit ⟨1⟩)
+      [(⟨1⟩, [])]
+      [.ExprStmtCall
+        (.Call (Sum.inl (.System (.REVERT))) [.Lit ⟨0⟩, .Lit ⟨0⟩])]
+  match exec 99 stmt .none stateEg₁ with
+  | .error e => repr e
+  | .ok _ => "selected"
+
 
 end Yul
 
@@ -1259,3 +1269,4 @@ def main : IO Unit := do
   IO.println (s!"test₃: {test₃} -- " ++ (if s!"{test₃}" = "StaticModeViolation" then "Success" else "Failure"))
   IO.println (s!"test₄: {test₄} -- " ++ (if s!"{test₄}" = "[1 [], 2 [(0, 5)], 3 [], 4 []]" then "Success" else "Failure"))
   IO.println (s!"test₅: {test₅} -- " ++ (if s!"{test₅}" = "[1 [], 2 [(0, 5)], 3 [], 4 []]" then "Success" else "Failure"))
+  IO.println (s!"test₆: {test₆} -- " ++ (if s!"{test₆}" = "selected" then "Success" else "Failure"))
