@@ -16,6 +16,19 @@ def multifill (vars : List Identifier) (vals : List Literal) : Yul.State → Yul
   | s@(Ok _ _) => (List.zip vars vals).foldr (λ (var, val) s ↦ s.insert var val) s
   | s => s
 
+def zeroFill (vars : List Identifier) : Yul.State → Yul.State :=
+  vars.foldr (λ var s ↦ s.insert var ⟨0⟩)
+
+def restrictVarStore (store scope : VarStore) : VarStore :=
+  store.sdiff (store.sdiff scope)
+
+def restrictStoreTo (scope : VarStore) : Yul.State → Yul.State
+  | Ok sharedState store => Ok sharedState (restrictVarStore store scope)
+  | Checkpoint (.Continue sharedState store) => Checkpoint (.Continue sharedState (restrictVarStore store scope))
+  | Checkpoint (.Break sharedState store) => Checkpoint (.Break sharedState (restrictVarStore store scope))
+  | Checkpoint (.Leave sharedState store) => Checkpoint (.Leave sharedState (restrictVarStore store scope))
+  | s => s
+
 -- | Overwrite the EvmYul.Yul.State state of some state.
 def setSharedState (sharedState : EvmYul.SharedState .Yul) : Yul.State → Yul.State
   | Ok _ store => Ok sharedState store
@@ -53,10 +66,11 @@ def diverge : Yul.State → Yul.State
   | s => s
 
 -- | Initialize function parameters and return values in varstore.
-def initcall (params : List Identifier) (args : List Literal) : Yul.State → Yul.State
+def initcall (params rets : List Identifier) (args : List Literal) : Yul.State → Yul.State
   | s@(Ok _ _) =>
     let s₁ := s.setStore default
-    s₁.multifill params args
+    let s₂ := s₁.zeroFill rets
+    s₂.multifill params args
   | s => s
 
 -- | Since it literally does not matter what happens if the state is non-Ok, we just use the default.
@@ -93,13 +107,16 @@ def overwrite? (s s' : Yul.State) : Yul.State :=
 --  STATE QUERIES
 -- ============================================================================
 
--- | Lookup the literal associated with an variable in the varstore, returning 0 if not found.
+def lookup? (var : Identifier) : Yul.State → Option Literal
+  | Ok _ store => store.lookup var
+  | Checkpoint (.Continue _ store) => store.lookup var
+  | Checkpoint (.Break _ store) => store.lookup var
+  | Checkpoint (.Leave _ store) => store.lookup var
+  | _ => .none
+
+-- | Lookup the literal associated with a variable in the varstore, returning 0 if not found.
 def lookup! (var : Identifier) : Yul.State → Literal
-  | Ok _ store => (store.lookup var).get!
-  | Checkpoint (.Continue _ store) => (store.lookup var).get!
-  | Checkpoint (.Break _ store) => (store.lookup var).get!
-  | Checkpoint (.Leave _ store) => (store.lookup var).get!
-  | _ => ⟨0⟩
+  | s => (s.lookup? var).getD ⟨0⟩
 
 -- ============================================================================
 --  STATE NOTATION
@@ -150,7 +167,7 @@ notation:65 s:64 "🏪⟦" s' "⟧" => Yul.State.setStore s s'
 notation:65 s:64 "🇪⟦" sharedState "⟧" => Yul.State.setSharedState sharedState s
 notation:65 "🪫" s:64 => Yul.State.diverge s
 notation:65 "👌" s:64 => Yul.State.mkOk s
-notation:65 s:64 "☎️⟦" params "," args "⟧" => Yul.State.initcall params args s
+notation:65 s:64 "☎️⟦" params "," rets "," args "⟧" => Yul.State.initcall params rets args s
 notation:65 s:64 "✏️⟦" s' "⟧?"  => Yul.State.overwrite? s s'
 notation:64 (priority := high) "🧟" s:max => Yul.State.reviveJump s
 

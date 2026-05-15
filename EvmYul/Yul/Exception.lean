@@ -13,8 +13,10 @@ inductive Exception where
   | MissingContract (s : String)                  : Exception
   | MissingContractFunction (s : String)          : Exception
   | InvalidExpression                             : Exception
+  | UnknownIdentifier (s : String)                : Exception
+  | DuplicateDeclaration (s : String)             : Exception
   | YulEXTCODESIZENotImplemented                  : Exception
-  | Revert                                        : Exception
+  | Revert (state : Yul.State)                    : Exception
   | YulHalt (state : Yul.State) (value : UInt256) : Exception
   -- | StopInvoked        : Exception
 
@@ -29,8 +31,10 @@ instance : Repr Exception where
       | .MissingContract s => "MissingContract: " ++ s
       | .MissingContractFunction f => "MissingContractFunction: " ++ f
       | .InvalidExpression => "InvalidExpression"
+      | .UnknownIdentifier s => "UnknownIdentifier: " ++ s
+      | .DuplicateDeclaration s => "DuplicateDeclaration: " ++ s
       | .YulEXTCODESIZENotImplemented => "YulEXTCODESIZENotImplemented"
-      | .Revert => "Revert"
+      | .Revert _ => "Revert"
       | .YulHalt _ _ => "YulHalt: (holds a state and a value)"
 
 

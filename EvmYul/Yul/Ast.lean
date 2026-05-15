@@ -47,6 +47,7 @@ mutual
   inductive Stmt where
     | Block : List Stmt → Stmt
     | Let : List Identifier → Option Expr → Stmt
+    | Assign : List Identifier → Expr → Stmt
     | ExprStmtCall : Expr → Stmt
     | Switch : Expr → List (Literal × List Stmt) → List Stmt → Stmt
     | For : Expr → List Stmt → List Stmt → Stmt
