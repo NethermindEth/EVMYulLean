@@ -1267,6 +1267,15 @@ def showExecVar (name : Identifier) (stmt : Stmt) (s : State) : String :=
   | .error e => toString (repr e)
   | .ok s => showVar? name s
 
+def showExecMode (stmt : Stmt) (s : State) : String :=
+  match exec 99 stmt .none s with
+  | .error e => toString (repr e)
+  | .ok (.Ok _ _) => "regular"
+  | .ok (.Checkpoint (.Break _ _)) => "break"
+  | .ok (.Checkpoint (.Continue _ _)) => "continue"
+  | .ok (.Checkpoint (.Leave _ _)) => "leave"
+  | .ok .OutOfFuel => "out-of-fuel"
+
 def test₇ :=
   let stmt : Stmt :=
     .Block
@@ -1399,6 +1408,13 @@ def test₁₃ :=
       ]
   showVar? "after" (execTopLevel 99 stmt selfdestructState)
 
+def test₁₄ :=
+  let stmt : Stmt := <s
+    switch 1
+    case 2 {}
+  >
+  showExecMode stmt stateEg₁
+
 
 end Yul
 
@@ -1422,3 +1438,4 @@ def main : IO Unit := do
   IO.println (s!"test₁₁: {test₁₁} -- " ++ (if s!"{test₁₁}" = "0" then "Success" else "Failure"))
   IO.println (s!"test₁₂: {test₁₂} -- " ++ (if s!"{test₁₂}" = "0" then "Success" else "Failure"))
   IO.println (s!"test₁₃: {test₁₃} -- " ++ (if s!"{test₁₃}" = "0" then "Success" else "Failure"))
+  IO.println (s!"test₁₄: {test₁₄} -- " ++ (if s!"{test₁₄}" = "regular" then "Success" else "Failure"))

@@ -273,7 +273,7 @@ partial def translateStmt (stmt : TSyntax `stmt) : TermElabM Term :=
       let (lit, cs) := litCase; `(($lit, [$cs,*]))
     let switchCases ← lits.zip cases |>.mapM f
     let dflt ← match dflts with
-                 | .none => `([.Break])
+                 | .none => `([])
                  | .some dflts => `([$(←dflts.mapM translateStmt),*])
     `(Stmt.Switch $expr [$switchCases,*] $dflt)
 
@@ -437,6 +437,11 @@ example : <s
   case 42 { continue }
   default { break }
 > = Stmt.Switch (Expr.Var "a") [(⟨42⟩, [.Continue])] [.Break] := rfl
+
+example : <s
+  switch 1
+  case 2 {}
+> = Stmt.Switch (.Lit ⟨1⟩) [(⟨2⟩, [])] [] := rfl
 
 example : <s let a, b, c > = Stmt.Let ["a", "b", "c"] .none := rfl
 example : <s revert(0, 0) > = Stmt.ExprStmtCall (.Call (Sum.inl (.System (.REVERT))) [(Expr.Lit ⟨0⟩), (Expr.Lit ⟨0⟩)]) := rfl
