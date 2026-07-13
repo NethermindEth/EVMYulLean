@@ -563,7 +563,10 @@ def primCall (fuel : ℕ) (s₀ : State) (prim : Operation .Yul) (args : List Li
           let s₁ := exec fuel' stmt codeOverride s
           match s₁ with
             | .error e => .error e
-            | .ok s₁ => exec fuel' (.Block stmts) codeOverride s₁
+            | .ok s₁ =>
+              match s₁ with
+              | .Ok _ _ => exec fuel' (.Block stmts) codeOverride s₁
+              | _ => .ok s₁
 
         | .Let vars exprOption =>
             match exprOption with
