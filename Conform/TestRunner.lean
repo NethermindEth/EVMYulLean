@@ -73,7 +73,7 @@ Now that this is not a `Finmap`, this is probably defined somewhere in the API, 
 def storageComplement (m₁ m₂ : PersistentAccountMap .EVM) : PersistentAccountMap .EVM := Id.run do
   let mut result : PersistentAccountMap .EVM := m₁
   for ⟨k₂, v₂⟩ in m₂.toList do
-    match m₁.find? k₂ with
+    match m₁.get? k₂ with
     | .none => continue
     | .some v₁ => if v₁ == v₂ then result := result.erase k₂ else continue
   return result
@@ -118,7 +118,7 @@ def executeTransaction
   (header : BlockHeader)
   : Except EVM.Exception EVM.State
 := do
-  let _fuel : ℕ := s.accountMap.find? sender |>.elim ⟨0⟩ (·.balance) |>.toNat
+  let _fuel : ℕ := s.accountMap.get? sender |>.elim ⟨0⟩ (·.balance) |>.toNat
 
   let (ypState, substate, statusCode, totalGasUsed) ←
     EVM.Υ _fuel
@@ -280,7 +280,7 @@ def validateTransaction
 
   -- "Also, with a slight abuse of notation ... "
   let (senderCode, senderNonce, senderBalance) :=
-    match σ.find? S_T with
+    match σ.get? S_T with
       | some sender => (sender.code, sender.nonce, sender.balance)
       | none =>
         dbg_trace s!"could not find sender {EvmYul.toHex S_T.toByteArray}"
@@ -516,7 +516,7 @@ def processBlocks
         0x000F3df6D732807Ef1319fB7B8bB8522d0Beac02
       let SYSTEM_ADDRESS : AccountAddress :=
         0xfffffffffffffffffffffffffffffffffffffffe
-      match s₀.accountMap.find? BEACON_ROOTS_ADDRESS with
+      match s₀.accountMap.get? BEACON_ROOTS_ADDRESS with
         | none => pure s₀
         | some roots =>
           let beaconRootsAddressCode := roots.code

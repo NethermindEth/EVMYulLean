@@ -5,14 +5,14 @@ def TestsSubdir : System.FilePath := "BlockchainTests"
 def isTestFile (file : System.FilePath) : Bool := file.extension.option false (· == "json")
 
 private def basicSuccess (name : System.FilePath)
-                         (result : Batteries.RBMap String EvmYul.Conform.TestResult compare) : IO Bool := do
+                         (result : Std.TreeMap String EvmYul.Conform.TestResult compare) : IO Bool := do
   if result.all (λ _ v ↦ v.isNone)
   then IO.println s!"SUCCESS! - {name}"; pure true
   else pure false
 
-private def success (result : Batteries.RBMap String EvmYul.Conform.TestResult compare) : Array String × Array String :=
+private def success (result : Std.TreeMap String EvmYul.Conform.TestResult compare) : Array String × Array String :=
   let (succeeded, failed) := result.partition (λ _ v ↦ v.isNone)
-  (succeeded.keys, failed.keys)
+  (succeeded.keysArray, failed.keysArray)
 
 def logFile (phase : ℕ) : System.FilePath := s!"tests_{phase}.txt"
 
@@ -58,7 +58,7 @@ def testFiles (root               : System.FilePath)
       λ (json, filepath) ↦
         match json.getObj? with
         | .error _ => panic! "Malformed test json."
-        | .ok x => (filepath, x.toArray.map Sigma.fst |>.filter isToBeTested)  
+        | .ok x => (filepath, x.keysArray |>.filter isToBeTested)  
 
   let mut tasks : Array (Task _) := .empty
   let mut thread := 0
@@ -88,7 +88,7 @@ def testFiles (root               : System.FilePath)
 
 def nproc : IO Nat := do
   let out ← IO.Process.output {cmd := "nproc", stdin := .null}
-  return out.stdout.trim.toNat? |>.getD 1
+  return out.stdout.trimAscii.toNat? |>.getD 1
 
 def main (args : List String) : IO UInt32 := do
   let NumThreads : ℕ := args.head? <&> String.toNat! |>.getD (←nproc)

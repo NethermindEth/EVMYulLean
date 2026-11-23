@@ -1,7 +1,7 @@
 import Lean.Data.Json
 import EvmYul.UInt256
 import EvmYul.Wheels
-import Batteries.Data.RBMap
+import Std.Data.TreeMap
 
 import Mathlib.Data.Multiset.Sort
 
@@ -31,9 +31,9 @@ def getObjValAsD! (j : Json) (α : Type) [FromJson α] [Inhabited α] (k : Strin
   getObjValAsD j α k default
 
 def getObjVals?
-  (self : Json) (α β : Type) [Ord α] [FromJson α] [FromJson β] : Except String (Batteries.RBMap α β compare) := do
-  let keys ← Array.map Sigma.fst <$> RBNode.toArray <$> self.getObj?
-  let mut result : Batteries.RBMap α β compare := ∅
+  (self : Json) (α β : Type) [Ord α] [FromJson α] [FromJson β] : Except String (Std.TreeMap α β compare) := do
+  let keys ← Std.TreeMap.Raw.keysArray <$> self.getObj?
+  let mut result : Std.TreeMap α β compare := ∅
   for k in keys do
     if let .ok key := FromJson.fromJson? k then
     result := result.insert key (← self.getObjValAs? β k)
@@ -103,24 +103,7 @@ end DebuggingAndProfiling
 end EvmYul
 
 def computeToList! {α}
-                   [LE α] [IsTrans α (· ≤ ·)] [IsAntisymm α (· ≤ ·)] [IsTotal α (· ≤ ·)]
+                   [LE α] [IsTrans α (· ≤ ·)] [Std.Antisymm (α := α) (· ≤ ·)] [Std.Total (α := α) (· ≤ ·)]
                    [DecidableRel (α := α) (· ≤ ·)] (m : Multiset α) : List α :=
   m.sort (· ≤ ·)
 
-def Batteries.RBMap.partition {α β : Type} {cmp : α → α → Ordering}
-  (t : Batteries.RBMap α β cmp) (p : α → β → Bool) : Batteries.RBMap α β cmp × Batteries.RBMap α β cmp :=
-  (t.filter p, t.filter (λ k v ↦ not (p k v)))
-
-namespace Std
-
-namespace HashSet
-
-def diff {α : Type} [DecidableEq α] [Hashable α] (a b : HashSet α) : HashSet α := Id.run do
-  let mut res := a
-  for elem in b do
-    res := res.erase elem
-  return res
-
-end HashSet
-
-end Std

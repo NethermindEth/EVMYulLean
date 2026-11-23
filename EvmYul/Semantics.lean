@@ -22,7 +22,6 @@ import EvmYul.SpongeHash.Keccak256
 --
 
 import Mathlib.Data.BitVec
-import Mathlib.Data.Array.Defs
 import Mathlib.Data.Finmap
 import Mathlib.Data.List.Defs
 import EvmYul.Data.Stack
@@ -216,7 +215,7 @@ def swap (n : ℕ) : Transformer .EVM :=
     .error .StackUnderflow
 
 -- TODO: Yul halting for `SELFDESTRUCT`
-def step {τ : OperationType} (op : Operation τ) (arg : Option (UInt256 × Nat) := .none) : Transformer τ := Id.run do
+def step {τ : OperationType} (op : Operation τ) (arg : Option (UInt256 × Nat) := .none) : Transformer τ :=
   let _ : Id Unit := -- For debug logging
     match τ with
       | .EVM => dbg_trace op.pretty; pure ()

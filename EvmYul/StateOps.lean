@@ -21,12 +21,12 @@ def addAccessedStorageKey {τ} (self : State τ) (sk : AccountAddress × UInt256
 DEAD(σ, a). Section 4.1., equation 15.
 -/
 def dead {τ} (σ : AccountMap τ) (addr : AccountAddress) : Bool :=
-  σ.find? addr |>.option True Account.emptyAccount
+  σ.get? addr |>.option True Account.emptyAccount
 
-def accountExists {τ} (self : State τ) (addr : AccountAddress) : Bool := self.accountMap.find? addr |>.isSome
+def accountExists {τ} (self : State τ) (addr : AccountAddress) : Bool := self.accountMap.get? addr |>.isSome
 
 def lookupAccount {τ} (self : State τ) (addr : AccountAddress) : Option (Account τ) :=
-  self.accountMap.find? addr
+  self.accountMap.get? addr
 
 def updateAccount {τ} (addr : AccountAddress) (act : Account τ) (self : State τ) : State τ :=
   { self with accountMap := self.accountMap.insert addr act }
@@ -46,7 +46,7 @@ def updateSelfAccount! {τ} (self : State τ) : (Account τ → Account τ) → 
 
 def balance {τ} (self : State τ) (k : UInt256) : State τ × UInt256 :=
   let addr := AccountAddress.ofUInt256 k
-  (self.addAccessedAccount addr, self.accountMap.find? addr |>.elim ⟨0⟩ (·.balance))
+  (self.addAccessedAccount addr, self.accountMap.get? addr |>.elim ⟨0⟩ (·.balance))
 
 def initialiseAccount (addr : AccountAddress) (self : State .EVM) : State .EVM :=
   if self.accountExists addr then self else self.updateAccount addr default
@@ -106,7 +106,7 @@ def gasLimit {τ} (self : State τ) : UInt256 :=
 def chainId {τ} (_ : State τ) : UInt256 := .ofNat EvmYul.chainId
 
 def selfbalance {τ} (self : State τ) : UInt256 :=
-  Batteries.RBMap.find? self.accountMap self.executionEnv.codeOwner |>.elim ⟨0⟩ (·.balance)
+  Std.TreeMap.get? self.accountMap self.executionEnv.codeOwner |>.elim ⟨0⟩ (·.balance)
 
 def setCode (self : State .EVM) (code : ByteArray) : State .EVM :=
   { self with executionEnv.code := code }
@@ -129,12 +129,12 @@ def sload {τ} (self : State τ) (spos : UInt256) : State τ × UInt256 :=
 
 def sstore {τ} (self : State τ) (spos sval : UInt256) : State τ :=
   let Iₐ := self.executionEnv.codeOwner
-  let { storage := σ_Iₐ, .. } := self.accountMap.find! Iₐ
+  let { storage := σ_Iₐ, .. } := self.accountMap.get! Iₐ
   let v₀ :=
-    match self.σ₀.find? Iₐ with
+    match self.σ₀.get? Iₐ with
       | none => ⟨0⟩
-      | some acc => acc.storage.findD spos ⟨0⟩
-  let v := σ_Iₐ.findD spos ⟨0⟩
+      | some acc => acc.storage.getD spos ⟨0⟩
+  let v := σ_Iₐ.getD spos ⟨0⟩
   let v' := sval
 
   let r_dirtyclear : ℤ :=

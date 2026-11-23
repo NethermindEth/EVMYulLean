@@ -132,7 +132,7 @@ def pow (b : UInt256) (n : UInt256) := powAux ⟨1⟩ b n.1
 instance : HPow UInt256 UInt256 UInt256 := ⟨pow⟩
 instance : AndOp UInt256 := ⟨UInt256.land⟩
 instance : OrOp UInt256 := ⟨UInt256.lor⟩
-instance : Xor UInt256 := ⟨UInt256.xor⟩
+instance : XorOp UInt256 := ⟨UInt256.xor⟩
 instance : ShiftLeft UInt256 := ⟨UInt256.shiftLeft⟩
 instance : ShiftRight UInt256 := ⟨UInt256.shiftRight⟩
 
