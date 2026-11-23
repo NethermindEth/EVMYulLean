@@ -173,7 +173,7 @@ instance : ToString Blob := ⟨Blob.toString⟩
 
 def getBlob? (s : String) : Except String Blob :=
   if isHex s then
-    let rest := s.drop HexPrefix.length
+    let rest := (s.drop HexPrefix.length).toString
     if rest.any (not ∘ isHexDigitChar)
     then .error "Blobs must consist of valid hex digits."
     else .ok rest.toLower

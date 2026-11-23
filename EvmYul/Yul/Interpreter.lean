@@ -88,7 +88,7 @@ def primCall (fuel : ℕ) (s₀ : State) (prim : Operation .Yul) (args : List Li
                   | .OutOfFuel => .error .OutOfFuel
                   | .Checkpoint j => .ok (.Checkpoint j, [⟨0⟩])
                   | .Ok sharedState varstore =>
-                      match s₀.sharedState.accountMap.find? address with
+                      match s₀.sharedState.accountMap.get? address with
                         | .none => 
                           buildContractCallEmptyReturnState s₀ accountMap₁ ⟨1⟩ -- No contract at the provided address, return 1 to indicate success, with empty return data. (Like STOP opcode).
                         | .some yulContract =>
@@ -182,7 +182,7 @@ def primCall (fuel : ℕ) (s₀ : State) (prim : Operation .Yul) (args : List Li
                 | .OutOfFuel => .error .OutOfFuel
                 | .Checkpoint j => .ok (.Checkpoint j, [⟨0⟩])
                 | .Ok sharedState varstore =>
-                    match s₀Static.sharedState.accountMap.find? address with
+                    match s₀Static.sharedState.accountMap.get? address with
                       | .none => 
                           buildContractCallEmptyReturnState s₀Static .none ⟨1⟩ -- No contract at the provided address, return 1 to indicate success, with empty return data. (Like STOP opcode).
                       | .some yulContract =>
@@ -265,7 +265,7 @@ def primCall (fuel : ℕ) (s₀ : State) (prim : Operation .Yul) (args : List Li
                   | .OutOfFuel => .error .OutOfFuel
                   | .Checkpoint j => .ok (.Checkpoint j, [⟨0⟩])
                   | .Ok sharedState varstore =>
-                      match s₀.sharedState.accountMap.find? address with
+                      match s₀.sharedState.accountMap.get? address with
                         | .none => 
                             buildContractCallEmptyReturnState s₀ accountMap₁ ⟨1⟩ -- No contract at the provided address, return 1 to indicate success, with empty return data. (Like STOP opcode).
                         | .some yulContract =>
@@ -343,7 +343,7 @@ def primCall (fuel : ℕ) (s₀ : State) (prim : Operation .Yul) (args : List Li
               | .OutOfFuel => .error .OutOfFuel
               | .Checkpoint j => .ok (.Checkpoint j, [⟨0⟩])
               | .Ok sharedState varstore =>
-                  match s₀.sharedState.accountMap.find? address with
+                  match s₀.sharedState.accountMap.get? address with
                     | .none => 
                       buildContractCallEmptyReturnState s₀ .none ⟨1⟩ -- No contract at the provided address, return 1 to indicate success, with empty return data. (Like STOP opcode).
                     | .some yulContract =>
@@ -436,7 +436,7 @@ def primCall (fuel : ℕ) (s₀ : State) (prim : Operation .Yul) (args : List Li
     match fuel with
       | 0 => .error .OutOfFuel
       | .succ fuel' =>
-        match s.sharedState.accountMap.find? s.executionEnv.codeOwner with
+        match s.sharedState.accountMap.get? s.executionEnv.codeOwner with
         | .none => .error (.MissingContract (s!"{s.executionEnv.codeOwner}")) 
         | .some yulContract =>
           let code : YulContract := codeOverride.getD yulContract.code

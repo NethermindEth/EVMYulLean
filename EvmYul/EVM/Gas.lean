@@ -97,13 +97,13 @@ It would be worth restructing everything to obtain cleaner separation of concern
 -/
 def Csstore (s : EVM.State) : ℕ :=
   let { stack := μₛ, accountMap := σ, σ₀ := σ₀, executionEnv.codeOwner := Iₐ, .. } := s
-  let { storage := σ_Iₐ, .. } := σ.find! Iₐ
+  let { storage := σ_Iₐ, .. } := σ.get! Iₐ
   let storeAddr := μₛ[0]!
   let v₀ :=
-    match σ₀.find? Iₐ with
+    match σ₀.get? Iₐ with
       | none => ⟨0⟩
-      | some acc => acc.storage.findD storeAddr ⟨0⟩
-  let v := σ_Iₐ.findD storeAddr ⟨0⟩
+      | some acc => acc.storage.getD storeAddr ⟨0⟩
+  let v := σ_Iₐ.getD storeAddr ⟨0⟩
   let v' := μₛ[1]!
   let loadComponent :=
     if s.substate.accessedStorageKeys.contains (Iₐ, storeAddr) then
@@ -140,7 +140,7 @@ def Cselfdestruct (s : EVM.State) : ℕ :=
   let { substate.accessedAccounts := Aₐ, accountMap := σ, executionEnv.codeOwner := Iₐ, .. } := s
   let c_cold := if Aₐ.contains r then 0 else Gcoldaccountaccess
   let c_new :=
-    if State.dead σ r ∧ (σ.find? Iₐ |>.option ⟨0⟩ (·.balance)) ≠ ⟨0⟩ then
+    if State.dead σ r ∧ (σ.get? Iₐ |>.option ⟨0⟩ (·.balance)) ≠ ⟨0⟩ then
       Gnewaccount
     else 0
   Gselfdestruct + c_cold + c_new
@@ -177,9 +177,8 @@ def Cgascap (t r : AccountAddress) (val g : UInt256) (σ : AccountMap .EVM) (μ 
     g.toNat
 
 def Ccallgas (t r : AccountAddress) (val g : UInt256) (σ : AccountMap .EVM) (μ : MachineState) (A : Substate) : ℕ :=
-  match val with
-    | ⟨0⟩ => Cgascap t r val g σ μ A
-    | _ => Cgascap t r val g σ μ A + GasConstants.Gcallstipend
+  if val = ⟨0⟩ then Cgascap t r val g σ μ A
+  else Cgascap t r val g σ μ A + GasConstants.Gcallstipend
 
 /--
 NB Assumes stack coherence.

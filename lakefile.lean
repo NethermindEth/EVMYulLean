@@ -2,14 +2,16 @@ import Lake
 open Lake DSL System
 
 require mathlib from git
-  "https://github.com/leanprover-community/mathlib4.git"@"v4.22.0"
+  "https://github.com/leanprover-community/mathlib4.git"@"v4.36.0"
 
 package «evmyul» {
   moreLeanArgs := #["-DautoImplicit=false"]
   moreServerOptions := #[⟨`autoImplicit, false⟩]
+  -- Mathlib uses the module system and EYL doesn't yet, so Lake would warn on every Mathlib import.
+  allowNonModules := true
 }
 
-def cloneWithCache (pkg : NPackage _package.name) (dirname url : String) : FetchM (Job GitRepo) := do
+def cloneWithCache (pkg : NPackage __name__) (dirname url : String) : FetchM (Job GitRepo) := do
   let repoDir : GitRepo := ⟨pkg.dir / dirname⟩
   if !(← repoDir.dir.pathExists) then dbg_trace s!"Cloning: {url}"; GitRepo.clone url repoDir
   return pure repoDir
@@ -61,7 +63,7 @@ extern_lib libleanffi pkg := do
     discard <| IO.Process.run {cmd := "git", args := #["submodule", "update", "--init"]}
 
   let name := nameToStaticLib "leanffi"
-  buildStaticLib (pkg.nativeLibDir / name) #[sha256O, keccak256, ffiO]
+  buildStaticLib (pkg.staticLibDir / name) #[sha256O, keccak256, ffiO]
 
 lean_lib «Conform»
 

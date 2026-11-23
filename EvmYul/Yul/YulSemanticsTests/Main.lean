@@ -361,7 +361,7 @@ functions := (∅ : Finmap (fun (_ : YulFunctionName) ↦ Yul.Ast.FunctionDefini
     { code := storageCode
     , balance := ⟨1000⟩
     , nonce := ⟨0⟩ 
-    , storage := Batteries.RBMap.ofList [(⟨0⟩, ⟨21⟩)] compare
+    , storage := Std.TreeMap.ofList [(⟨0⟩, ⟨21⟩)] compare
     , tstorage := ∅
     }
   let callerCode : YulContract := 
@@ -1173,7 +1173,7 @@ let storage2Account : Account .Yul :=
     , tstorage := ∅
     }
     
-  let accountMap : AccountMap .Yul := Batteries.RBMap.insert ∅ storageAddress storageAccount
+  let accountMap : AccountMap .Yul := Std.TreeMap.insert ∅ storageAddress storageAccount
                                       |>.insert callerAddress callerAccount
                                       |>.insert caller2Address caller2Account
                                       |>.insert storage2Address storage2Account

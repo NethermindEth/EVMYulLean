@@ -19,7 +19,7 @@ section FromJson
 
 open Lean (FromJson Json)
 
-private def fromBlobString {α} (f : Blob → Except String α) : FromJson α :=
+@[instance_reducible] private def fromBlobString {α} (f : Blob → Except String α) : FromJson α :=
   {
     fromJson? := λ json ↦ json.getStr? >>= (getBlob? · >>= f)
   }
@@ -182,7 +182,7 @@ instance : FromJson TestMap where
 end FromJson
 
 def testNamesOfTest (test : Lean.Json) : Except String (Array String) :=
-  test.getObj? <&> (·.toArray.map Sigma.fst)
+  test.getObj? <&> Std.TreeMap.Raw.keysArray
 
 section PrettyPrinter
 

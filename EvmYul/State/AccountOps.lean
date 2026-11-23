@@ -9,7 +9,7 @@ namespace EvmYul
 namespace Account
 
 def lookupStorage {τ} (self : Account τ) (k : UInt256) : UInt256 :=
-  self.storage.findD k ⟨0⟩
+  self.storage.getD k ⟨0⟩
 
 def updateStorage {τ} (self : Account τ) (k v : UInt256) : Account τ :=
   if v == default then
@@ -18,7 +18,7 @@ def updateStorage {τ} (self : Account τ) (k v : UInt256) : Account τ :=
     { self with storage := self.storage.insert k v }
 
 def lookupTransientStorage {τ} (self : Account τ) (k : UInt256) : UInt256 :=
-  self.tstorage.findD k ⟨0⟩
+  self.tstorage.getD k ⟨0⟩
 
 def updateTransientStorage {τ} (self : Account τ) (k v : UInt256) : Account τ :=
   if v == default then

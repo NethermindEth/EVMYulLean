@@ -21,7 +21,7 @@ This breaks the moment that `Repr` changes its behaviour; it is fine for the tim
 def Operation.pretty {τ} (self : Operation τ) : String :=
   let reprStr := ToString.toString <| repr self
   let lastComponent := reprStr.splitOn "." |>.getLast!
-  lastComponent.take lastComponent.length.pred
+  (lastComponent.take lastComponent.length.pred).toString
 
 /--
 `Finmap`s are not very computation-friendly and so the API is ever so slightly meh;
@@ -32,8 +32,8 @@ TODO(not critical) - Unify all the maps used throught the formalisation one day.
 def Finmap.pretty {α β : Type} [ToString α] [ToString β]
                                [LE ((_ : α) × β)]
                                [IsTrans ((_ : α) × β) fun x x_1 => x ≤ x_1]
-                               [IsAntisymm ((_ : α) × β) fun x x_1 => x ≤ x_1]
-                               [IsTotal ((_ : α) × β) fun x x_1 => x ≤ x_1]
+                               [Std.Antisymm (α := (_ : α) × β) fun x x_1 => x ≤ x_1]
+                               [Std.Total (α := (_ : α) × β) fun x x_1 => x ≤ x_1]
                                [DecidableRel fun (x : ((_ : α) × β)) x_1 => x ≤ x_1]
                   (self : Finmap (λ _ : α ↦ β)) : String := Id.run do
   let mut result : String := ""
