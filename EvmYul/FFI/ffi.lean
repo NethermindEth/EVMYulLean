@@ -14,8 +14,10 @@ def BLAKE2 (d : ByteArray) : Except String ByteArray := do
   if d[212]! ∉ [0, 1].map Nat.toUInt8 then throw "error"
   return BLAKE2Compress d
 
+-- Proofs see this body, and compiled code calls `memset_zero`, so the two must agree.
 @[extern "memset_zero"]
-opaque ByteArray.zeroes (n : USize) : ByteArray
+def ByteArray.zeroes (n : USize) : ByteArray :=
+  ⟨Array.replicate n.toNat 0⟩
 
 @[extern "keccak256"]
 opaque keccak256 (input : @& ByteArray) (len : USize) : ByteArray
